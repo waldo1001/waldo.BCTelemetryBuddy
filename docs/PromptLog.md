@@ -131,4 +131,10 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ### Entry #28 — 2025-10-15 17:05
 > "Now create the UserGuide.md first to document the planned user experience."
 
+### Entry #29 — 2025-01-14 17:10
+> "Proceed to the next step: scaffolding the MCP backend implementation"
+
+### Entry #30 — 2025-01-14 17:15
+> "Continue creating all MCP backend modules following SOLID principles"
+
 ---
