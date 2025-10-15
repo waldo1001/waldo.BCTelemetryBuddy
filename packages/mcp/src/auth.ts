@@ -1,5 +1,9 @@
 import { ConfidentialClientApplication, DeviceCodeRequest, PublicClientApplication } from '@azure/msal-node';
 import { MCPConfig } from './config.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 /**
  * Authentication result containing access token and user info
@@ -13,7 +17,7 @@ export interface AuthResult {
 
 /**
  * Authentication service using MSAL for Azure AD
- * Supports both device_code and client_credentials flows
+ * Supports device_code, client_credentials, and azure_cli flows
  */
 export class AuthService {
     private config: MCPConfig;
@@ -43,10 +47,64 @@ export class AuthService {
      * Authenticate using configured flow
      */
     async authenticate(): Promise<AuthResult> {
-        if (this.config.authFlow === 'device_code') {
+        if (this.config.authFlow === 'azure_cli') {
+            return this.authenticateAzureCLI();
+        } else if (this.config.authFlow === 'device_code') {
             return this.authenticateDeviceCode();
         } else {
             return this.authenticateClientCredentials();
+        }
+    }
+
+    /**
+     * Azure CLI flow - uses cached credentials from 'az login'
+     * No interactive login required if user already logged in via Azure CLI
+     */
+    private async authenticateAzureCLI(): Promise<AuthResult> {
+        try {
+            console.log('Using Azure CLI authentication (az account get-access-token)...');
+
+            // Get access token from Azure CLI
+            // Use --resource flag to get token for Application Insights API
+            const { stdout, stderr } = await execAsync(
+                'az account get-access-token --resource https://api.applicationinsights.io'
+            );
+
+            if (stderr) {
+                console.error('Azure CLI stderr:', stderr);
+            }
+
+            const tokenResponse = JSON.parse(stdout);
+
+            if (!tokenResponse.accessToken) {
+                throw new Error('No access token returned from Azure CLI');
+            }
+
+            this.authResult = {
+                authenticated: true,
+                accessToken: tokenResponse.accessToken,
+                user: tokenResponse.subscription || 'Azure CLI User',
+                expiresOn: tokenResponse.expiresOn ? new Date(tokenResponse.expiresOn) : undefined
+            };
+
+            console.log(`✓ Authenticated via Azure CLI`);
+            console.log(`  Subscription: ${tokenResponse.subscription || 'N/A'}`);
+            console.log(`  Tenant: ${tokenResponse.tenant || 'N/A'}`);
+
+            return this.authResult;
+        } catch (error: any) {
+            console.error('Azure CLI authentication failed:', error.message);
+
+            if (error.message.includes('az: command not found') || error.message.includes('not recognized')) {
+                console.error('\n⚠️  Azure CLI is not installed or not in PATH');
+                console.error('Install from: https://docs.microsoft.com/cli/azure/install-azure-cli\n');
+            } else if (error.message.includes('az login')) {
+                console.error('\n⚠️  You need to login first using: az login');
+                console.error('Run "az login" in your terminal and try again.\n');
+            }
+
+            this.authResult = { authenticated: false };
+            throw error;
         }
     }
 
@@ -56,9 +114,13 @@ export class AuthService {
      */
     private async authenticateDeviceCode(): Promise<AuthResult> {
         try {
+            // Use Azure CLI's public client ID if none configured
+            // This is a well-known Microsoft client ID for device code flow
+            const clientId = this.config.clientId || '04b07795-8ddb-461a-bbee-02f9e1bf7b46';
+
             const pca = new PublicClientApplication({
                 auth: {
-                    clientId: this.config.clientId || 'default-client-id', // Use default or configured
+                    clientId,
                     authority: `https://login.microsoftonline.com/${this.config.tenantId}`
                 }
             });

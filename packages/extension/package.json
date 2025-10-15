@@ -58,21 +58,22 @@
                 "bctb.mcp.tenantId": {
                     "type": "string",
                     "default": "",
-                    "description": "Azure tenant ID"
+                    "description": "Azure tenant ID (not needed for azure_cli flow, which uses current az login session)"
                 },
                 "bctb.mcp.clientId": {
                     "type": "string",
                     "default": "",
-                    "description": "Azure client ID (optional for device_code flow)"
+                    "description": "Azure client ID (not needed for azure_cli or device_code flows, required for client_credentials)"
                 },
                 "bctb.mcp.authFlow": {
                     "type": "string",
                     "enum": [
+                        "azure_cli",
                         "device_code",
                         "client_credentials"
                     ],
-                    "default": "device_code",
-                    "description": "Authentication flow to use"
+                    "default": "azure_cli",
+                    "description": "Authentication flow to use (azure_cli uses 'az login' cached credentials, device_code requires browser login each time, client_credentials uses service principal)"
                 },
                 "bctb.mcp.applicationInsights.appId": {
                     "type": "string",
@@ -113,6 +114,11 @@
                     "type": "number",
                     "default": 3,
                     "description": "Maximum retry attempts for failed queries"
+                },
+                "bctb.queries.folder": {
+                    "type": "string",
+                    "default": "queries",
+                    "description": "Folder for saved KQL queries (relative to workspace root)"
                 },
                 "bctb.mcp.references": {
                     "type": "array",

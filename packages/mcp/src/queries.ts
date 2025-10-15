@@ -7,6 +7,7 @@ import * as path from 'path';
 export interface SavedQuery {
     filePath: string;
     fileName: string;
+    category: string;  // Subfolder/namespace (e.g., "Monitoring", "Analysis")
     name: string;
     purpose: string;
     useCase: string;
@@ -20,9 +21,12 @@ export interface SavedQuery {
  */
 export class QueriesService {
     private queriesDir: string;
+    private workspacePath: string;
 
-    constructor(workspacePath: string) {
-        this.queriesDir = path.join(workspacePath, '.vscode', '.bctb', 'queries');
+    constructor(workspacePath: string, queriesFolder: string = 'queries') {
+        this.workspacePath = workspacePath;
+        // Use workspace root for queries (default: 'queries/' folder)
+        this.queriesDir = path.join(workspacePath, queriesFolder);
         this.ensureQueriesDir();
     }
 
@@ -41,7 +45,7 @@ export class QueriesService {
     }
 
     /**
-     * Get all saved queries
+     * Get all saved queries (recursively scans subfolders)
      */
     getAllQueries(): SavedQuery[] {
         try {
@@ -49,27 +53,39 @@ export class QueriesService {
                 return [];
             }
 
-            const files = fs.readdirSync(this.queriesDir);
             const queries: SavedQuery[] = [];
+            this.scanDirectory(this.queriesDir, queries);
 
-            for (const file of files) {
-                if (!file.endsWith('.kql')) {
-                    continue;
-                }
-
-                const filePath = path.join(this.queriesDir, file);
-                const query = this.parseQueryFile(filePath);
-
-                if (query) {
-                    queries.push(query);
-                }
-            }
-
-            console.log(`✓ Loaded ${queries.length} saved queries`);
+            console.log(`✓ Loaded ${queries.length} saved queries from ${this.queriesDir}`);
             return queries;
         } catch (error) {
             console.error('Failed to load saved queries:', error);
             return [];
+        }
+    }
+
+    /**
+     * Recursively scan directory for .kql files
+     */
+    private scanDirectory(dirPath: string, queries: SavedQuery[]): void {
+        try {
+            const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = path.join(dirPath, entry.name);
+
+                if (entry.isDirectory()) {
+                    // Recursively scan subdirectories
+                    this.scanDirectory(fullPath, queries);
+                } else if (entry.isFile() && entry.name.endsWith('.kql')) {
+                    const query = this.parseQueryFile(fullPath);
+                    if (query) {
+                        queries.push(query);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to scan directory ${dirPath}:`, error);
         }
     }
 
@@ -123,9 +139,14 @@ export class QueriesService {
                 return null;
             }
 
+            // Determine category from folder path
+            const relativePath = path.relative(this.queriesDir, path.dirname(filePath));
+            const category = relativePath === '' ? 'Root' : relativePath.split(path.sep)[0];
+
             return {
                 filePath: metadata.filePath!,
                 fileName: metadata.fileName!,
+                category,
                 name: metadata.name || metadata.fileName!,
                 purpose: metadata.purpose || '',
                 useCase: metadata.useCase || '',
@@ -226,16 +247,30 @@ export class QueriesService {
     /**
      * Save new query to .kql file
      */
-    saveQuery(name: string, kql: string, purpose?: string, useCase?: string, tags?: string[]): string {
+    saveQuery(name: string, kql: string, purpose?: string, useCase?: string, tags?: string[], category?: string): string {
         try {
+            // Determine target directory (with optional category subfolder)
+            let targetDir = this.queriesDir;
+            if (category && category.trim().length > 0) {
+                targetDir = path.join(this.queriesDir, category);
+                // Create category subfolder if it doesn't exist
+                if (!fs.existsSync(targetDir)) {
+                    fs.mkdirSync(targetDir, { recursive: true });
+                    console.log(`✓ Created category folder: ${category}`);
+                }
+            }
+
             // Generate filename from name
-            const fileName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.kql';
-            const filePath = path.join(this.queriesDir, fileName);
+            const fileName = name.replace(/[^a-z0-9\s-]/gi, '').trim().replace(/\s+/g, ' ') + '.kql';
+            const filePath = path.join(targetDir, fileName);
 
             // Build file content with formatted comments
             const lines: string[] = [];
 
             lines.push(`// Query: ${name}`);
+            if (category) {
+                lines.push(`// Category: ${category}`);
+            }
             if (purpose) {
                 lines.push(`// Purpose: ${purpose}`);
             }
@@ -259,6 +294,31 @@ export class QueriesService {
         } catch (error) {
             console.error('Failed to save query:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Get list of all categories (subfolders)
+     */
+    getCategories(): string[] {
+        try {
+            if (!fs.existsSync(this.queriesDir)) {
+                return [];
+            }
+
+            const categories: string[] = [];
+            const entries = fs.readdirSync(this.queriesDir, { withFileTypes: true });
+
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    categories.push(entry.name);
+                }
+            }
+
+            return categories.sort();
+        } catch (error) {
+            console.error('Failed to get categories:', error);
+            return [];
         }
     }
 }

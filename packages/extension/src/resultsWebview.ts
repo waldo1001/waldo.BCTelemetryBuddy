@@ -5,50 +5,50 @@ import { QueryResult } from './mcpClient';
  * Webview for displaying query results
  */
 export class ResultsWebview {
-    private panel: vscode.WebviewPanel | undefined;
-    private context: vscode.ExtensionContext;
-    private outputChannel: vscode.OutputChannel;
+  private panel: vscode.WebviewPanel | undefined;
+  private context: vscode.ExtensionContext;
+  private outputChannel: vscode.OutputChannel;
 
-    constructor(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel) {
-        this.context = context;
-        this.outputChannel = outputChannel;
+  constructor(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel) {
+    this.context = context;
+    this.outputChannel = outputChannel;
+  }
+
+  /**
+   * Show query results in webview
+   */
+  show(result: QueryResult): void {
+    if (this.panel) {
+      this.panel.reveal(vscode.ViewColumn.Two);
+    } else {
+      this.panel = vscode.window.createWebviewPanel(
+        'bctbResults',
+        'Telemetry Results',
+        vscode.ViewColumn.Two,
+        {
+          enableScripts: true,
+          retainContextWhenHidden: true
+        }
+      );
+
+      this.panel.onDidDispose(() => {
+        this.panel = undefined;
+      });
     }
 
-    /**
-     * Show query results in webview
-     */
-    show(result: QueryResult): void {
-        if (this.panel) {
-            this.panel.reveal(vscode.ViewColumn.Two);
-        } else {
-            this.panel = vscode.window.createWebviewPanel(
-                'bctbResults',
-                'Telemetry Results',
-                vscode.ViewColumn.Two,
-                {
-                    enableScripts: true,
-                    retainContextWhenHidden: true
-                }
-            );
+    this.panel.webview.html = this.getHtmlContent(result);
+    this.outputChannel.appendLine('Results displayed in webview');
+  }
 
-            this.panel.onDidDispose(() => {
-                this.panel = undefined;
-            });
-        }
-
-        this.panel.webview.html = this.getHtmlContent(result);
-        this.outputChannel.appendLine('Results displayed in webview');
+  /**
+   * Generate HTML content for webview
+   */
+  private getHtmlContent(result: QueryResult): string {
+    if (result.type === 'error') {
+      return this.getErrorHtml(result);
     }
 
-    /**
-     * Generate HTML content for webview
-     */
-    private getHtmlContent(result: QueryResult): string {
-        if (result.type === 'error') {
-            return this.getErrorHtml(result);
-        }
-
-        return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -193,80 +193,80 @@ export class ResultsWebview {
   ${this.renderRecommendations(result)}
 </body>
 </html>`;
+  }
+
+  /**
+   * Render table
+   */
+  private renderTable(result: QueryResult): string {
+    if (!result.columns || !result.rows || result.rows.length === 0) {
+      return '<div class="empty-state">No results returned</div>';
     }
 
-    /**
-     * Render table
-     */
-    private renderTable(result: QueryResult): string {
-        if (!result.columns || !result.rows || result.rows.length === 0) {
-            return '<div class="empty-state">No results returned</div>';
-        }
+    const rowCount = result.rows.length;
+    const columnCount = result.columns.length;
 
-        const rowCount = result.rows.length;
-        const columnCount = result.columns.length;
+    let html = `<h2>Results</h2>`;
+    html += `<div class="row-count">${rowCount} row(s) × ${columnCount} column(s)</div>`;
+    html += '<table>';
 
-        let html = `<h2>Results</h2>`;
-        html += `<div class="row-count">${rowCount} row(s) × ${columnCount} column(s)</div>`;
-        html += '<table>';
+    // Header
+    html += '<thead><tr>';
+    for (const column of result.columns) {
+      html += `<th>${this.escapeHtml(column)}</th>`;
+    }
+    html += '</tr></thead>';
 
-        // Header
-        html += '<thead><tr>';
-        for (const column of result.columns) {
-            html += `<th>${this.escapeHtml(column)}</th>`;
-        }
-        html += '</tr></thead>';
+    // Rows (limit to first 1000 for performance)
+    html += '<tbody>';
+    const maxRows = Math.min(result.rows.length, 1000);
 
-        // Rows (limit to first 1000 for performance)
-        html += '<tbody>';
-        const maxRows = Math.min(result.rows.length, 1000);
+    for (let i = 0; i < maxRows; i++) {
+      html += '<tr>';
+      const row = result.rows[i];
 
-        for (let i = 0; i < maxRows; i++) {
-            html += '<tr>';
-            const row = result.rows[i];
+      for (const cell of row) {
+        html += `<td>${this.escapeHtml(this.formatCell(cell))}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+    html += '</table>';
 
-            for (const cell of row) {
-                html += `<td>${this.escapeHtml(this.formatCell(cell))}</td>`;
-            }
-            html += '</tr>';
-        }
-        html += '</tbody>';
-        html += '</table>';
-
-        if (result.rows.length > 1000) {
-            html += `<div class="row-count">Showing first 1000 of ${result.rows.length} rows</div>`;
-        }
-
-        return html;
+    if (result.rows.length > 1000) {
+      html += `<div class="row-count">Showing first 1000 of ${result.rows.length} rows</div>`;
     }
 
-    /**
-     * Render recommendations
-     */
-    private renderRecommendations(result: QueryResult): string {
-        if (!result.recommendations || result.recommendations.length === 0) {
-            return '';
-        }
+    return html;
+  }
 
-        let html = '<div class="recommendations">';
-        html += '<h2>💡 Recommendations</h2>';
-        html += '<ul>';
-
-        for (const rec of result.recommendations) {
-            html += `<li>${this.escapeHtml(rec)}</li>`;
-        }
-
-        html += '</ul>';
-        html += '</div>';
-
-        return html;
+  /**
+   * Render recommendations
+   */
+  private renderRecommendations(result: QueryResult): string {
+    if (!result.recommendations || result.recommendations.length === 0) {
+      return '';
     }
 
-    /**
-     * Get error HTML
-     */
-    private getErrorHtml(result: QueryResult): string {
-        return `<!DOCTYPE html>
+    let html = '<div class="recommendations">';
+    html += '<h2>💡 Recommendations</h2>';
+    html += '<ul>';
+
+    for (const rec of result.recommendations) {
+      html += `<li>${this.escapeHtml(rec)}</li>`;
+    }
+
+    html += '</ul>';
+    html += '</div>';
+
+    return html;
+  }
+
+  /**
+   * Get error HTML
+   */
+  private getErrorHtml(result: QueryResult): string {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -331,35 +331,40 @@ export class ResultsWebview {
   </div>
 </body>
 </html>`;
+  }
+
+  /**
+   * Format cell value
+   */
+  private formatCell(value: any): string {
+    if (value === null || value === undefined) {
+      return '';
     }
 
-    /**
-     * Format cell value
-     */
-    private formatCell(value: any): string {
-        if (value === null || value === undefined) {
-            return '';
-        }
-
-        if (typeof value === 'object') {
-            return JSON.stringify(value);
-        }
-
-        return String(value);
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
     }
 
-    /**
-     * Escape HTML
-     */
-    private escapeHtml(text: string): string {
-        const map: Record<string, string> = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
+    return String(value);
+  }
 
-        return text.replace(/[&<>"']/g, (m) => map[m]);
+  /**
+   * Escape HTML
+   */
+  private escapeHtml(text: string | null | undefined): string {
+    // Handle null/undefined values
+    if (text === null || text === undefined) {
+      return '';
     }
+
+    const map: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+
+    return String(text).replace(/[&<>"']/g, (m) => map[m]);
+  }
 }

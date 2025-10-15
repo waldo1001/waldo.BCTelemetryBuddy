@@ -8,7 +8,7 @@ export interface MCPConfig {
     tenantId: string;
     clientId?: string;
     clientSecret?: string;
-    authFlow: 'device_code' | 'client_credentials';
+    authFlow: 'device_code' | 'client_credentials' | 'azure_cli';
 
     // Application Insights / Kusto
     applicationInsightsAppId: string;
@@ -26,6 +26,9 @@ export interface MCPConfig {
 
     // Workspace
     workspacePath: string;
+
+    // Queries
+    queriesFolder: string;
 
     // External References
     references: Reference[];
@@ -46,6 +49,8 @@ export function loadConfig(): MCPConfig {
     const workspacePath = process.env.BCTB_WORKSPACE_PATH;
 
     if (!workspacePath) {
+        console.error('\n❌ Configuration Error: BCTB_WORKSPACE_PATH environment variable is required');
+        console.error('Set it to your workspace path, e.g.: $env:BCTB_WORKSPACE_PATH="C:\\path\\to\\workspace"\n');
         throw new Error('BCTB_WORKSPACE_PATH environment variable is required');
     }
 
@@ -54,7 +59,7 @@ export function loadConfig(): MCPConfig {
         tenantId: process.env.BCTB_TENANT_ID || '',
         clientId: process.env.BCTB_CLIENT_ID,
         clientSecret: process.env.BCTB_CLIENT_SECRET,
-        authFlow: (process.env.BCTB_AUTH_FLOW as 'device_code' | 'client_credentials') || 'device_code',
+        authFlow: (process.env.BCTB_AUTH_FLOW as 'device_code' | 'client_credentials' | 'azure_cli') || 'azure_cli',
 
         applicationInsightsAppId: process.env.BCTB_APP_INSIGHTS_ID || '',
         kustoClusterUrl: process.env.BCTB_KUSTO_URL || '',
@@ -67,6 +72,8 @@ export function loadConfig(): MCPConfig {
         port: parseInt(process.env.BCTB_PORT || '52345', 10),
 
         workspacePath,
+
+        queriesFolder: process.env.BCTB_QUERIES_FOLDER || 'queries',
 
         references: parseReferences(process.env.BCTB_REFERENCES || '[]')
     };
@@ -91,27 +98,31 @@ function parseReferences(referencesJson: string): Reference[] {
 export function validateConfig(config: MCPConfig): void {
     const errors: string[] = [];
 
-    if (!config.tenantId) {
-        errors.push('tenantId is required');
+    // Azure CLI doesn't need tenantId (uses current az login session)
+    if (config.authFlow !== 'azure_cli' && !config.tenantId) {
+        errors.push('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
     }
 
     if (!config.applicationInsightsAppId) {
-        errors.push('applicationInsightsAppId is required');
+        errors.push('BCTB_APP_INSIGHTS_ID is required');
     }
 
     if (!config.kustoClusterUrl) {
-        errors.push('kustoClusterUrl is required');
+        errors.push('BCTB_KUSTO_URL is required');
     }
 
     if (config.authFlow === 'client_credentials' && !config.clientId) {
-        errors.push('clientId is required for client_credentials auth flow');
+        errors.push('BCTB_CLIENT_ID is required for client_credentials auth flow');
     }
 
     if (config.authFlow === 'client_credentials' && !config.clientSecret) {
-        errors.push('clientSecret is required for client_credentials auth flow');
+        errors.push('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
     }
 
     if (errors.length > 0) {
+        console.error('\n❌ Configuration Validation Failed:');
+        errors.forEach(err => console.error(`   - ${err}`));
+        console.error('\nSet the required environment variables before starting the server.\n');
         throw new Error(`Configuration validation failed:\n${errors.join('\n')}`);
     }
 }

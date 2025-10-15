@@ -89,12 +89,19 @@ Create `.vscode/settings.json`:
 ### 3.1 Manual MCP Start
 - Command Palette (Ctrl+Shift+P): `BC Telemetry Buddy: Start MCP Server`
 
-**Expected:**
+**Expected (if MCP not already running):**
 - ✅ Output shows: "Starting MCP server..."
 - ✅ Output shows: "MCP server started on port 52345"
 - ✅ Output shows: "MCP server health check passed"
 - ✅ If `device_code`: Browser opens with device code login prompt
 - ✅ If `client_credentials`: Silent authentication
+- ✅ Notification: "MCP server started successfully"
+
+**Expected (if MCP already running - common with auto-start):**
+- ✅ Output shows: "MCP already running"
+- ✅ Notification: "MCP server started successfully"
+- ✅ No new MCP process spawned
+- ✅ Existing MCP continues running
 
 **Check for Errors:**
 - ❌ "Failed to start MCP server" → Check port availability (52345)
@@ -108,6 +115,8 @@ Create `.vscode/settings.json`:
 ---
 
 ## Part 4: Test Natural Language Queries (10 min)
+
+**Note:** Command Palette queries are for **testing/debugging only**. The primary use case is GitHub Copilot integration (Part 10). These tests verify the underlying MCP infrastructure works before testing Copilot integration.
 
 ### 4.1 Simple Query
 - Command Palette: `BC Telemetry Buddy: Run Natural Language Query`
@@ -163,28 +172,33 @@ Create `.vscode/settings.json`:
   - **Purpose:** `Track recent errors for monitoring dashboard`
   - **Use Case:** `Monitoring and alerting on application health`
   - **Tags:** `errors, monitoring, daily`
+  - **Category:** `Monitoring` (when prompted for category)
 
 **Expected:**
-- ✅ File created: `.vscode/.bctb/queries/Recent Errors.kql`
+- ✅ Category prompt appears with suggestions of existing categories (if any)
+- ✅ File created: `queries/Monitoring/Recent Errors.kql`
 - ✅ Output Channel shows: "Query saved successfully"
-- ✅ Notification: "Query 'Recent Errors' saved"
+- ✅ Notification: "Query saved to queries/Monitoring/Recent Errors.kql"
 
 ### 5.2 Verify Saved Query
-- Open `.vscode/.bctb/queries/Recent Errors.kql`
+- Open `queries/Monitoring/Recent Errors.kql`
 
 **Expected Content:**
 ```kql
 // Query: Recent Errors
+// Category: Monitoring
 // Purpose: Track recent errors for monitoring dashboard
 // Use Case: Monitoring and alerting on application health
+// Created: 2025-10-16
 // Tags: errors, monitoring, daily
-// Saved: 2025-10-15T18:30:00Z
 
 traces 
 | where severityLevel >= 3 
 | where timestamp > ago(1d) 
 | project timestamp, message, severityLevel
 ```
+
+**Note:** Queries are now saved to the workspace root `queries/` folder (not `.vscode/.bctb/queries/`) with category subfolders for organization. This allows queries to be version-controlled and shared with the team.
 
 ### 5.3 Test Context Pickup
 - Run query: `show me errors similar to my saved queries`
@@ -203,16 +217,20 @@ traces
 
 **Expected:**
 - ✅ Windows Explorer opens (or Finder on macOS)
-- ✅ Path: `.vscode/.bctb/queries/`
-- ✅ Contains `Recent Errors.kql` from Part 5
+- ✅ Path: `queries/` (in workspace root, not `.vscode`)
+- ✅ Contains `Monitoring/` subfolder with `Recent Errors.kql` from Part 5
+- ✅ Folder structure visible: organized by categories
 
 ### 6.2 Manual Query Creation
-- Create new file: `.vscode/.bctb/queries/Page Views.kql`
+- Create new folder: `queries/Performance/`
+- Create new file: `queries/Performance/Page Views.kql`
 ```kql
 // Query: Page Views Analysis
+// Category: Performance
 // Purpose: Analyze page view patterns
 // Use Case: Performance optimization
 // Tags: pageviews, performance
+// Created: 2025-10-16
 
 pageViews
 | where timestamp > ago(7d)
@@ -222,6 +240,10 @@ pageViews
 
 **Expected:**
 - ✅ MCP picks up new query on next execution (context for NL translation)
+- ✅ Category automatically extracted from folder path
+- ✅ Queries organized in namespace/category structure
+
+**Note:** The `queries/` folder should be added to version control (git) so team members can share query libraries. The `.vscode/.bctb/cache/` folder should remain gitignored.
 
 ---
 
@@ -284,70 +306,154 @@ pageViews
 
 ---
 
-## Part 10: Optional - Copilot Integration (10 min)
+## Part 10: GitHub Copilot Integration (15 min) — **PRIMARY USE CASE**
 
-**Prerequisites:** GitHub Copilot license active
+**⚠️ CRITICAL:** This is the **core purpose** of BC Telemetry Buddy. The extension exists to provide MCP tools to GitHub Copilot Chat. Command Palette queries (Parts 4-6) are for testing/debugging only. **If Copilot integration doesn't work, the project has failed its primary objective.**
 
-### 10.1 Verify MCP Registered
-- Command Palette: `Developer: Show Running Extensions`
-- Look for MCP server process (port 52345)
+**Prerequisites:** 
+- ✅ GitHub Copilot license active
+- ✅ MCP server running (verified in Part 3)
+- ✅ At least one saved query exists (created in Part 5)
 
-### 10.2 Test MCP Tools in Copilot Chat
-Open GitHub Copilot Chat panel, try:
+### 10.1 Verify MCP Tools Registered
+- Open GitHub Copilot Chat panel (Ctrl+Alt+I or View → Chat)
+- In chat, type `@workspace /` to see available tools
+- **Expected:** MCP tools should be listed (query_telemetry, get_saved_queries, save_query, etc.)
+- If tools not visible, check Output Channel for MCP registration errors
 
-1. **Query Telemetry:**
-   ```
-   @workspace query my telemetry for errors in the last hour
-   ```
-   Expected: Copilot uses `query_telemetry` tool, shows results
+### 10.2 Test Natural Language Query (Primary Workflow)
+Open GitHub Copilot Chat, enter:
+```
+@workspace Show me all errors from my Business Central telemetry in the last 24 hours
+```
 
-2. **List Saved Queries:**
-   ```
-   @workspace list my saved telemetry queries
-   ```
-   Expected: Copilot uses `get_saved_queries` tool, shows query names
+**Expected:**
+- ✅ Copilot invokes `query_telemetry` tool with NL query
+- ✅ MCP translates NL to KQL
+- ✅ Query executes against Application Insights
+- ✅ Results displayed in chat with formatted table
+- ✅ Copilot provides natural language summary of results
+- ✅ Follow-up questions work (e.g., "filter these to only show SQL errors")
 
-3. **Save Query:**
-   ```
-   @workspace save this telemetry query: pageViews | summarize count() by name
-   ```
-   Expected: Copilot uses `save_query` tool, creates .kql file
+**This is the PRIMARY use case. If this fails, stop and debug before continuing.**
 
-4. **Get Recommendations:**
-   ```
-   @workspace recommend improvements for this query: traces | where timestamp > ago(1d)
-   ```
-   Expected: Copilot uses `get_recommendations` tool, suggests optimizations
+### 10.3 Test Saved Queries Context
+```
+@workspace What saved telemetry queries do I have?
+```
 
-5. **Search Queries:**
-   ```
-   @workspace search my queries about performance
-   ```
-   Expected: Copilot uses `search_queries` tool, finds matching queries
+**Expected:**
+- ✅ Copilot uses `get_saved_queries` tool
+- ✅ Lists queries with names, purposes, categories
+- ✅ Shows "Recent Errors" from Part 5
+
+Follow-up:
+```
+@workspace Run my "Recent Errors" query
+```
+
+**Expected:**
+- ✅ Copilot retrieves saved query KQL
+- ✅ Executes via `query_telemetry` tool
+- ✅ Shows results
+
+### 10.4 Test Query Saving via Copilot
+```
+@workspace Save this query as "Slow Page Views" in Performance category: 
+pageViews | where duration > 2000 | project timestamp, name, duration
+Purpose: Track slow page load times
+```
+
+**Expected:**
+- ✅ Copilot uses `save_query` tool
+- ✅ File created: `queries/Performance/Slow Page Views.kql`
+- ✅ Copilot confirms: "Query saved successfully"
+- ✅ Verify file exists in workspace
+
+### 10.5 Test Query Search
+```
+@workspace Search my saved queries for anything related to performance
+```
+
+**Expected:**
+- ✅ Copilot uses `search_queries` tool
+- ✅ Returns queries with "performance" in name/purpose/tags
+- ✅ Shows "Slow Page Views" from 10.4
+
+### 10.6 Test Query Recommendations
+```
+@workspace Suggest improvements for this query:
+traces | where timestamp > ago(1d)
+```
+
+**Expected:**
+- ✅ Copilot uses `get_recommendations` tool with query and context
+- ✅ Returns suggestions (e.g., "Add specific severityLevel filter", "Use summarize for better performance")
+- ✅ Recommendations include external reference examples (if configured)
+
+### 10.7 Test Complex Multi-Step Workflow
+```
+@workspace I need to analyze BC telemetry:
+1. Show me errors from the last 7 days
+2. Group them by error type
+3. Save the query as "Weekly Error Analysis" in Monitoring category
+4. Then show me a summary of the top 5 error types
+```
+
+**Expected:**
+- ✅ Copilot breaks down into multiple tool calls
+- ✅ Uses `query_telemetry` for initial query
+- ✅ Refines KQL to add grouping
+- ✅ Uses `save_query` to store result
+- ✅ Uses `query_telemetry` again for summary
+- ✅ Provides natural language analysis of findings
+
+### 10.8 Test Error Handling in Copilot
+```
+@workspace Query my telemetry for invalid_table_name_xyz
+```
+
+**Expected:**
+- ✅ MCP returns error message
+- ✅ Copilot explains error in natural language
+- ✅ Copilot suggests corrections (e.g., "Did you mean 'traces' or 'dependencies'?")
+- ✅ No crash, conversation continues
 
 ---
 
 ## Expected Test Results
 
 ### ✅ Success Criteria (All Must Pass)
+
+**CRITICAL (Project Purpose - Must Work):**
+- [ ] **GitHub Copilot integration functional (Part 10)** — MCP tools registered and accessible via `@workspace`
+- [ ] **Copilot can query telemetry via natural language** — Primary workflow works end-to-end
+- [ ] **Copilot can list/search/save queries** — Complete MCP tool suite functional
+
+**Infrastructure (Supporting Components):**
 - [ ] MCP server starts successfully (auto-start + manual start)
-- [ ] Authentication completes (device code or client credentials)
+- [ ] Authentication completes (azure_cli, device_code, or client_credentials)
 - [ ] Natural language queries translate to KQL and execute
-- [ ] Webview displays results correctly (table, styling, badges)
 - [ ] Query caching works (CACHED badge appears)
-- [ ] Save query creates .kql file with proper format
-- [ ] Open Queries Folder opens file explorer
+- [ ] Save query creates .kql file with proper format in queries/ folder
+- [ ] Queries organized by category (subfolder structure)
 - [ ] Large datasets handled (1000+ rows)
 - [ ] Error handling graceful (no crashes)
-- [ ] Special characters escaped (no XSS)
 - [ ] MCP process terminates on shutdown
-- [ ] Optional: Copilot integration works (MCP tools accessible)
+
+**Testing Only (Not Primary Workflow):**
+- [ ] Command Palette queries work (Parts 4-6) — for debugging/testing only
+- [ ] Webview displays results correctly (table, styling, badges)
+- [ ] Open Queries Folder opens file explorer
+- [ ] Special characters escaped (no XSS)
+
+**⚠️ If Copilot integration (Part 10) fails, the project has failed its core objective. Command Palette functionality is for testing purposes only.**
 
 ### 📋 Known Limitations
 - First query takes 3-5 seconds (authentication + Kusto API latency)
 - Cached queries < 1 second
 - Large result sets (10,000+ rows) show first 1000 only
-- Device code flow requires manual browser interaction
+- Device code flow requires manual browser interaction (azure_cli recommended for seamless auth)
 
 ---
 
@@ -379,8 +485,22 @@ Add to GitHub Issues with label `testing` and `bug`.
 
 **Test Complete!** 🎉
 
-If all success criteria passed, extension is ready for:
+### Next Steps Based on Results:
+
+**If Part 10 (Copilot Integration) PASSED ✅:**
+Extension has achieved its primary objective! Ready for:
 - Integration tests (extension.ts E2E)
 - Asset creation (icon, screenshots)
-- Documentation finalization
+- Documentation finalization (UserGuide.md, README.md)
 - Packaging and marketplace publishing
+
+**If Part 10 (Copilot Integration) FAILED ❌:**
+**STOP. This is a critical failure.** Debug before proceeding:
+1. Check MCP server logs for tool registration errors
+2. Verify MCP JSON-RPC endpoints responding (curl http://localhost:52345/rpc)
+3. Check GitHub Copilot can see MCP tools (`@workspace /` in chat)
+4. Review Instructions.md for proper MCP tool definitions
+5. Verify VSCode settings for MCP integration
+6. Test with simple MCP tool (e.g., `get_saved_queries`) first
+
+Command Palette functionality (Parts 4-6) is nice to have for testing, but **Copilot integration is the entire reason this project exists.**

@@ -83,6 +83,36 @@ function getWorkspacePath(): string | undefined {
 }
 
 /**
+ * Handle device code authentication message from MCP
+ */
+function handleDeviceCodeMessage(message: string): void {
+    // Detect device code authentication message pattern
+    // Example: "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code D2YH6WEA3 to authenticate."
+    const urlMatch = message.match(/https:\/\/microsoft\.com\/devicelogin/i);
+    const codeMatch = message.match(/code\s+([A-Z0-9]{9})/i);
+
+    if (urlMatch && codeMatch) {
+        const deviceCode = codeMatch[1];
+        const url = 'https://microsoft.com/devicelogin';
+
+        // Copy code to clipboard
+        vscode.env.clipboard.writeText(deviceCode).then(() => {
+            outputChannel.appendLine(`✓ Device code ${deviceCode} copied to clipboard`);
+        });
+
+        // Show notification with button to open browser
+        vscode.window.showInformationMessage(
+            `Azure Authentication Required: Code ${deviceCode} (copied to clipboard)`,
+            'Open Browser'
+        ).then(selection => {
+            if (selection === 'Open Browser') {
+                vscode.env.openExternal(vscode.Uri.parse(url));
+            }
+        });
+    }
+}
+
+/**
  * Start MCP server process
  */
 async function startMCP(): Promise<void> {
@@ -115,7 +145,11 @@ async function startMCP(): Promise<void> {
     });
 
     proc.stdout?.on('data', (data) => {
-        outputChannel.appendLine(`[MCP] ${data.toString().trim()}`);
+        const message = data.toString().trim();
+        outputChannel.appendLine(`[MCP] ${message}`);
+
+        // Detect device code authentication message
+        handleDeviceCodeMessage(message);
     });
 
     proc.stderr?.on('data', (data) => {
@@ -146,12 +180,16 @@ function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePat
         BCTB_CLIENT_ID: config.get<string>('mcp.clientId', ''),
         BCTB_CLIENT_SECRET: config.get<string>('mcp.clientSecret', ''),
         BCTB_AUTH_FLOW: config.get<string>('mcp.authFlow', 'device_code'),
-        BCTB_APP_INSIGHTS_APP_ID: config.get<string>('mcp.applicationInsights.appId', ''),
-        BCTB_KUSTO_CLUSTER_URL: config.get<string>('mcp.kusto.clusterUrl', ''),
+        // MCP expects BCTB_APP_INSIGHTS_ID (no extra "_APP_")
+        BCTB_APP_INSIGHTS_ID: config.get<string>('mcp.applicationInsights.appId', ''),
+        // MCP expects BCTB_KUSTO_URL
+        BCTB_KUSTO_URL: config.get<string>('mcp.kusto.clusterUrl', ''),
         BCTB_CACHE_ENABLED: config.get<boolean>('mcp.cache.enabled', true) ? 'true' : 'false',
-        BCTB_CACHE_TTL_SECONDS: config.get<number>('mcp.cache.ttlSeconds', 3600).toString(),
+        // MCP expects BCTB_CACHE_TTL (seconds)
+        BCTB_CACHE_TTL: config.get<number>('mcp.cache.ttlSeconds', 3600).toString(),
         BCTB_REMOVE_PII: config.get<boolean>('mcp.sanitize.removePII', false) ? 'true' : 'false',
-        BCTB_PORT: config.get<number>('mcp.port', 52345).toString()
+        BCTB_PORT: config.get<number>('mcp.port', 52345).toString(),
+        BCTB_QUERIES_FOLDER: config.get<string>('queries.folder', 'queries')
     };
 
     // Add references if configured
@@ -339,8 +377,25 @@ async function saveQueryCommand(): Promise<void> {
 
         const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
 
+        // Get existing categories for suggestions
+        let categories: string[] = [];
+        try {
+            const response = await mcpClient.request('get_categories', {});
+            categories = response?.result || [];
+        } catch (err) {
+            // Categories endpoint may not be available in older versions
+            console.warn('Failed to fetch categories:', err);
+        }
+
+        // Prompt for category with suggestions
+        const category = await vscode.window.showInputBox({
+            prompt: 'Category (optional, subfolder name)',
+            placeHolder: categories.length > 0 ? `e.g., ${categories.join(', ')}` : 'e.g., Monitoring, Analysis, Performance',
+            ignoreFocusOut: true
+        });
+
         // Save query via MCP
-        const result = await mcpClient.saveQuery({ name, kql, purpose, useCase, tags });
+        const result = await mcpClient.saveQuery({ name, kql, purpose, useCase, tags, category });
 
         vscode.window.showInformationMessage(`Query saved: ${result.filePath}`);
         outputChannel.appendLine(`✓ Query saved to ${result.filePath}`);
@@ -360,7 +415,9 @@ async function openQueriesFolderCommand(): Promise<void> {
             throw new Error('No workspace folder open');
         }
 
-        const queriesPath = path.join(workspacePath, '.vscode', '.bctb', 'queries');
+        const config = vscode.workspace.getConfiguration('bctb');
+        const queriesFolder = config.get<string>('queries.folder', 'queries');
+        const queriesPath = path.join(workspacePath, queriesFolder);
 
         // Open folder in explorer
         const uri = vscode.Uri.file(queriesPath);

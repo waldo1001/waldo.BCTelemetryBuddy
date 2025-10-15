@@ -91,10 +91,10 @@ describe('Extension Module', () => {
                 'BCTB_CLIENT_ID',
                 'BCTB_CLIENT_SECRET',
                 'BCTB_AUTH_FLOW',
-                'BCTB_APP_INSIGHTS_APP_ID',
-                'BCTB_KUSTO_CLUSTER_URL',
+                'BCTB_APP_INSIGHTS_ID',
+                'BCTB_KUSTO_URL',
                 'BCTB_CACHE_ENABLED',
-                'BCTB_CACHE_TTL_SECONDS',
+                'BCTB_CACHE_TTL',
                 'BCTB_REMOVE_PII',
                 'BCTB_PORT'
             ];
@@ -102,7 +102,7 @@ describe('Extension Module', () => {
             expect(envVars.length).toBe(12);
             expect(envVars).toContain('BCTB_WORKSPACE_PATH');
             expect(envVars).toContain('BCTB_TENANT_ID');
-            expect(envVars).toContain('BCTB_APP_INSIGHTS_APP_ID');
+            expect(envVars).toContain('BCTB_APP_INSIGHTS_ID');
         });
 
         it('should build environment correctly', () => {

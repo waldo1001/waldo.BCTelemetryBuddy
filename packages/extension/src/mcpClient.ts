@@ -35,6 +35,7 @@ export interface SaveQueryRequest {
     purpose?: string;
     useCase?: string;
     tags?: string[];
+    category?: string;
 }
 
 /**
@@ -169,8 +170,21 @@ export class MCPClient {
             kql: request.kql,
             purpose: request.purpose,
             useCase: request.useCase,
-            tags: request.tags
+            tags: request.tags,
+            category: request.category
         });
+    }
+
+    /**
+     * Generic JSON-RPC request (for any method)
+     */
+    async request<T = any>(method: string, params?: any): Promise<{ result?: T; error?: any }> {
+        try {
+            const result = await this.rpcRequest<T>(method, params);
+            return { result };
+        } catch (error: any) {
+            return { error: error.message };
+        }
     }
 
     /**

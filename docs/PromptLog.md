@@ -268,3 +268,180 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #58 — 2025-10-15 22:32
+> "MCP failed to start within timeout — run diagnostics and fix env var mapping between extension and MCP (BCTB_APP_INSIGHTS_ID / BCTB_KUSTO_URL / BCTB_CACHE_TTL)."
+
+---
+
+### Entry #59 — 2025-10-15 22:34
+> "I noticed you're not logging my prompts?"
+
+---
+
+### Entry #60 — 2025-10-15 22:45
+> "Again, you're not logging my prompts!"
+
+---
+
+### Entry #61 — 2025-10-15 22:46
+> "how do you want me to continue the e2e test (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #62 — 2025-10-15 22:46
+> "what are the options for the \"bctb.mcp.logLevel\" (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #63 — 2025-10-15 22:46
+> "Output on the extension-host (in vscode after f5):\n\nBC Telemetry Buddy extension activated\nWorkspace settings detected, auto-starting MCP...\nStarting MCP server on port 52345...\nWorkspace: c:\\Temp\\bctb-test-workspace\nExtension ready\nMCP process exited with code 0\nFailed to auto-start MCP: MCP server failed to start within timeout period\n\nCould it be that I need to log in somewhere?  I don't get that  chance anywhere. (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #64 — 2025-10-15 22:46
+> "You missed a few (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #65 — 2025-10-15 22:54
+> "Yet again, you're lot loging my prompts .. I'm getting really sick of this.  Follow the instructions, please!  Every single prompt should be logged in the prompt log! (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #66 — 2025-10-15 22:54
+> "No, not done, you missed a bunch (See <attachments> above for file contents. You may not need to search or read the file again.)"
+
+---
+
+### Entry #67 — 2025-10-15 22:58
+> "Ok, tell me, how do we solve the issue of starting the MCP server"
+
+---
+
+### Entry #68 — 2025-10-15 22:59
+> "Sidenote: stop using powershell to get current datetime to log the prompts.  Previously you never had to do that, and I don't want to 'allow' that script every single time.  Find another way to log the prompts - but log the prompts every single time of course"
+
+---
+
+### Entry #69 — 2025-10-15 23:00
+> "Be specific on where i Need to run what.  Either here in this repo, or in the test-workspace."
+
+---
+
+### Entry #70 — 2025-10-15 23:01
+> "when I start the MCP server, there is no output"
+
+---
+
+### Entry #71 — 2025-10-15 23:02
+> "Please continue"
+
+---
+
+### Entry #72 — 2025-10-15 23:03
+> "When I run now the extension, I get this in the output: [EADDRINUSE error on port 52345]"
+
+---
+
+### Entry #73 — 2025-10-15 23:04
+> "We have progress! [MCP server started successfully] I'll continue e2e testing now"
+
+---
+
+### Entry #74 — 2025-10-15 23:05
+> "running 3.1 in the #file:E2E-TestScript.md , I don't get anything in the output."
+
+---
+
+### Entry #75 — 2025-10-15 23:06
+> "In the output window, I still get this: [output showing 'MCP already running' message]. But when running command 'start mcp server', I get a notification: MCP server started successfully"
+
+---
+
+### Entry #76 — 2025-10-15 23:07
+> "may be you should change the #file:E2E-TestScript.md to update what the expected output is in this case?"
+
+---
+
+### Entry #77 — 2025-10-15 23:08
+> "part 4 is me running a NL query through a new command palette. This was not part of the instructions. I was very clear to be making the MCP available for GitHub Copilot, so that I would be able to use you, Github copilot, to do the NL part, where the MCP would get queries, github copilot would check its similarity, create a KQL, where then the MCP would execute the query."
+
+---
+
+### Entry #78 — 2025-10-15 23:12
+> "when running the query from 4.1, I get this output: [MCP ERROR] Query execution failed: TypeError [ERR_INVALID_ARG_TYPE]: The 'data' argument must be of type string or an instance of Buffer, TypedArray, or DataView. Received undefined at Hash.update (node:internal/crypto/hash:140:11) at CacheService.generateKey"
+
+---
+
+### Entry #79 — 2025-10-15 23:13
+> "Of course" (in response to "Would you like me to also update the documentation to log this fix?")
+
+---
+
+### Entry #80 — 2025-10-15 23:16
+> "Yet again an error. Remember that I never got the chance to log in. So executing a query in App Insights is going to be difficult, no? [MCP ERROR] Query execution failed: AuthError: post_request_failed: Post request failed from the network, could be a 4xx/5xx or a network unavailability. Please check the exact error code for details. invalid_grant"
+
+---
+
+### Entry #81 — 2025-10-15 23:18
+> "I don't think authentication is working: [MCP] === DEVICE CODE AUTHENTICATION === [MCP] undefined ================================== [MCP ERROR] Device code authentication failed: AuthError: post_request_failed: invalid_grant"
+
+---
+
+### Entry #82 — 2025-10-16 00:02
+> "This time, authentication was successful, but when running the query, I get this: [MCP ERROR] Kusto query failed (404): unknown key 'v1' in path or following value for key is missing in cluster name"
+
+---
+
+### Entry #83 — 2025-10-16 00:10
+> "Again, a step further - but not there yet. I'm able to log in, it is able to run a query (it seems), but.. [MCP] ✓ Query executed successfully, 1 table(s) returned... [MCP Client] query_telemetry <- Success... Attempt 1 failed: Cannot read properties of null (reading 'replace')... Attempt 2 failed... Attempt 3 failed"
+
+---
+
+### Entry #84 — 2025-10-16 00:15
+> "For authentication, it shows me the message 'To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code D2YH6WEA3 to authenticate.' in the output window. Could you additionally show it as a notification in VSCode, where you have the option to navigate to the site, and where the code is already in the clipboard?"
+
+---
+
+### Entry #85 — 2025-10-16 00:20
+> "I was wondering - since I have to log in every time I restart the MCP - would it be an option to work with 'az login', where the login is basically cached on the current windows session?"
+
+---
+
+### Entry #86 — 2025-10-16 00:25
+> "azure_cli is working fine, and the query is getting executed - I'm moving on!"
+
+---
+
+### Entry #87 — 2025-10-16 00:27
+> "how do I configure external references?"
+
+---
+
+### Entry #88 — 2025-10-16 00:30
+> "I just executed the 'save query' - where is that query saved?"
+
+---
+
+### Entry #89 — 2025-10-16 00:32
+> "the idea of the 'save query' is more to build some kind of codebase. So saving it in the .vscode folder doesn't make sense. It's more like a Src folder, or KQL folder, or ... and create subfolders as 'namespaces' or categories."
+
+---
+
+### Entry #90 — 2025-10-16 00:33
+> "Yes please" (proceeding with implementation of workspace root queries folder with subfolder/category support)
+
+---
+
+### Entry #91 — 2025-10-16 01:15
+> "(Copilot continues implementation after conversation summary)"
+
+---
+
+### Entry #92 — 2025-10-16 01:20
+> "The implementation of 5.2 has changed - update the document"
+
+---
+
+### Entry #93 — 2025-10-16 01:25
+> "This thing says 'option copilot integration'. That integration is not optional. It's actually the very reason of the existance of this workspace. I will never be running any NL query through the command palette. If it doesn't work through github copilot, this project is lost."

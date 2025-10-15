@@ -76,7 +76,7 @@ export class MCPServer {
         this.auth = new AuthService(this.config);
         this.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl);
         this.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
-        this.queries = new QueriesService(this.config.workspacePath);
+        this.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);
         this.references = new ReferencesService(this.config.references, this.cache);
 
         this.setupMiddleware();
@@ -149,9 +149,19 @@ export class MCPServer {
                     req.body.kql,
                     req.body.purpose,
                     req.body.useCase,
-                    req.body.tags
+                    req.body.tags,
+                    req.body.category
                 );
                 res.json({ filePath });
+            } catch (error: any) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        this.app.get('/categories', async (req: Request, res: Response) => {
+            try {
+                const categories = this.queries.getCategories();
+                res.json(categories);
             } catch (error: any) {
                 res.status(500).json({ error: error.message });
             }
@@ -200,8 +210,24 @@ export class MCPServer {
             // Route to appropriate handler
             switch (rpcRequest.method) {
                 case 'query_telemetry':
+                    // Handle both KQL and natural language queries
+                    let kqlQuery = rpcRequest.params.kql;
+
+                    if (!kqlQuery && rpcRequest.params.nl) {
+                        // Natural language query - translate to KQL
+                        kqlQuery = await this.translateNLToKQL(
+                            rpcRequest.params.nl,
+                            rpcRequest.params.useContext || false,
+                            rpcRequest.params.includeExternal || false
+                        );
+                    }
+
+                    if (!kqlQuery) {
+                        throw new Error('Either kql or nl parameter is required');
+                    }
+
                     result = await this.executeQuery(
-                        rpcRequest.params.kql,
+                        kqlQuery,
                         rpcRequest.params.useContext || false,
                         rpcRequest.params.includeExternal || false
                     );
@@ -221,9 +247,14 @@ export class MCPServer {
                         rpcRequest.params.kql,
                         rpcRequest.params.purpose,
                         rpcRequest.params.useCase,
-                        rpcRequest.params.tags
+                        rpcRequest.params.tags,
+                        rpcRequest.params.category
                     );
                     result = { filePath };
+                    break;
+
+                case 'get_categories':
+                    result = this.queries.getCategories();
                     break;
 
                 case 'get_recommendations':
@@ -340,6 +371,75 @@ export class MCPServer {
     }
 
     /**
+     * Translate natural language to KQL
+     * For command palette: simple keyword-based translation
+     * For Copilot integration: Copilot handles translation using MCP context
+     */
+    private async translateNLToKQL(
+        nl: string,
+        useContext: boolean,
+        includeExternal: boolean
+    ): Promise<string> {
+        console.log(`Translating NL to KQL: "${nl}"`);
+
+        // Load context if requested
+        let contextQueries: string[] = [];
+
+        if (useContext) {
+            const saved = this.queries.getAllQueries();
+            contextQueries = saved.map(q => q.kql || '');
+        }
+
+        if (includeExternal) {
+            const external = await this.references.getAllExternalQueries();
+            contextQueries.push(...external.map(q => q.content || ''));
+        }
+
+        // Simple keyword-based translation (basic implementation)
+        // This is a fallback for command palette - Copilot Chat will do better
+        const nlLower = nl.toLowerCase();
+        let kql = '';
+
+        // Detect table
+        let table = 'traces';
+        if (nlLower.includes('request') || nlLower.includes('page')) {
+            table = 'requests';
+        } else if (nlLower.includes('dependency') || nlLower.includes('database') || nlLower.includes('sql')) {
+            table = 'dependencies';
+        } else if (nlLower.includes('exception')) {
+            table = 'exceptions';
+        } else if (nlLower.includes('pageview')) {
+            table = 'pageViews';
+        }
+
+        kql = table;
+
+        // Detect time range
+        if (nlLower.includes('last 24 hour') || nlLower.includes('last day')) {
+            kql += ' | where timestamp > ago(1d)';
+        } else if (nlLower.includes('last hour')) {
+            kql += ' | where timestamp > ago(1h)';
+        } else if (nlLower.includes('last 7 day') || nlLower.includes('last week')) {
+            kql += ' | where timestamp > ago(7d)';
+        } else {
+            kql += ' | where timestamp > ago(1d)'; // Default
+        }
+
+        // Detect filters
+        if (nlLower.includes('error')) {
+            kql += ' | where severityLevel >= 3';
+        } else if (nlLower.includes('warning')) {
+            kql += ' | where severityLevel == 2';
+        }
+
+        // Add limit
+        kql += ' | take 100';
+
+        console.log(`Generated KQL: ${kql}`);
+        return kql;
+    }
+
+    /**
      * Generate recommendations based on query and results
      */
     private async generateRecommendations(kql: string, results: any): Promise<string[]> {
@@ -371,13 +471,25 @@ export class MCPServer {
     /**
      * Start the server
      */
-    start(): void {
+    async start(): Promise<void> {
         const port = this.config.port;
 
         this.app.listen(port, () => {
             console.log(`\n✓ MCP Server listening on port ${port}`);
             console.log(`Ready to receive requests\n`);
         });
+
+        // Authenticate immediately on startup
+        // For device_code flow, this triggers the browser login before any queries
+        // For client_credentials flow, this validates credentials early
+        console.log('Authenticating...');
+        try {
+            await this.auth.authenticate();
+            console.log('✓ Authentication successful\n');
+        } catch (error: any) {
+            console.error('❌ Authentication failed:', error.message);
+            console.error('You can retry authentication when running your first query.\n');
+        }
 
         // Graceful shutdown
         process.on('SIGINT', () => {
@@ -393,7 +505,16 @@ export class MCPServer {
 }
 
 // Start server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new MCPServer();
-    server.start();
-}
+// Note: Simplified check that always runs when this file is executed
+// (ESM import.meta.url checks are unreliable on Windows)
+(async () => {
+    try {
+        const server = new MCPServer();
+        await server.start();
+    } catch (error: any) {
+        console.error('\n❌ Failed to start MCP server:');
+        console.error(error.message);
+        console.error('\nPlease check your environment variables and configuration.');
+        process.exit(1);
+    }
+})();
