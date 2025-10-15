@@ -10,6 +10,7 @@
         "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
         "start": "node dist/server.js",
         "test": "jest",
+        "test:coverage": "jest --coverage",
         "test:watch": "jest --watch",
         "clean": "rimraf dist"
     },
