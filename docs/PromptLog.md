@@ -137,4 +137,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ### Entry #30 — 2025-01-14 17:15
 > "Continue creating all MCP backend modules following SOLID principles"
 
+### Entry #31 — 2025-01-14 17:20
+> "Scaffold the VSCode extension based on the #file:Instructions.md"
+
 ---
