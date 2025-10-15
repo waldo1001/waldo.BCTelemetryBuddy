@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/docs
+    about: Check the documentation for setup and usage guides
+  - name: Discussions
+    url: https://github.com/waldo1001/waldo.BCTelemetryBuddy/discussions
+    about: Ask questions or discuss ideas with the community

@@ -1,0 +1,187 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags (e.g., v0.1.0, v1.0.0)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.1.0)'
+        required: true
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: false
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run all tests
+        run: |
+          npm run test:coverage --workspace=packages/mcp
+          npm run test:coverage --workspace=packages/extension
+      
+      - name: Build all packages
+        run: |
+          npm run build --workspace=packages/mcp
+          npm run build --workspace=packages/extension
+      
+      - name: Package extension
+        run: npm run package --workspace=packages/extension
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            packages/extension/*.vsix
+            packages/mcp/dist/**/*
+          retention-days: 30
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: ./artifacts
+      
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Extract changelog for this version
+          if [ -f "packages/extension/CHANGELOG.md" ]; then
+            # Get content between this version and previous version
+            CHANGES=$(sed -n "/## \[${{ steps.version.outputs.version }}\]/,/## \[/p" packages/extension/CHANGELOG.md | sed '$d')
+            if [ -z "$CHANGES" ]; then
+              CHANGES="See CHANGELOG.md for details."
+            fi
+          else
+            CHANGES="Release ${{ steps.version.outputs.version }}"
+          fi
+          
+          # Write to file to handle multiline
+          echo "$CHANGES" > changelog.txt
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: changelog.txt
+          files: |
+            artifacts/packages/extension/*.vsix
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-marketplace:
+    name: Publish to VS Code Marketplace
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: github.event.inputs.prerelease != 'true'  # Only publish stable releases
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: ./artifacts
+      
+      - name: Publish to VS Code Marketplace
+        run: |
+          cd packages/extension
+          npx vsce publish --packagePath ../../artifacts/packages/extension/*.vsix -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      
+      - name: Publish to Open VSX Registry
+        run: |
+          cd packages/extension
+          npx ovsx publish ../../artifacts/packages/extension/*.vsix -p ${{ secrets.OVSX_PAT }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        continue-on-error: true  # Don't fail if Open VSX publish fails
+
+  publish-prerelease:
+    name: Publish Pre-release to Marketplace
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: github.event.inputs.prerelease == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: ./artifacts
+      
+      - name: Publish pre-release to VS Code Marketplace
+        run: |
+          cd packages/extension
+          npx vsce publish --pre-release --packagePath ../../artifacts/packages/extension/*.vsix -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

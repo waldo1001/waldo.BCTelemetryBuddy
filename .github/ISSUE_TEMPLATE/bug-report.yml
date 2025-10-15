@@ -1,0 +1,142 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear and concise description of the bug
+      placeholder: When I try to..., I expect..., but instead...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the bug
+      placeholder: |
+        1. Open VSCode with workspace...
+        2. Run command 'BC Telemetry Buddy: ...'
+        3. Enter query '...'
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+      placeholder: The query should execute and display results in the webview.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Error message displayed, or webview is blank, or...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output Channel Logs
+      description: Copy logs from Output Channel "BC Telemetry Buddy"
+      placeholder: |
+        [2025-10-15 18:45:00] Starting MCP server...
+        [2025-10-15 18:45:01] Error: ...
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Extension Version
+      description: Check in Extensions view or package.json
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VSCode Version
+      description: Help → About → Version
+      placeholder: "1.85.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Run `node --version` in terminal
+      placeholder: "v20.10.0"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: auth-flow
+    attributes:
+      label: Authentication Flow
+      options:
+        - label: device_code (interactive browser login)
+        - label: client_credentials (client ID + secret)
+
+  - type: textarea
+    id: workspace-settings
+    attributes:
+      label: Workspace Settings (sanitized)
+      description: Copy from .vscode/settings.json (remove secrets!)
+      placeholder: |
+        {
+          "bctb.mcp.tenantId": "...",
+          "bctb.mcp.applicationInsights.appId": "...",
+          "bctb.mcp.authFlow": "device_code"
+        }
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Screenshots, error messages, related issues, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have included all relevant logs and error messages
+          required: false
+        - label: I have sanitized credentials from settings/logs
+          required: true

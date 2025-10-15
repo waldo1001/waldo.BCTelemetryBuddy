@@ -1,0 +1,75 @@
+version: 2
+
+updates:
+  # Root workspace dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    reviewers:
+      - "waldo1001"
+    ignore:
+      # Ignore major version updates for critical dependencies (manual review)
+      - dependency-name: "@types/vscode"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # MCP backend dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/mcp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(mcp/deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "mcp"
+      - "automated"
+    reviewers:
+      - "waldo1001"
+
+  # VSCode extension dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/extension"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(extension/deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "extension"
+      - "automated"
+    reviewers:
+      - "waldo1001"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    reviewers:
+      - "waldo1001"

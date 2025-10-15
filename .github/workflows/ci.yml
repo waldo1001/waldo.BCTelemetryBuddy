@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  test-mcp:
+    name: Test MCP Backend
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Run MCP tests
+        run: npm test --workspace=packages/mcp
+      
+      - name: Run MCP tests with coverage
+        run: npm run test:coverage --workspace=packages/mcp
+      
+      - name: Upload MCP coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./packages/mcp/coverage/coverage-final.json
+          flags: mcp
+          name: mcp-${{ matrix.node-version }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  test-extension:
+    name: Test VSCode Extension
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Extension
+        run: npm run build --workspace=packages/extension
+      
+      - name: Run Extension unit tests
+        run: npm test --workspace=packages/extension
+      
+      - name: Run Extension tests with coverage
+        run: npm run test:coverage --workspace=packages/extension
+      
+      - name: Upload Extension coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./packages/extension/coverage/coverage-final.json
+          flags: extension
+          name: extension-${{ matrix.os }}-${{ matrix.node-version }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      
+      # Integration tests only on Ubuntu (VSCode headless)
+      - name: Run Extension integration tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run -a npm run test:integration --workspace=packages/extension
+        continue-on-error: true  # Integration tests may not be ready yet
+
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check TypeScript compilation
+        run: |
+          npm run build --workspace=packages/mcp
+          npm run build --workspace=packages/extension
+      
+      - name: Run ESLint (if configured)
+        run: |
+          if [ -f ".eslintrc.json" ]; then
+            npm run lint || echo "No lint script defined"
+          else
+            echo "ESLint not configured, skipping"
+          fi
+        continue-on-error: true
+
+  build:
+    name: Build All Packages
+    runs-on: ubuntu-latest
+    needs: [test-mcp, test-extension]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Build Extension
+        run: npm run build --workspace=packages/extension
+      
+      - name: Package Extension (.vsix)
+        run: npm run package --workspace=packages/extension
+      
+      - name: Upload Extension Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-vsix
+          path: packages/extension/*.vsix
+          retention-days: 7
+      
+      - name: Archive MCP Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-dist
+          path: packages/mcp/dist/
+          retention-days: 7

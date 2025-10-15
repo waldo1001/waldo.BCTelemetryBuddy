@@ -153,3 +153,13 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #35 — 2025-10-15 18:30
+> "Ok, for me to be able to do End to End testing, I'd like a comprehensive (don't exaggerate in the amount of detail - i'm not an idiot 😉) testscript of steps I should do to test this from VSCode (remember none of this is on the marketplace yet)."
+
+---
+
+### Entry #36 — 2025-10-15 18:45
+> "While i'm setting things up to test, you can implement a best-practics set of Github Actions for CI/CD and Deployment of all the components."
+
+---
+

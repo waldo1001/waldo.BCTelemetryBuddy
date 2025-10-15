@@ -1,5 +1,10 @@
 # BC Telemetry Buddy
 
+![CI](https://github.com/waldo1001/waldo.BCTelemetryBuddy/workflows/CI/badge.svg)
+![Release](https://github.com/waldo1001/waldo.BCTelemetryBuddy/workflows/Release/badge.svg)
+![CodeQL](https://github.com/waldo1001/waldo.BCTelemetryBuddy/workflows/CodeQL%20Security%20Analysis/badge.svg)
+[![codecov](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy/branch/main/graph/badge.svg)](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy)
+
 Query Business Central telemetry from VSCode using natural language with GitHub Copilot integration.
 
 ## Overview
@@ -47,30 +52,53 @@ npm run build
 ### Run Tests
 
 ```powershell
+# Run all tests
 npm test
+
+# Run tests with coverage
+npm run test:coverage --workspace=packages/mcp
+npm run test:coverage --workspace=packages/extension
 ```
 
 ### Development
 
 ```powershell
 # Run MCP backend in watch mode
-npm run dev:mcp
+npm run dev --workspace=packages/mcp
 
-# Run extension in debug mode
-npm run dev:extension
+# Run extension in debug mode (or press F5 in VSCode)
+npm run dev --workspace=packages/extension
 ```
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **CI**: Automated testing on Node.js 18.x/20.x across Ubuntu/Windows/macOS
+- **Security**: CodeQL analysis and dependency scanning
+- **Release**: Automated publishing to VS Code Marketplace and GitHub Releases
+
+See [.github/workflows/README.md](.github/workflows/README.md) for workflow documentation.
 
 ## Documentation
 
 - [User Guide](docs/UserGuide.md) - Installation and usage
+- [E2E Test Script](docs/E2E-TestScript.md) - Manual testing guide
 - [Design Walkthrough](docs/DesignWalkthrough.md) - Architecture and design decisions
 - [Instructions](Instructions/Instructions.md) - Technical implementation details
+- [Workflow Documentation](.github/workflows/README.md) - CI/CD setup and usage
 - [MCP Changelog](packages/mcp/CHANGELOG.md) - MCP backend version history
 - [Extension Changelog](packages/extension/CHANGELOG.md) - Extension version history
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+We welcome contributions! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Follow our coding standards (SOLID principles, 70% test coverage)
+4. Submit a pull request with tests and documentation
 
 ## License
 
