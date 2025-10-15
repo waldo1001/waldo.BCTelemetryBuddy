@@ -218,3 +218,13 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #48 — 2025-10-15 19:55
+> "Still an issue. IN the 'Build All Packages' stage, I get this output in the 'package extension' part: [vsce: not found error]"
+
+---
+
+### Entry #49 — 2025-10-15 20:00
+> "no promptlog?"
+
+---
+

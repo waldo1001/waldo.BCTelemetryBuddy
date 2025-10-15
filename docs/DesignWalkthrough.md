@@ -141,5 +141,9 @@ Stepwise implementation log
   - **Why:** User noticed agent stopped logging prompts (violations of copilot-instructions.md rule to log EVERY prompt FIRST).
   - **How:** Backfilled missing prompts as Entries #38-44 in PromptLog.md (CI investigations, integration test question, logo addition, license request, meta-prompt about logging). Reaffirmed commitment to log ALL user prompts before taking any action.
 
+- **2025-10-15 19:50** — Fixed CI build: vsce not found during packaging. [Prompt #47]
+  - **Why:** CI "Build All Packages" job failed with "sh: 1: vsce: not found" because package script ran `npm install --production` which excludes devDependencies (where @vscode/vsce lives). CI had already run `npm ci` which installs all dependencies, making the production reinstall unnecessary and breaking the build.
+  - **How:** Simplified package script from `npm install --production --no-save && vsce package` to just `vsce package`. CI's earlier `npm ci` step ensures all devDependencies (including vsce) are already installed. Verified packaging works locally.
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

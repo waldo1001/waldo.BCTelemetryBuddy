@@ -154,7 +154,7 @@
         "test": "jest",
         "test:coverage": "jest --coverage",
         "test:integration": "npm run build && node ./dist/test/runTest.js",
-        "package": "npm install --production --no-save && vsce package",
+        "package": "vsce package",
         "clean": "rimraf dist out"
     },
     "dependencies": {
