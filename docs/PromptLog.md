@@ -90,3 +90,23 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Business Central Telemetry should not contain PII information, but just in case, make it an opt-in setting, and apply it to both cached results and data sent to LLM."
 
 ---
+
+### Entry #18 — 2025-10-15 16:30
+> "I see this in the instructions: 'If you'd like, I can now scaffold the MCP TypeScript project and the minimal VSCode extension in this workspace. Tell me your choices' - why is that?"
+
+---
+
+### Entry #19 — 2025-10-15 16:35
+> "Please clean up the #file:Instructions.md with a clean set of instructions that includes everything we talked about and agreed about!"
+
+---
+
+### Entry #20 — 2025-10-15 16:40
+> "If you would implement all code from #file:Instructions.md, what are the things that has to be clarified still? I don't want you to make too many decisions, so ask me now."
+
+---
+
+### Entry #21 — 2025-10-15 16:45
+> "Here are my answers: 1. MCP backend doesn't translate NL to KQL, it searches by content/filename on search terms from LLM, returns queries, LLM decides similarity. 2. Formal MCP JSON-RPC protocol. 3. Monorepo with separate folders, build both together. 4. Display: 'BC Telemetry Buddy', package: 'bc-telemetry-buddy', publisher: waldo. 5. GitHub API unauthenticated. 6-10: Skip web scraping v1, Console+Output Channel logging, Extension passes workspace via env var, One MCP per workspace, ES2022+ESM."
+
+---

@@ -57,5 +57,17 @@ Stepwise implementation log
   - **Why:** Before scaffolding code, needed to clarify all architectural decisions (cache backend, auth flow, NL-to-KQL strategy, external references, embeddings, UI, MCP lifecycle, error handling, PII sanitization, query format) to avoid making assumptions that misalign with user's vision.
   - **How:** Asked 12 clarification questions covering critical and deferrable decisions. User provided comprehensive answers: (1) file-based cache, (2) device_code auth primary with client_credentials documented, (3) few-shot prompting with GitHub Copilot using folder/filename filtering then LLM similarity, (4) GitHub API first, (5) no embeddings, (6) marketplace extension, (7) auto-start MCP, (8) webview UI, (9) automatic MCP registration, (10) expose query failures with configurable retry count, (11) opt-in PII sanitization for cache + LLM, (12) strict .kql format. Added "Implementation decisions (finalized)" section to Instructions.md documenting all choices, new settings (`bctb.agent.maxRetries`, `bctb.mcp.sanitize.removePII`), and strict saved query file format with comment header specification.
 
+- **2025-10-15** — Removed outdated "tell me your choices" text from Instructions.md. [Prompt #18]
+  - **Why:** User noticed outdated text asking for cache/auth choices that were already finalized in previous entry. Instructions.md should be clean reference documentation, not contain interactive prompts.
+  - **How:** Replaced outdated closing section with "Ready for implementation" heading confirming all decisions are finalized and ready for scaffolding.
+
+- **2025-10-15** — Cleaned up Instructions.md to professional reference document. [Prompt #19]
+  - **Why:** Remove all conversational/draft content and create clean, implementation-ready instructions containing all finalized decisions.
+  - **How:** Removed duplicate "original requirements" section at end (over 100 lines), removed duplicate "MCP plan" section, removed "Next steps" conversational prompts, consolidated to single clean Change Log, formatted all JSON examples with proper code blocks, added key settings explanations, kept only implementation decisions section with all 12 finalized choices.
+
+- **2025-10-15 16:45** — Added technical implementation specifications to Instructions.md. [Prompt #21]
+  - **Why:** Final clarifications revealed implementation-specific details not captured in architectural decisions (NL-to-KQL flow, JSON-RPC protocol type, monorepo structure, naming, etc.). These needed to be documented before scaffolding to eliminate ambiguity.
+  - **How:** Created new "Technical implementation specifications" section in Instructions.md with 10 clarifications: (1) MCP searches queries by content/filename (doesn't translate NL to KQL), LLM generates KQL; (2) formal MCP JSON-RPC protocol (not REST); (3) monorepo with packages/mcp + packages/extension, single build; (4) extension naming (BC Telemetry Buddy / bc-telemetry-buddy / waldo); (5) GitHub API unauthenticated (60 req/hr); (6) web scraping deferred to v2; (7) console + Output Channel logging; (8) workspace path via env var; (9) one MCP per workspace; (10) ES2022 + ESM. Updated NL-to-KQL decision (#3) in main section to clarify search-based collaborative approach between MCP and LLM.
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

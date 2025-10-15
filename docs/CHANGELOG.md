@@ -6,6 +6,9 @@ This changelog is automatically appended with merged PR metadata (title, author,
 Recent entries
 --------------
 
+- 2025-10-15 16:35 — Cleaned up Instructions.md — Removed 200+ lines of duplicate and outdated conversational content (chat-driven)
+- 2025-10-15 16:45 — Added technical implementation specifications to Instructions.md — Documented NL-to-KQL search flow, JSON-RPC protocol, monorepo structure, extension naming, logging, workspace discovery, TypeScript config (chat-driven)
+- 2025-10-15 16:30 — Removed outdated "tell me your choices" text from Instructions.md — Cleaned up outdated interactive prompt text; Instructions.md is now complete reference documentation ready for implementation (chat-driven)
 - 2025-10-15 16:25 — Finalized implementation decisions in Instructions.md — Documented all architectural choices: file-based cache, device_code auth (primary), few-shot prompting with GitHub Copilot, GitHub API for external references, no embeddings, webview UI, automatic MCP registration, configurable retry count, opt-in PII sanitization, strict .kql format; added new settings and saved query format specification (chat-driven)
 - 2025-10-15 15:50 — Added external reference support to Instructions.md — MCP can now fetch KQL examples from GitHub repos and blogs to maximize context for NL-to-KQL translation; added workspace settings, new references.ts module, rate limiting, and caching (chat-driven)
 - 2025-10-15 15:35 — Updated Copilot instructions to log ALL prompts immediately — Made prompt logging the first step in workflow; all user interactions (questions, changes, etc.) now logged to PromptLog.md before any other action (chat-driven)

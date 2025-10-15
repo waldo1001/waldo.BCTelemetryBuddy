@@ -20,21 +20,21 @@ Workspace settings (per-workspace)
 ---------------------------------
 Add the following keys to your workspace `.vscode/settings.json`. Each workspace maps to one connection. Keep secrets out of version control.
 
-Example:
-
+```json
 {
 	"bctb.mcp.connectionName": "MyTenant-AI",
 	"bctb.mcp.tenantId": "<azure-tenant-guid>",
 	"bctb.mcp.clientId": "<app-client-id-or-empty-for-device-flow>",
 	"bctb.mcp.clientSecret": "<optional-client-secret-if-using-client-credentials>",
-	"bctb.mcp.authFlow": "device_code",        // device_code | client_credentials
+	"bctb.mcp.authFlow": "device_code",
 	"bctb.mcp.applicationInsights.appId": "<app-insights-appid>",
 	"bctb.mcp.kusto.clusterUrl": "https://<cluster>.kusto.windows.net",
 	"bctb.mcp.cache.enabled": true,
 	"bctb.mcp.cache.ttlSeconds": 3600,
-	"bctb.mcp.sanitize.removePII": true,
+	"bctb.mcp.sanitize.removePII": false,
 	"bctb.mcp.port": 52345,
-	"bctb.mcp.url": "http://localhost:52345", // optional: point to remote MCP
+	"bctb.mcp.url": "http://localhost:52345",
+	"bctb.agent.maxRetries": 3,
 	"bctb.mcp.references": [
 		{
 			"name": "BC Telemetry Samples",
@@ -50,39 +50,49 @@ Example:
 		}
 	]
 }
+```
+
+**Key settings:**
+- `bctb.mcp.authFlow`: `"device_code"` (recommended, no Azure setup) or `"client_credentials"` (for service accounts)
+- `bctb.mcp.cache.enabled`: Enable file-based caching of query results
+- `bctb.mcp.sanitize.removePII`: Opt-in PII redaction (default: `false`)
+- `bctb.agent.maxRetries`: How many times Copilot agent should retry failed queries
+- `bctb.mcp.references`: External KQL sources for context (GitHub repos, blogs)
 
 Authentication flows
 --------------------
 - device_code — recommended for development and per-user access. The MCP triggers MSAL device code and user completes sign-in in a browser. No client secret stored in settings.  
 - client_credentials — recommended for unattended or server scenarios; use environment variables or OS secret stores for secrets.
 
-Minimal MCP JSON contract
--------------------------
-Keep responses concise. The MCP focuses on returning small, actionable context.
+MCP JSON contract
+-----------------
+The MCP returns small, structured JSON payloads optimized for agent consumption.
 
-Success example:
-
+**Success response:**
+```json
 {
 	"type": "table",
 	"kql": "traces | summarize count() by severityLevel",
 	"summary": "Top severities in last 24h: Error: 12, Warning: 48",
-	"columns": ["severityLevel","count_"],
-	"rows": [[3,12],[2,48]],
-	"chart": { "kind": "bar", "x":"severityLevel", "y":"count_" },
+	"columns": ["severityLevel", "count_"],
+	"rows": [[3, 12], [2, 48]],
+	"chart": { "kind": "bar", "x": "severityLevel", "y": "count_" },
 	"recommendations": ["Investigate repeated errors in Service X"],
 	"cached": false
 }
+```
 
-Error example:
-
+**Error response:**
+```json
 {
 	"type": "error",
 	"message": "Authentication required",
 	"code": "auth_required"
 }
+```
 
-Saved-query list example (GET /saved response):
-
+**Saved queries list (GET /saved):**
+```json
 {
 	"type": "saved_queries",
 	"queries": [
@@ -97,6 +107,7 @@ Saved-query list example (GET /saved response):
 		}
 	]
 }
+```
 
 Core MCP endpoints
 ------------------
@@ -270,17 +281,21 @@ Based on requirements discussion, the following implementation choices have been
 ### Core architecture decisions
 1. **Cache backend**: File-based cache (`.vscode/.bctb/cache/`) — simple, no external dependencies, suitable for local development and production.
 2. **Initial auth flow**: `device_code` (primary) — no Azure app registration required, "just works" for developers. Client credentials flow fully documented for unattended scenarios.
-3. **NL-to-KQL translation**: Few-shot prompting using GitHub Copilot's LLM
-   - Filter local `.kql` files by folder/filename (non-LLM filtering)
-   - Filter external references (GitHub repos) by folder/filename
-   - LLM analyzes filtered examples for similarity to user's natural language query
-   - LLM generates KQL based on most similar examples
-4. **External references**: GitHub API first (repos with KQL samples) — web scraping for blogs/docs is lower priority, may be added later.
-5. **Embeddings**: Not implemented — use folder/filename filtering + LLM similarity instead.
+3. **NL-to-KQL translation architecture**: 
+   - **LLM** (GitHub Copilot in VSCode) analyzes user's natural language query and generates search terms
+   - **MCP backend** searches local `.kql` files and external references by content/filename using search terms
+   - **MCP backend** returns matching query examples to LLM (does NOT translate NL to KQL itself)
+   - **LLM** decides which examples are similar and generates final KQL based on most relevant examples
+   - This keeps MCP simple: it's a search engine, not a translator
+4. **External references**: GitHub API first (unauthenticated, 60 req/hour) — web scraping for blogs/docs deferred to v2.
+5. **Embeddings**: Not implemented — use content/filename search instead.
 6. **Extension distribution**: VSCode Marketplace (free extension).
-7. **MCP lifecycle**: Auto-start when needed (when workspace settings exist and user triggers query).
+   - Display name: "BC Telemetry Buddy"
+   - Package name: `bc-telemetry-buddy`
+   - Publisher: `waldo`
+7. **MCP lifecycle**: One MCP process per workspace — auto-start when needed, extension passes workspace path via environment variable.
 8. **Query result UI**: Webview with rich HTML/CSS for tables, charts (better UX than output channel).
-9. **MCP registration**: Automatic — extension writes to VSCode MCP registry on activation (similar to community MCP pattern).
+9. **MCP protocol**: Formal MCP JSON-RPC protocol (Model Context Protocol from Anthropic) — extension registers MCP with VSCode on activation.
 10. **Query failure handling**: Expose errors to agent (agent retries) — make retry count configurable via setting `bctb.agent.maxRetries`.
 11. **PII sanitization**: Opt-in setting `bctb.mcp.sanitize.removePII` (default: false) — applies to both cached results and data sent to LLM. Business Central telemetry should not contain PII, but this provides safety net.
 12. **Saved query format**: Strict `.kql` file format with standardized comment headers (query name, purpose, use case, created date, tags).
@@ -326,138 +341,46 @@ dependencies
 
 The MCP's `queries.ts` module will parse these comments to extract metadata and provide context for few-shot prompting.
 
-Change log
-----------
-2025-10-15 — Full solution instructions created and scaffold plan defined.
-2025-10-15 16:25 — Finalized implementation decisions based on requirements discussion (Entry #16, #17).
+---
+
+## Technical implementation specifications
+
+These implementation-specific decisions clarify how the architecture is built:
+
+1. **NL-to-KQL flow**: MCP backend does NOT translate natural language to KQL. The LLM (GitHub Copilot) provides search terms, MCP searches local `.kql` files and external references by content/filename, MCP returns matching examples, then the LLM decides which are similar and generates final KQL.
+
+2. **MCP protocol**: Use formal **MCP JSON-RPC protocol** (Model Context Protocol specification from Anthropic) — not a custom REST API. This ensures compatibility with VSCode's MCP integration.
+
+3. **Project structure**: **Monorepo** with separate folders for MCP backend and VSCode extension:
+   - `packages/mcp/` — MCP backend server
+   - `packages/extension/` — VSCode extension
+   - Single build command builds both packages
+   - Single GitHub repository
+
+4. **Extension naming**:
+   - Display name: **"BC Telemetry Buddy"**
+   - Package name: **`bc-telemetry-buddy`**
+   - Publisher: **`waldo`**
+
+5. **GitHub API authentication**: Unauthenticated API access (60 requests/hour rate limit) — sufficient for fetching reference KQL from known repositories. Client can configure personal access token later if needed.
+
+6. **Web scraping**: Deferred to v2 — focus on GitHub API for external references first.
+
+7. **Logging**:
+   - MCP backend: Console output (for debugging)
+   - VSCode extension: VSCode Output Channel (standard extension logging)
+
+8. **Workspace discovery**: Extension passes workspace path to MCP backend via **environment variable** when spawning the MCP process.
+
+9. **MCP process lifecycle**: One MCP process per workspace — extension spawns MCP on-demand (when workspace settings exist and user triggers query).
+
+10. **TypeScript configuration**: **ES2022** with **ESM modules** (modern JavaScript, better for MCP protocol compatibility).
 
 ---
-If you'd like, I can now scaffold the MCP TypeScript project and the minimal VSCode extension in this workspace. Tell me your choices for cache backend and auth flow and I will start coding.
-I want to create a tool in VSCode (a VSCode Extension) that is a mix of "Azure Data Explorer" and "ChatGPT".  And all that focused on Business Central Telemetry.
 
-Here, you can find more information on Business Central Telemetry: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview
+## Change Log
 
-The tool should be able to query Application Insights data using Kusto Query Language (KQL) and provide insights and recommendations based on the telemetry data.  All from VSCode.
-
-But I see it as an assistant.  So the user should be able to ask questions in natural language, and the tool should basically translate that into KQL queries, execute them, and then present the results in a user-friendly way.  
-
-To make the tool self-learning, whenever it comes with good queries, it should be able to store them in a local form, so that next queries can have context of similar queries to be able to have a better understanding of what the user wants.  I see it as whenever the user is happy with a query, he can "save" it, and then the tool can use that as context for future queries.
-
-The tool should also be able to provide recommendations based on the telemetry data.  For example, if the telemetry data shows that a system is slow because of a specific issue, the tool should be able to recommend a solution to that issue.
-
-To have a set of references, the tool should be able to reference (in settings) to external sources (like GitHub repos, blogs, etc) to be able to learn from them and provide better recommendations.
-
-If all this would be available in the VSCode Chat, that would be awesome.  If that is not possible, a custom UI would be fine as well - just make it a similar user experience.
-
-The tool should have the following features:
-1. **Natural Language Processing (NLP)**: The tool should be able to understand natural language queries and translate them into KQL queries.
-2. **KQL Execution**: The tool should be able to execute KQL queries against Application Insights and retrieve the results.
-3. **Result Presentation**: The tool should present the results in a user-friendly way, such as tables, charts, or graphs.
-4. **Self-Learning**: The tool should be able to learn from previous queries and improve its understanding of user intent over time.
-5. **Recommendations**: The tool should be able to provide recommendations based on the telemetry data.
-6. **User Interface**: The tool should have a user-friendly interface within VSCode, allowing users to easily input queries and view results.
-7. **Local Storage**: The tool should be able to store successful queries locally for future reference and context.
-
-MCP (Model Context Protocol) plan — Copilot Agent integration
------------------------------------------------------------
-
-Goal
-----
-Provide a lightweight, easy-to-install MCP backend service written in TypeScript (Node + Express) that the Microsoft Copilot Agent (or any other agent that supports MCP) can call. The MCP will centralize authentication to Azure, run Kusto/Application Insights queries, cache results, compute small summaries and recommendations, and expose a compact JSON data contract that agents and the local VSCode extension can consume.
-
-High-level architecture
------------------------
-- MCP backend: TypeScript (Node.js + Express) with these responsibilities:
-	- Load workspace-specific connection and auth settings at startup from the VSCode workspace `settings.json` file (see settings section below).
-	- Perform MSAL-based authentication (device code / client credentials as configured) to request tokens for Kusto/Application Insights.
-	- Expose endpoints: `/auth/status`, `/query`, `/saved`, `/recommend`.
-	- Cache query results locally (file-based JSON cache or optional Redis) and optionally compute embeddings for saved queries.
-	- Sanitize and summarize results before returning to callers (truncate long textual fields, remove PII if configured).
-- VSCode extension (lightweight): discovers/starts MCP locally (or points to provided URL), provides UI to run queries and save them, and can register the MCP for Copilot Agent use if Copilot supports external MCP endpoints.
-
-Workspace settings (example keys)
---------------------------------
-Add the following keys to your workspace `settings.json` to configure a connection for the MCP. Each VSCode workspace maps to a single Application Insights connection.
-
-{
-	"bctb.mcp.connectionName": "MyTenant-AI",
-	"bctb.mcp.tenantId": "<azure-tenant-guid>",
-	"bctb.mcp.clientId": "<app-client-id-or-empty-for-device-flow>",
-	"bctb.mcp.clientSecret": "<optional-client-secret-if-using-client-credentials>",
-	"bctb.mcp.authFlow": "device_code" | "client_credentials",
-	"bctb.mcp.applicationInsights.appId": "<app-insights-appid>",
-	"bctb.mcp.kusto.clusterUrl": "https://<cluster>.kusto.windows.net",
-	"bctb.mcp.cache.enabled": true,
-	"bctb.mcp.cache.ttlSeconds": 3600,
-	"bctb.mcp.sanitize.removePII": true,
-	"bctb.mcp.port": 52345
-}
-
-Data contract (compact)
------------------------
-The MCP returns compact JSON payloads optimized for agent consumption. Examples:
-
-Query response (success):
-
-{
-	"type": "table",
-	"kql": "traces | summarize count() by severityLevel",
-	"summary": "Top severities in last 24h: Error: 12, Warning: 48",
-	"columns": ["severityLevel","count_"],
-	"rows": [[3,12],[2,48]],
-	"chart": { "kind": "bar", "x":"severityLevel", "y":"count_" },
-	"recommendations": ["Investigate frequent warnings from Service X"],
-	"cached": false
-}
-
-Error response:
-
-{
-	"type": "error",
-	"message": "Authentication required",
-	"code": "auth_required"
-}
-
-Saved query object:
-
-{
-	"id": "guid",
-	"name": "Slow Database Calls",
-	"kql": "dependencies | where duration > 2000 | summarize count() by target",
-	"createdBy": "user",
-	"createdAt": "2025-10-15T12:34:56Z",
-	"embeddingId": "embedding-guid"
-}
-
-Install & run (developer-friendly)
-----------------------------------
-1) Prerequisites: Node 18+, npm/yarn, optional Redis if you want an external cache.
-2) Scaffold the MCP directory and install:
-
-	 - Create a workspace folder (e.g., `mcp-server`).
-	 - npm init -y && npm install express msal @azure/appinsights axios lru-cache
-
-3) Create a small `server.ts` that reads workspace settings (the VSCode extension will write them to a `.vscode/bctb.settings.json` file or you can supply env vars), implements the routes (see data contract above), and starts the server on `bctb.mcp.port`.
-
-4) Start the server locally:
-
-```powershell
-# from project root
-node dist/server.js
-```
-
-VSCode integration notes
-------------------------
-- The VSCode extension will: detect and start a local MCP, or use `bctb.mcp.url` if the MCP is remote; load `bctb.*` workspace settings and write a local copy to `.vscode/bctb.settings.json` for the MCP to consume at startup.  
-- Provide UI commands: "Run NL query (MCP)", "Save query", "Open MCP status".
-- If Copilot Agent supports registering external MCPs, the extension can register the MCP endpoint so Copilot Chat can call it. If not, the extension can still open Copilot Chat with a prefilled prompt and include the MCP response in a local note.
-
-Security and compliance
------------------------
-- Treat `clientSecret` carefully — prefer `device_code` or client credentials with certificate-based auth for production. Do not commit secrets to source control. Use workspace-level `settings.json` and advise users to store secrets in environment variables or use a secure secret store.
-- Encrypt cache files at rest if storing telemetry results locally. Add explicit consent text in the extension before caching telemetry.
-
-Next steps
-----------
-- I will scaffold a minimal TypeScript MCP server (Express) with `/auth/status` and `/query` endpoints, MSAL device code flow, and a simple file-based cache, plus a minimal VSCode extension that writes workspace settings for the MCP and can start the local server.  
-- Tell me if you prefer Redis for caching or the default file-based cache, and whether you want to use `device_code` or `client_credentials` as the initial auth flow for the prototype.
+- **2025-10-15** — Full solution instructions created and scaffold plan defined
+- **2025-10-15** — Finalized implementation decisions based on requirements discussion
+- **2025-10-15** — Cleaned up and finalized instructions document
+- **2025-10-15** — Added technical implementation specifications (NL-to-KQL flow, JSON-RPC protocol, monorepo structure, naming, etc.)
