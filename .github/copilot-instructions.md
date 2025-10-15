@@ -25,8 +25,10 @@ After completing any significant change (new file, refactor, feature addition, c
   - How it was implemented (brief technical note)
   - **Include reference to prompt**: `[Prompt #N]` at the end of the first line
 
-- `docs/CHANGELOG.md` — add a timestamped entry:
+- `docs/CHANGELOG.md` — add a timestamped entry **at the top** (reverse chronological order - latest first):
   - Format: `- YYYY-MM-DD HH:MM — <what> — <why> (chat-driven)`
+  - **CRITICAL**: New entries must be inserted at the TOP of the "Recent entries" section, immediately after the "---" line
+  - The CHANGELOG maintains reverse chronological order so the most recent changes are always visible first
 
 **CRITICAL**: Log the prompt to PromptLog.md BEFORE making changes, so you have the entry number to reference in DesignWalkthrough.md. **ALWAYS use exact timestamps (HH:MM format), NEVER use placeholders like "[Current Time]".**
 
