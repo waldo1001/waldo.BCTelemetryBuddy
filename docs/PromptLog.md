@@ -148,3 +148,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #34 — 2025-10-15 18:00
+> "Now add tests for the VSCode Extension. Same minimum coverage."
+
+---
+
