@@ -140,4 +140,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ### Entry #31 — 2025-01-14 17:20
 > "Scaffold the VSCode extension based on the #file:Instructions.md"
 
+### Entry #32 — 2025-10-15 17:25
+> "Time to Create tests. Create tests for the MCP modules."
+
+### Entry #33 — 2025-10-15 17:30
+> "Create tests for the MCP modules."
+
 ---
+

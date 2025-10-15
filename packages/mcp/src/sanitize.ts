@@ -68,12 +68,12 @@ export function sanitize(text: string, enabled: boolean): string {
 
     let sanitized = text;
 
-    // Apply all redaction functions
+    // Apply all redaction functions (URLs first to prevent password@domain being treated as email)
+    sanitized = redactSensitiveURLs(sanitized);
     sanitized = redactEmails(sanitized);
     sanitized = maskIPs(sanitized);
     sanitized = maskGUIDs(sanitized);
     sanitized = redactPhones(sanitized);
-    sanitized = redactSensitiveURLs(sanitized);
 
     return sanitized;
 }
