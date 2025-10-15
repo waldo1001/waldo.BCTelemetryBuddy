@@ -163,3 +163,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #37 — 2025-10-15 19:00
+> "I don't like that you commit and push from the agent. Never do that again, put that in the #file:copilot-instructions.md"
+
+---
+

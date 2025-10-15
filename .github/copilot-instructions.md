@@ -173,6 +173,55 @@ Apply these software engineering principles to all code:
 - Use JSDoc for public APIs and exported functions
 - Keep comments up-to-date when code changes
 
+### 11. Never execute git commands
+**CRITICAL RULE**: You MUST NEVER execute git commands without EXPLICIT user request.
+
+**Prohibited Commands (never run these):**
+- `git add` / `git add -A` / `git add .`
+- `git commit` / `git commit -m "..."`
+- `git push` / `git push origin <branch>`
+- `git pull` / `git fetch`
+- `git merge` / `git rebase`
+- `git checkout` / `git switch`
+- `git tag` / `git branch`
+- `git reset` / `git revert`
+- Any other git command that affects repository history or remote state
+
+**Acceptable Commands (these are fine):**
+- Build tools: `npm run build`, `npm run compile`, `npm run lint`
+- Test tools: `npm test`, `npm run test:watch`, `npm run coverage`
+- File operations: creating, modifying, deleting files via tools
+- Package managers: `npm install`, `npm ci` (when explicitly needed)
+- Verification commands: checking file contents, running local servers
+
+**Rationale:**
+- User maintains full control over repository commits and pushes
+- User needs to review changes before they become part of git history
+- Automated commits bypass user's review and approval process
+- Git operations have permanent effects on repository and remote
+
+**Workflow Instead:**
+1. Create/modify files as requested
+2. Verify changes work locally (run build, tests)
+3. Inform user: "Changes ready. Please review and commit when ready."
+4. Let user decide when/how to commit and push
+
+**Exception:**
+- Only execute git commands if user explicitly says: "commit this", "push to GitHub", "git add these files", etc.
+- Even then, confirm: "Should I run `git commit -m '...'`?"
+
+**Example Violation:**
+```
+❌ BAD: run_in_terminal("git add -A && git commit -m 'fix' && git push")
+```
+
+**Example Correct Behavior:**
+```
+✅ GOOD: "I've fixed the CI errors by deleting the old test files. 
+         Build succeeds and all 56 tests pass. 
+         Changes are ready - please review and commit when you're satisfied."
+```
+
 ---
 
 ## Notes for maintainers
