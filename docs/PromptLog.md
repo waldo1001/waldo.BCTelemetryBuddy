@@ -168,3 +168,38 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #38 — 2025-10-15 19:05
+> "This time, read into this github action to see what the issue is: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18532071900/job/52817260291#step:7:12"
+
+---
+
+### Entry #39 — 2025-10-15 19:10
+> "Do we have any integration tests? Do we have any tests that test the combo of the VSCode extension with the MCP server?"
+
+---
+
+### Entry #40 — 2025-10-15 19:15
+> "I'll to E2E testing first. But here you see yet another issue in the CI pipeline: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18532282542/job/52818239329"
+
+---
+
+### Entry #41 — 2025-10-15 19:20
+> "I added waldo.png - please use that as the logo for both"
+
+---
+
+### Entry #42 — 2025-10-15 19:25
+> "Still an error when running the build: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18532773375/job/52819894754"
+
+---
+
+### Entry #43 — 2025-10-15 19:30
+> "Can you add a default MIT license to the project?"
+
+---
+
+### Entry #44 — 2025-10-15 19:35
+> "I notice you're not documenting my prompts anymore?"
+
+---
+
