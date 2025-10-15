@@ -69,5 +69,13 @@ Stepwise implementation log
   - **Why:** Final clarifications revealed implementation-specific details not captured in architectural decisions (NL-to-KQL flow, JSON-RPC protocol type, monorepo structure, naming, etc.). These needed to be documented before scaffolding to eliminate ambiguity.
   - **How:** Created new "Technical implementation specifications" section in Instructions.md with 10 clarifications: (1) MCP searches queries by content/filename (doesn't translate NL to KQL), LLM generates KQL; (2) formal MCP JSON-RPC protocol (not REST); (3) monorepo with packages/mcp + packages/extension, single build; (4) extension naming (BC Telemetry Buddy / bc-telemetry-buddy / waldo); (5) GitHub API unauthenticated (60 req/hr); (6) web scraping deferred to v2; (7) console + Output Channel logging; (8) workspace path via env var; (9) one MCP per workspace; (10) ES2022 + ESM. Updated NL-to-KQL decision (#3) in main section to clarify search-based collaborative approach between MCP and LLM.
 
+- **2025-10-15 16:55** — Added development standards to Copilot instructions. [Prompt #24]
+  - **Why:** Before scaffolding code, need to establish strict guidelines for test coverage and documentation maintenance to ensure quality and usability of the solution.
+  - **How:** Added two new sections to `.github/copilot-instructions.md`: (8) Always create tests — requires tests for every module/feature, runnable via npm scripts, using Jest/Mocha for MCP and VSCode test framework for extension; (9) Maintain comprehensive documentation — three levels: UserGuide.md (user-facing setup/usage), component CHANGELOGs (MCP and extension version history with semantic versioning), and existing developer docs. Tests must be created in same commit as code. Documentation updates required whenever user-facing features change.
+
+- **2025-10-15 16:57** — Added SOLID principles and best practices to Copilot instructions. [Prompt #25]
+  - **Why:** Ensure code quality, maintainability, and adherence to software engineering best practices throughout implementation.
+  - **How:** Added section 10 to `.github/copilot-instructions.md` covering: SOLID principles (SRP, OCP, LSP, ISP, DIP with explanations), code quality best practices (DRY, KISS, YAGNI, meaningful names, small functions, error handling, type safety, immutability, async/await, separation of concerns, dependency injection, configuration), code organization guidelines (module grouping, folder structure, file size limits), and documentation standards (self-documenting code, JSDoc for public APIs, keep comments current).
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

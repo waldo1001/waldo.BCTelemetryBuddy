@@ -114,6 +114,12 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Read the instructions. Imagine it's finished. Answer this question: will the MCP be able to get 'inspiration' from online sources as well. I know it can get inspiration from queries saved in the workspace (which it should), but additionally, I should be able to have online repos or other forms of documentation so it has most chance to create a decent query."
 
 ### Entry #23 — 2025-10-15 16:52
-> "Read the instructions. Imagine it's finished. Answer these questions: - Is it going to be possible to have a workspace in VSCode, and have a specific set of KQL in there, that the Copilot will pick up as extra context? - Is installation going to be easy? - Can I set up a connect per workspace? Or multiple connections may be? - Does it contain a VSCode extension that includes an MCP that adds tools to Github Copilot?""
+> "Read the instructions. Imagine it's finished. Answer these questions: - Is it going to be possible to have a workspace in VSCode, and have a specific set of KQL in there, that the Copilot will pick up as extra context? - Is installation going to be easy? - Can I set up a connect per workspace? Or multiple connections may be? - Does it contain a VSCode extension that includes an MCP that adds tools to Github Copilot?"
+
+### Entry #24 — 2025-10-15 16:55
+> "Before you start creating the code, I want to add to the #file:copilot-instructions.md instructions some guidelines that I want you to strictly follow. 1. always create tests. I want to have tests for both MCP and VSCode Extension. I want to be able to run tests 2. documentation. I want user documentation on how to set up, update and use the functionality. I also want you to keep track of a ChangeLog for both the MCP as the VSCode Extension."
+
+### Entry #25 — 2025-10-15 16:57
+> "Add common best practices and SOLID principles to the #file:copilot-instructions.md as well.""
 
 ---

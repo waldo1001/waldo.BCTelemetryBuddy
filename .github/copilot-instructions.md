@@ -95,6 +95,86 @@ After completing any significant change (new file, refactor, feature addition, c
 
 ---
 
+## Development Standards (you must follow these)
+
+### 8. Always create tests
+- **EVERY new module, feature, or function MUST have accompanying tests**
+- Write tests for both MCP backend and VSCode extension
+- Test files should be created in the same commit/change as the code they test
+- Tests must be runnable via npm scripts (e.g., `npm test`)
+- Test frameworks:
+  - **MCP backend**: Use Jest or Mocha for unit tests
+  - **VSCode extension**: Use VSCode's extension testing framework
+- If you create code without tests, the user will ask you to add them
+
+### 9. Maintain comprehensive documentation
+You must maintain THREE levels of documentation:
+
+**A. User Documentation (`docs/UserGuide.md`)**
+- How to install the extension
+- How to configure workspace settings
+- How to authenticate (device code flow, client credentials)
+- How to use the features (querying, saving queries, recommendations)
+- Troubleshooting common issues
+- Update this file whenever user-facing features change
+
+**B. Component Changelogs**
+- `packages/mcp/CHANGELOG.md` — Version history for MCP backend
+- `packages/extension/CHANGELOG.md` — Version history for VSCode extension
+- Use semantic versioning (MAJOR.MINOR.PATCH)
+- Format: `## [version] - YYYY-MM-DD` with sections: Added, Changed, Fixed, Removed
+- Update these files whenever you make changes to the respective component
+
+**C. Developer Documentation (already exists)**
+- `docs/DesignWalkthrough.md` — Design decisions and evolution
+- `docs/CHANGELOG.md` — Overall project changes (chat-driven)
+- `Instructions/Instructions.md` — Technical implementation reference
+
+**When to update documentation:**
+- Create UserGuide.md before scaffolding (with planned features)
+- Create component CHANGELOGs with initial scaffolding
+- Update UserGuide.md whenever user-facing behavior changes
+- Update component CHANGELOGs with every feature/fix
+- Keep all docs in sync with code changes
+
+### 10. Follow SOLID principles and best practices
+Apply these software engineering principles to all code:
+
+**SOLID Principles:**
+- **Single Responsibility Principle (SRP)**: Each class/module should have one reason to change. Keep functions focused on a single task.
+- **Open/Closed Principle (OCP)**: Code should be open for extension but closed for modification. Use interfaces, abstract classes, and dependency injection.
+- **Liskov Substitution Principle (LSP)**: Subtypes must be substitutable for their base types without breaking functionality.
+- **Interface Segregation Principle (ISP)**: Clients shouldn't depend on interfaces they don't use. Create small, focused interfaces.
+- **Dependency Inversion Principle (DIP)**: Depend on abstractions, not concrete implementations. Use dependency injection.
+
+**Code Quality Best Practices:**
+- **DRY (Don't Repeat Yourself)**: Extract common logic into reusable functions/modules
+- **KISS (Keep It Simple, Stupid)**: Favor simple, readable solutions over clever complexity
+- **YAGNI (You Aren't Gonna Need It)**: Don't add functionality until it's actually needed
+- **Meaningful names**: Use descriptive variable, function, and class names that reveal intent
+- **Small functions**: Keep functions short (< 20 lines ideally), doing one thing well
+- **Error handling**: Always handle errors gracefully with proper logging and user feedback
+- **Type safety**: Use TypeScript types and interfaces, avoid `any` unless absolutely necessary
+- **Immutability**: Prefer `const` over `let`, avoid mutating objects when possible
+- **Async/await**: Use modern async patterns, avoid callback hell
+- **Separation of concerns**: Keep business logic separate from UI, data access, and infrastructure
+- **Dependency injection**: Pass dependencies as parameters rather than hardcoding them
+- **Configuration over hardcoding**: Use configuration files/environment variables for values that may change
+
+**Code Organization:**
+- Group related functionality into modules
+- Use clear folder structure (e.g., `/models`, `/services`, `/utils`, `/tests`)
+- Keep files focused and reasonably sized (< 300 lines)
+- Export only what needs to be public
+
+**Comments and Documentation:**
+- Write self-documenting code with clear names
+- Add comments only when code logic is complex or non-obvious
+- Use JSDoc for public APIs and exported functions
+- Keep comments up-to-date when code changes
+
+---
+
 ## Notes for maintainers
 - This file is read by GitHub Copilot at the start of each session.
 - Keep it concise and actionable.
