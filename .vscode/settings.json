@@ -1,0 +1,55 @@
+{
+    // TypeScript
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    // Editor
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    // Files
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/coverage": true,
+        "**/.nyc_output": true,
+        "**/*.vsix": true
+    },
+    // Files to exclude from problem matching
+    "files.watcherExclude": {
+        "**/.github/**": true,
+        "**/node_modules/**": true,
+        "**/dist/**": true
+    },
+    // Search
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/coverage": true,
+        "**/.nyc_output": true,
+        "**/*.vsix": true
+    },
+    // Problems - Suppress false positives
+    "problems.ignoreFileExtensions": [
+        ".md"
+    ],
+    // Markdown - disable all validation to prevent false positives
+    "markdown.validate.enabled": false,
+    "[markdown]": {
+        "editor.defaultFormatter": "vscode.markdown-language-features"
+    },
+    // File associations - force markdown to be treated as markdown only
+    "files.associations": {
+        "*.md": "markdown"
+    },
+    // Disable MSBuild and C# language features for this workspace
+    "omnisharp.enableMsBuildLoadProjectsOnDemand": false,
+    "omnisharp.enableRoslynAnalyzers": false,
+    "omnisharp.enableEditorConfigSupport": false,
+    // Disable Kusto/KQL validation (prevents false positives in chat/markdown)
+    "kusto.enableIntelliSense": false,
+    "kusto.validationEnabled": false,
+    // NPM
+    "npm.packageManager": "npm",
+    "npm.enableRunFromFolder": true
+}
