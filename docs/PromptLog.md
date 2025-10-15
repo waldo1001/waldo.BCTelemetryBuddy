@@ -228,3 +228,13 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #50 — 2025-10-15 20:05
+> "Still an issue. IN the 'Build All Packages' stage, I get this output in the 'package extension' part: [Error: invalid relative path: extension/../../.git/config - vsce including 627 files with parent directories]"
+
+---
+
+### Entry #51 — 2025-10-15 20:10
+> "Promtlog, PROMPTLOG, PROMPTLOOOOOG"
+
+---
+

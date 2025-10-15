@@ -145,5 +145,9 @@ Stepwise implementation log
   - **Why:** CI "Build All Packages" job failed with "sh: 1: vsce: not found" because package script ran `npm install --production` which excludes devDependencies (where @vscode/vsce lives). CI had already run `npm ci` which installs all dependencies, making the production reinstall unnecessary and breaking the build.
   - **How:** Simplified package script from `npm install --production --no-save && vsce package` to just `vsce package`. CI's earlier `npm ci` step ensures all devDependencies (including vsce) are already installed. Verified packaging works locally.
 
+- **2025-10-15 20:00** — Fixed CI build: vsce including parent directories and .git folder. [Prompt #48]
+  - **Why:** After fixing vsce not found, packaging failed with "Error: invalid relative path: extension/../../.git/config". vsce was traversing up parent directories (627 files including 556 from ../), trying to package workspace root and .git folder. .vscodeignore wasn't blocking parent directory references.
+  - **How:** Added `../` and `../../` exclusions to top of .vscodeignore to explicitly block parent directory traversal. Reduced package from 627 files back to 400 files (888 KB). Verified packaging works locally without git config errors.
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

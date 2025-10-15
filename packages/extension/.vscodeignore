@@ -1,3 +1,7 @@
+# Parent directories (critical - prevent including workspace root)
+../
+../../
+
 # Source files (only include compiled dist/)
 src/
 tsconfig.json
