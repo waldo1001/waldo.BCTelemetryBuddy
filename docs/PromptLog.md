@@ -120,6 +120,9 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Before you start creating the code, I want to add to the #file:copilot-instructions.md instructions some guidelines that I want you to strictly follow. 1. always create tests. I want to have tests for both MCP and VSCode Extension. I want to be able to run tests 2. documentation. I want user documentation on how to set up, update and use the functionality. I also want you to keep track of a ChangeLog for both the MCP as the VSCode Extension."
 
 ### Entry #25 — 2025-10-15 16:57
-> "Add common best practices and SOLID principles to the #file:copilot-instructions.md as well.""
+> "Add common best practices and SOLID principles to the #file:copilot-instructions.md as well."
+
+### Entry #26 — 2025-10-15 17:00
+> "Do you think we're ready to start generate the code based on what we have in #file:Instructions.md ?""
 
 ---
