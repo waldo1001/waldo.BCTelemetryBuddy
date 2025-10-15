@@ -1,0 +1,119 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "build",
+            "path": "packages/extension",
+            "label": "npm: build - packages/extension",
+            "detail": "Build the VSCode extension",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": false
+            }
+        },
+        {
+            "type": "npm",
+            "script": "dev",
+            "path": "packages/extension",
+            "label": "npm: dev - packages/extension",
+            "detail": "Build the VSCode extension in watch mode",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": false
+            }
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "path": "packages/mcp",
+            "label": "npm: build - packages/mcp",
+            "detail": "Build the MCP backend",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": false
+            }
+        },
+        {
+            "type": "npm",
+            "script": "dev",
+            "path": "packages/mcp",
+            "label": "npm: dev - packages/mcp",
+            "detail": "Build the MCP backend in watch mode",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": false
+            }
+        },
+        {
+            "label": "Build All",
+            "dependsOn": [
+                "npm: build - packages/mcp",
+                "npm: build - packages/extension"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "path": "packages/extension",
+            "label": "npm: test - packages/extension",
+            "detail": "Run extension tests",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "path": "packages/mcp",
+            "label": "npm: test - packages/mcp",
+            "detail": "Run MCP tests",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}

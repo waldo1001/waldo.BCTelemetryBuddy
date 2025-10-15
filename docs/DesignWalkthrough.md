@@ -149,5 +149,9 @@ Stepwise implementation log
   - **Why:** After fixing vsce not found, packaging failed with "Error: invalid relative path: extension/../../.git/config". vsce was traversing up parent directories (627 files including 556 from ../), trying to package workspace root and .git folder. .vscodeignore wasn't blocking parent directory references.
   - **How:** Added `../` and `../../` exclusions to top of .vscodeignore to explicitly block parent directory traversal. Reduced package from 627 files back to 400 files (888 KB). Verified packaging works locally without git config errors.
 
+- **2025-10-15 20:15** — Created VSCode launch and tasks configurations for monorepo debugging. [Prompt #52]
+  - **Why:** User needs to debug extension and MCP server from VSCode. Monorepo requires proper configuration with workspace-relative paths.
+  - **How:** Created `.vscode/launch.json` with 4 launch configurations: "Run Extension" (normal), "Run Extension (Watch Mode)", "Extension Tests", "Debug MCP Server" (standalone with env vars), and compound "Extension + MCP Server" for debugging both simultaneously. Created `.vscode/tasks.json` with build tasks for both packages (build, dev/watch mode, test) and pre-launch task integration. All paths use ${workspaceFolder} for monorepo support. User can now press F5 to launch Extension Development Host.
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

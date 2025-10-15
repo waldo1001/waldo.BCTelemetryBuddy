@@ -238,3 +238,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #52 — 2025-10-15 20:15
+> "I see there are no launch-files for me to be able to run from VSCode. Isn't that possible in this monorepo? If it is, please make it possible."
+
+---
+

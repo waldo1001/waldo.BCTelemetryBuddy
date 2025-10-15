@@ -1,0 +1,89 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/extension"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/extension/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build - packages/extension",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Run Extension (Watch Mode)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/extension"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/extension/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: dev - packages/extension",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Extension Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/extension",
+                "--extensionTestsPath=${workspaceFolder}/packages/extension/dist/test/suite/index"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/extension/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build - packages/extension",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Debug MCP Server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/packages/mcp/dist/server.js",
+            "cwd": "${workspaceFolder}/packages/mcp",
+            "outFiles": [
+                "${workspaceFolder}/packages/mcp/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build - packages/mcp",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "BCTB_WORKSPACE_PATH": "${workspaceFolder}",
+                "BCTB_MCP_PORT": "52345",
+                "BCTB_TENANT_ID": "",
+                "BCTB_CLIENT_ID": "",
+                "BCTB_APP_INSIGHTS_APP_ID": "",
+                "NODE_ENV": "development"
+            },
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Extension + MCP Server",
+            "configurations": [
+                "Run Extension",
+                "Debug MCP Server"
+            ],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "group": "Debug",
+                "order": 1
+            }
+        }
+    ]
+}
