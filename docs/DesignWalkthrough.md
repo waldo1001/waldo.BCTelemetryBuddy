@@ -81,5 +81,9 @@ Stepwise implementation log
   - **Why:** Establish foundation for both MCP backend and VSCode extension development. Monorepo enables single build, shared TypeScript config, and coordinated versioning while keeping concerns separated.
   - **How:** Created root package.json with npm workspaces (packages/mcp, packages/extension), root tsconfig.json with ES2022+ESM, .gitignore excluding cache/secrets, README.md with project overview. Created packages/mcp with package.json (Express, MSAL, Jest), tsconfig.json, jest.config.js, CHANGELOG.md, and src/ directory. Created packages/extension with package.json (VSCode extension manifest with all commands and settings), tsconfig.json (CommonJS for VSCode), CHANGELOG.md, and src/ directory. Both packages set to v0.1.0 with testing frameworks configured (Jest for MCP, VSCode test framework for extension).
 
+- **2025-10-15 17:05** — Created comprehensive UserGuide.md for end users. [Prompt #28]
+  - **Why:** Before implementing code, document the complete user experience so development stays aligned with user needs and expectations. Provides reference for UX decisions during implementation.
+  - **How:** Created `docs/UserGuide.md` with 13 sections covering: what/why/features, prerequisites, installation (marketplace + VSIX), first-time setup (workspace settings), authentication (device_code + client_credentials flows with examples), using commands, querying telemetry (natural language + KQL), saving queries (.kql file format), external references (GitHub + web), Copilot integration (MCP tools), advanced configuration (caching, PII, retries, multi-workspace), troubleshooting (MCP start, auth, no results, Copilot, external refs), and FAQ (10 common questions). Documented complete user journey from installation through daily usage.
+
 --
 Keep entries short and focused. This doc is your presentation backbone.
