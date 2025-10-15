@@ -39,7 +39,7 @@ jobs:
         run: npm run test:coverage --workspace=packages/mcp
       
       - name: Upload MCP coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./packages/mcp/coverage/coverage-final.json
           flags: mcp
@@ -79,7 +79,7 @@ jobs:
         run: npm run test:coverage --workspace=packages/extension
       
       - name: Upload Extension coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./packages/extension/coverage/coverage-final.json
           flags: extension
