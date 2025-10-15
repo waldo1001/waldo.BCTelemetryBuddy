@@ -1,0 +1,30 @@
+# Source files (only include compiled dist/)
+src/
+tsconfig.json
+tsconfig.tsbuildinfo
+
+# Test files
+**/__tests__/
+**/*.test.ts
+coverage/
+.nyc_output/
+test/
+
+# Build and config files
+jest.config.js
+.eslintrc.json
+.prettierrc
+
+# Development files
+node_modules/@types/
+*.map
+
+# Documentation that's not needed in package
+docs/
+.github/
+.git/
+.gitignore
+
+# Misc
+.vscode-test/
+*.vsix

@@ -31,7 +31,7 @@ Add to your workspace `.vscode/settings.json`:
 }
 ```
 
-See [UserGuide.md](../../docs/UserGuide.md) for complete configuration options.
+See [UserGuide.md](https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md) for complete configuration options.
 
 ## Development
 
