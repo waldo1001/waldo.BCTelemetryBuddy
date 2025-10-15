@@ -1,0 +1,165 @@
+{
+    "name": "bc-telemetry-buddy",
+    "displayName": "BC Telemetry Buddy",
+    "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
+    "version": "0.1.0",
+    "publisher": "waldo",
+    "icon": "resources/icon.png",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "Other",
+        "Data Science"
+    ],
+    "keywords": [
+        "business-central",
+        "telemetry",
+        "application-insights",
+        "kusto",
+        "kql",
+        "copilot"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "bctb.startMCP",
+                "title": "BC Telemetry Buddy: Start MCP Server"
+            },
+            {
+                "command": "bctb.runNLQuery",
+                "title": "BC Telemetry Buddy: Run Natural Language Query"
+            },
+            {
+                "command": "bctb.saveQuery",
+                "title": "BC Telemetry Buddy: Save Query"
+            },
+            {
+                "command": "bctb.openQueriesFolder",
+                "title": "BC Telemetry Buddy: Open Queries Folder"
+            }
+        ],
+        "configuration": {
+            "title": "BC Telemetry Buddy",
+            "properties": {
+                "bctb.mcp.connectionName": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Friendly name for this telemetry connection"
+                },
+                "bctb.mcp.tenantId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Azure tenant ID"
+                },
+                "bctb.mcp.clientId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Azure client ID (optional for device_code flow)"
+                },
+                "bctb.mcp.authFlow": {
+                    "type": "string",
+                    "enum": [
+                        "device_code",
+                        "client_credentials"
+                    ],
+                    "default": "device_code",
+                    "description": "Authentication flow to use"
+                },
+                "bctb.mcp.applicationInsights.appId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Application Insights application ID"
+                },
+                "bctb.mcp.kusto.clusterUrl": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Kusto cluster URL"
+                },
+                "bctb.mcp.cache.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable file-based caching"
+                },
+                "bctb.mcp.cache.ttlSeconds": {
+                    "type": "number",
+                    "default": 3600,
+                    "description": "Cache TTL in seconds"
+                },
+                "bctb.mcp.sanitize.removePII": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable PII sanitization (opt-in)"
+                },
+                "bctb.mcp.port": {
+                    "type": "number",
+                    "default": 52345,
+                    "description": "MCP server port"
+                },
+                "bctb.mcp.url": {
+                    "type": "string",
+                    "default": "http://localhost:52345",
+                    "description": "MCP server URL"
+                },
+                "bctb.agent.maxRetries": {
+                    "type": "number",
+                    "default": 3,
+                    "description": "Maximum retry attempts for failed queries"
+                },
+                "bctb.mcp.references": {
+                    "type": "array",
+                    "default": [],
+                    "description": "External reference sources for KQL examples",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Reference name"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "github",
+                                    "web"
+                                ],
+                                "description": "Reference type"
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "Reference URL"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "Enable this reference"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run build",
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "node ./out/test/runTest.js",
+        "package": "vsce package",
+        "clean": "rimraf dist out"
+    },
+    "dependencies": {
+        "axios": "^1.6.0"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.85.0",
+        "@types/node": "^18.0.0",
+        "@vscode/test-electron": "^2.3.0",
+        "typescript": "^5.3.0",
+        "@vscode/vsce": "^2.22.0",
+        "rimraf": "^5.0.0"
+    }
+}

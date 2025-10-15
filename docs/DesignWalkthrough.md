@@ -77,5 +77,9 @@ Stepwise implementation log
   - **Why:** Ensure code quality, maintainability, and adherence to software engineering best practices throughout implementation.
   - **How:** Added section 10 to `.github/copilot-instructions.md` covering: SOLID principles (SRP, OCP, LSP, ISP, DIP with explanations), code quality best practices (DRY, KISS, YAGNI, meaningful names, small functions, error handling, type safety, immutability, async/await, separation of concerns, dependency injection, configuration), code organization guidelines (module grouping, folder structure, file size limits), and documentation standards (self-documenting code, JSDoc for public APIs, keep comments current).
 
+- **2025-10-15 17:02** — Created monorepo structure for MCP backend and VSCode extension. [Prompt #27]
+  - **Why:** Establish foundation for both MCP backend and VSCode extension development. Monorepo enables single build, shared TypeScript config, and coordinated versioning while keeping concerns separated.
+  - **How:** Created root package.json with npm workspaces (packages/mcp, packages/extension), root tsconfig.json with ES2022+ESM, .gitignore excluding cache/secrets, README.md with project overview. Created packages/mcp with package.json (Express, MSAL, Jest), tsconfig.json, jest.config.js, CHANGELOG.md, and src/ directory. Created packages/extension with package.json (VSCode extension manifest with all commands and settings), tsconfig.json (CommonJS for VSCode), CHANGELOG.md, and src/ directory. Both packages set to v0.1.0 with testing frameworks configured (Jest for MCP, VSCode test framework for extension).
+
 --
 Keep entries short and focused. This doc is your presentation backbone.

@@ -1,0 +1,21 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "lib": [
+            "ES2022"
+        ],
+        "sourceMap": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "out",
+        "**/*.test.ts"
+    ]
+}

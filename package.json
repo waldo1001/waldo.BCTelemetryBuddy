@@ -1,0 +1,41 @@
+{
+    "name": "bc-telemetry-buddy",
+    "version": "0.1.0",
+    "description": "Query Business Central telemetry from VSCode with natural language using MCP and GitHub Copilot",
+    "private": true,
+    "workspaces": [
+        "packages/mcp",
+        "packages/extension"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces",
+        "test": "npm run test --workspaces",
+        "clean": "npm run clean --workspaces",
+        "dev:mcp": "npm run dev --workspace=packages/mcp",
+        "dev:extension": "npm run dev --workspace=packages/extension"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/waldo1001/waldo.BCTelemetryBuddy.git"
+    },
+    "keywords": [
+        "business-central",
+        "telemetry",
+        "application-insights",
+        "kusto",
+        "kql",
+        "vscode-extension",
+        "mcp",
+        "copilot"
+    ],
+    "author": "waldo",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "typescript": "^5.3.0"
+    }
+}
