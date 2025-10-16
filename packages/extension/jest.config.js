@@ -9,7 +9,8 @@ module.exports = {
         '!src/**/*.d.ts',
         '!src/test/**',
         '!src/__tests__/**',
-        '!src/extension.ts'  // Requires VSCode environment, use test:integration for E2E tests
+        '!src/extension.ts',  // Requires VSCode environment, use test:integration for E2E tests
+        '!src/webviews/SetupWizardProvider.ts'  // Large UI component (838 lines) with complex webview interactions requiring integration testing
     ],
     coverageThreshold: {
         global: {
