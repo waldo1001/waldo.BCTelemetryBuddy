@@ -608,3 +608,21 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ```
 
+
+### Entry #127 — 2025-10-16 17:20
+> "When using any of the 'cache' commands, I get one again that the MCP server is not running... is this again an http / stdio thingy?"
+
+---
+
+
+### Entry #128 — 2025-10-16 17:25
+> "I don't like this solution. The confusion between the HTTP server and the STDIO server is too complex for users. This should be managed behind the scenes."
+
+---
+
+
+### Entry #129 — 2025-10-16 17:30
+> "Remove everything about the 'Cleanup Expired Cache'. I don't see the need for it."
+
+### Entry #130 — 2025-10-16 17:35
+> "How can I make it so that the agent that is getting generic questions on business central telemetry .. that it would be guided (by this MCP) first to the catalog and resource, and then start to assemble kql?"

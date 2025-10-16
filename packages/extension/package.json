@@ -68,10 +68,6 @@
                 "title": "BC Telemetry Buddy: Clear Cache"
             },
             {
-                "command": "bctb.cleanupCache",
-                "title": "BC Telemetry Buddy: Cleanup Expired Cache"
-            },
-            {
                 "command": "bctb.showCacheStats",
                 "title": "BC Telemetry Buddy: Show Cache Statistics"
             }
@@ -86,7 +82,7 @@
             {
                 "name": "bctb_query_telemetry",
                 "displayName": "Query BC Telemetry",
-                "modelDescription": "Executes telemetry queries against Business Central Application Insights. IMPORTANT: Before using this tool, you should FIRST call search_queries or get_saved_queries to find similar existing query patterns - this improves accuracy by using proven patterns from the team's query library. This tool accepts either: (1) a KQL query string that you provide, OR (2) a natural language description which the MCP backend will automatically translate to KQL by finding similar patterns in saved queries and external references (keyword-based pattern matching with similarity scoring). The backend handles all KQL generation internally - you receive the final query results with metadata showing which pattern was used.",
+                "modelDescription": "Executes telemetry queries against Business Central Application Insights. CRITICAL WORKFLOW - Follow this order: (1) For exploratory/generic BC telemetry questions (errors, performance, usage patterns), you MUST call get_event_catalog FIRST to discover relevant event IDs and understand what telemetry is available; (2) Then call get_event_schema for the specific event ID to see available customDimensions fields; (3) For customer-specific queries, call get_tenant_mapping to resolve company names to tenant IDs; (4) Check search_queries or get_saved_queries for similar existing patterns; (5) ONLY THEN execute this tool with either direct KQL or natural language. If you skip discovery steps (catalog/schema/saved queries), you risk querying wrong events or missing critical fields. The backend handles KQL generation via pattern matching when you provide natural language, but it needs the context from prior discovery steps to generate accurate queries.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -114,7 +110,7 @@
             {
                 "name": "bctb_get_saved_queries",
                 "displayName": "Get Saved Queries",
-                "modelDescription": "List all saved telemetry queries in the workspace. RECOMMENDED FIRST STEP: Use this tool before executing queries to discover what queries are already available in the team's library. This helps you reuse existing proven patterns and understand the query structure before creating new queries.",
+                "modelDescription": "List all saved telemetry queries in the workspace. **RECOMMENDED STEP** after discovering event IDs/schemas but before executing queries - check if the team already has proven queries for similar scenarios. This helps you reuse existing patterns that are known to work correctly. Each saved query includes purpose, use case, and tags for easy discovery. Use this when the user's question might match existing query patterns (errors, performance, specific features).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -131,7 +127,7 @@
             {
                 "name": "bctb_search_queries",
                 "displayName": "Search Queries",
-                "modelDescription": "Search saved queries by keywords. RECOMMENDED FIRST STEP: Use this tool before executing queries to find similar existing query patterns from the team's query library. This helps you understand what queries are available and reuse proven patterns instead of creating new ones.",
+                "modelDescription": "Search saved queries by keywords. **RECOMMENDED STEP** after discovering event IDs/schemas - use this to find existing queries that match the user's intent (search terms like 'error', 'slow', 'login', 'report', etc). More targeted than get_saved_queries when you know what you're looking for. Returns matching queries with relevance scores so you can reuse proven patterns instead of writing KQL from scratch.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -232,7 +228,7 @@
             {
                 "name": "bctb_get_event_catalog",
                 "displayName": "Get BC Event Catalog",
-                "modelDescription": "Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Returns event IDs sorted by frequency with status (success/error/too slow), short descriptions, occurrence counts, and Microsoft Learn documentation links.",
+                "modelDescription": "Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. **REQUIRED FIRST STEP** when user asks generic BC telemetry questions like 'show me errors', 'performance issues', 'what happened today', or any exploratory query where you don't know the exact event IDs. This tool discovers what events are actually firing in their environment. Returns event IDs sorted by frequency with status (success/error/too slow), short descriptions, occurrence counts, and Microsoft Learn documentation links. Use the catalog to identify relevant event IDs, then call get_event_schema to understand available fields, then build your KQL query.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -264,7 +260,7 @@
             {
                 "name": "bctb_get_event_schema",
                 "displayName": "Get BC Event Schema",
-                "modelDescription": "Get the schema (available customDimensions fields) for a specific event ID by sampling recent occurrences. Use this after discovering an event ID to understand what fields are available before building detailed queries.",
+                "modelDescription": "Get the schema (available customDimensions fields) for a specific event ID by sampling recent occurrences. **REQUIRED SECOND STEP** after get_event_catalog identifies relevant event IDs. BC telemetry stores most useful data in customDimensions (company name, user, duration, error messages, etc), but available fields vary by event type. This tool samples 100 recent events to show you what fields exist, their data types, and example values. Use this before writing KQL to ensure you reference correct field names and understand the data structure. Returns field list with examples and generates a sample query showing proper syntax.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
