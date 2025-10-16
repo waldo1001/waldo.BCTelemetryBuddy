@@ -254,10 +254,17 @@ export class SetupWizardProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        // Get logo as base64
-        const logoPath = vscode.Uri.joinPath(this._extensionUri, 'images', 'waldo.png').fsPath;
-        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
-        const logoDataUri = `data:image/png;base64,${logoBase64}`;
+        // Get logo as base64 (with fallback for tests)
+        let logoDataUri = '';
+        try {
+            const logoPath = vscode.Uri.joinPath(this._extensionUri, 'images', 'waldo.png').fsPath;
+            if (logoPath && fs.existsSync(logoPath)) {
+                const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+                logoDataUri = `data:image/png;base64,${logoBase64}`;
+            }
+        } catch (error) {
+            // Ignore errors (e.g., in test environment)
+        }
 
         // For now, return inline HTML. In production, you might want to load from a file
         return `<!DOCTYPE html>
@@ -449,9 +456,9 @@ export class SetupWizardProvider {
 </head>
 <body>
     <div class="container">
-        <div class="header-logo">
+        ${logoDataUri ? `<div class="header-logo">
             <img src="${logoDataUri}" alt="">
-        </div>
+        </div>` : ''}
         <h1>🚀 BC Telemetry Buddy Setup Wizard</h1>
         <p>Welcome! This wizard will help you configure BC Telemetry Buddy to connect to your Azure Data Explorer and Application Insights.</p>
 

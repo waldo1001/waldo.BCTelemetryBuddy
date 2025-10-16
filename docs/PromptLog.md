@@ -852,3 +852,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "now it's just showing me a square .. no logo."
 
 ---
+
+### Entry #176 — 2025-10-16 21:45
+> "It seems tests broke again: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18574813340/job/52957518655 run the tests locally, and find out what going on"
+
+---
