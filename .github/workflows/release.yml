@@ -139,19 +139,20 @@ jobs:
           name: release-artifacts
           path: ./artifacts
       
+      - name: List artifacts (debug)
+        run: ls -la ./artifacts/packages/extension/
+      
       - name: Publish to VS Code Marketplace
-        working-directory: packages/extension
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          npx vsce publish --packagePath ../../artifacts/packages/extension/*.vsix -p ${VSCE_PAT}
+          npx vsce publish --packagePath ./artifacts/packages/extension/*.vsix -p ${VSCE_PAT}
       
       - name: Publish to Open VSX Registry
-        working-directory: packages/extension
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          npx ovsx publish ../../artifacts/packages/extension/*.vsix -p ${OVSX_PAT}
+          npx ovsx publish ./artifacts/packages/extension/*.vsix -p ${OVSX_PAT}
         continue-on-error: true  # Don't fail if Open VSX publish fails
 
   publish-prerelease:
@@ -180,8 +181,7 @@ jobs:
           path: ./artifacts
       
       - name: Publish pre-release to VS Code Marketplace
-        working-directory: packages/extension
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          npx vsce publish --pre-release --packagePath ../../artifacts/packages/extension/*.vsix -p ${VSCE_PAT}
+          npx vsce publish --pre-release --packagePath ./artifacts/packages/extension/*.vsix -p ${VSCE_PAT}
