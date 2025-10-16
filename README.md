@@ -11,24 +11,62 @@ Query Business Central telemetry from VSCode using natural language with GitHub 
 
 BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query Business Central telemetry data from Application Insights/Kusto. It combines:
 
+- **🧙 Setup Wizard**: Step-by-step guided configuration with validation and testing
 - **Natural Language Queries**: Ask questions in plain English using GitHub Copilot
 - **MCP Backend**: Lightweight Model Context Protocol server for telemetry access
-- **Self-Learning**: Save and reuse queries with automatic context building
+- **Event Discovery**: Browse telemetry catalog and schemas before querying
+- **Query Library**: Save and organize queries by category and customer
+- **Smart Context**: Automatically includes saved queries for better KQL generation
 - **External References**: Pull KQL examples from GitHub repos and documentation
-- **Recommendations**: Get actionable insights from your telemetry data
 
-## Features
+## ✨ Features
 
-- 🔐 **Easy Authentication**: Device code flow (no Azure setup) or client credentials
-- 💾 **Smart Caching**: File-based caching with configurable TTL
-- 📊 **Rich Visualization**: Tables and charts in webview UI
-- 🧠 **Context-Aware**: Uses saved queries and external references for better KQL generation
-- 🔒 **Privacy-Focused**: Optional PII sanitization, workspace-scoped settings
-- 🤖 **Copilot Integration**: Query telemetry directly from GitHub Copilot Chat
+- **🧙 Setup Wizard**: Guided first-run configuration with Azure resource validation and connection testing
+- **🔐 Flexible Authentication**: Azure CLI (recommended), Device Code, or Client Credentials
+- **📊 Event Catalog & Schema Discovery**: Explore what telemetry events exist and their structure before querying
+- **💾 Smart Caching**: File-based caching with configurable TTL (default 1 hour)
+- **� Query Library**: Save queries organized by category; customer-specific queries automatically organized in `Companies/[CompanyName]/` folders
+- **👁️ CodeLens Support**: "▶ Run Query" links appear in .kql files for one-click execution
+- **🧠 Context-Aware**: Uses saved queries and external references for better KQL generation
+- **�️ Tenant Mapping**: Map friendly company names to Azure tenant IDs for customer queries
+- **🔒 Privacy-Focused**: Optional PII sanitization, workspace-scoped settings
+- **🤖 Copilot Integration**: MCP tools available to GitHub Copilot for natural language telemetry analysis
 
 ## Quick Start
 
-See [docs/UserGuide.md](docs/UserGuide.md) for installation and setup instructions.
+### 1. Install the Extension
+Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bctb) or search for "BC Telemetry Buddy" in VSCode Extensions.
+
+### 2. Run Setup Wizard
+Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run:
+```
+BC Telemetry Buddy: Setup Wizard
+```
+
+The wizard guides you through:
+- **Azure Configuration**: Connect to your tenant and Application Insights
+- **Authentication**: Choose Azure CLI (recommended), Device Code, or Client Credentials
+- **Connection Testing**: Validate your configuration before saving
+- **Quick Tips**: Get started with @workspace Copilot queries
+
+### 3. Start Querying
+**With Copilot** (recommended):
+```
+@workspace Show me all errors from BC in the last 24 hours
+@workspace What are the slowest operations this week?
+@workspace Find login failures for customer Contoso
+```
+
+**With Command Palette**:
+- `BC Telemetry Buddy: Run KQL Query` - Execute direct KQL or natural language
+- Create a `.kql` file and click "▶ Run Query" CodeLens link
+
+### 4. Save & Organize Queries
+Queries are automatically organized:
+- **Generic queries**: `queries/[Category]/[QueryName].kql`
+- **Customer queries**: `queries/Companies/[CompanyName]/[Category]/[QueryName].kql`
+
+See [docs/UserGuide.md](docs/UserGuide.md) for detailed configuration and advanced features.
 
 ## Development
 
