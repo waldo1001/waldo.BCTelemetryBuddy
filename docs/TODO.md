@@ -10,3 +10,6 @@
   The instructions should include to save all used queries for the analysis into the same folder (next to the analysis md file).  in the md file-refer to the analysis.
   Obviously, when performing instructions, we need to make sure to give these instructions to the LLM so it knows what kind of data we expect, what the flow is, the tools that should be used, and so on.
 
+- add BC specific knowledge for the LLM to take into account
+LIke SQL Query details: what is what
+SHuld basically be some kind of file that the LLM can interpret to take into their analysis.
