@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as child_process from 'child_process';
 import { MCPClient } from './mcpClient';
 import { ResultsWebview } from './resultsWebview';
+import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 
 /**
  * MCP process handle
@@ -17,6 +18,7 @@ interface MCPProcess {
 let mcpProcess: MCPProcess | null = null;
 let mcpClient: MCPClient | null = null;
 let outputChannel: vscode.OutputChannel;
+let setupWizard: SetupWizardProvider | null = null;
 
 /**
  * Register MCP server definition provider with VSCode
@@ -332,8 +334,14 @@ export function activate(context: vscode.ExtensionContext) {
     const mcpUrl = config.get<string>('mcp.url', 'http://localhost:52345');
     mcpClient = new MCPClient(mcpUrl, outputChannel);
 
+    // Initialize setup wizard
+    setupWizard = new SetupWizardProvider(context.extensionUri);
+
     // Register commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('bctb.setupWizard', () => {
+            setupWizard?.show();
+        }),
         vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
         vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
         vscode.commands.registerCommand('bctb.runKQLFromDocument', () => runKQLFromDocumentCommand(context)),
@@ -374,6 +382,9 @@ export function activate(context: vscode.ExtensionContext) {
     // Don't auto-start HTTP server - VSCode MCP infrastructure (stdio mode) handles Copilot integration
     // Command palette commands will show error if HTTP server not manually started via "Start MCP Server" command
 
+    // Auto-show setup wizard on first activation if not configured
+    checkAndShowSetupWizard(context);
+
     outputChannel.appendLine('Extension ready');
     outputChannel.appendLine('');
     outputChannel.appendLine('ℹ️  For Copilot integration: MCP server automatically managed by VSCode');
@@ -399,12 +410,45 @@ export function deactivate() {
  * Check if workspace has BCTB settings configured
  */
 function hasWorkspaceSettings(): boolean {
-    const config = vscode.workspace.getConfiguration('bctb');
-    const tenantId = config.get<string>('mcp.tenantId');
-    const appId = config.get<string>('mcp.applicationInsights.appId');
+    const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
+    const tenantId = config.get<string>('tenant.id');
+    const appInsightsId = config.get<string>('appInsights.id');
+    const kustoUrl = config.get<string>('kusto.url');
 
-    return !!(tenantId && appId);
+    return !!(tenantId && appInsightsId && kustoUrl);
 }
+
+/**
+ * Check if this is first run and show setup wizard if needed
+ */
+async function checkAndShowSetupWizard(context: vscode.ExtensionContext): Promise<void> {
+    // Check if user has dismissed the wizard before
+    const hasSeenWizard = context.globalState.get<boolean>('bctb.hasSeenSetupWizard', false);
+    
+    // Check if workspace is configured
+    const isConfigured = hasWorkspaceSettings();
+
+    // If not configured and haven't seen wizard, show it
+    if (!isConfigured && !hasSeenWizard) {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            outputChannel.appendLine('📋 First run detected - showing setup wizard...');
+            
+            // Mark as seen so we don't show it again
+            await context.globalState.update('bctb.hasSeenSetupWizard', true);
+            
+            // Show wizard after a short delay to let activation complete
+            setTimeout(() => {
+                setupWizard?.show();
+            }, 1000);
+        }
+    } else if (isConfigured) {
+        outputChannel.appendLine('✓ Workspace configured');
+    } else {
+        outputChannel.appendLine('ℹ️  Setup wizard available via Command Palette');
+    }
+}
+
 
 /**
  * Get workspace root path

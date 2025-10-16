@@ -49,6 +49,11 @@
         ],
         "commands": [
             {
+                "command": "bctb.setupWizard",
+                "title": "BC Telemetry Buddy: Setup Wizard",
+                "icon": "$(gear)"
+            },
+            {
                 "command": "bctb.startMCP",
                 "title": "BC Telemetry Buddy: Start MCP Server"
             },

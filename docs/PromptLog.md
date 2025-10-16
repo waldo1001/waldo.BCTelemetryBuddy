@@ -675,3 +675,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "On CI action has an error when running the 'MCP tests with coverage'. More info: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18569449778/job/52939262334 [CI log provided showing console.error output from tests and coverage thresholds not met: statements 41.86% < 70%, branches 30.97% < 70%, lines 42.61% < 70%, functions 47.5% < 70%]"
 
 ---
+
+### Entry #140 — 2025-10-16 19:10
+> "The Steps to set up everything, I'd like to have some kind of 'Setup Wizard' (could be some kind of built in webpage) that explains what needs to be done, has a validation step what it still be done, and has links to help setting up all the bits and pieces."
+
+---
