@@ -445,3 +445,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ### Entry #93 — 2025-10-16 01:25
 > "This thing says 'option copilot integration'. That integration is not optional. It's actually the very reason of the existance of this workspace. I will never be running any NL query through the command palette. If it doesn't work through github copilot, this project is lost."
+
+---
+
+### Entry #94 — 2025-10-16 01:30
+> "I want to start testing from GitHub copilot. Write me an End-to-end testscript for manual testing with GitHub copilot."
