@@ -121,7 +121,7 @@ See [.github/workflows/README.md](.github/workflows/README.md) for workflow docu
 ## Documentation
 
 - [User Guide](docs/UserGuide.md) - Installation and usage
-- [E2E Test Script](docs/E2E-TestScript.md) - Manual testing guide
+- [E2E Copilot Test Script](docs/E2E-Copilot-TestScript.md) - GitHub Copilot integration testing guide
 - [Design Walkthrough](docs/DesignWalkthrough.md) - Architecture and design decisions
 - [Instructions](Instructions/Instructions.md) - Technical implementation details
 - [Workflow Documentation](.github/workflows/README.md) - CI/CD setup and usage

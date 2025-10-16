@@ -104,7 +104,7 @@ Invoke-RestMethod -Uri 'http://localhost:52345/rpc' -Method Post -ContentType 'a
 
 **Expected:**
 - ✅ Returns JSON with `tools` array
-- ✅ Shows 7 tools: query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries
+- ✅ Shows 11 tools: query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries, get_event_catalog, get_event_schema, get_tenant_mapping, and cache management tools
 - ✅ Each tool has name, description, inputSchema
 
 **If Failed:**

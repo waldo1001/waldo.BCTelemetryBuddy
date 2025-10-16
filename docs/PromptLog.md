@@ -862,3 +862,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Still errors: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18575363929/job/52959244678 Running the tests for the extension, [coverage failure output showing SetupWizardProvider.ts with 22.12% coverage not meeting 70% threshold]"
 
 ---
+
+### Entry #178 — 2025-10-16 22:00
+> "I see the readme still refers to the end to end testing script, which isn't up-to-date anymore. Remove it, remove the references, update the 'E2E-Copilot-TestScript.md', and refer to that."
+
+---
