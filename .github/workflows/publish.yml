@@ -44,12 +44,19 @@ jobs:
         working-directory: packages/extension
         run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
       
+      - name: Get version
+        id: get_version
+        working-directory: packages/extension
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
       - name: Package Extension
         run: npm run package --workspace=packages/extension
       
       - name: Publish to Visual Studio Marketplace
         working-directory: packages/extension
-        run: npx vsce publish -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx vsce publish -p ${VSCE_PAT}
       
       - name: Upload VSIX to Release
         if: github.event_name == 'release'
@@ -61,11 +68,6 @@ jobs:
           asset_path: packages/extension/bc-telemetry-buddy-${{ steps.get_version.outputs.version }}.vsix
           asset_name: bc-telemetry-buddy.vsix
           asset_content_type: application/octet-stream
-      
-      - name: Get version
-        id: get_version
-        working-directory: packages/extension
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
       
       - name: Create GitHub Release (manual trigger)
         if: github.event_name == 'workflow_dispatch'
