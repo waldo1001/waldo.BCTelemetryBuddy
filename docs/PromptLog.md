@@ -651,3 +651,27 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Last changes were not saved to promptlog or other files."
 
 ---
+### Entry #135 — 2025-10-16 18:50
+> "Now I would like to work on making sure this solution is easy to install for the end user. First a question: the two components, how would a user have to set it up. don't change anything, just answer first."
+
+---
+
+### Entry #136 — 2025-10-16 18:52
+> "First of all, I'm going to publish the extension. publisher name is waldoBC. VSCE_PAT is already set up on github. Do the necessary changes for this."
+
+---
+
+### Entry #137 — 2025-10-16 18:55
+> "Please keep logging the prompts and changes!"
+
+---
+
+### Entry #138 — 2025-10-16 19:00
+> "why are you working with powershell to update the logging? I don't like that. change #file:copilot-instructions.md to not use powershell to update the changelog, promptlog or designwalkthrough."
+
+---
+
+### Entry #139 — 2025-10-16 19:05
+> "On CI action has an error when running the 'MCP tests with coverage'. More info: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18569449778/job/52939262334 [CI log provided showing console.error output from tests and coverage thresholds not met: statements 41.86% < 70%, branches 30.97% < 70%, lines 42.61% < 70%, functions 47.5% < 70%]"
+
+---

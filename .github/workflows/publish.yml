@@ -1,0 +1,88 @@
+name: Publish Extension
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use package.json version)'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    name: Publish to Marketplace
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: |
+          npm test --workspace=packages/mcp
+          npm test --workspace=packages/extension
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Build Extension
+        run: npm run build --workspace=packages/extension
+      
+      - name: Update version (if specified)
+        if: github.event.inputs.version != ''
+        working-directory: packages/extension
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+      
+      - name: Package Extension
+        run: npm run package --workspace=packages/extension
+      
+      - name: Publish to Visual Studio Marketplace
+        working-directory: packages/extension
+        run: npx vsce publish -p ${{ secrets.VSCE_PAT }}
+      
+      - name: Upload VSIX to Release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: packages/extension/bc-telemetry-buddy-${{ steps.get_version.outputs.version }}.vsix
+          asset_name: bc-telemetry-buddy.vsix
+          asset_content_type: application/octet-stream
+      
+      - name: Get version
+        id: get_version
+        working-directory: packages/extension
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          body: |
+            ## BC Telemetry Buddy v${{ steps.get_version.outputs.version }}
+            
+            Published to Visual Studio Code Marketplace.
+            
+            ### Installation
+            Install directly from VSCode Marketplace or download the .vsix file below.
+            
+            See [UserGuide.md](docs/UserGuide.md) for setup instructions.
+          draft: false
+          prerelease: false

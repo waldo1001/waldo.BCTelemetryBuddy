@@ -4,6 +4,7 @@
     "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
     "version": "0.1.0",
     "publisher": "waldoBC",
+    "license": "MIT",
     "icon": "images/waldo.png",
     "engines": {
         "vscode": "^1.85.0"
@@ -28,6 +29,10 @@
         "type": "git",
         "url": "https://github.com/waldo1001/waldo.BCTelemetryBuddy.git"
     },
+    "bugs": {
+        "url": "https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues"
+    },
+    "homepage": "https://github.com/waldo1001/waldo.BCTelemetryBuddy#readme",
     "contributes": {
         "languages": [
             {

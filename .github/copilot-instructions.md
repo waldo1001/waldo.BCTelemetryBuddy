@@ -72,13 +72,15 @@ After completing any significant change (new file, refactor, feature addition, c
 
 ### 6. Workflow summary
 1. User makes ANY request or asks ANY question
-2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** (to get entry number)
+2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using the `replace_string_in_file` tool (to get entry number)
 3. If no "why" provided for a change → ask for purpose
 4. Make the change or answer the question
-5. If significant change: Append log entries to `docs/DesignWalkthrough.md` (with `[Prompt #N]` reference) and `docs/CHANGELOG.md`
+5. If significant change: Append log entries to `docs/DesignWalkthrough.md` (with `[Prompt #N]` reference) and `docs/CHANGELOG.md` using the `replace_string_in_file` tool
 6. Confirm completion and show the log entry
 
 **CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
+
+**TOOL USAGE**: Always use the `replace_string_in_file` tool to update documentation files. NEVER use PowerShell commands (Add-Content, Out-File, etc.) or terminal commands to modify PromptLog.md, DesignWalkthrough.md, or CHANGELOG.md. The file editing tools ensure proper formatting and avoid encoding issues.
 
 ### 7. Example interaction
 
