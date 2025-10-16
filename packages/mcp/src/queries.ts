@@ -245,17 +245,44 @@ export class QueriesService {
     }
 
     /**
+     * Detect if a query filters on customer/tenant by checking for aadTenantId or companyName filters
+     */
+    private detectCustomerQuery(kql: string): boolean {
+        const lowerKql = kql.toLowerCase();
+        // Check for tenant or company filtering
+        return lowerKql.includes('aadtenantid') ||
+            lowerKql.includes('companyname') ||
+            lowerKql.includes('company_name');
+    }
+
+    /**
      * Save new query to .kql file
      */
-    saveQuery(name: string, kql: string, purpose?: string, useCase?: string, tags?: string[], category?: string): string {
+    saveQuery(name: string, kql: string, purpose?: string, useCase?: string, tags?: string[], category?: string, companyName?: string): string {
         try {
-            // Determine target directory (with optional category subfolder)
+            // Auto-detect if query is customer-specific by checking for tenant/company filters
+            const isCustomerQuery = companyName || this.detectCustomerQuery(kql);
+
+            // Determine target directory structure
             let targetDir = this.queriesDir;
-            if (category && category.trim().length > 0) {
+
+            if (isCustomerQuery && companyName) {
+                // Customer-specific: queries/Companies/[CompanyName]/[Category]/
+                targetDir = path.join(this.queriesDir, 'Companies', companyName);
+                if (category && category.trim().length > 0) {
+                    targetDir = path.join(targetDir, category);
+                }
+            } else if (category && category.trim().length > 0) {
+                // Generic query with category: queries/[Category]/
                 targetDir = path.join(this.queriesDir, category);
-                // Create category subfolder if it doesn't exist
-                if (!fs.existsSync(targetDir)) {
-                    fs.mkdirSync(targetDir, { recursive: true });
+            }
+
+            // Create directory structure if it doesn't exist
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+                if (isCustomerQuery && companyName) {
+                    console.log(`✓ Created company folder: Companies/${companyName}${category ? '/' + category : ''}`);
+                } else if (category) {
                     console.log(`✓ Created category folder: ${category}`);
                 }
             }
@@ -268,6 +295,9 @@ export class QueriesService {
             const lines: string[] = [];
 
             lines.push(`// Query: ${name}`);
+            if (companyName) {
+                lines.push(`// Company: ${companyName}`);
+            }
             if (category) {
                 lines.push(`// Category: ${category}`);
             }

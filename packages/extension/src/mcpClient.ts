@@ -36,6 +36,7 @@ export interface SaveQueryRequest {
     useCase?: string;
     tags?: string[];
     category?: string;
+    companyName?: string;
 }
 
 /**
@@ -99,7 +100,16 @@ export class MCPClient {
             const response = await this.client.post<JSONRPCResponse>('/rpc', request);
 
             if (response.data.error) {
-                throw new Error(response.data.error.message);
+                const errorMessage = response.data.error.message || 'Unknown error';
+                const errorCode = response.data.error.code || -1;
+                const errorData = response.data.error.data ? JSON.stringify(response.data.error.data) : '';
+
+                this.outputChannel.appendLine(`[MCP Client] ${method} <- JSON-RPC Error (code ${errorCode}): ${errorMessage}`);
+                if (errorData) {
+                    this.outputChannel.appendLine(`[MCP Client] Error data: ${errorData}`);
+                }
+
+                throw new Error(errorMessage);
             }
 
             this.outputChannel.appendLine(`[MCP Client] ${method} <- Success`);
@@ -107,10 +117,41 @@ export class MCPClient {
             return response.data.result as T;
         } catch (err: any) {
             if (axios.isAxiosError(err)) {
+                // Axios error - could be network, HTTP status, etc.
                 const message = err.response?.data?.error?.message || err.message;
-                this.outputChannel.appendLine(`[MCP Client] ${method} <- Error: ${message}`);
+                const status = err.response?.status;
+                const url = err.config?.url;
+                const baseURL = err.config?.baseURL;
+
+                this.outputChannel.appendLine(`[MCP Client] ${method} <- Axios Error (status ${status || 'unknown'}): ${message}`);
+                this.outputChannel.appendLine(`[MCP Client] Error code: ${err.code || 'none'}`);
+                this.outputChannel.appendLine(`[MCP Client] Base URL: ${baseURL}`);
+                if (url) {
+                    this.outputChannel.appendLine(`[MCP Client] Request URL: ${url}`);
+                }
+                if (err.response?.data) {
+                    this.outputChannel.appendLine(`[MCP Client] Response data: ${JSON.stringify(err.response.data)}`);
+                } else {
+                    this.outputChannel.appendLine(`[MCP Client] No response received - connection error?`);
+                }
+
+                // Provide more helpful error message
+                if (err.code === 'ECONNREFUSED') {
+                    throw new Error(`Cannot connect to MCP server at ${baseURL}. Is the MCP server running?`);
+                } else if (err.code === 'ETIMEDOUT') {
+                    throw new Error(`Connection to MCP server timed out at ${baseURL}`);
+                }
+
                 throw new Error(message);
             }
+
+            // Other error type - log full error object
+            this.outputChannel.appendLine(`[MCP Client] ${method} <- Unexpected Error: ${err.message || String(err)}`);
+            this.outputChannel.appendLine(`[MCP Client] Error type: ${err.constructor.name}`);
+            if (err.stack) {
+                this.outputChannel.appendLine(`[MCP Client] Stack: ${err.stack}`);
+            }
+
             throw err;
         }
     }

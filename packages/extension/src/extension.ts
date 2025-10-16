@@ -334,10 +334,33 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
-        vscode.commands.registerCommand('bctb.runNLQuery', () => runNLQueryCommand(context)),
+        vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
+        vscode.commands.registerCommand('bctb.runKQLFromDocument', () => runKQLFromDocumentCommand(context)),
+        vscode.commands.registerCommand('bctb.runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
+            runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
+        ),
         vscode.commands.registerCommand('bctb.saveQuery', () => saveQueryCommand()),
         vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand())
     );
+
+    // Register CodeLens provider for .kql files
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+            { language: 'kql' },
+            new KQLCodeLensProvider(context)
+        )
+    );
+    outputChannel.appendLine('✓ Registered CodeLens provider for .kql files');
+
+    // Check if CodeLens is enabled
+    const editorConfig = vscode.workspace.getConfiguration('editor');
+    const codeLensEnabled = editorConfig.get<boolean>('codeLens', true);
+    if (!codeLensEnabled) {
+        outputChannel.appendLine('⚠️  WARNING: editor.codeLens is disabled in settings. CodeLens will not appear.');
+        outputChannel.appendLine('   To enable: File → Preferences → Settings → search "codeLens" → check "Editor: Code Lens"');
+    } else {
+        outputChannel.appendLine('✓ CodeLens is enabled in settings');
+    }
 
     // Register MCP server definition provider (makes server globally available in VSCode)
     registerMCPServerDefinitionProvider(context);
@@ -345,15 +368,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Register MCP tools with VSCode's language model API (for direct tool invocation)
     registerLanguageModelTools(context);
 
-    // Auto-start MCP if workspace has settings configured
-    if (hasWorkspaceSettings()) {
-        outputChannel.appendLine('Workspace settings detected, auto-starting MCP...');
-        startMCP().catch(err => {
-            outputChannel.appendLine(`Failed to auto-start MCP: ${err.message}`);
-        });
-    }
+    // Don't auto-start HTTP server - VSCode MCP infrastructure (stdio mode) handles Copilot integration
+    // Command palette commands will show error if HTTP server not manually started via "Start MCP Server" command
 
     outputChannel.appendLine('Extension ready');
+    outputChannel.appendLine('');
+    outputChannel.appendLine('ℹ️  For Copilot integration: MCP server automatically managed by VSCode');
+    outputChannel.appendLine('ℹ️  For Command Palette commands: Run "BC Telemetry Buddy: Start MCP Server" if needed');
 }
 
 /**
@@ -476,7 +497,11 @@ async function startMCP(): Promise<void> {
     // Wait for MCP to be ready
     await waitForMCPReady(port);
 
+    // Initialize HTTP client for command palette commands
+    mcpClient = new MCPClient(`http://localhost:${port}`, outputChannel);
+
     outputChannel.appendLine('✓ MCP server started successfully');
+    outputChannel.appendLine('✓ Command palette commands now available');
 }
 
 /**
@@ -564,7 +589,7 @@ async function startMCPCommand(): Promise<void> {
 /**
  * Command: Run natural language query
  */
-async function runNLQueryCommand(context: vscode.ExtensionContext): Promise<void> {
+async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<void> {
     try {
         // Ensure MCP is running
         if (!mcpProcess) {
@@ -575,18 +600,19 @@ async function runNLQueryCommand(context: vscode.ExtensionContext): Promise<void
             throw new Error('MCP client not initialized');
         }
 
-        // Prompt for natural language query
-        const query = await vscode.window.showInputBox({
-            prompt: 'Enter your telemetry query in natural language',
-            placeHolder: 'e.g., Show me all errors in the last 24 hours',
-            ignoreFocusOut: true
+        // Prompt for KQL query
+        const kqlQuery = await vscode.window.showInputBox({
+            prompt: 'Enter your KQL query',
+            placeHolder: 'e.g., traces | where timestamp >= ago(1d) | where customDimensions.eventId == "RT0005" | take 100',
+            ignoreFocusOut: true,
+            value: '' // Empty default so users can paste
         });
 
-        if (!query) {
+        if (!kqlQuery) {
             return;
         }
 
-        outputChannel.appendLine(`Executing query: ${query}`);
+        outputChannel.appendLine(`Executing KQL query: ${kqlQuery}`);
 
         // Show progress
         await vscode.window.withProgress(
@@ -606,10 +632,166 @@ async function runNLQueryCommand(context: vscode.ExtensionContext): Promise<void
                         outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
 
                         const result = await mcpClient!.queryTelemetry({
-                            query,
-                            queryType: 'natural',
-                            useContext: true,
-                            includeExternal: true
+                            query: kqlQuery,
+                            queryType: 'kql',
+                            useContext: false,
+                            includeExternal: false
+                        });
+
+                        // Show results in webview
+                        const webview = new ResultsWebview(context, outputChannel);
+                        webview.show(result);
+
+                        outputChannel.appendLine('✓ Query executed successfully');
+                        return;
+                    } catch (err: any) {
+                        lastError = err;
+                        outputChannel.appendLine(`Attempt ${attempt} failed: ${err.message}`);
+
+                        if (attempt < maxRetries) {
+                            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                        }
+                    }
+                }
+
+                throw lastError || new Error('Query failed after retries');
+            }
+        );
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Query failed: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Run KQL from active document
+ */
+async function runKQLFromDocumentCommand(context: vscode.ExtensionContext): Promise<void> {
+    try {
+        // Ensure MCP is running
+        if (!mcpProcess) {
+            await startMCP();
+        }
+
+        if (!mcpClient) {
+            throw new Error('MCP client not initialized');
+        }
+
+        // Get active editor
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage('No active text editor. Please open a file containing KQL query.');
+            return;
+        }
+
+        // Get selection or entire document
+        const selection = editor.selection;
+        const kqlQuery = selection.isEmpty
+            ? editor.document.getText()
+            : editor.document.getText(selection);
+
+        if (!kqlQuery.trim()) {
+            vscode.window.showWarningMessage('Document or selection is empty. Please select KQL text to execute.');
+            return;
+        }
+
+        outputChannel.appendLine(`Executing KQL from document: ${editor.document.fileName}`);
+        outputChannel.appendLine(`Query: ${kqlQuery.substring(0, 100)}${kqlQuery.length > 100 ? '...' : ''}`);
+
+        // Show progress
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Querying telemetry...',
+                cancellable: false
+            },
+            async () => {
+                const config = vscode.workspace.getConfiguration('bctb');
+                const maxRetries = config.get<number>('agent.maxRetries', 3);
+
+                let lastError: Error | null = null;
+
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
+
+                        const result = await mcpClient!.queryTelemetry({
+                            query: kqlQuery,
+                            queryType: 'kql',
+                            useContext: false,
+                            includeExternal: false
+                        });
+
+                        // Show results in webview
+                        const webview = new ResultsWebview(context, outputChannel);
+                        webview.show(result);
+
+                        outputChannel.appendLine('✓ Query executed successfully');
+                        return;
+                    } catch (err: any) {
+                        lastError = err;
+                        outputChannel.appendLine(`Attempt ${attempt} failed: ${err.message}`);
+
+                        if (attempt < maxRetries) {
+                            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                        }
+                    }
+                }
+
+                throw lastError || new Error('Query failed after retries');
+            }
+        );
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Query failed: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Run KQL from CodeLens click
+ */
+async function runKQLFromCodeLensCommand(
+    context: vscode.ExtensionContext,
+    uri: vscode.Uri,
+    startLine: number,
+    endLine: number,
+    queryText: string
+): Promise<void> {
+    try {
+        // Ensure MCP is running
+        if (!mcpProcess) {
+            await startMCP();
+        }
+
+        if (!mcpClient) {
+            throw new Error('MCP client not initialized');
+        }
+
+        outputChannel.appendLine(`Executing KQL query from line ${startLine + 1}-${endLine + 1}`);
+        outputChannel.appendLine(`Query: ${queryText.substring(0, 100)}${queryText.length > 100 ? '...' : ''}`);
+
+        // Show progress
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Querying telemetry...',
+                cancellable: false
+            },
+            async () => {
+                const config = vscode.workspace.getConfiguration('bctb');
+                const maxRetries = config.get<number>('agent.maxRetries', 3);
+
+                let lastError: Error | null = null;
+
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
+
+                        const result = await mcpClient!.queryTelemetry({
+                            query: queryText,
+                            queryType: 'kql',
+                            useContext: false,
+                            includeExternal: false
                         });
 
                         // Show results in webview
@@ -697,15 +879,35 @@ async function saveQueryCommand(): Promise<void> {
             console.warn('Failed to fetch categories:', err);
         }
 
+        // Detect if query is customer-specific (filters on tenant or company)
+        const lowerKql = kql.toLowerCase();
+        const isCustomerQuery = lowerKql.includes('aadtenantid') ||
+            lowerKql.includes('companyname') ||
+            lowerKql.includes('company_name');
+
+        let companyName: string | undefined;
+        if (isCustomerQuery) {
+            // Prompt for company name
+            companyName = await vscode.window.showInputBox({
+                prompt: 'Company name (query filters on customer/tenant)',
+                placeHolder: 'e.g., Contoso Ltd, Fabrikam Inc',
+                ignoreFocusOut: true
+            });
+
+            if (!companyName) {
+                return; // Cancel if no company name provided for customer query
+            }
+        }
+
         // Prompt for category with suggestions
         const category = await vscode.window.showInputBox({
-            prompt: 'Category (optional, subfolder name)',
+            prompt: isCustomerQuery ? 'Category (optional, subfolder within company)' : 'Category (optional, subfolder name)',
             placeHolder: categories.length > 0 ? `e.g., ${categories.join(', ')}` : 'e.g., Monitoring, Analysis, Performance',
             ignoreFocusOut: true
         });
 
         // Save query via MCP
-        const result = await mcpClient.saveQuery({ name, kql, purpose, useCase, tags, category });
+        const result = await mcpClient.saveQuery({ name, kql, purpose, useCase, tags, category, companyName });
 
         vscode.window.showInformationMessage(`Query saved: ${result.filePath}`);
         outputChannel.appendLine(`✓ Query saved to ${result.filePath}`);
@@ -737,5 +939,83 @@ async function openQueriesFolderCommand(): Promise<void> {
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to open queries folder: ${err.message}`);
         outputChannel.show();
+    }
+}
+
+/**
+ * CodeLens provider for KQL files
+ * Shows "▶ Run Query" link above each query
+ */
+class KQLCodeLensProvider implements vscode.CodeLensProvider {
+    private context: vscode.ExtensionContext;
+
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
+    }
+
+    provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]> {
+        // Only provide CodeLenses for .kql files
+        if (document.languageId !== 'kql' && !document.fileName.endsWith('.kql')) {
+            return [];
+        }
+
+        const codeLenses: vscode.CodeLens[] = [];
+        const text = document.getText();
+        const lines = text.split('\n'); let queryStartLine = -1;
+        let inQuery = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            // Skip empty lines and comments
+            if (line.length === 0 || line.startsWith('//')) {
+                continue;
+            }
+
+            // If we're not in a query and this line has content, it's the start of a query
+            if (!inQuery && line.length > 0) {
+                queryStartLine = i;
+                inQuery = true;
+            }
+
+            // Check if this line ends a query (contains semicolon or is the last line with content)
+            const isQueryEnd = line.includes(';') || (i === lines.length - 1 && inQuery);
+
+            if (inQuery && isQueryEnd) {
+                // Create a CodeLens at the start of the query
+                const range = new vscode.Range(queryStartLine, 0, queryStartLine, 0);
+
+                // Extract the query text from queryStartLine to current line
+                const queryText = lines.slice(queryStartLine, i + 1).join('\n').trim();
+
+                const codeLens = new vscode.CodeLens(range, {
+                    title: '▶ Run Query',
+                    command: 'bctb.runKQLFromCodeLens',
+                    arguments: [document.uri, queryStartLine, i, queryText]
+                });
+
+                codeLenses.push(codeLens);
+
+                // Reset for next query
+                inQuery = false;
+                queryStartLine = -1;
+            }
+        }
+
+        // If still in a query at the end (no semicolon), add CodeLens for the whole remaining query
+        if (inQuery && queryStartLine >= 0) {
+            const range = new vscode.Range(queryStartLine, 0, queryStartLine, 0);
+            const queryText = lines.slice(queryStartLine).join('\n').trim();
+
+            const codeLens = new vscode.CodeLens(range, {
+                title: '▶ Run Query',
+                command: 'bctb.runKQLFromCodeLens',
+                arguments: [document.uri, queryStartLine, lines.length - 1, queryText]
+            });
+
+            codeLenses.push(codeLens);
+        }
+
+        return codeLenses;
     }
 }

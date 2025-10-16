@@ -29,14 +29,31 @@
         "url": "https://github.com/waldo1001/waldo.BCTelemetryBuddy.git"
     },
     "contributes": {
+        "languages": [
+            {
+                "id": "kql",
+                "aliases": [
+                    "Kusto Query Language",
+                    "KQL"
+                ],
+                "extensions": [
+                    ".kql"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
         "commands": [
             {
                 "command": "bctb.startMCP",
                 "title": "BC Telemetry Buddy: Start MCP Server"
             },
             {
-                "command": "bctb.runNLQuery",
-                "title": "BC Telemetry Buddy: Run Natural Language Query"
+                "command": "bctb.runKQLQuery",
+                "title": "BC Telemetry Buddy: Run KQL Query"
+            },
+            {
+                "command": "bctb.runKQLFromDocument",
+                "title": "BC Telemetry Buddy: Run KQL From Document"
             },
             {
                 "command": "bctb.saveQuery",
@@ -152,6 +169,10 @@
                         "category": {
                             "type": "string",
                             "description": "Category/folder for organization"
+                        },
+                        "companyName": {
+                            "type": "string",
+                            "description": "Company name if query is customer-specific (filters on aadTenantId or companyName). Query will be saved under queries/Companies/{companyName}/{category}/"
                         }
                     },
                     "required": [

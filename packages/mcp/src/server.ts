@@ -173,7 +173,8 @@ export class MCPServer {
                     req.body.purpose,
                     req.body.useCase,
                     req.body.tags,
-                    req.body.category
+                    req.body.category,
+                    req.body.companyName
                 );
                 res.json({ filePath });
             } catch (error: any) {
@@ -450,12 +451,20 @@ export class MCPServer {
 
             res.json(response);
         } catch (error: any) {
-            // Error response
+            // Error response - ensure we have a meaningful message
+            const errorMessage = error.message || error.toString() || 'Internal error';
+
+            console.error(`[MCP] RPC Error in ${rpcRequest.method}:`, errorMessage);
+            if (error.stack) {
+                console.error('[MCP] Stack:', error.stack);
+            }
+
             const errorResponse: JSONRPCResponse = {
                 jsonrpc: '2.0',
                 error: {
                     code: -32603,
-                    message: error.message || 'Internal error'
+                    message: errorMessage,
+                    data: error.stack ? { stack: error.stack } : undefined
                 },
                 id: rpcRequest.id
             };
@@ -1380,7 +1389,8 @@ traces
                         params.purpose,
                         params.useCase,
                         params.tags,
-                        params.category
+                        params.category,
+                        params.companyName
                     );
                     result = { filePath };
                     break;
@@ -1493,7 +1503,8 @@ traces
                     params.purpose,
                     params.useCase,
                     params.tags,
-                    params.category
+                    params.category,
+                    params.companyName
                 );
                 return { filePath };
 
@@ -1535,9 +1546,13 @@ traces
 }
 
 // Detect mode: stdio (VSCode MCP) vs HTTP (legacy MCPClient)
-// If stdin is a TTY, it's interactive/HTTP mode
+// Can be explicitly set via BCTB_MODE env var (http or stdio)
+// Otherwise, if stdin is a TTY, it's interactive/HTTP mode
 // If stdin is a pipe, it's stdio mode
-const isStdioMode = !process.stdin.isTTY;
+const forcedMode = process.env.BCTB_MODE?.toLowerCase();
+const isStdioMode = forcedMode === 'stdio' ? true
+    : forcedMode === 'http' ? false
+        : !process.stdin.isTTY;
 
 // If stdio mode, redirect console output BEFORE creating server instance
 // to prevent constructor logs from breaking JSON-RPC on stdout

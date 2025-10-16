@@ -538,6 +538,63 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ### Entry #113 — 2025-10-16 12:05
 > "When talking about 'customers', BC Telemetry doesn't work with names, but TenantIds. So any question about a customername, should be mapped to a TenantId. [Provided KQL query for mapping companyName to aadTenantId]. Give the option to the LLM to actually do that - in fact, encourage the LLM to convert customernames, and always filter for aadTenantId after mapping it with the above query."
 
+---
+
+### Entry #114 — 2025-10-16 12:10
+> "I tried to copy/paste a kql in the 'Run Natural Language query' .. but that didn't work. I would remove that command, and replace it with a 'run KQL query' .. and pretty much the same outcome in the webview"
+
+---
+
+### Entry #115 — 2025-10-16 12:15
+> "The user experience of running a kql query is bad. Would we be able to make it possible to run a KQL query from an active document? Also, running a kql query from the new command, fails: [error logs showing query_telemetry sending wrong parameters]"
+
+---
+
+### Entry #116 — 2025-10-16 12:20
+> "Investigate and fix the query execution error (generic 'Error: Error' message) and add command to run KQL from active document to improve UX."
+
+---
+
+### Entry #117 — 2025-10-16 12:25
+> "Good start, but I imagine a 'run' link above any query in a KQL document. Could you do that?"
+
+---
+
+### Entry #118 — 2025-10-16 12:30
+> "I don't see the codelens to run the query from within the document. Enable it by default if it is disabled. Also, when I run a query from the 'run from document', I get the same [Axios Error (status unknown): Error]."
+
+---
+
+### Entry #119 — 2025-10-16 12:35
+> "Not good: [Error logs showing ECONNREFUSED - MCP server not running, auto-start failed with 'MCP server failed to start within timeout period']"
+
+---
+
+### Entry #120 — 2025-10-16 12:47
+> "[AI-diagnosed issue] MCP server mode detection failed - child_process.spawn creates pipes for stdin/stdout/stderr by default, so process.stdin.isTTY is false in spawned MCP process, causing it to start in stdio mode instead of HTTP mode. Extension then tries to communicate via HTTP port 52345 but server is listening on stdin/stdout."
+
+---
+
+### Entry #121 — 2025-10-16 13:05
+> "the command 'Run KQL from Document' works. But I still don't see the codelens."
+
+---
+
+### Entry #122 — 2025-10-16 13:15
+> "I enabled it in settings.json, and BAM - works! BUT.. I'm seeing 'Run Query' twice now..."
+
+---
+
+### Entry #123 — 2025-10-16 13:25
+> "In terms for folder structuring. From the moment we're talking 'customer' (so basically, when saving a query that filters on a tenantid or companyname), the root folder should be 'Companies' and then the subfolder the companyname (customername), and then kind of the same structure as the generic queries (that don't filter on any tenant or company)"
+
+---
+
+### Entry #124 — 2025-10-16 15:25
+> "I get: Error: listen EADDRINUSE: address already in use :::52345 [...] Can't you make that process a bit more stable? If the port already is in use, then probably the server is already started by another instance??"
+
+---
+
 
 ```
 
