@@ -424,7 +424,7 @@ function hasWorkspaceSettings(): boolean {
 async function checkAndShowSetupWizard(context: vscode.ExtensionContext): Promise<void> {
     // Check if user has dismissed the wizard before
     const hasSeenWizard = context.globalState.get<boolean>('bctb.hasSeenSetupWizard', false);
-    
+
     // Check if workspace is configured
     const isConfigured = hasWorkspaceSettings();
 
@@ -433,10 +433,10 @@ async function checkAndShowSetupWizard(context: vscode.ExtensionContext): Promis
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders && workspaceFolders.length > 0) {
             outputChannel.appendLine('📋 First run detected - showing setup wizard...');
-            
+
             // Mark as seen so we don't show it again
             await context.globalState.update('bctb.hasSeenSetupWizard', true);
-            
+
             // Show wizard after a short delay to let activation complete
             setTimeout(() => {
                 setupWizard?.show();

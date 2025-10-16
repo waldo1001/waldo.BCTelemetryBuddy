@@ -680,3 +680,80 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "The Steps to set up everything, I'd like to have some kind of 'Setup Wizard' (could be some kind of built in webpage) that explains what needs to be done, has a validation step what it still be done, and has links to help setting up all the bits and pieces."
 
 ---
+
+### Entry #141 — 2025-10-16 19:25
+> "make the test succeed"
+
+---
+
+### Entry #142 — 2025-10-16 19:30
+> "Wizard looks good - but if there is already a setup, then I'd expect those values to be filled in automagically"
+
+---
+
+### Entry #143 — 2025-10-16 19:35
+> "log the changes please"
+
+---
+
+### Entry #144 — 2025-10-16 19:40
+> "The setup wizard does not show what I already have in the settings.json"
+
+---
+
+### Entry #145 — 2025-10-16 19:45
+> "Please keep logging the prompts. It's in your instructions!"
+
+---
+
+### Entry #146 — 2025-10-16 19:50
+> "I still don't get the setting prefilled! [User showed Azure Configuration page with empty fields for Tenant ID, Tenant Name, Application Insights ID, Kusto Cluster URL, Kusto Database, Kusto Cluster Name]"
+
+---
+
+### Entry #147 — 2025-10-16 19:55
+> "How stupid is this. I'm testing while running the extension, not in this workspace; In that test-workspace, I do have settings: C:\Temp\bctb-test-workspace\.vscode\settings.json"
+
+---
+
+### Entry #148 — 2025-10-16 20:00
+> "content of the settings file in the test-workspace: [User provided settings.json showing old namespace 'bctb.mcp.*' instead of current 'bcTelemetryBuddy.*']"
+
+---
+
+### Entry #149 — 2025-10-16 20:05
+### Entry #149 — 2025-10-16 20:05
+> "I see not all files were updated in terms of logging. always do that."
+
+---
+
+### Entry #150 — 2025-10-16 20:10
+> "In Step 2 of the wizard, I'm getting weird fieldnames: doesn't make sense. I expect: connectionName (which is the name of the connection, where are you connecting to?), tenantId (), applicationInsights.appId (explain how to get it), kusto.clusterUrl (give the example of app insights, which is valid for BC: https://ade.applicationinsights.io/subscriptions/<subscription-id>). That's it - nothing more."
+
+---
+
+### Entry #151 — 2025-10-16 20:15
+> "You and your logging - you're so bad in it. You added the promptlog in the beginnen of the file, just after entry 4. Why??? Add it in the end! Plus - you know I don't like you using powershell."
+
+---
+
+### Entry #152 — 2025-10-16 20:20
+> "when I do 'validate azure cli', I get a green box 'Azure CLI authenticated'. Which is good. But add a few more details: the tenant, directory, user, subscription - all that is interesting info."
+
+---
+
+### Entry #153 — 2025-10-16 20:25
+> "When I 'Test Connection', I get a red box: 'Missing App Insights ID or Kusto URL'. Thats not correct, because I know I CAN connect, the chat is working. Also - the output (BC Telemetry Buddy) doesn't give me any details when trying the 'Test Connection'."
+
+---
+
+### Entry #154 — 2025-10-16 20:28
+> "the setups broken, when I click 'next', nothing happens (stuck on first tab)"
+
+### Entry #155 — 2025-10-16 20:35
+> "Same.  The 'Next' on the first tab doesn't do anything."
+
+### Entry #156 — 2025-10-16 20:40
+> "When I press 'Next', I don't see anything happening in the debug console."
+
+---

@@ -72,7 +72,7 @@ describe('SetupWizardProvider Tests', () => {
     test('should show wizard webview', async () => {
         // Show the wizard
         wizard.show();
-        
+
         // Give it a moment to create the webview
         await new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -88,7 +88,7 @@ describe('SetupWizardProvider Tests', () => {
 
     test('should dispose cleanly', async () => {
         wizard.show();
-        
+
         await new Promise<void>((resolve) => {
             setTimeout(() => {
                 expect(() => {
@@ -103,7 +103,7 @@ describe('SetupWizardProvider Tests', () => {
         wizard.show();
         wizard.show();
         wizard.show();
-        
+
         // If implementation is correct, this should just reveal existing panel
         // Test passes if no errors are thrown
         expect(true).toBe(true);
@@ -127,14 +127,14 @@ describe('Setup Wizard Configuration Tests', () => {
     test('should be able to update workspace configuration', async () => {
         const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
         const target = vscode.ConfigurationTarget.Workspace;
-        
+
         // Mock will return empty string by default
         const originalValue = config.get<string>('tenant.name');
         expect(originalValue).toBe('');
-        
+
         // Update config (mock will resolve successfully)
         await expect(config.update('tenant.name', 'Test Tenant', target)).resolves.toBeUndefined();
-        
+
         // Verify update was called
         expect(config.update).toHaveBeenCalledWith('tenant.name', 'Test Tenant', target);
     });
@@ -145,7 +145,7 @@ describe('Setup Wizard Validation Tests', () => {
         // Valid GUID format
         const validTenantId = '12345678-1234-1234-1234-123456789abc';
         expect(validTenantId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-        
+
         // Invalid formats
         const invalidTenantId = 'not-a-guid';
         expect(invalidTenantId).not.toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
@@ -155,7 +155,7 @@ describe('Setup Wizard Validation Tests', () => {
         // Valid Kusto URL
         const validKustoUrl = 'https://yourcluster.westeurope.kusto.windows.net';
         expect(validKustoUrl).toMatch(/^https:\/\/.+\.kusto\.windows\.net$/i);
-        
+
         // Invalid formats
         const invalidKustoUrl = 'http://example.com';
         expect(invalidKustoUrl).not.toMatch(/^https:\/\/.+\.kusto\.windows\.net$/i);
@@ -163,11 +163,11 @@ describe('Setup Wizard Validation Tests', () => {
 
     test('should validate auth flow options', () => {
         const validAuthFlows = ['azure_cli', 'device_code', 'client_credentials'];
-        
+
         validAuthFlows.forEach(flow => {
             expect(['azure_cli', 'device_code', 'client_credentials']).toContain(flow);
         });
-        
+
         const invalidFlow = 'invalid_flow';
         expect(['azure_cli', 'device_code', 'client_credentials']).not.toContain(invalidFlow);
     });
@@ -176,7 +176,7 @@ describe('Setup Wizard Validation Tests', () => {
         const validTTL = 3600;
         expect(validTTL).toBeGreaterThan(0);
         expect(Number.isInteger(validTTL)).toBe(true);
-        
+
         const invalidTTL = -100;
         expect(invalidTTL).toBeLessThanOrEqual(0);
     });

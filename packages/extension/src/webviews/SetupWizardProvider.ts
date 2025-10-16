@@ -11,7 +11,7 @@ export class SetupWizardProvider {
     private _panel: vscode.WebviewPanel | undefined;
     private _disposables: vscode.Disposable[] = [];
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    constructor(private readonly _extensionUri: vscode.Uri) { }
 
     public show() {
         const column = vscode.window.activeTextEditor
@@ -97,11 +97,29 @@ export class SetupWizardProvider {
                 // Check if Azure CLI is installed
                 try {
                     await execAsync('az --version');
-                    
-                    // Check if logged in
+
+                    // Check if logged in and get account details
                     const { stdout } = await execAsync('az account show');
-                    isValid = stdout.length > 0;
-                    message = isValid ? 'Azure CLI authenticated' : 'Not logged in to Azure CLI';
+                    if (stdout.length > 0) {
+                        isValid = true;
+
+                        // Parse the JSON output to get account details
+                        try {
+                            const accountInfo = JSON.parse(stdout);
+                            const user = accountInfo.user?.name || 'Unknown';
+                            const subscription = accountInfo.name || 'Unknown';
+                            const tenantId = accountInfo.tenantId || 'Unknown';
+                            const tenantDisplayName = accountInfo.tenantDisplayName || accountInfo.tenantId || 'Unknown';
+
+                            // Format with newlines for multi-line display
+                            message = `Azure CLI authenticated\n\nUser: ${user}\nSubscription: ${subscription}\nTenant: ${tenantDisplayName}\nTenant ID: ${tenantId}`;
+                        } catch (parseError) {
+                            // If JSON parsing fails, just show basic message
+                            message = 'Azure CLI authenticated';
+                        }
+                    } else {
+                        message = 'Not logged in to Azure CLI';
+                    }
                 } catch (error: any) {
                     message = error.message.includes('az')
                         ? 'Azure CLI not installed'
@@ -138,9 +156,9 @@ export class SetupWizardProvider {
     }
 
     private async _testConnection(): Promise<void> {
-        const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
-        const appInsightsId = config.get<string>('appInsights.id');
-        const kustoUrl = config.get<string>('kusto.url');
+        const config = vscode.workspace.getConfiguration('bctb.mcp');
+        const appInsightsId = config.get<string>('applicationInsights.appId');
+        const kustoUrl = config.get<string>('kusto.clusterUrl');
 
         let success = false;
         let message = '';
@@ -167,54 +185,36 @@ export class SetupWizardProvider {
 
     private async _saveSettings(settings: any): Promise<void> {
         try {
-            const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
+            const config = vscode.workspace.getConfiguration('bctb.mcp');
             const target = vscode.ConfigurationTarget.Workspace;
 
-            // Save tenant settings
-            if (settings.tenantId) {
-                await config.update('tenant.id', settings.tenantId, target);
-            }
+            // Save connection name and tenant settings
             if (settings.tenantName) {
-                await config.update('tenant.name', settings.tenantName, target);
+                await config.update('connectionName', settings.tenantName, target);
+            }
+            if (settings.tenantId) {
+                await config.update('tenantId', settings.tenantId, target);
             }
 
             // Save App Insights settings
             if (settings.appInsightsId) {
-                await config.update('appInsights.id', settings.appInsightsId, target);
+                await config.update('applicationInsights.appId', settings.appInsightsId, target);
             }
 
             // Save Kusto settings
             if (settings.kustoUrl) {
-                await config.update('kusto.url', settings.kustoUrl, target);
-            }
-            if (settings.kustoDatabase) {
-                await config.update('kusto.database', settings.kustoDatabase, target);
-            }
-            if (settings.kustoCluster) {
-                await config.update('kusto.cluster', settings.kustoCluster, target);
+                await config.update('kusto.clusterUrl', settings.kustoUrl, target);
             }
 
             // Save auth settings
             if (settings.authFlow) {
-                await config.update('auth.flow', settings.authFlow, target);
+                await config.update('authFlow', settings.authFlow, target);
             }
             if (settings.clientId) {
-                await config.update('auth.clientId', settings.clientId, target);
+                await config.update('clientId', settings.clientId, target);
             }
-            if (settings.clientSecret) {
-                await config.update('auth.clientSecret', settings.clientSecret, target);
-            }
-
-            // Save optional settings
-            if (settings.queriesFolder) {
-                await config.update('queries.folder', settings.queriesFolder, target);
-            }
-            if (settings.cacheTTL !== undefined) {
-                await config.update('cache.ttl', settings.cacheTTL, target);
-            }
-            if (settings.enableCodeLens !== undefined) {
-                await config.update('codelens.enable', settings.enableCodeLens, target);
-            }
+            // Note: clientSecret is not saved to settings for security reasons
+            // It would need to be stored in a secure credential store instead
 
             this._panel?.webview.postMessage({
                 type: 'settingsSaved',
@@ -235,21 +235,16 @@ export class SetupWizardProvider {
     }
 
     private async _sendCurrentSettings(): Promise<void> {
-        const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
+        const config = vscode.workspace.getConfiguration('bctb.mcp');
 
         const settings = {
-            tenantId: config.get<string>('tenant.id') || '',
-            tenantName: config.get<string>('tenant.name') || '',
-            appInsightsId: config.get<string>('appInsights.id') || '',
-            kustoUrl: config.get<string>('kusto.url') || '',
-            kustoDatabase: config.get<string>('kusto.database') || '',
-            kustoCluster: config.get<string>('kusto.cluster') || '',
-            authFlow: config.get<string>('auth.flow') || 'azure_cli',
-            clientId: config.get<string>('auth.clientId') || '',
-            clientSecret: config.get<string>('auth.clientSecret') || '',
-            queriesFolder: config.get<string>('queries.folder') || '',
-            cacheTTL: config.get<number>('cache.ttl') || 3600,
-            enableCodeLens: config.get<boolean>('codelens.enable') ?? true
+            tenantName: config.get<string>('connectionName') || '',
+            tenantId: config.get<string>('tenantId') || '',
+            appInsightsId: config.get<string>('applicationInsights.appId') || '',
+            kustoUrl: config.get<string>('kusto.clusterUrl') || '',
+            authFlow: config.get<string>('authFlow') || 'azure_cli',
+            clientId: config.get<string>('clientId') || '',
+            clientSecret: '' // Not stored in settings for security
         };
 
         this._panel?.webview.postMessage({
@@ -389,9 +384,11 @@ export class SetupWizardProvider {
         .validation-status {
             display: inline-block;
             margin-left: 10px;
-            padding: 4px 8px;
+            padding: 8px 12px;
             border-radius: 2px;
             font-size: 0.9em;
+            max-width: 500px;
+            line-height: 1.5;
         }
         .validation-status.success {
             background: var(--vscode-terminal-ansiGreen);
@@ -460,10 +457,6 @@ export class SetupWizardProvider {
             </li>
             <li class="wizard-step" data-step="5">
                 <div class="step-number">5</div>
-                <div>Optional</div>
-            </li>
-            <li class="wizard-step" data-step="6">
-                <div class="step-number">6</div>
                 <div>Complete</div>
             </li>
         </ul>
@@ -497,7 +490,13 @@ export class SetupWizardProvider {
         <!-- Step 2: Azure Configuration -->
         <div class="step-content" data-step="2">
             <h2>Azure Configuration</h2>
-            <p>Configure your Azure resources for telemetry analysis.</p>
+            <p>Configure your connection to Business Central telemetry.</p>
+
+            <div class="form-group">
+                <label for="tenantName">Connection Name *</label>
+                <input type="text" id="tenantName" placeholder="e.g., Contoso Production">
+                <div class="help-text">Friendly name identifying this complete connection (tenant + App Insights endpoint)</div>
+            </div>
 
             <div class="form-group">
                 <label for="tenantId">Tenant ID *</label>
@@ -506,39 +505,22 @@ export class SetupWizardProvider {
             </div>
 
             <div class="form-group">
-                <label for="tenantName">Tenant Name (Optional)</label>
-                <input type="text" id="tenantName" placeholder="e.g., Contoso">
-                <div class="help-text">Friendly name for your tenant (for documentation purposes)</div>
-            </div>
-
-            <div class="form-group">
-                <label for="appInsightsId">Application Insights ID *</label>
+                <label for="appInsightsId">Application Insights App ID *</label>
                 <input type="text" id="appInsightsId" placeholder="e.g., 12345678-1234-1234-1234-123456789abc">
-                <div class="help-text">Your App Insights resource ID. Find it in Azure Portal → Application Insights → Properties</div>
+                <div class="help-text">Your App Insights Application ID (not resource ID). Find it in Azure Portal → Application Insights → API Access → Application ID</div>
             </div>
 
             <div class="form-group">
                 <label for="kustoUrl">Kusto Cluster URL *</label>
-                <input type="text" id="kustoUrl" placeholder="e.g., https://yourcluster.westeurope.kusto.windows.net">
-                <div class="help-text">Your Azure Data Explorer cluster URL</div>
-            </div>
-
-            <div class="form-group">
-                <label for="kustoDatabase">Kusto Database</label>
-                <input type="text" id="kustoDatabase" placeholder="e.g., TelemetryData">
-                <div class="help-text">Database name in your Kusto cluster (optional if default)</div>
-            </div>
-
-            <div class="form-group">
-                <label for="kustoCluster">Kusto Cluster Name</label>
-                <input type="text" id="kustoCluster" placeholder="e.g., yourcluster">
-                <div class="help-text">Cluster name (optional, extracted from URL if not provided)</div>
+                <input type="text" id="kustoUrl" placeholder="https://ade.applicationinsights.io/subscriptions/<subscription-id>">
+                <div class="help-text">For BC telemetry in App Insights, use: https://ade.applicationinsights.io/subscriptions/&lt;your-subscription-id&gt;</div>
             </div>
 
             <div class="links">
                 <h4>📚 Need Help?</h4>
                 <a href="#" data-url="https://portal.azure.com">Open Azure Portal</a>
                 <a href="#" data-url="https://learn.microsoft.com/en-us/azure/azure-monitor/app/create-workspace-resource">Create Application Insights</a>
+                <a href="#" data-url="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview">BC Telemetry Setup Guide</a>
             </div>
 
             <div class="button-group">
@@ -639,43 +621,15 @@ export class SetupWizardProvider {
             </div>
         </div>
 
-        <!-- Step 5: Optional Features -->
+        <!-- Step 5: Complete -->
         <div class="step-content" data-step="5">
-            <h2>Optional Features</h2>
-            <p>Customize your BC Telemetry Buddy experience.</p>
-
-            <div class="form-group">
-                <label for="queriesFolder">Queries Folder</label>
-                <input type="text" id="queriesFolder" placeholder="e.g., .bc-telemetry/queries">
-                <div class="help-text">Folder to store your saved KQL queries (relative to workspace root)</div>
-            </div>
-
-            <div class="form-group">
-                <label for="cacheTTL">Cache TTL (seconds)</label>
-                <input type="number" id="cacheTTL" value="3600" min="0">
-                <div class="help-text">How long to cache query results (default: 3600 seconds / 1 hour)</div>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="enableCodeLens" checked>
-                <label for="enableCodeLens">Enable CodeLens for .kql files</label>
-            </div>
-            <div class="help-text" style="margin-left: 30px;">Shows "Run Query" and "Save Query" buttons above KQL queries</div>
-
-            <div class="button-group">
-                <button class="secondary" onclick="prevStep()">← Back</button>
-                <button onclick="nextStep()">Next →</button>
-            </div>
-        </div>
-
-        <!-- Step 6: Complete -->
-        <div class="step-content" data-step="6">
             <h2>🎉 Setup Complete!</h2>
             <p>Your BC Telemetry Buddy is ready to use.</p>
 
             <div class="links">
                 <h4>✅ Configuration Summary</h4>
                 <p>Your settings will be saved to <code>.vscode/settings.json</code> in your workspace.</p>
+                <p><em>For optional features (queries folder, cache TTL, CodeLens), see the README.</em></p>
             </div>
 
             <button onclick="saveSettings()">💾 Save Configuration</button>
@@ -684,11 +638,13 @@ export class SetupWizardProvider {
             <div class="links" style="margin-top: 30px;">
                 <h4>🚀 Next Steps:</h4>
                 <ul>
-                    <li>Open the Command Palette (Ctrl+Shift+P / Cmd+Shift+P)</li>
-                    <li>Try: "BC Telemetry Buddy: Query Telemetry with Copilot"</li>
-                    <li>Or ask Copilot: "Show me all errors from BC in the last 24 hours"</li>
+                    <li>Chat with GitHub Copilot and ask about your BC telemetry</li>
+                    <li>Example: "@workspace Show me all errors from BC in the last 24 hours"</li>
+                    <li>Or use Command Palette: "BC Telemetry Buddy: Run KQL Query"</li>
+                    <li>Create and save your own KQL queries in <code>.kql</code> files</li>
                 </ul>
-                <a href="#" data-url="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md">📖 Read the User Guide</a>
+                <p><strong>💡 Tip:</strong> The MCP server will automatically start when you chat with Copilot!</p>
+                <a href="#" data-url="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/README.md">📖 Read the README</a>
             </div>
 
             <div class="button-group">
@@ -701,7 +657,7 @@ export class SetupWizardProvider {
     <script>
         const vscode = acquireVsCodeApi();
         let currentStep = 1;
-        const totalSteps = 6;
+        const totalSteps = 5;
 
         // Request current settings on load
         window.addEventListener('load', () => {
@@ -728,19 +684,14 @@ export class SetupWizardProvider {
         });
 
         function populateSettings(settings) {
-            document.getElementById('tenantId').value = settings.tenantId || '';
             document.getElementById('tenantName').value = settings.tenantName || '';
+            document.getElementById('tenantId').value = settings.tenantId || '';
             document.getElementById('appInsightsId').value = settings.appInsightsId || '';
             document.getElementById('kustoUrl').value = settings.kustoUrl || '';
-            document.getElementById('kustoDatabase').value = settings.kustoDatabase || '';
-            document.getElementById('kustoCluster').value = settings.kustoCluster || '';
             document.getElementById('authFlow').value = settings.authFlow || 'azure_cli';
             document.getElementById('deviceCodeClientId').value = settings.clientId || '';
             document.getElementById('spClientId').value = settings.clientId || '';
             document.getElementById('clientSecret').value = settings.clientSecret || '';
-            document.getElementById('queriesFolder').value = settings.queriesFolder || '';
-            document.getElementById('cacheTTL').value = settings.cacheTTL || 3600;
-            document.getElementById('enableCodeLens').checked = settings.enableCodeLens !== false;
             
             updateAuthFields();
         }
@@ -784,7 +735,7 @@ export class SetupWizardProvider {
         function showAuthValidation(message) {
             const span = document.getElementById('authValidation');
             span.className = \`validation-status \${message.isValid ? 'success' : 'error'}\`;
-            span.textContent = message.message;
+            span.innerHTML = message.message.replace(/\\n/g, '<br>');
         }
 
         function testConnection() {
@@ -804,22 +755,17 @@ export class SetupWizardProvider {
         function saveSettings() {
             const authFlow = document.getElementById('authFlow').value;
             const settings = {
-                tenantId: document.getElementById('tenantId').value,
                 tenantName: document.getElementById('tenantName').value,
+                tenantId: document.getElementById('tenantId').value,
                 appInsightsId: document.getElementById('appInsightsId').value,
                 kustoUrl: document.getElementById('kustoUrl').value,
-                kustoDatabase: document.getElementById('kustoDatabase').value,
-                kustoCluster: document.getElementById('kustoCluster').value,
                 authFlow: authFlow,
                 clientId: authFlow === 'device_code' 
                     ? document.getElementById('deviceCodeClientId').value 
                     : document.getElementById('spClientId').value,
                 clientSecret: authFlow === 'client_credentials' 
                     ? document.getElementById('clientSecret').value 
-                    : '',
-                queriesFolder: document.getElementById('queriesFolder').value,
-                cacheTTL: parseInt(document.getElementById('cacheTTL').value),
-                enableCodeLens: document.getElementById('enableCodeLens').checked
+                    : ''
             };
 
             vscode.postMessage({ type: 'saveSettings', settings });
