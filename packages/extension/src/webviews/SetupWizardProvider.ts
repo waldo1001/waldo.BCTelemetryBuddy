@@ -254,13 +254,18 @@ export class SetupWizardProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
+        // Get logo as base64
+        const logoPath = vscode.Uri.joinPath(this._extensionUri, 'images', 'waldo.png').fsPath;
+        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+        const logoDataUri = `data:image/png;base64,${logoBase64}`;
+        
         // For now, return inline HTML. In production, you might want to load from a file
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline';">
     <title>BC Telemetry Buddy Setup</title>
     <style>
         body {
@@ -274,10 +279,19 @@ export class SetupWizardProvider {
             max-width: 800px;
             margin: 0 auto;
         }
+        .header-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-logo img {
+            width: 80px;
+            height: 80px;
+        }
         h1 {
             color: var(--vscode-foreground);
             border-bottom: 2px solid var(--vscode-textLink-foreground);
             padding-bottom: 10px;
+            text-align: center;
         }
         .wizard-steps {
             display: flex;
@@ -435,6 +449,9 @@ export class SetupWizardProvider {
 </head>
 <body>
     <div class="container">
+        <div class="header-logo">
+            <img src="${logoDataUri}" alt="">
+        </div>
         <h1>🚀 BC Telemetry Buddy Setup Wizard</h1>
         <p>Welcome! This wizard will help you configure BC Telemetry Buddy to connect to your Azure Data Explorer and Application Insights.</p>
 

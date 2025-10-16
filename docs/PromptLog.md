@@ -837,3 +837,18 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Time to work on all readme's. Please update according to the current functionality of the extension."
 
 ---
+
+### Entry #173 — 2025-10-16 21:35
+> "Small change - put my logo on the setup wizard."
+
+---
+
+### Entry #174 — 2025-10-16 21:40
+> "the logo is not showing. it says 'BC Telemetry Buddy Logo', but that's it. I told you to just use the waldo log on top, that's it."
+
+---
+
+### Entry #175 — 2025-10-16 21:42
+> "now it's just showing me a square .. no logo."
+
+---
