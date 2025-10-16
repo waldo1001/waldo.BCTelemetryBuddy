@@ -196,6 +196,35 @@ export class MCPServer {
             res.json({ recommendations });
         });
 
+        // Cache management endpoints
+        this.app.get('/cache/stats', async (req: Request, res: Response) => {
+            try {
+                const stats = this.cache.getStats();
+                res.json(stats);
+            } catch (error: any) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        this.app.post('/cache/clear', async (req: Request, res: Response) => {
+            try {
+                this.cache.clear();
+                res.json({ success: true, message: 'Cache cleared successfully' });
+            } catch (error: any) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        this.app.post('/cache/cleanup', async (req: Request, res: Response) => {
+            try {
+                this.cache.cleanupExpired();
+                const stats = this.cache.getStats();
+                res.json({ success: true, message: `Cleaned up expired entries. ${stats.totalEntries} entries remaining`, stats });
+            } catch (error: any) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
         // Health check
         this.app.get('/health', (req: Request, res: Response) => {
             res.json({ status: 'ok' });
@@ -1432,6 +1461,21 @@ traces
                     );
                     break;
 
+                case 'get_cache_stats':
+                    result = this.cache.getStats();
+                    break;
+
+                case 'clear_cache':
+                    this.cache.clear();
+                    result = { success: true, message: 'Cache cleared successfully' };
+                    break;
+
+                case 'cleanup_cache':
+                    this.cache.cleanupExpired();
+                    const cleanupStats = this.cache.getStats();
+                    result = { success: true, message: `Cleaned up expired entries. ${cleanupStats.totalEntries} entries remaining`, stats: cleanupStats };
+                    break;
+
                 default:
                     throw new Error(`Unknown method: ${method}`);
             }
@@ -1538,6 +1582,18 @@ traces
                     params?.daysBack || 10,
                     params?.companyNameFilter
                 );
+
+            case 'get_cache_stats':
+                return this.cache.getStats();
+
+            case 'clear_cache':
+                this.cache.clear();
+                return { success: true, message: 'Cache cleared successfully' };
+
+            case 'cleanup_cache':
+                this.cache.cleanupExpired();
+                const stats = this.cache.getStats();
+                return { success: true, message: `Cleaned up expired entries. ${stats.totalEntries} entries remaining`, stats };
 
             default:
                 throw new Error(`Unknown tool: ${toolName}`);

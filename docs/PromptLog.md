@@ -595,6 +595,16 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #125 — 2025-10-16 15:35
+> "I see the cache building up - shouldn't there be some kind of cleaning mechanism? Like a new command to clean cache?"
+
+---
+
+### Entry #126 — 2025-10-16 15:54
+> "Implement cache management commands (Clear Cache, Cleanup Expired Cache, Show Cache Statistics) for Command Palette access."
+
+---
+
 
 ```
 

@@ -62,6 +62,18 @@
             {
                 "command": "bctb.openQueriesFolder",
                 "title": "BC Telemetry Buddy: Open Queries Folder"
+            },
+            {
+                "command": "bctb.clearCache",
+                "title": "BC Telemetry Buddy: Clear Cache"
+            },
+            {
+                "command": "bctb.cleanupCache",
+                "title": "BC Telemetry Buddy: Cleanup Expired Cache"
+            },
+            {
+                "command": "bctb.showCacheStats",
+                "title": "BC Telemetry Buddy: Show Cache Statistics"
             }
         ],
         "mcpServerDefinitionProviders": [

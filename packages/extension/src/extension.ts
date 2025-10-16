@@ -340,7 +340,10 @@ export function activate(context: vscode.ExtensionContext) {
             runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
         ),
         vscode.commands.registerCommand('bctb.saveQuery', () => saveQueryCommand()),
-        vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand())
+        vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand()),
+        vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
+        vscode.commands.registerCommand('bctb.cleanupCache', () => cleanupCacheCommand()),
+        vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand())
     );
 
     // Register CodeLens provider for .kql files
@@ -938,6 +941,98 @@ async function openQueriesFolderCommand(): Promise<void> {
         outputChannel.appendLine(`Opened queries folder: ${queriesPath}`);
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to open queries folder: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Clear cache
+ */
+async function clearCacheCommand(): Promise<void> {
+    try {
+        if (!mcpClient) {
+            vscode.window.showErrorMessage('MCP server is not running. Please start it first using "BC Telemetry Buddy: Start MCP Server"');
+            return;
+        }
+
+        const response = await mcpClient.request('clear_cache', {});
+
+        if (response?.result?.success) {
+            vscode.window.showInformationMessage(`Cache cleared successfully`);
+            outputChannel.appendLine('✓ Cache cleared');
+        } else {
+            throw new Error(response?.result?.message || response?.error || 'Failed to clear cache');
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to clear cache: ${err.message}`);
+        outputChannel.appendLine(`✗ Clear cache error: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Cleanup expired cache entries
+ */
+async function cleanupCacheCommand(): Promise<void> {
+    try {
+        if (!mcpClient) {
+            vscode.window.showErrorMessage('MCP server is not running. Please start it first using "BC Telemetry Buddy: Start MCP Server"');
+            return;
+        }
+
+        const response = await mcpClient.request('cleanup_cache', {});
+
+        if (response?.result?.success) {
+            const stats = response.result.stats || {};
+            const remainingEntries = stats.remainingEntries || 0;
+            vscode.window.showInformationMessage(`Expired cache entries cleaned up. ${remainingEntries} entries remaining.`);
+            outputChannel.appendLine(`✓ Cache cleanup complete: ${remainingEntries} entries remaining`);
+        } else {
+            throw new Error(response?.result?.message || response?.error || 'Failed to cleanup cache');
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to cleanup cache: ${err.message}`);
+        outputChannel.appendLine(`✗ Cache cleanup error: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Show cache statistics
+ */
+async function showCacheStatsCommand(): Promise<void> {
+    try {
+        if (!mcpClient) {
+            vscode.window.showErrorMessage('MCP server is not running. Please start it first using "BC Telemetry Buddy: Start MCP Server"');
+            return;
+        }
+
+        const response = await mcpClient.request('get_cache_stats', {});
+
+        if (response?.result) {
+            const result = response.result;
+            const totalEntries = result.totalEntries || 0;
+            const expiredEntries = result.expiredEntries || 0;
+            const totalSizeBytes = result.totalSizeBytes || 0;
+            const cachePath = result.cachePath || 'unknown';
+
+            const sizeInKB = (totalSizeBytes / 1024).toFixed(2);
+            const sizeInMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
+
+            const message = `Cache Statistics:\n` +
+                `Total Entries: ${totalEntries}\n` +
+                `Expired Entries: ${expiredEntries}\n` +
+                `Total Size: ${sizeInKB} KB (${sizeInMB} MB)\n` +
+                `Cache Path: ${cachePath}`;
+
+            vscode.window.showInformationMessage(message, { modal: true });
+            outputChannel.appendLine(`Cache stats: ${totalEntries} entries, ${expiredEntries} expired, ${sizeInKB} KB`);
+        } else {
+            throw new Error(response?.error || 'No cache statistics returned');
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to get cache statistics: ${err.message}`);
+        outputChannel.appendLine(`✗ Cache stats error: ${err.message}`);
         outputChannel.show();
     }
 }

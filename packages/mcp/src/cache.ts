@@ -163,6 +163,51 @@ export class CacheService {
     }
 
     /**
+     * Get cache statistics
+     */
+    getStats(): { totalEntries: number; expiredEntries: number; totalSizeBytes: number; cachePath: string } {
+        if (!this.enabled || !fs.existsSync(this.cacheDir)) {
+            return { totalEntries: 0, expiredEntries: 0, totalSizeBytes: 0, cachePath: this.cacheDir };
+        }
+
+        try {
+            const files = fs.readdirSync(this.cacheDir);
+            let totalEntries = 0;
+            let expiredEntries = 0;
+            let totalSizeBytes = 0;
+
+            for (const file of files) {
+                if (!file.endsWith('.json')) {
+                    continue;
+                }
+
+                const filePath = path.join(this.cacheDir, file);
+                totalEntries++;
+
+                try {
+                    const stats = fs.statSync(filePath);
+                    totalSizeBytes += stats.size;
+
+                    const fileContent = fs.readFileSync(filePath, 'utf-8');
+                    const entry: CacheEntry<any> = JSON.parse(fileContent);
+
+                    const age = (Date.now() - entry.timestamp) / 1000;
+                    if (age > entry.ttl) {
+                        expiredEntries++;
+                    }
+                } catch (error) {
+                    console.error(`Failed to process cache file ${file}:`, error);
+                }
+            }
+
+            return { totalEntries, expiredEntries, totalSizeBytes, cachePath: this.cacheDir };
+        } catch (error) {
+            console.error('Failed to get cache stats:', error);
+            return { totalEntries: 0, expiredEntries: 0, totalSizeBytes: 0, cachePath: this.cacheDir };
+        }
+    }
+
+    /**
      * Clean up expired cache entries
      */
     cleanupExpired(): void {
