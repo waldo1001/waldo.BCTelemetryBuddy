@@ -754,6 +754,81 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Same.  The 'Next' on the first tab doesn't do anything."
 
 ### Entry #156 — 2025-10-16 20:40
-> "When I press 'Next', I don't see anything happening in the debug console."
+> "When I press 'Next', I don't see anything happening in the debug console"
+
+---
+
+### Entry #157 — 2025-10-16 20:45
+> "No, the 'Next' is still not working"
+
+---
+
+### Entry #158 — 2025-10-16 20:48
+> "No, still not - good that I still didn't 'keep' the changes, because this simple change breaks a simple button."
+
+---
+
+### Entry #159 — 2025-10-16 20:50
+> "still borken"
+
+---
+
+### Entry #160 — 2025-10-16 20:52
+> "I heard that before... seems you're running in circles. Next works"
+
+---
+
+### Entry #161 — 2025-10-16 20:53
+> "step 2 simplification first"
+
+---
+
+### Entry #162 — 2025-10-16 21:00
+> "it works, but you undid all the things I already asked for twice."
+
+---
+
+### Entry #163 — 2025-10-16 21:02
+> "Nope .. the next button is broken again. Didn't think you were such an amateur"
+
+---
+
+### Entry #164 — 2025-10-16 21:05
+> "So - as we are running in circles, I know that this next step is going to fuck up the next button. If I ask you to show more details when after the AzureCLI authentication, it fucks up the next button."
+
+---
+
+### Entry #165 — 2025-10-16 21:08
+> "works!"
+
+---
+
+### Entry #166 — 2025-10-16 21:10
+> "I like it as is - keep it as is!"
+
+---
+
+### Entry #167 — 2025-10-16 21:12
+> "Finally we can work on the next problem, which is in testing the connection to AppInsights. I do have a working connecting, but the Test Connection fails: Missing App Insights ID or Kusto URL"
+
+---
+
+### Entry #168 — 2025-10-16 21:14
+> "Works! Remove the 'Optional' tab - those options should be described in the Readme; Talking about the readme - I think it needs an update bigtime!"
+
+---
+
+### Entry #169 — 2025-10-16 21:18
+> "Let's review the wizard. Like: this doesn't exist: BC Telemetry Buddy: Query Telemetry with Copilot"
+
+---
+
+### Entry #170 — 2025-10-16 21:20
+> "When saving configuration: Unable to write to Workspace Settings because bctb.mcp.auth.flow is not a registered configuration."
+
+---
+
+### Entry #171 — 2025-10-16 21:22
+> "I notice you're behind in documentatin changes in the promptlog, changelog and such"
 
 ---
