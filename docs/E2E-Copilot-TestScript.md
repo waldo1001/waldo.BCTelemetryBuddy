@@ -87,61 +87,89 @@ cd ../extension && npm run build
 
 ## Part 2: Verify MCP Tools Registration (5 min)
 
-### 2.1 Check Available Tools
-In Copilot Chat, type:
-```
-@workspace /
-```
-(Type "@workspace" followed by a forward slash)
+### 2.1 Test MCP Server Tool List (Direct Method)
+The `@workspace /` dropdown is **unreliable** for showing MCP tools. Instead, test the MCP server directly:
 
-**Expected:**
-- ✅ Dropdown shows available tools/commands
-- ✅ MCP tools visible in the list (may need to scroll)
-- ✅ Look for: `query_telemetry`, `get_saved_queries`, `save_query`, etc.
+**In PowerShell:**
+```powershell
+$body = @{
+    jsonrpc = "2.0"
+    method = "tools/list"
+    params = @{}
+    id = 1
+} | ConvertTo-Json
 
-**If MCP Tools Not Visible:**
-- Check Output Channel for MCP tool registration errors
-- Verify `Instructions/Instructions.md` exists with proper MCP tool definitions
-- Restart Extension Development Host (close and F5 again)
-
-### 2.2 Test Tool Discovery
-In Copilot Chat, type:
-```
-@workspace What telemetry tools do you have available?
+Invoke-RestMethod -Uri 'http://localhost:52345/rpc' -Method Post -ContentType 'application/json' -Body $body
 ```
 
 **Expected:**
-- ✅ Copilot lists MCP tools: query_telemetry, get_saved_queries, save_query, search_queries, get_recommendations, get_external_queries
-- ✅ Copilot explains what each tool does
+- ✅ Returns JSON with `tools` array
+- ✅ Shows 7 tools: query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries
+- ✅ Each tool has name, description, inputSchema
+
+**If Failed:**
+- Check MCP server is running (Output Channel should show "MCP server started")
+- Verify port 52345 is accessible
+- Restart Extension Development Host
+
+### 2.2 Test Tool Discovery via Copilot
+In Copilot Chat, type:
+```
+@workspace What telemetry tools or capabilities do you have for Business Central?
+```
+
+**Expected (CORRECTED):**
+- ✅ Copilot describes **MCP tools** (query_telemetry, get_saved_queries, save_query, etc.)
+- ✅ Explains tool capabilities (not just workspace settings)
 - ✅ No errors in Output Channel
 
-**This is a critical checkpoint. If tools aren't available, STOP and debug before continuing.**
+**If Copilot only describes workspace settings:**
+This means MCP tools are NOT registered. Copilot is reading settings.json but not seeing the MCP server's tools.
+
+**Debug Steps:**
+1. Verify `tools/list` works (see 2.1 above)
+2. Check Output Channel for MCP registration errors
+3. Restart Extension Development Host (Ctrl+Shift+F5)
+4. Verify `Instructions/Instructions.md` exists
+
+**⚠️ CRITICAL CHECKPOINT:** If Copilot can't see MCP tools after debugging, the integration has failed. Do NOT continue to Part 3 until this is resolved.
 
 ---
 
 ## Part 3: Basic Telemetry Queries (10 min)
 
-### 3.1 Simple Error Query
+### 3.1 Simple Error Query (PRIMARY TEST)
+**This is the core test that proves the entire project works.**
+
 In Copilot Chat, type:
 ```
 @workspace Show me all errors from my Business Central telemetry in the last 24 hours
 ```
 
-**Expected:**
-- ✅ Copilot invokes `query_telemetry` tool (visible in chat)
-- ✅ Output Channel shows: `[MCP Client] query_telemetry -> ...`
+**WATCH OUTPUT CHANNEL FIRST** (View → Output → "BC Telemetry Buddy"):
+- ✅ **CRITICAL**: Look for `[MCP Client] query_telemetry -> ...` — this proves Copilot invoked your MCP tool
+- ✅ Look for `[MCP] Translating NL to KQL: "Show me all errors..."`
+- ✅ Look for `[MCP] ✓ Query executed successfully`
+
+**If you don't see `[MCP Client] query_telemetry` in the Output Channel:**
+- MCP integration has failed
+- Copilot is not calling your tools
+- STOP and debug Part 2 before continuing
+
+**Then check Copilot Chat Response:**
 - ✅ Natural language translated to KQL (e.g., `traces | where severityLevel >= 3 | where timestamp > ago(1d)`)
 - ✅ Query executes successfully
 - ✅ Results displayed in chat (formatted table or structured text)
 - ✅ Copilot provides natural language summary (e.g., "Found 42 errors in the last 24 hours")
 - ✅ Row count mentioned
 
-**Verify:**
-- Data looks correct (timestamps within 24 hours)
+**Verify Data:**
+- Timestamps within 24 hours
 - Error messages from your BC environment visible
 - No authentication errors
 
-**If Failed:**
+**If Failed (but MCP Client log appeared):**
+- MCP integration works! Issue is with query/auth/data
 - Check Output Channel for detailed error
 - Verify Application Insights has data
 - Try simpler query: "Show me any telemetry from the last hour"

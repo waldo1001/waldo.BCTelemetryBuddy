@@ -47,6 +47,229 @@
                 "title": "BC Telemetry Buddy: Open Queries Folder"
             }
         ],
+        "mcpServerDefinitionProviders": [
+            {
+                "id": "bc-telemetry-buddy.mcp-server",
+                "label": "BC Telemetry Buddy MCP Server"
+            }
+        ],
+        "languageModelTools": [
+            {
+                "name": "bctb_query_telemetry",
+                "displayName": "Query BC Telemetry",
+                "modelDescription": "Executes telemetry queries against Business Central Application Insights. IMPORTANT: Before using this tool, you should FIRST call search_queries or get_saved_queries to find similar existing query patterns - this improves accuracy by using proven patterns from the team's query library. This tool accepts either: (1) a KQL query string that you provide, OR (2) a natural language description which the MCP backend will automatically translate to KQL by finding similar patterns in saved queries and external references (keyword-based pattern matching with similarity scoring). The backend handles all KQL generation internally - you receive the final query results with metadata showing which pattern was used.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "kql": {
+                            "type": "string",
+                            "description": "Direct KQL query string to execute (optional if nl provided)"
+                        },
+                        "nl": {
+                            "type": "string",
+                            "description": "Natural language description of what to query - the MCP backend will find similar saved query patterns and generate KQL automatically (optional if kql provided)"
+                        },
+                        "useContext": {
+                            "type": "boolean",
+                            "description": "Whether MCP should search saved queries in workspace for pattern matching when translating nl to KQL",
+                            "default": true
+                        },
+                        "includeExternal": {
+                            "type": "boolean",
+                            "description": "Whether MCP should search external reference queries for pattern matching when translating nl to KQL",
+                            "default": true
+                        }
+                    }
+                }
+            },
+            {
+                "name": "bctb_get_saved_queries",
+                "displayName": "Get Saved Queries",
+                "modelDescription": "List all saved telemetry queries in the workspace. RECOMMENDED FIRST STEP: Use this tool before executing queries to discover what queries are already available in the team's library. This helps you reuse existing proven patterns and understand the query structure before creating new queries.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Filter by tags (optional)"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "bctb_search_queries",
+                "displayName": "Search Queries",
+                "modelDescription": "Search saved queries by keywords. RECOMMENDED FIRST STEP: Use this tool before executing queries to find similar existing query patterns from the team's query library. This helps you understand what queries are available and reuse proven patterns instead of creating new ones.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "searchTerms": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Search terms"
+                        }
+                    },
+                    "required": [
+                        "searchTerms"
+                    ]
+                }
+            },
+            {
+                "name": "bctb_save_query",
+                "displayName": "Save Query",
+                "modelDescription": "Save a telemetry query for future reference",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Query name"
+                        },
+                        "kql": {
+                            "type": "string",
+                            "description": "KQL query string"
+                        },
+                        "purpose": {
+                            "type": "string",
+                            "description": "Query purpose"
+                        },
+                        "useCase": {
+                            "type": "string",
+                            "description": "When to use this query"
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Tags for categorization"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Category/folder for organization"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "kql"
+                    ]
+                }
+            },
+            {
+                "name": "bctb_get_categories",
+                "displayName": "Get Query Categories",
+                "modelDescription": "List all query categories (folders)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "bctb_get_recommendations",
+                "displayName": "Get Query Recommendations",
+                "modelDescription": "Get recommendations for improving a query based on saved query patterns and best practices. Use this after executing a query to suggest optimizations or find similar existing patterns that might work better.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "kql": {
+                            "type": "string",
+                            "description": "KQL query to analyze"
+                        },
+                        "results": {
+                            "type": "object",
+                            "description": "Query results to analyze"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "bctb_get_external_queries",
+                "displayName": "Get External Query Examples",
+                "modelDescription": "Get KQL examples from external references (GitHub, blogs)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "bctb_get_event_catalog",
+                "displayName": "Get BC Event Catalog",
+                "modelDescription": "Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Returns event IDs sorted by frequency with status (success/error/too slow), short descriptions, occurrence counts, and Microsoft Learn documentation links.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "daysBack": {
+                            "type": "number",
+                            "description": "Number of days to analyze (default: 10)",
+                            "default": 10
+                        },
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "success",
+                                "error",
+                                "too slow",
+                                "unknown"
+                            ],
+                            "description": "Filter by event status (default: all)",
+                            "default": "all"
+                        },
+                        "minCount": {
+                            "type": "number",
+                            "description": "Minimum occurrence count to include (default: 1)",
+                            "default": 1
+                        }
+                    }
+                }
+            },
+            {
+                "name": "bctb_get_event_schema",
+                "displayName": "Get BC Event Schema",
+                "modelDescription": "Get the schema (available customDimensions fields) for a specific event ID by sampling recent occurrences. Use this after discovering an event ID to understand what fields are available before building detailed queries.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "eventId": {
+                            "type": "string",
+                            "description": "Event ID to analyze (e.g., AL0000E26)"
+                        },
+                        "sampleSize": {
+                            "type": "number",
+                            "description": "Number of events to sample (default: 100)",
+                            "default": 100
+                        }
+                    },
+                    "required": [
+                        "eventId"
+                    ]
+                }
+            },
+            {
+                "name": "bctb_get_tenant_mapping",
+                "displayName": "Map Company Names to Tenant IDs",
+                "modelDescription": "CRITICAL: Business Central telemetry uses aadTenantId (not company names) for filtering customers. When the user asks about a specific customer/company, you MUST call this tool first to map the company name to a tenant ID, then use that tenant ID in subsequent queries with: | where tostring(customDimensions.aadTenantId) == \"{tenantId}\". This ensures queries target the correct customer data.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "daysBack": {
+                            "type": "number",
+                            "description": "Number of days to look back for company-to-tenant mappings (default: 10)",
+                            "default": 10
+                        },
+                        "companyNameFilter": {
+                            "type": "string",
+                            "description": "Optional: Filter for specific company name (partial match, case-insensitive)"
+                        }
+                    }
+                }
+            }
+        ],
         "configuration": {
             "title": "BC Telemetry Buddy",
             "properties": {

@@ -450,3 +450,94 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ### Entry #94 — 2025-10-16 01:30
 > "I want to start testing from GitHub copilot. Write me an End-to-end testscript for manual testing with GitHub copilot."
+
+---
+
+### Entry #95 — 2025-10-16 09:20
+> "in 2.1, the dropdown doesn't give me any tools from this MCP server. Is there another way to test?"
+
+---
+
+### Entry #96 — 2025-10-16 09:25
+> "Here is question and answer. it seems to just be reading the settings.json, not the actual mcp config: [Copilot response showing workspace settings instead of MCP tools]"
+
+---
+
+### Entry #97 — 2025-10-16 09:35
+> "I don't think the MCP server is registered in VSCode. Like there should be an mcp.json somewhere (global) where the MCP server should be registered, no?"
+
+---
+
+### Entry #98 — 2025-10-16 09:40
+> ### Entry #98 — 2025-10-16 09:40
+> User implemented VSCode language model tool registration fix (extension.ts + package.json)
+
+### Entry #99 — 2025-10-16 09:45
+> "still not the case, but I don't see how it is registered in VSCode.  Shouldn't I have some kind of command palette command in the extension to be able to set up the MCP server in VSCode, so it adds the right settings to the mcp.json (global)?"
+
+### Entry #100 — 2025-10-16 09:50
+> "There is progress! Now it tries to automatically start the MCP server. But it fails. [Error log showing: Cannot find module 'c:\_Source\Community\waldo.BCTelemetryBuddy\packages\mcp\dist\index.js']"
+
+### Entry #101 — 2025-10-16 09:52
+> "new error: [MCP server starting but failing with EADDRINUSE on port 52345, and 'Failed to parse message' warnings for console.log output]"
+
+### Entry #102 — 2025-10-16 10:00
+> "When I ask the question 'Show me all errors from my Business Central telemetry in the last 24 hours', I would like to try to have the following flow: consult resources and filter them for anything 'telemetry' and 'error'... [detailed flow description]... Error: TypeError: o.content is not iterable"
+
+### Entry #103 — 2025-10-16 10:35
+> "I had a nice conversation with copilot regarding what I want to change... [Detailed task description]: Enhance BC Telemetry MCP to Use Query Patterns - Phase 1: Add Response Metadata, Phase 2: Auto-Pattern Matching"
+
+---
+
+### Entry #104 — 2025-10-16 10:40
+> "I see your time on the promptlog and changelog is completely off... now, it's 10:35 in the morning, and you're logging it to be 16:10??"
+
+---
+
+### Entry #105 — 2025-10-16 10:45
+> "It has been off for all entries added today. Apply the same time difference in both promptlog and changelog for all entries of today. - except the ones before 13:00"
+
+---
+
+### Entry #106 — 2025-10-16 10:50
+> "I tested this question, and asked to explain... [Copilot says: 'the mcp_bc_telemetry__query_telemetry tool which can query telemetry using either KQL or natural language']. I don't see how the MCP can do the natural language part. The idea is that the MCP gives back possible queries for the LLM to interpret, no? ... Well - the pattern matching does have advantages, just make clear to the LLM that that's what happening, and that's the only thing it should expect from the tool. So option b I guess"
+
+---
+
+### Entry #107 — 2025-10-16 10:58
+> "I have the feeling copilot relies too much on the query_telemetry and doesn't seem to try to get examples based on already existing data, or based on the tools available in the MCP. The first step should always be to try to get similar queries .. queries, not executing a query right away, while now, always it does the query_telemetry first. What can we do to facilitate this?"
+
+---
+
+### Entry #108 — 2025-10-16 11:05
+> "Below is a query that results a list of eventid's that is very interesting to be used... [provided comprehensive KQL query for event catalog with descriptions, status, counts, Learn URLs]... I don't know what's best: create a new tool that gives you the option to get you the decent info about an event, or all events, Or incorporate this knowledge in all other tools."
+
+---
+
+### Entry #109 — 2025-10-16 11:10
+> ### Entry #109 — 2025-10-16 11:10
+> "Yes please! I follow your recommendation!" (to implement bctb_get_event_catalog and bctb_get_event_schema tools)
+
+---
+
+### Entry #110 — 2025-10-16 11:20
+> "So what about the 'MCP ERROR' part?" (referring to startup output showing [MCP ERROR] for normal informational messages)
+
+---
+
+### Entry #111 — 2025-10-16 11:55
+> "Still the same output, I'm afraid: [shows MCP ERROR messages still appearing, and VSCode warnings about 'Failed to parse message' for startup banner]"
+
+---
+
+### Entry #112 — 2025-10-16 12:00
+> "regarding the MCP ERROR - there is one less: [but still showing some [MCP ERROR] prefixes]. And regarding the available tools: [only 7 tools discovered instead of 9]"
+
+---
+
+### Entry #113 — 2025-10-16 12:05
+> "When talking about 'customers', BC Telemetry doesn't work with names, but TenantIds. So any question about a customername, should be mapped to a TenantId. [Provided KQL query for mapping companyName to aadTenantId]. Give the option to the LLM to actually do that - in fact, encourage the LLM to convert customernames, and always filter for aadTenantId after mapping it with the above query."
+
+
+```
+

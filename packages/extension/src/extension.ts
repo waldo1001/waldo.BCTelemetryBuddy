@@ -18,6 +18,308 @@ let mcpClient: MCPClient | null = null;
 let outputChannel: vscode.OutputChannel;
 
 /**
+ * Register MCP server definition provider with VSCode
+ * This makes the MCP server discoverable globally in VSCode's MCP settings
+ */
+function registerMCPServerDefinitionProvider(context: vscode.ExtensionContext): void {
+    outputChannel.appendLine('Registering MCP server definition provider...');
+
+    const provider: vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> = {
+        provideMcpServerDefinitions(token: vscode.CancellationToken): vscode.ProviderResult<vscode.McpStdioServerDefinition[]> {
+            const workspacePath = getWorkspacePath();
+            if (!workspacePath) {
+                outputChannel.appendLine('⚠ No workspace folder - MCP server not available');
+                return [];
+            }
+
+            const config = vscode.workspace.getConfiguration('bctb');
+            const mcpScriptPath = path.join(context.extensionPath, '..', 'mcp', 'dist', 'server.js');
+
+            // Build environment variables from workspace settings
+            const env = buildMCPEnvironment(config, workspacePath);
+
+            const serverDefinition = new vscode.McpStdioServerDefinition(
+                'BC Telemetry Buddy',
+                'node',
+                [mcpScriptPath],
+                env,
+                '0.1.0'
+            );
+
+            outputChannel.appendLine(`✓ Providing MCP server definition: node ${mcpScriptPath}`);
+            return [serverDefinition];
+        },
+
+        resolveMcpServerDefinition(
+            server: vscode.McpStdioServerDefinition,
+            token: vscode.CancellationToken
+        ): vscode.ProviderResult<vscode.McpStdioServerDefinition> {
+            outputChannel.appendLine(`Resolving MCP server definition: ${server.label}`);
+            // Can add authentication or validation here if needed
+            return server;
+        }
+    };
+
+    const disposable = vscode.lm.registerMcpServerDefinitionProvider(
+        'bc-telemetry-buddy.mcp-server',
+        provider
+    );
+
+    context.subscriptions.push(disposable);
+    outputChannel.appendLine('✓ MCP server definition provider registered');
+}
+
+/**
+ * Register MCP tools with VSCode's language model API
+ * NOTE: This is now redundant - tools should come from MCP server itself
+ */
+function registerLanguageModelTools(context: vscode.ExtensionContext): void {
+    outputChannel.appendLine('Registering MCP tools with VSCode language model API...');
+
+    // Tool 1: query_telemetry
+    const queryTelemetryTool = vscode.lm.registerTool('bctb_query_telemetry', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            kql?: string;
+            nl?: string;
+            useContext?: boolean;
+            includeExternal?: boolean;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const params = options.input;
+
+            // Call MCP server via JSON-RPC
+            const response = await mcpClient.request('query_telemetry', {
+                kql: params.kql,
+                nl: params.nl,
+                useContext: params.useContext ?? true,
+                includeExternal: params.includeExternal ?? true
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 2: get_saved_queries
+    const getSavedQueriesTool = vscode.lm.registerTool('bctb_get_saved_queries', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            tags?: string[];
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_saved_queries', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 3: search_queries
+    const searchQueriesTool = vscode.lm.registerTool('bctb_search_queries', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            searchTerms: string[];
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('search_queries', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 4: save_query
+    const saveQueryTool = vscode.lm.registerTool('bctb_save_query', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            name: string;
+            kql: string;
+            purpose?: string;
+            useCase?: string;
+            tags?: string[];
+            category?: string;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('save_query', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 5: get_categories
+    const getCategoriesTool = vscode.lm.registerTool('bctb_get_categories', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{}>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_categories', {});
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 6: get_recommendations
+    const getRecommendationsTool = vscode.lm.registerTool('bctb_get_recommendations', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            kql?: string;
+            results?: any;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_recommendations', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 7: get_external_queries
+    const getExternalQueriesTool = vscode.lm.registerTool('bctb_get_external_queries', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{}>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_external_queries', {});
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 8: get_event_catalog
+    const getEventCatalogTool = vscode.lm.registerTool('bctb_get_event_catalog', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            daysBack?: number;
+            status?: string;
+            minCount?: number;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_event_catalog', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Tool 9: get_event_schema
+    const getEventSchemaTool = vscode.lm.registerTool('bctb_get_event_schema', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            eventId: string;
+            sampleSize?: number;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_event_schema', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    const getTenantMappingTool = vscode.lm.registerTool('bctb_get_tenant_mapping', {
+        async invoke(options: vscode.LanguageModelToolInvocationOptions<{
+            daysBack?: number;
+            companyNameFilter?: string;
+        }>, token: vscode.CancellationToken) {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+
+            const response = await mcpClient.request('get_tenant_mapping', options.input);
+
+            if (response.error) {
+                throw new Error(response.error.message);
+            }
+
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart(JSON.stringify(response.result, null, 2))
+            ]);
+        }
+    });
+
+    // Add all tool disposables to context
+    context.subscriptions.push(
+        queryTelemetryTool,
+        getSavedQueriesTool,
+        searchQueriesTool,
+        saveQueryTool,
+        getCategoriesTool,
+        getRecommendationsTool,
+        getExternalQueriesTool,
+        getEventCatalogTool,
+        getEventSchemaTool,
+        getTenantMappingTool
+    );
+
+    outputChannel.appendLine('✓ Registered 10 MCP tools with language model API');
+}
+
+/**
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
@@ -36,6 +338,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.saveQuery', () => saveQueryCommand()),
         vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand())
     );
+
+    // Register MCP server definition provider (makes server globally available in VSCode)
+    registerMCPServerDefinitionProvider(context);
+
+    // Register MCP tools with VSCode's language model API (for direct tool invocation)
+    registerLanguageModelTools(context);
 
     // Auto-start MCP if workspace has settings configured
     if (hasWorkspaceSettings()) {
@@ -153,7 +461,9 @@ async function startMCP(): Promise<void> {
     });
 
     proc.stderr?.on('data', (data) => {
-        outputChannel.appendLine(`[MCP ERROR] ${data.toString().trim()}`);
+        // MCP server already prefixes stderr output with [MCP] or [MCP] ERROR:
+        // so just pass it through without adding another prefix
+        outputChannel.appendLine(data.toString().trim());
     });
 
     proc.on('close', (code) => {
