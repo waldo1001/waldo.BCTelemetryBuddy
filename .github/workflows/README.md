@@ -25,23 +25,28 @@ This directory contains CI/CD workflows for the BC Telemetry Buddy project.
 
 **Triggers:** Git tags matching `v*.*.*` (e.g., `v0.1.0`), manual dispatch
 
+**Purpose:** Complete release pipeline — builds, tests, creates GitHub releases, and publishes to marketplaces.
+
 **Jobs:**
 - **build-and-test** — Full test suite + build + package
-- **create-github-release** — Creates GitHub release with `.vsix` file
-- **publish-marketplace** — Publishes to VS Code Marketplace (stable only)
+- **create-github-release** — Creates GitHub release with `.vsix` file and changelog
+- **publish-marketplace** — Publishes to VS Code Marketplace (stable releases only)
   - Requires `VSCE_PAT` secret (Visual Studio Code Extensions Personal Access Token)
   - Also publishes to Open VSX Registry (requires `OVSX_PAT`)
-- **publish-prerelease** — Publishes pre-release versions
+- **publish-prerelease** — Publishes pre-release versions (when marked as pre-release)
 
 **Usage:**
 ```bash
-# Tag-based release (recommended)
+# Tag-based release (recommended for stable releases)
 git tag v0.1.0
 git push origin v0.1.0
 
 # Manual release (from GitHub UI)
 # Actions → Release → Run workflow → Enter version
+# Check "Mark as pre-release" for beta/alpha versions
 ```
+
+**Note:** This is the ONLY publishing workflow. The old `publish.yml` has been removed to avoid confusion and redundancy.
 
 ### 🔒 Security (`codeql.yml`)
 
