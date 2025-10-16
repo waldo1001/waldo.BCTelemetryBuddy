@@ -7,18 +7,19 @@ jest.mock('@azure/msal-node');
 
 describe('AuthService', () => {
     const mockConfig: MCPConfig = {
-        connectionName: 'Test',
+        connectionName: 'test',
         tenantId: 'test-tenant-id',
         clientId: 'test-client-id',
         clientSecret: 'test-secret',
         authFlow: 'device_code',
         applicationInsightsAppId: 'test-app-id',
-        kustoClusterUrl: 'https://api.applicationinsights.io',
+        kustoClusterUrl: 'https://test.kusto.windows.net',
         cacheEnabled: true,
         cacheTTLSeconds: 3600,
         removePII: false,
         port: 52345,
         workspacePath: '/test/workspace',
+        queriesFolder: 'queries',
         references: []
     };
 

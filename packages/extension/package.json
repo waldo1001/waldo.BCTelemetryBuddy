@@ -3,7 +3,7 @@
     "displayName": "BC Telemetry Buddy",
     "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
     "version": "0.1.0",
-    "publisher": "waldo",
+    "publisher": "waldoBC",
     "icon": "images/waldo.png",
     "engines": {
         "vscode": "^1.85.0"

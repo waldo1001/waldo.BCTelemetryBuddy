@@ -67,7 +67,7 @@ describe('Configuration Module', () => {
             expect(config).toMatchObject({
                 connectionName: 'Default',
                 tenantId: '',
-                authFlow: 'device_code',
+                authFlow: 'azure_cli', // Default changed to azure_cli
                 cacheEnabled: true,
                 cacheTTLSeconds: 3600,
                 removePII: false,
@@ -145,6 +145,7 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
@@ -165,11 +166,12 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
-            expect(() => validateConfig(config)).toThrow('Configuration validation failed:\ntenantId is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
         });
 
         it('should throw error when applicationInsightsAppId is missing', () => {
@@ -185,11 +187,12 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
-            expect(() => validateConfig(config)).toThrow('applicationInsightsAppId is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_APP_INSIGHTS_ID is required');
         });
 
         it('should throw error when kustoClusterUrl is missing', () => {
@@ -205,11 +208,12 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
-            expect(() => validateConfig(config)).toThrow('kustoClusterUrl is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_KUSTO_URL is required');
         });
 
         it('should throw error when clientId is missing for client_credentials flow', () => {
@@ -225,11 +229,12 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
-            expect(() => validateConfig(config)).toThrow('clientId is required for client_credentials auth flow');
+            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_ID is required for client_credentials auth flow');
         });
 
         it('should throw error when clientSecret is missing for client_credentials flow', () => {
@@ -246,11 +251,12 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
-            expect(() => validateConfig(config)).toThrow('clientSecret is required for client_credentials auth flow');
+            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
         });
 
         it('should throw error with multiple validation failures', () => {
@@ -266,16 +272,17 @@ describe('Configuration Module', () => {
                 removePII: false,
                 port: 52345,
                 workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
                 references: []
             };
 
             // Act & Assert
             expect(() => validateConfig(config)).toThrow('Configuration validation failed:');
-            expect(() => validateConfig(config)).toThrow('tenantId is required');
-            expect(() => validateConfig(config)).toThrow('applicationInsightsAppId is required');
-            expect(() => validateConfig(config)).toThrow('kustoClusterUrl is required');
-            expect(() => validateConfig(config)).toThrow('clientId is required');
-            expect(() => validateConfig(config)).toThrow('clientSecret is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_TENANT_ID is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_APP_INSIGHTS_ID is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_KUSTO_URL is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_ID is required');
+            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_SECRET is required');
         });
     });
 });

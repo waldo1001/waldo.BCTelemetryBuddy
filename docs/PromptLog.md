@@ -626,3 +626,28 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ### Entry #130 — 2025-10-16 17:35
 > "How can I make it so that the agent that is getting generic questions on business central telemetry .. that it would be guided (by this MCP) first to the catalog and resource, and then start to assemble kql?"
+
+---
+
+### Entry #131 — 2025-10-16 17:40
+
+> "From the changes I did today and yesterday - create the necessary tests."
+
+> **Status:** Tests created for all major features from 2025-10-16. Created 5 new test files (cache-commands, customer-folders, azure-cli-auth, event-catalog, codelens-provider, tenant-mapping) with 117 test cases. Extension tests: 88 tests (79 passing). MCP tests: 213 tests (190 passing). Fixed jest mock issues and assertions. Some config/queries tests need refinement but test infrastructure is complete.
+
+---
+
+### Entry #132 — 2025-10-16 18:30
+> "last testrun they didn't all pass. Do they now?"
+
+---
+
+### Entry #133 — 2025-10-16 18:35
+> "Make sure the failing tests succeed - obviously the right way: if the test is wrong: fix the test, if the failing test indicates a bug - fix the bug"
+
+---
+
+### Entry #134 — 2025-10-16 18:45
+> "Last changes were not saved to promptlog or other files."
+
+---

@@ -8,7 +8,7 @@ const mockedFs = fs as jest.Mocked<typeof fs>;
 
 describe('QueriesService', () => {
     const workspacePath = '/test/workspace';
-    const queriesDir = path.join(workspacePath, '.vscode', '.bctb', 'queries');
+    const queriesDir = path.join(workspacePath, 'queries'); // Default queries folder
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -86,7 +86,10 @@ traces
 | take 10`;
 
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['test-query.kql'] as any);
+            // Mock Dirent objects with name, isDirectory(), isFile()
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'test-query.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockReturnValue(fileContent);
 
             const service = new QueriesService(workspacePath);
@@ -110,7 +113,10 @@ traces
         it('should skip non-.kql files', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['readme.txt', 'test.kql'] as any);
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'readme.txt', isDirectory: () => false, isFile: () => true },
+                { name: 'test.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockReturnValue('// Query: Test\ntraces | take 10');
 
             const service = new QueriesService(workspacePath);
@@ -130,7 +136,9 @@ traces
 | take 10`;
 
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['simple.kql'] as any);
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'simple.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockReturnValue(fileContent);
 
             const service = new QueriesService(workspacePath);
@@ -152,7 +160,9 @@ traces
 `;
 
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['empty.kql'] as any);
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'empty.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockReturnValue(fileContent);
 
             const consoleWarnSpy = jest.spyOn(console, 'warn');
@@ -169,7 +179,9 @@ traces
         it('should handle read errors gracefully', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['error.kql'] as any);
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'error.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockImplementation(() => {
                 throw new Error('Read error');
             });
@@ -211,7 +223,11 @@ requests | summarize avg(duration)`;
 traces | where customDimensions.userId != ""`;
 
             mockedFs.existsSync.mockReturnValue(true);
-            mockedFs.readdirSync.mockReturnValue(['errors.kql', 'performance.kql', 'users.kql'] as any);
+            mockedFs.readdirSync.mockReturnValue([
+                { name: 'errors.kql', isDirectory: () => false, isFile: () => true },
+                { name: 'performance.kql', isDirectory: () => false, isFile: () => true },
+                { name: 'users.kql', isDirectory: () => false, isFile: () => true }
+            ] as any);
             mockedFs.readFileSync.mockImplementation((filePath: any) => {
                 if (filePath.includes('errors.kql')) return query1;
                 if (filePath.includes('performance.kql')) return query2;
@@ -365,7 +381,7 @@ traces | where customDimensions.userId != ""`;
             expect(writtenContent).toContain('// Use case: Testing use case');
             expect(writtenContent).toContain('// Tags: test, example');
             expect(writtenContent).toContain('traces | take 10');
-            expect(filePath).toContain('test-query.kql');
+            expect(filePath).toContain('Test Query.kql'); // Filename preserves spaces
         });
 
         it('should save query without optional metadata', () => {
@@ -405,8 +421,9 @@ traces | where customDimensions.userId != ""`;
             const filePath2 = service.saveQuery('Query #2 @ 2025', 'traces | take 10');
 
             // Assert
-            expect(filePath1).toContain('my-test-query-.kql');
-            expect(filePath2).toContain('query-2-2025.kql');
+            // Special chars removed, spaces normalized: "My Test Query!" -> "My Test Query.kql"
+            expect(filePath1).toContain('My Test Query.kql');
+            expect(filePath2).toContain('Query 2 2025.kql'); // Special chars removed, multiple spaces normalized to single
         });
 
         it('should include current date in Created field', () => {
