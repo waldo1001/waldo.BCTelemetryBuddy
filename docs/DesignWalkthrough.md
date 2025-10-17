@@ -574,3 +574,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Deep analysis revealed root cause: launcher.js was build artifact not in git, CI/CD had no way to include it. [Entry: 0c9c5863-6d9b-4c36-8d36-efa7cf5cb8fc]
   - **Why:** launcher.js existed only in local gitignored dist/ folder. CI/CD builds from clean checkout never had it. copy-mcp script silently failed (empty catch block).
   - **How:** Created launcher.js as SOURCE FILE in packages/mcp/, updated MCP build to copy it to dist/, removed silent error handling from copy-mcp. Released v0.2.10.
+- **2025-10-17**  Automated CHANGELOG updates in release script. [Entry: 7c48cb7d-e3c3-4c06-9fbd-54306de9d24e]
+  - **Why:** Manual CHANGELOG updates were being forgotten during releases, causing version entries to be missing.
+  - **How:** Added Update-Changelog function to release script that automatically moves [Unreleased] content to versioned section with date stamp. Fixed missing v0.2.10 entry.
