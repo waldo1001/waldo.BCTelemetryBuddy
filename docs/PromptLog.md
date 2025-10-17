@@ -1035,3 +1035,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I did option 2 - seems to work! Release through a patch release, please!"
 
 ---
+### Entry ID: 3814ede0-1ef0-47ac-b66d-8d708b15c1c1  2025-10-17 14:47
+> "Next problem. Djeezes lord .. why is this so difficult. [v0.2.8 still missing launcher.js - Cannot find module error]"
+
+---
+### Entry ID: 79f731ed-47ae-425d-8fac-c22d95ac1d73  2025-10-17 14:50
+> "So what do I do?"
+
+---
+### Entry ID: 3e756f44-33c7-481a-8657-cfd85bdf8ac3  2025-10-17 14:51
+> "It does work now"
+
+---

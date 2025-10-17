@@ -562,3 +562,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Released v0.2.8 with launcher.js fix. [Entry: ee0b1045-2016-407a-999f-5285f76528b6]
   - **Why:** Fix critical VSIX installation bug where .cjs files weren't extracted, causing marketplace installations to fail.
   - **How:** Renamed server.cjs to launcher.js, updated all references, committed changes, ran release script (patch bump), pushed tag to GitHub triggering CI/CD.
+- **2025-10-17**  Fixed v0.2.8 tag placement - recreated on correct commit with launcher.js changes. [Entry: 3814ede0-1ef0-47ac-b66d-8d708b15c1c1]
+  - **Why:** Release script created v0.2.8 tag on version bump commit BEFORE launcher.js changes were committed, so CI/CD built wrong code.
+  - **How:** Deleted v0.2.8 tag locally and remotely, recreated tag on HEAD (includes launcher.js fix), pushed to GitHub to retrigger CI/CD.
+- **2025-10-17**  Confirmed v0.2.8 works with launcher.js fix. [Entry: 3e756f44-33c7-481a-8657-cfd85bdf8ac3]
+  - **Why:** Verify the launcher.js solution resolves all marketplace installation issues.
+  - **How:** User tested locally with manually copied launcher.js, MCP server started successfully, no more module errors.
