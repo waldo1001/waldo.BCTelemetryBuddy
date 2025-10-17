@@ -577,3 +577,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Automated CHANGELOG updates in release script. [Entry: 7c48cb7d-e3c3-4c06-9fbd-54306de9d24e]
   - **Why:** Manual CHANGELOG updates were being forgotten during releases, causing version entries to be missing.
   - **How:** Added Update-Changelog function to release script that automatically moves [Unreleased] content to versioned section with date stamp. Fixed missing v0.2.10 entry.
+- **2025-10-17** — Updated all dependencies to latest versions (Node 22 compatible) [Entry: 6329b252-0d8a-46af-816c-9bc71a67013e]
+  - **Why:** Fix Dependabot PR test failures and modernize dependencies (@types/node 18→22, @azure/msal-node 2→3, jest 29→30).
+  - **How:** Updated package.json files for both MCP and extension, verified all 311 tests pass (213 MCP + 98 extension). Builds succeed with no breaking changes.

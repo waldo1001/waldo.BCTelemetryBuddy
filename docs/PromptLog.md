@@ -1059,3 +1059,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "In the release process, there is something wrong with the changelog. We just released 0.2.10, and that is not in the changelog? How do we need to change the release flow to make this right for the future?"
 
 ---
+### Entry ID: 6329b252-0d8a-46af-816c-9bc71a67013e — 2025-10-17 21:35
+> "User chose option B: Update all dependencies locally, test, and fix any breaking changes (then close all Dependabot PRs)"
+
+---
