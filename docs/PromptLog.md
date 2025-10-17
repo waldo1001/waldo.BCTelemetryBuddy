@@ -953,3 +953,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #196 — 2025-10-17 17:10
+> "I installed this product from the marketplace, and this is what I get when starting the MCP server: [error log showing 'Cannot find module c:\\Users\\EricWauters\\.vscode\\extensions\\mcp\\dist\\server.js']"
+
+---
+

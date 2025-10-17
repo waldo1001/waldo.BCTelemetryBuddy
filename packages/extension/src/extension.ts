@@ -36,7 +36,8 @@ function registerMCPServerDefinitionProvider(context: vscode.ExtensionContext): 
             }
 
             const config = vscode.workspace.getConfiguration('bctb');
-            const mcpScriptPath = path.join(context.extensionPath, '..', 'mcp', 'dist', 'server.js');
+            // Fixed for marketplace: MCP server bundled at mcp/dist/server.js within extension directory
+            const mcpScriptPath = path.join(context.extensionPath, 'mcp', 'dist', 'server.js');
 
             // Build environment variables from workspace settings
             const env = buildMCPEnvironment(config, workspacePath);
