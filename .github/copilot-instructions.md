@@ -9,27 +9,23 @@ This file provides persistent instructions to GitHub Copilot (the AI assistant) 
 - If the user requests a code change, file creation, or refactoring **without explaining the purpose**, ask: **"What's the purpose of this change? I'll log it to the docs."**
 - Wait for the user to provide the reasoning before proceeding.
 
-### 2. Log every significant action
-After completing any significant change (new file, refactor, feature addition, config change), **you MUST append entries to ALL THREE files**:
+### 2. Log every action
+For every user prompt or request, you MUST append entries to both `docs/PromptLog.md` and `docs/DesignWalkthrough.md`. Do NOT update `docs/CHANGELOG.md` for every prompt — update `docs/CHANGELOG.md` only for releases, major API/architecture changes, or when the user explicitly requests a changelog entry.
 
 - `docs/PromptLog.md` — **ALWAYS log the user's original prompt FIRST**:
-  - Format: `### Entry #N — YYYY-MM-DD HH:MM`
-  - Next line: `> "<user's prompt verbatim or paraphrased>"`
-  - Increment entry number sequentially (check the file for the last entry number)
-  - **Do this for EVERY user request that results in changes**, not just major features
+   - Format: `### Entry #N — YYYY-MM-DD HH:MM`
+   - Next line: `> "<user's prompt verbatim or paraphrased>"`
+   - Increment entry number sequentially (check the file for the last entry number)
+   - **Do this for EVERY user request**, even questions or small edits — PromptLog.md is the authoritative chronological record.
 
-- `docs/DesignWalkthrough.md` — add a short narrative entry (1-3 lines) in the "Stepwise implementation log" section with:
-  - Date (YYYY-MM-DD)
-  - What changed
-  - Why it changed (user's stated purpose)
-  - How it was implemented (brief technical note)
-  - **Include reference to prompt**: `[Prompt #N]` at the end of the first line
+- `docs/DesignWalkthrough.md` — **ALWAYS append a short narrative entry** (1-3 lines) in the "Stepwise implementation log" section for every prompt or change, using the blind-append template below. Include the prompt reference `[Prompt #N]` so entries can be cross-referenced to the PromptLog.
+   - What to include: Date (YYYY-MM-DD), short title, one-line Why, one-line How
 
 - `docs/CHANGELOG.md` — update this file ONLY for releases, major changes, or when the user explicitly requests a CHANGELOG entry:
-   - Format: `- YYYY-MM-DD HH:MM — <what> — <why> (chat-driven)`
-   - **When to update:** releases (version bumps), large API/architecture changes, or when the user asks. Do NOT update this file for every prompt or small tweak.
-   - **How to update when required:** read only the first 30 lines to find the "Recent entries" section and insert the new entry directly after it (reverse chronological order).
-   - Rationale: `docs/CHANGELOG.md` is a project-level, release-focused log and updating it for every prompt creates noise and slows iteration.
+    - Format: `- YYYY-MM-DD HH:MM — <what> — <why> (chat-driven)`
+    - **When to update:** releases (version bumps), large API/architecture changes, or when the user asks. Do NOT update this file for every prompt or small tweak.
+    - **How to update when required:** read only the first 30 lines to find the "Recent entries" section and insert the new entry directly after it (reverse chronological order).
+    - Rationale: `docs/CHANGELOG.md` is a project-level, release-focused log and updating it for every prompt creates noise and slows iteration.
 
 **CRITICAL**: Log the prompt to PromptLog.md BEFORE making changes, so you have the entry number to reference in DesignWalkthrough.md. **ALWAYS use exact timestamps (HH:MM format), NEVER use placeholders like "[Current Time]".**
 
@@ -73,18 +69,17 @@ After completing any significant change (new file, refactor, feature addition, c
 
 ### 6. Workflow summary
 1. User makes ANY request or asks ANY question
-2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number)
+2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number). This gives you the `[Prompt #N]` to reference.
 3. If no "why" provided for a change → ask for purpose
 4. Make the change or answer the question
-5. If significant change:
-    - Append to `docs/DesignWalkthrough.md` by blindly appending the exact template below. DO NOT read, parse, search, or attempt to merge against `DesignWalkthrough.md` — always append to the end. This file must never be read or parsed; blind-appends avoid merge conflicts and keep the workflow fast.
-       - Template to append (exact structure):
-          - `- **YYYY-MM-DD** — <Short title> [Prompt #N]`
-             - `  - **Why:** <one-line reason>`
-             - `  - **How:** <one-line implementation note>`
-       - Keep entries short (1–3 lines plus Why/How lines). The maintainer can expand later if needed.
-    - Update `docs/CHANGELOG.md` only when it's a release/major change or the user explicitly asks for a changelog entry. When updating, do a targeted read of the first 30 lines to find the insertion point and prepend the new entry there.
-6. Confirm completion and show the log entry
+5. **Always append to `docs/DesignWalkthrough.md`** by blindly appending the exact template below. DO NOT read, parse, search, or attempt to merge against `DesignWalkthrough.md` — always append to the end. Use the `[Prompt #N]` from PromptLog.md in the entry.
+   - Template to append (exact structure):
+      - `- **YYYY-MM-DD** — <Short title> [Prompt #N]`
+         - `  - **Why:** <one-line reason>`
+         - `  - **How:** <one-line implementation note>`
+   - Keep entries short (1–3 lines plus Why/How lines). The maintainer can expand later if needed.
+6. Update `docs/CHANGELOG.md` only when it's a release/major change or the user explicitly asks for a changelog entry. When updating, do a targeted read of the first 30 lines to find the insertion point and prepend the new entry there.
+7. Confirm completion and show the log entry
 
 **CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
 
