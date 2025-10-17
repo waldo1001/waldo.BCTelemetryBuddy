@@ -544,3 +544,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Switched to GUID-based EntryId system for PromptLog. [Entry: f27c81fc-fd40-46d3-bbaa-32772ad5ecc7]
   - **Why:** Sequential entry numbers require reading last line of PromptLog.md; GUID-based IDs eliminate this overhead and prevent merge conflicts when processing multiple prompts concurrently.
   - **How:** Updated copilot-instructions.md to use [guid]::NewGuid() for EntryId, removed Get-Content -Tail 1 step, DesignWalkthrough references GUID instead of entry number.
+- **2025-10-17**  Released extension v0.2.6 with MCP runtime fix. [Entry: 9b33d603-5567-4626-844b-7dfb883b3d03]
+  - **Why:** Ship critical production fix for marketplace MCP startup failure.
+  - **How:** Executed patch release (0.2.5  0.2.6), included CommonJS launcher and all related changes, published to VS Code Marketplace.
