@@ -1063,3 +1063,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "User chose option B: Update all dependencies locally, test, and fix any breaking changes (then close all Dependabot PRs)"
 
 ---
+### Entry ID: bf17787b-fa6d-40c8-b98f-b50bc0494bbe — 2025-10-17 21:55
+> "User requested to close all Dependabot PRs using GitHub API since dependencies are now updated locally"
+
+---
+### Entry ID: 3a8f576a-32b0-47fd-9070-e92262f432a9 — 2025-10-17 22:04
+> "Investigating CI failures after dependency update - likely Node.js version mismatch (@types/node 22 vs CI running Node 18/20)"
+
+---
