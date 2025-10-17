@@ -150,16 +150,16 @@ if ($DryRun) {
     exit 0
 }
 
-# Commit the version bump
+# Commit the version bump (including package-lock.json)
 Write-Step "Committing version bump..."
 if ($Component -eq 'both') {
-    git add packages/extension/package.json packages/mcp/package.json
+    git add packages/extension/package.json packages/extension/package-lock.json packages/mcp/package.json packages/mcp/package-lock.json package-lock.json
     git commit -m "chore: bump version to $tagVersion (extension + mcp)"
 } elseif ($Component -eq 'extension') {
-    git add packages/extension/package.json
+    git add packages/extension/package.json packages/extension/package-lock.json package-lock.json
     git commit -m "chore: bump extension version to $tagVersion"
 } else {
-    git add packages/mcp/package.json
+    git add packages/mcp/package.json packages/mcp/package-lock.json package-lock.json
     git commit -m "chore: bump mcp version to $tagVersion"
 }
 Write-Success "Version bump committed"
