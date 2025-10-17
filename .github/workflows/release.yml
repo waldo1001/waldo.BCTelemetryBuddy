@@ -45,13 +45,16 @@ jobs:
       - name: Package extension
         run: npm run package --workspace=packages/extension
       
+      - name: List packaged files (debug)
+        run: |
+          echo "Files in packages/extension:"
+          ls -la packages/extension/*.vsix || echo "No .vsix files found"
+      
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
-          path: |
-            packages/extension/*.vsix
-            packages/mcp/dist/**/*
+          path: packages/extension/*.vsix
           retention-days: 30
 
   create-github-release:
@@ -107,8 +110,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.version }}
           body_path: changelog.txt
-          files: |
-            artifacts/*.vsix
+          files: ./artifacts/*.vsix
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
         env:
@@ -139,22 +141,36 @@ jobs:
           name: release-artifacts
           path: ./artifacts
       
-      - name: List artifacts (debug)
-        run: ls -la ./artifacts/
+      - name: List downloaded artifacts (debug)
+        run: |
+          echo "Contents of ./artifacts:"
+          ls -la ./artifacts/ || echo "Artifacts directory is empty or doesn't exist"
+          echo "Searching for .vsix files:"
+          find ./artifacts -name "*.vsix" -type f || echo "No .vsix files found"
       
       - name: Publish to VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          VSIX_FILE=$(ls ./artifacts/*.vsix)
+          VSIX_FILE=$(find ./artifacts -name "*.vsix" -type f | head -n 1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "Error: No .vsix file found in artifacts"
+            exit 1
+          fi
+          echo "Publishing: $VSIX_FILE"
           npx vsce publish --packagePath "$VSIX_FILE" -p ${VSCE_PAT}
       
       - name: Publish to Open VSX Registry
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          VSIX_FILE=$(ls ./artifacts/*.vsix)
-          npx ovsx publish "$VSIX_FILE" -p ${OVSX_PAT}
+          VSIX_FILE=$(find ./artifacts -name "*.vsix" -type f | head -n 1)
+          if [ -n "$VSIX_FILE" ]; then
+            echo "Publishing to Open VSX: $VSIX_FILE"
+            npx ovsx publish "$VSIX_FILE" -p ${OVSX_PAT}
+          else
+            echo "Warning: No .vsix file found for Open VSX"
+          fi
         continue-on-error: true  # Don't fail if Open VSX publish fails
 
   publish-prerelease:
@@ -186,5 +202,10 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          VSIX_FILE=$(ls ./artifacts/*.vsix)
+          VSIX_FILE=$(find ./artifacts -name "*.vsix" -type f | head -n 1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "Error: No .vsix file found in artifacts"
+            exit 1
+          fi
+          echo "Publishing pre-release: $VSIX_FILE"
           npx vsce publish --pre-release --packagePath "$VSIX_FILE" -p ${VSCE_PAT}
