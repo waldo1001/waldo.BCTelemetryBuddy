@@ -547,3 +547,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Released extension v0.2.6 with MCP runtime fix. [Entry: 9b33d603-5567-4626-844b-7dfb883b3d03]
   - **Why:** Ship critical production fix for marketplace MCP startup failure.
   - **How:** Executed patch release (0.2.5  0.2.6), included CommonJS launcher and all related changes, published to VS Code Marketplace.
+- **2025-10-17**  Released extension v0.2.7 fixing server.cjs packaging issue.
+  - **Why:** v0.2.6 marketplace release was missing server.cjs file causing 'Cannot find module' errors.
+  - **How:** Ran copy-mcp script before release, verified server.cjs exists in extension/mcp/dist/, published patch release 0.2.6  0.2.7.
+- **2025-10-17**  Made test execution optional in release script (default: false). [Entry: e8003f4c-9f5a-4882-a783-a9e688e896ac]
+  - **Why:** Speed up releases by skipping tests unless explicitly requested with -RunTests flag.
+  - **How:** Added -RunTests switch parameter (default false), wrapped test execution in conditional, added warning when tests are skipped.

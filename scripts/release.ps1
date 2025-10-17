@@ -17,6 +17,7 @@
     .\scripts\release.ps1 -BumpType minor -Component both
     .\scripts\release.ps1 -BumpType patch -NoCommit
     .\scripts\release.ps1 -BumpType patch -DryRun
+    .\scripts\release.ps1 -BumpType patch -RunTests
 #>
 
 param(
@@ -32,7 +33,10 @@ param(
     [switch]$NoCommit,
     
     [Parameter(Mandatory=$false)]
-    [switch]$DryRun
+    [switch]$DryRun,
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$RunTests
 )
 
 # Color output functions
@@ -76,15 +80,19 @@ if ($currentBranch -ne "main") {
     }
 }
 
-# Run tests first
-Write-Step "Running all tests..."
-if (-not $DryRun) {
-    npm test
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Tests failed! Fix tests before releasing."
-        exit 1
+# Run tests if requested
+if ($RunTests) {
+    Write-Step "Running all tests..."
+    if (-not $DryRun) {
+        npm test
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Tests failed! Fix tests before releasing."
+            exit 1
+        }
+        Write-Success "All tests passed"
     }
-    Write-Success "All tests passed"
+} else {
+    Write-Warning "Skipping tests (use -RunTests to run tests before release)"
 }
 
 # Function to bump version and get new version

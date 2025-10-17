@@ -1015,3 +1015,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "v0.2.6 marketplace release is missing server.cjs file - need to publish v0.2.7"
 
 ---
+### Entry ID: e8003f4c-9f5a-4882-a783-a9e688e896ac  2025-10-17 13:59
+> "Make the running of tests in release script optional, and default false."
+
+---
