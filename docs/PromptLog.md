@@ -1011,3 +1011,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Do a patch release of the extension"
 
 ---
+### Entry ID: 07fa7ae6-5997-4a3e-bae7-93073955a2b5  2025-10-17 13:55
+> "v0.2.6 marketplace release is missing server.cjs file - need to publish v0.2.7"
+
+---
