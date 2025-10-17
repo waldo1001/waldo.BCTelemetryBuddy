@@ -580,3 +580,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17** — Updated all dependencies to latest versions (Node 22 compatible) [Entry: 6329b252-0d8a-46af-816c-9bc71a67013e]
   - **Why:** Fix Dependabot PR test failures and modernize dependencies (@types/node 18→22, @azure/msal-node 2→3, jest 29→30).
   - **How:** Updated package.json files for both MCP and extension, verified all 311 tests pass (213 MCP + 98 extension). Builds succeed with no breaking changes.
+- **2025-10-17** — Fixed CI workflow Node.js version mismatch [Entry: 3a8f576a-32b0-47fd-9070-e92262f432a9]
+  - **Why:** CI was failing because it tested on Node 18/20 but we updated @types/node to v22.
+  - **How:** Updated .github/workflows/ci.yml to test on Node 20.x and 22.x instead of 18.x and 20.x.
