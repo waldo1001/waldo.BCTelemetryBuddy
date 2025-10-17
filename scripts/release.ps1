@@ -174,6 +174,29 @@ if ($NoCommit) {
     exit 0
 }
 
+# Check if tag already exists
+Write-Step "Checking if tag v$tagVersion already exists..."
+$tagExists = git tag -l "v$tagVersion"
+if ($tagExists) {
+    Write-Warning "Tag v$tagVersion already exists"
+    $recreate = Read-Host "Delete and recreate the tag? This will update it to point to the new version bump commit. (y/N)"
+    if ($recreate -ne "y" -and $recreate -ne "Y") {
+        Write-Host "Release cancelled. Please delete the tag manually or use a different version."
+        exit 1
+    }
+    
+    Write-Step "Deleting existing tag v$tagVersion..."
+    git tag -d "v$tagVersion" | Out-Null
+    Write-Host "  Deleted local tag" -ForegroundColor Gray
+    
+    # Try to delete remote tag (may not exist remotely)
+    git push origin ":refs/tags/v$tagVersion" 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Deleted remote tag" -ForegroundColor Gray
+    }
+    Write-Success "Existing tag deleted"
+}
+
 # Commit the version bump (including package-lock.json)
 Write-Step "Committing version bump..."
 if ($Component -eq 'both') {
@@ -186,19 +209,37 @@ if ($Component -eq 'both') {
     git add packages/mcp/package.json packages/mcp/package-lock.json package-lock.json
     git commit -m "chore: bump mcp version to $tagVersion"
 }
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to commit version bump"
+    exit 1
+}
 Write-Success "Version bump committed"
 
 # Create git tag
 Write-Step "Creating git tag v$tagVersion..."
 git tag "v$tagVersion"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to create tag"
+    exit 1
+}
 Write-Success "Tag created"
 
 # Push to GitHub
 Write-Step "Pushing to GitHub..."
 Write-Host "  Pushing commits..." -ForegroundColor Gray
 git push origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to push commits to GitHub"
+    exit 1
+}
+
 Write-Host "  Pushing tag..." -ForegroundColor Gray
 git push origin "v$tagVersion"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to push tag to GitHub"
+    exit 1
+}
 Write-Success "Pushed to GitHub"
 
 Write-Host ""
