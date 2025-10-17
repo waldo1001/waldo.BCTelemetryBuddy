@@ -872,3 +872,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I get this when I do 'npm install': npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful. npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported. Shouldn't this be addressed?"
 
 ---
+
+### Entry #180 — 2025-10-17 12:16
+> "We have an issue logged on github that we need to solve: https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/20. Someone seems to install it for the first time ever, and there are some dependency issues?"
+
+---

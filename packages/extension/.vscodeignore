@@ -7,6 +7,9 @@ src/
 tsconfig.json
 tsconfig.tsbuildinfo
 
+# Node modules (bundled into dist/extension.js by esbuild)
+node_modules/
+
 # Test files
 **/__tests__/
 **/*.test.ts
@@ -20,7 +23,6 @@ jest.config.js
 .prettierrc
 
 # Development files
-node_modules/@types/
 *.map
 
 # Documentation that's not needed in package
