@@ -1071,3 +1071,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Investigating CI failures after dependency update - likely Node.js version mismatch (@types/node 22 vs CI running Node 18/20)"
 
 ---
+### Entry ID: 37adc3be-a134-4524-ba4d-1dba6a1e80e0 — 2025-10-17 23:23
+> "Review documentation, readme and all, and see if all is still up-to-date, if all features is explained and still up-to-date. If not, change documentation, not code."
+
+---
+### Entry ID: 04be254c-961a-4f69-b257-dc5fa6cb2627 — 2025-10-17 23:42
+> "Update this document (MONOREPO.md)"
+
+---
+### Entry ID: 97220b35-2532-477d-a0ff-f5ed9b69ed7d — 2025-10-17 23:45
+> "13 MCP tools?"
+
+---

@@ -75,7 +75,26 @@ Before installing BC Telemetry Buddy, ensure you have:
 
 ## First-Time Setup
 
-After installation, configure BC Telemetry Buddy for your workspace:
+After installation, you have two options to configure BC Telemetry Buddy:
+
+### Option 1: Setup Wizard (Recommended) ⭐
+
+The **Setup Wizard** provides a guided, 5-step process with validation and testing:
+
+1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Run: `BC Telemetry Buddy: Setup Wizard`
+3. Follow the steps:
+   - **Step 1 - Workspace Check**: Wizard verifies you have a workspace folder open
+   - **Step 2 - Azure Configuration**: Enter your tenant ID, Application Insights App ID, and Kusto cluster URL
+   - **Step 3 - Authentication**: Choose authentication method (Azure CLI recommended)
+   - **Step 4 - Connection Testing**: Wizard validates settings and runs a test query
+   - **Step 5 - Complete**: Settings are saved automatically, quick-start tips displayed
+
+**Benefits**: No manual JSON editing, validation before saving, connection testing, clear error messages.
+
+### Option 2: Manual Configuration
+
+If you prefer manual configuration or need to review/edit settings:
 
 ### 1. Open Workspace Settings
 
@@ -105,11 +124,20 @@ To find your Application Insights details:
 1. Go to the **Azure Portal** (https://portal.azure.com)
 2. Navigate to your **Application Insights** resource
 3. Copy the **Application ID** from the Overview page
-4. Note the **Kusto cluster URL** (usually in the format `https://ade.applicationinsights.io/subscriptions/...`)
+4. For **Kusto cluster URL**, use the BC telemetry endpoint:
+   - Default: `https://ade.applicationinsights.io/subscriptions/{subscription-id}/resourcegroups/{resource-group}/providers/microsoft.insights/components/{app-insights-name}`
+   - You can find this in the Application Insights resource under "API Access"
+
+**Note**: The Setup Wizard pre-fills the Kusto cluster URL format for you.
 
 ### 4. Start the MCP Server
 
-Open the **Command Palette** (Ctrl+Shift+P / Cmd+Shift+P) and run:
+The MCP server starts automatically when you:
+- Run a query via Command Palette
+- Use Copilot to query telemetry
+- Run the Setup Wizard
+
+To manually start the server, open the **Command Palette** (Ctrl+Shift+P / Cmd+Shift+P) and run:
 
 ```
 BC Telemetry Buddy: Start MCP Server
@@ -119,16 +147,41 @@ The extension will:
 - Validate your settings
 - Start the MCP backend server
 - Show a confirmation message when ready
+- Display the server status in the Status Bar
 
 ---
 
 ## Authentication
 
-BC Telemetry Buddy supports two authentication methods:
+BC Telemetry Buddy supports three authentication methods:
 
-### Device Code Flow (Recommended)
+### Azure CLI (Recommended) ⭐
 
-**Best for:** Individual developers, interactive use
+**Best for:** Individual developers, interactive use, easiest setup
+
+**How it works:**
+1. Ensure you're logged in with Azure CLI: `az login`
+2. The MCP server uses your existing Azure CLI credentials automatically
+3. **No additional configuration needed** - just set `authFlow` to `azure_cli`
+
+**Benefits:**
+- ✅ No Azure app registration required
+- ✅ No device code prompts every time
+- ✅ Uses your existing Azure session
+- ✅ Works for all Azure resources you have access to
+
+**To configure:**
+```json
+{
+  "bctb.mcp.authFlow": "azure_cli"
+}
+```
+
+**Note:** You don't need to specify `tenantId`, `clientId`, or `clientSecret` when using Azure CLI auth.
+
+### Device Code Flow
+
+**Best for:** When Azure CLI is not available, or for explicit browser-based auth
 
 **How it works:**
 1. The MCP server initiates device code authentication
@@ -138,7 +191,7 @@ BC Telemetry Buddy supports two authentication methods:
 5. Grant permissions when prompted
 6. Return to VSCode — you're authenticated!
 
-**No Azure app registration required!** This is the easiest way to get started.
+**No Azure app registration required!** But you'll need to authenticate each time the MCP server starts.
 
 **To configure:**
 ```json
@@ -150,7 +203,7 @@ BC Telemetry Buddy supports two authentication methods:
 
 ### Client Credentials Flow
 
-**Best for:** Service accounts, CI/CD pipelines, unattended scenarios
+**Best for:** Service accounts, CI/CD pipelines, unattended scenarios, automation
 
 **How it works:**
 1. Create an Azure service principal with Application Insights read permissions
@@ -197,37 +250,116 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 
 ### Using Natural Language (with GitHub Copilot)
 
+GitHub Copilot provides the best experience with BC Telemetry Buddy through a **systematic discovery workflow**:
+
 1. Open **GitHub Copilot Chat** (Ctrl+Alt+I / Cmd+Alt+I)
 2. Type your question in plain English:
    ```
    @workspace Show me all errors in the last 24 hours
    ```
-3. Copilot will:
-   - Search your saved `.kql` queries for similar examples
-   - Fetch relevant KQL from configured external references
-   - Generate an appropriate KQL query
-   - Execute it via the MCP backend
-   - Display results in a formatted view
+3. **Copilot automatically follows this workflow:**
+   - **Step 1 - Discover Events**: Calls `bctb_get_event_catalog` to find relevant event IDs (e.g., RT0010 for errors)
+   - **Step 2 - Understand Schema**: Calls `bctb_get_event_schema` to see available customDimensions fields
+   - **Step 3 - Check Saved Queries**: Searches workspace queries for similar patterns
+   - **Step 4 - Execute Query**: Generates KQL and calls `bctb_query_telemetry` to run it
+   - **Step 5 - Display Results**: Shows formatted results with recommendations
+
+**For customer-specific queries**, Copilot adds a step:
+```
+@workspace Show me errors for customer Contoso in the last 24 hours
+```
+- Copilot calls `bctb_get_tenant_mapping` to map "Contoso" to its Azure tenant ID
+- Then proceeds with the workflow above, filtering by `aadTenantId`
 
 **Example queries:**
 - "What are the slowest database operations today?"
 - "Show me failed web service calls in the last hour"
-- "How many sessions started in the past week?"
+- "How many sessions started in the past week for customer Fabrikam?"
 - "Which reports are causing the most timeouts?"
-
-### Using the Command
-
-1. Run `BC Telemetry Buddy: Run Natural Language Query`
-2. Enter your question in the input box
-3. View results in a webview with tables and charts
+- "What telemetry events are firing most frequently?"
 
 ### Using KQL Directly
 
-If you know KQL, you can query directly via GitHub Copilot:
+If you know KQL, you can query directly:
 
+**Via GitHub Copilot:**
 ```
 @workspace Run this KQL: requests | where success == false | take 10
 ```
+
+**Via Command Palette:**
+1. Run `BC Telemetry Buddy: Run KQL Query`
+2. Enter your KQL query in the input box
+3. View results in a rich webview with tables, charts, and recommendations
+
+**Via CodeLens in .kql files:**
+1. Create or open a `.kql` file in your workspace
+2. Write your KQL query
+3. Click the "▶ Run Query" CodeLens link that appears above the query
+4. View results in the webview
+
+### Discovering Available Events
+
+Before querying, you can discover what telemetry events exist:
+
+**Via Copilot:**
+```
+@workspace What telemetry events are available?
+@workspace Show me the schema for event RT0005
+```
+
+**Manual Discovery:**
+The extension exposes these tools to Copilot:
+- **Event Catalog** (`bctb_get_event_catalog`): Lists recent BC telemetry event IDs with descriptions, frequency, and Learn URLs
+- **Event Schema** (`bctb_get_event_schema`): Shows available customDimensions fields for a specific event ID
+
+This helps you understand:
+- What events are firing in your environment
+- What data each event contains (customDimensions fields)
+- How frequently events occur
+- Microsoft Learn documentation for each event type
+
+---
+
+## Working with Customers (Tenant Mapping)
+
+BC Telemetry Buddy includes powerful features for managing multi-customer environments:
+
+### Automatic Company Discovery
+
+When you query telemetry, the extension can discover all companies/customers in your Application Insights:
+
+**Via Copilot:**
+```
+@workspace What companies do I have telemetry for?
+```
+
+Copilot calls `bctb_get_tenant_mapping` which:
+- Scans recent telemetry (default: last 10 days)
+- Extracts unique company names and their Azure tenant IDs
+- Returns a mapping table for easy reference
+
+### Customer-Specific Queries
+
+When asking about a specific customer:
+
+```
+@workspace Show me errors for customer Contoso in the last week
+```
+
+**Copilot automatically:**
+1. Calls `bctb_get_tenant_mapping` to find Contoso's tenant ID
+2. Generates KQL with: `| where tostring(customDimensions.aadTenantId) == "{tenant-id}"`
+3. Executes the query and returns customer-specific results
+
+### Saving Customer Queries
+
+When you save a query that filters by tenant/company, it's automatically organized:
+
+**Generic queries** → `queries/[Category]/[QueryName].kql`  
+**Customer queries** → `queries/Companies/[CompanyName]/[Category]/[QueryName].kql`
+
+This keeps customer-specific queries isolated and easy to find.
 
 ---
 
@@ -242,8 +374,9 @@ When you find a useful query, save it for future reference and context building:
 3. Enter the **KQL query**
 4. Optionally add a **description**
 5. Optionally add **tags** (comma-separated)
+6. Optionally specify a **company name** (for customer-specific queries)
 
-The query is saved to `.vscode/bctb/queries/` as a `.kql` file.
+The query is saved to `.vscode/bctb/queries/` (or `queries/Companies/{CompanyName}/` for customer queries) as a `.kql` file.
 
 ### Via GitHub Copilot
 
@@ -329,20 +462,32 @@ When you query with natural language:
 
 ---
 
-## GitHub Copilot Integration
+### GitHub Copilot Integration
 
-BC Telemetry Buddy integrates seamlessly with GitHub Copilot through MCP tools.
+BC Telemetry Buddy exposes **10 MCP tools** to GitHub Copilot for comprehensive telemetry analysis.
 
 ### Available Tools
 
-When you have Copilot and BC Telemetry Buddy installed, Copilot can:
-
-| Tool | Description |
-|------|-------------|
-| `query_telemetry` | Execute KQL or natural language queries |
-| `get_saved_queries` | List saved queries with optional tag filtering |
-| `save_query` | Save a query for future reference |
-| `get_recommendations` | Analyze results and provide actionable insights |
+| Tool | Description | When Copilot Uses It |
+|------|-------------|----------------------|
+| **Discovery Tools** |
+| `bctb_get_event_catalog` | List available BC telemetry events with descriptions and frequency | When you ask generic questions about errors, performance, or "what's available" |
+| `bctb_get_event_schema` | Get customDimensions fields for a specific event ID | After discovering relevant events, to understand available fields |
+| `bctb_get_tenant_mapping` | Map company names to Azure tenant IDs | When you mention a specific customer/company name in your query |
+| **Query Execution** |
+| `bctb_query_telemetry` | Execute KQL or natural language queries | For every telemetry query (after discovery steps) |
+| **Query Library** |
+| `bctb_get_saved_queries` | List saved queries (with optional tag filtering) | To find existing patterns before generating new queries |
+| `bctb_search_queries` | Search saved queries by keywords | When your question matches common patterns (errors, slow, login, etc.) |
+| `bctb_save_query` | Save a successful query for future reference | When you ask to save a query or Copilot recommends saving |
+| `bctb_get_categories` | List query categories/folders | To understand your workspace organization |
+| **Analysis & Recommendations** |
+| `bctb_get_recommendations` | Analyze results and provide actionable insights | After query execution, to suggest next steps or optimizations |
+| `bctb_get_external_queries` | Fetch KQL examples from configured references | For additional context when generating queries |
+| **Cache Management** |
+| `bctb_get_cache_stats` | Get cache size and statistics | When you ask about cache performance |
+| `bctb_clear_cache` | Clear all cached results | When you explicitly ask to clear cache |
+| `bctb_cleanup_cache` | Remove only expired cache entries | For routine maintenance |
 
 ### Usage Examples
 

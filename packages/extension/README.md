@@ -22,18 +22,27 @@ The setup wizard automatically appears on first activation and guides you throug
 
 ## ✨ Features
 
-- **🧙 Setup Wizard**: Step-by-step guided configuration with connection testing and validation
-- **🔐 Flexible Authentication**: Azure CLI (uses existing `az login`), Device Code, or Client Credentials
-- **📊 Event Catalog & Schema Discovery**: Browse available telemetry events and understand their customDimensions structure before querying
-- **🤖 GitHub Copilot Integration**: MCP tools enable Copilot to query telemetry, discover events, and generate KQL from natural language
-- **💬 Natural Language Queries**: Ask questions in plain English - backend matches patterns from saved queries to generate KQL
+### Getting Started
+- **🧙 Setup Wizard**: Step-by-step 5-step guided configuration with connection testing, validation, and automatic settings save
+- **🔐 Flexible Authentication**: Azure CLI (recommended - uses existing `az login`), Device Code, or Client Credentials
+
+### Discovery & Exploration
+- **📊 Event Catalog**: Browse available BC telemetry event IDs (RT0001, RT0005, etc.) with descriptions, frequency, and Learn URLs
+- **🔍 Schema Discovery**: Understand customDimensions fields for each event type by sampling recent occurrences
+- **🗺️ Tenant Mapping**: Automatically discover company names and map them to Azure tenant IDs for customer queries
+
+### Query Execution
+- **🤖 GitHub Copilot Integration**: 10 MCP tools enable Copilot to systematically discover → understand → search → execute queries
+- **💬 Natural Language Queries**: Ask questions in plain English - Copilot follows structured workflow for accurate results
 - **📝 KQL Support**: Write and execute KQL queries directly; create `.kql` files with syntax highlighting
 - **👁️ CodeLens**: "▶ Run Query" links appear above queries in `.kql` files for one-click execution
-- **📚 Query Library**: Save queries organized by category; customer-specific queries auto-filed in `Companies/[CompanyName]/` folders
-- **🗺️ Tenant Mapping**: Define friendly company names that map to Azure tenant IDs for customer queries
+- **📋 Rich Results**: View query results in formatted tables with row counts, execution timing, and recommendations
+
+### Query Management
+- **📚 Query Library**: Save queries organized by category; customer-specific queries auto-filed in `Companies/[CompanyName]/[Category]/` folders
+- **� Query Search**: Search saved queries by keywords to find existing patterns before writing new KQL
 - **💾 Smart Caching**: File-based caching with configurable TTL (default 1 hour); manual cache management commands
 - **🧠 Context-Aware**: Automatically includes saved workspace queries and external GitHub references for better KQL generation
-- **📋 Rich Results**: View query results in formatted tables with row counts and execution timing
 
 ## 📋 Commands
 

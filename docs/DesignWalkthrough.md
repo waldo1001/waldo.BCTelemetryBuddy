@@ -583,3 +583,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17** — Fixed CI workflow Node.js version mismatch [Entry: 3a8f576a-32b0-47fd-9070-e92262f432a9]
   - **Why:** CI was failing because it tested on Node 18/20 but we updated @types/node to v22.
   - **How:** Updated .github/workflows/ci.yml to test on Node 20.x and 22.x instead of 18.x and 20.x.
+- **2025-10-17** — Comprehensive documentation review and updates [Entry: 37adc3be-a134-4524-ba4d-1dba6a1e80e0]
+  - **Why:** Ensure all documentation reflects current features (Setup Wizard, Azure CLI auth, Event Catalog, Tenant Mapping, 10 MCP tools, CodeLens, customer folders).
+  - **How:** Updated README.md, UserGuide.md, extension README.md, MCP README.md, and Instructions.md with expanded feature descriptions, systematic workflow explanations, and clarified authentication methods.
+- **2025-10-17** — Updated MONOREPO.md to reflect current project state [Entry: 5b3f8d2e-9c47-4a1b-b8e6-7d4a3c1e5f9a]
+  - **Why:** Document needed to show all implemented features, file structure, 10 MCP tools, test coverage, CI/CD status, and complete documentation list.
+  - **How:** Expanded directory tree with actual implemented files, updated package descriptions with features/stats, changed 'Next Steps' to 'Project Status' showing completed work, reorganized documentation section into user/developer/change tracking categories.
+- **2025-10-17** — Corrected MCP tool count from 13 to 10 [Entry: 97220b35-2532-477d-a0ff-f5ed9b69ed7d]
+  - **Why:** User questioned the count - actual implementation has 10 tools (query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries, get_event_catalog, get_event_schema, get_tenant_mapping).
+  - **How:** Updated all documentation files (README.md, UserGuide.md, MONOREPO.md, extension README.md, MCP README.md, DesignWalkthrough.md) to reflect correct count of 10 MCP tools.

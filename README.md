@@ -37,29 +37,39 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 ### 1. Install the Extension
 Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy) or search for "BC Telemetry Buddy" in VSCode Extensions.
 
-### 2. Run Setup Wizard
-Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run:
+### 2. Run Setup Wizard ⭐
+**First-time users: Start here!** Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run:
 ```
 BC Telemetry Buddy: Setup Wizard
 ```
 
-The wizard guides you through:
-- **Azure Configuration**: Connect to your tenant and Application Insights
-- **Authentication**: Choose Azure CLI (recommended), Device Code, or Client Credentials
-- **Connection Testing**: Validate your configuration before saving
-- **Quick Tips**: Get started with @workspace Copilot queries
+The 5-step wizard guides you through:
+- **Step 1 - Workspace Check**: Ensures you have a workspace folder open
+- **Step 2 - Azure Configuration**: Enter your tenant ID and Application Insights details
+- **Step 3 - Authentication**: Choose Azure CLI (recommended), Device Code, or Client Credentials
+- **Step 4 - Connection Testing**: Validates settings and tests your connection with a sample query
+- **Step 5 - Complete**: Saves settings and provides quick-start tips
+
+**No manual configuration needed!** The wizard validates everything and saves to `.vscode/settings.json` automatically.
 
 ### 3. Start Querying
-**With Copilot** (recommended):
+**With Copilot** (recommended - follows systematic discovery workflow):
 ```
 @workspace Show me all errors from BC in the last 24 hours
 @workspace What are the slowest operations this week?
 @workspace Find login failures for customer Contoso
 ```
 
+Copilot automatically follows this workflow:
+1. **Discover Events**: Calls Event Catalog to find relevant telemetry event IDs
+2. **Understand Schema**: Calls Event Schema to see available fields for each event
+3. **Check Saved Queries**: Searches your workspace for similar existing patterns
+4. **Execute Query**: Generates and runs the KQL query
+5. **Display Results**: Shows formatted results with recommendations
+
 **With Command Palette**:
 - `BC Telemetry Buddy: Run KQL Query` - Execute direct KQL or natural language
-- Create a `.kql` file and click "▶ Run Query" CodeLens link
+- Create a `.kql` file and click "▶ Run Query" CodeLens link above queries
 
 ### 4. Save & Organize Queries
 Queries are automatically organized:
@@ -130,13 +140,19 @@ See [.github/workflows/README.md](.github/workflows/README.md) for workflow docu
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
-
 We welcome contributions! Please:
 1. Fork the repository
 2. Create a feature branch
-3. Follow our coding standards (SOLID principles, 70% test coverage)
-4. Submit a pull request with tests and documentation
+3. Follow our coding standards:
+   - SOLID principles and clean code practices
+   - Minimum 70% test coverage (enforced by CI)
+   - TypeScript strict mode
+   - Comprehensive JSDoc comments for public APIs
+4. Write tests for all new features
+5. Update documentation (UserGuide.md, component CHANGELOGs)
+6. Submit a pull request with tests and documentation
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for detailed development guidelines and workflow instructions.
 
 ## License
 
