@@ -1047,3 +1047,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "It does work now"
 
 ---
+### Entry ID: 3deacb69-b7a6-4339-85cf-db0d2de93916  2025-10-17 14:53
+> "Patch it correctly now please, and point to the right commit"
+
+---
