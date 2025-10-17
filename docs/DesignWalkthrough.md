@@ -568,3 +568,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Confirmed v0.2.8 works with launcher.js fix. [Entry: 3e756f44-33c7-481a-8657-cfd85bdf8ac3]
   - **Why:** Verify the launcher.js solution resolves all marketplace installation issues.
   - **How:** User tested locally with manually copied launcher.js, MCP server started successfully, no more module errors.
+- **2025-10-17**  Released v0.2.9 with proper build order verification. [Entry: 3deacb69-b7a6-4339-85cf-db0d2de93916]
+  - **Why:** v0.2.8 marketplace publish failed (version already exists), needed new patch release.
+  - **How:** Verified CI/CD builds MCP first (generates launcher.js), then builds/packages extension (copy-mcp copies launcher.js), tagged v0.2.9, pushed to GitHub.

@@ -1051,3 +1051,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Patch it correctly now please, and point to the right commit"
 
 ---
+### Entry ID: 0c9c5863-6d9b-4c36-8d36-efa7cf5cb8fc  2025-10-17 15:10
+> "Still not working .. I start to question if we will ever be able to fix this. [v0.2.9 also missing launcher.js] Please do a deep analysis before you waste my time again!"
+
+---

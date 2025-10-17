@@ -423,7 +423,7 @@
         "test": "jest",
         "test:coverage": "jest --coverage",
         "test:integration": "npm run build && node ./dist/test/runTest.js",
-        "copy-mcp": "node -e \"const fs=require('fs');const path=require('path');const targetDir=path.join(__dirname,'mcp','dist');fs.mkdirSync(targetDir,{recursive:true});fs.copyFileSync(path.join(__dirname,'..','mcp','dist','server.js'),path.join(targetDir,'server.js'));try{fs.copyFileSync(path.join(__dirname,'..','mcp','dist','launcher.js'),path.join(targetDir,'launcher.js'));}catch(e){}console.log('Copied MCP server bundle to extension/mcp/dist/server.js and launcher.js')\"",
+        "copy-mcp": "node -e \"const fs=require('fs');const path=require('path');const targetDir=path.join(__dirname,'mcp','dist');fs.mkdirSync(targetDir,{recursive:true});fs.copyFileSync(path.join(__dirname,'..','mcp','dist','server.js'),path.join(targetDir,'server.js'));fs.copyFileSync(path.join(__dirname,'..','mcp','dist','launcher.js'),path.join(targetDir,'launcher.js'));console.log('Copied MCP server bundle to extension/mcp/dist/')\"",
         "package": "vsce package",
         "clean": "rimraf dist out mcp"
     },

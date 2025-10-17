@@ -6,7 +6,7 @@
     "main": "./dist/server.js",
     "types": "./dist/server.d.ts",
     "scripts": {
-        "build": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --minify --external:fsevents",
+        "build": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --minify --external:fsevents && node -e \"require('fs').copyFileSync('launcher.js', 'dist/launcher.js')\"",
         "dev": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --watch",
         "compile": "tsc --noEmit",
         "start": "node dist/server.js",

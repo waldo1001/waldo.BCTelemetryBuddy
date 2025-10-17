@@ -5,6 +5,16 @@ All notable changes to the BC Telemetry Buddy VSCode extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Build process: fixed launcher.js not being included in VSIX due to silent copy failure. Created launcher.js as source file (not build artifact), updated MCP build to copy it to dist/, removed silent error handling from copy-mcp script.
+
+## [0.2.9] - 2025-10-17
+
+### Fixed  
+- Release tagging: corrected v0.2.8 tag placement and re-released as v0.2.9 (v0.2.8 was already published to marketplace with wrong code).
+
 ## [0.2.8] - 2025-10-17
 
 ### Fixed
