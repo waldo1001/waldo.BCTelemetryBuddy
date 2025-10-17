@@ -95,6 +95,41 @@ if ($RunTests) {
     Write-Warning "Skipping tests (use -RunTests to run tests before release)"
 }
 
+# Function to update CHANGELOG.md (move [Unreleased] to new version)
+function Update-Changelog {
+    param($PackagePath, $Version)
+    
+    $changelogPath = "$PackagePath/CHANGELOG.md"
+    
+    if (-not (Test-Path $changelogPath)) {
+        Write-Warning "CHANGELOG.md not found at $changelogPath - skipping"
+        return
+    }
+    
+    $content = Get-Content $changelogPath -Raw
+    
+    # Check if there's an [Unreleased] section with content
+    if ($content -notmatch '## \[Unreleased\]\s*\n\s*\n(###.+?)(?=\n## \[|\z)') {
+        Write-Warning "No [Unreleased] section with content found in CHANGELOG.md - skipping"
+        return
+    }
+    
+    # Get today's date
+    $date = Get-Date -Format "yyyy-MM-dd"
+    
+    # Replace [Unreleased] with new version and add empty [Unreleased] section
+    $newContent = $content -replace `
+        '## \[Unreleased\]', `
+        "## [Unreleased]`n`n## [$Version] - $date"
+    
+    if ($DryRun) {
+        Write-Host "  Would update CHANGELOG.md: [Unreleased] → [$Version] - $date" -ForegroundColor Yellow
+    } else {
+        Set-Content -Path $changelogPath -Value $newContent -NoNewline
+        Write-Host "  Updated CHANGELOG.md: [Unreleased] → [$Version] - $date" -ForegroundColor Green
+    }
+}
+
 # Function to bump version and get new version
 function Bump-Version {
     param($PackagePath)
@@ -132,6 +167,8 @@ $extensionVersion = $null
 if ($Component -eq 'extension' -or $Component -eq 'both') {
     Write-Step "Bumping extension version ($BumpType)..."
     $extensionVersion = Bump-Version -PackagePath "packages/extension"
+    Write-Step "Updating extension CHANGELOG..."
+    Update-Changelog -PackagePath "packages/extension" -Version $extensionVersion
 }
 
 # Bump MCP version
@@ -139,6 +176,8 @@ $mcpVersion = $null
 if ($Component -eq 'mcp' -or $Component -eq 'both') {
     Write-Step "Bumping MCP version ($BumpType)..."
     $mcpVersion = Bump-Version -PackagePath "packages/mcp"
+    Write-Step "Updating MCP CHANGELOG..."
+    Update-Changelog -PackagePath "packages/mcp" -Version $mcpVersion
 }
 
 # Determine tag version (use extension version as primary)

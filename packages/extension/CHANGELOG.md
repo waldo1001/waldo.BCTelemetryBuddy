@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.10] - 2025-10-17
+
 ### Fixed
 - Build process: fixed launcher.js not being included in VSIX due to silent copy failure. Created launcher.js as source file (not build artifact), updated MCP build to copy it to dist/, removed silent error handling from copy-mcp script.
 

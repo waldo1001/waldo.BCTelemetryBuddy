@@ -571,3 +571,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Released v0.2.9 with proper build order verification. [Entry: 3deacb69-b7a6-4339-85cf-db0d2de93916]
   - **Why:** v0.2.8 marketplace publish failed (version already exists), needed new patch release.
   - **How:** Verified CI/CD builds MCP first (generates launcher.js), then builds/packages extension (copy-mcp copies launcher.js), tagged v0.2.9, pushed to GitHub.
+- **2025-10-17**  Deep analysis revealed root cause: launcher.js was build artifact not in git, CI/CD had no way to include it. [Entry: 0c9c5863-6d9b-4c36-8d36-efa7cf5cb8fc]
+  - **Why:** launcher.js existed only in local gitignored dist/ folder. CI/CD builds from clean checkout never had it. copy-mcp script silently failed (empty catch block).
+  - **How:** Created launcher.js as SOURCE FILE in packages/mcp/, updated MCP build to copy it to dist/, removed silent error handling from copy-mcp. Released v0.2.10.

@@ -1055,3 +1055,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Still not working .. I start to question if we will ever be able to fix this. [v0.2.9 also missing launcher.js] Please do a deep analysis before you waste my time again!"
 
 ---
+### Entry ID: 7c48cb7d-e3c3-4c06-9fbd-54306de9d24e  2025-10-17 15:23
+> "In the release process, there is something wrong with the changelog. We just released 0.2.10, and that is not in the changelog? How do we need to change the release flow to make this right for the future?"
+
+---
