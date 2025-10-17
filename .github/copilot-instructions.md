@@ -25,10 +25,11 @@ After completing any significant change (new file, refactor, feature addition, c
   - How it was implemented (brief technical note)
   - **Include reference to prompt**: `[Prompt #N]` at the end of the first line
 
-- `docs/CHANGELOG.md` — add a timestamped entry **at the top** (reverse chronological order - latest first):
-  - Format: `- YYYY-MM-DD HH:MM — <what> — <why> (chat-driven)`
-  - **CRITICAL**: New entries must be inserted at the TOP of the "Recent entries" section, immediately after the "---" line
-  - The CHANGELOG maintains reverse chronological order so the most recent changes are always visible first
+- `docs/CHANGELOG.md` — update this file ONLY for releases, major changes, or when the user explicitly requests a CHANGELOG entry:
+   - Format: `- YYYY-MM-DD HH:MM — <what> — <why> (chat-driven)`
+   - **When to update:** releases (version bumps), large API/architecture changes, or when the user asks. Do NOT update this file for every prompt or small tweak.
+   - **How to update when required:** read only the first 30 lines to find the "Recent entries" section and insert the new entry directly after it (reverse chronological order).
+   - Rationale: `docs/CHANGELOG.md` is a project-level, release-focused log and updating it for every prompt creates noise and slows iteration.
 
 **CRITICAL**: Log the prompt to PromptLog.md BEFORE making changes, so you have the entry number to reference in DesignWalkthrough.md. **ALWAYS use exact timestamps (HH:MM format), NEVER use placeholders like "[Current Time]".**
 
@@ -75,9 +76,14 @@ After completing any significant change (new file, refactor, feature addition, c
 2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number)
 3. If no "why" provided for a change → ask for purpose
 4. Make the change or answer the question
-5. If significant change: 
-   - Append to `docs/DesignWalkthrough.md` using FAST APPEND (no reading, just append to end)
-   - Prepend to `docs/CHANGELOG.md` using TARGETED READ (read first 30 lines only to find insertion point)
+5. If significant change:
+    - Append to `docs/DesignWalkthrough.md` by blindly appending the exact template below. DO NOT read, parse, search, or attempt to merge against `DesignWalkthrough.md` — always append to the end. This file must never be read or parsed; blind-appends avoid merge conflicts and keep the workflow fast.
+       - Template to append (exact structure):
+          - `- **YYYY-MM-DD** — <Short title> [Prompt #N]`
+             - `  - **Why:** <one-line reason>`
+             - `  - **How:** <one-line implementation note>`
+       - Keep entries short (1–3 lines plus Why/How lines). The maintainer can expand later if needed.
+    - Update `docs/CHANGELOG.md` only when it's a release/major change or the user explicitly asks for a changelog entry. When updating, do a targeted read of the first 30 lines to find the insertion point and prepend the new entry there.
 6. Confirm completion and show the log entry
 
 **CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
@@ -86,12 +92,12 @@ After completing any significant change (new file, refactor, feature addition, c
 
 **Use `read_file` with `offset` and `limit` parameters for targeted reading:**
 - **PromptLog.md**: Read ONLY last 20 lines (offset=860, limit=20 for 880-line file) to get latest entry number, then append new entry
-- **DesignWalkthrough.md**: NO READING - just append to end of file (chronological order)
+- **DesignWalkthrough.md**: DO NOT READ, PARSE, OR SEARCH THIS FILE — blindly append new entries to the end using the exact template above. Never attempt to read or parse `DesignWalkthrough.md` before appending; doing so defeats the fast-append workflow and increases merge conflicts.
 - **CHANGELOG.md**: Read ONLY first 30 lines (limit=30) to find "Recent entries" section, then prepend new entry
 
 **Why this is fast:**
 - PromptLog.md: Read last 20 lines only (~860 offset) instead of 880 lines - 40x faster
-- DesignWalkthrough.md: Zero reading (0 lines) - just blind append to end
+- DesignWalkthrough.md: Do not read; always blind-append to the end
 - CHANGELOG.md: Read first 30 lines only instead of 120 lines - 4x faster
 - Use `replace_string_in_file` to make changes visible in VSCode change tracking
 - Total time: ~5 seconds instead of ~30 seconds per prompt
@@ -287,12 +293,13 @@ Ready to release BC Telemetry Buddy!
 ✅ Last commit: [brief description]
 
 📦 What I'll do:
-1. Run all tests (311 tests)
-2. Bump version: 0.2.3 → 0.2.4 (example)
-3. Commit: "chore: bump extension version to 0.2.4"
-4. Create git tag: v0.2.4
-5. Push to GitHub (triggers CI/CD pipeline)
-6. Monitor deployment to VS Code Marketplace
+1. Update component CHANGELOG(s) with version changes
+2. Run all tests (311 tests)
+3. Bump version: 0.2.3 → 0.2.4 (example)
+4. Commit: "chore: bump extension version to 0.2.4" (includes CHANGELOG updates)
+5. Create git tag: v0.2.4
+6. Push to GitHub (triggers CI/CD pipeline)
+7. Monitor deployment to VS Code Marketplace
 
 Which version bump would you like?
 • patch (0.2.3 → 0.2.4) - Bug fixes, small improvements
@@ -302,15 +309,41 @@ Which version bump would you like?
 Type: patch, minor, or major (or 'cancel' to abort)
 ```
 
-**Step 3: Execute Release** after user confirms bump type:
+**Step 3: Update Component CHANGELOGs** - Before running release script:
 ```
-1. Run: .\scripts\release.ps1 -BumpType [user's choice]
-2. Monitor terminal output for errors
-3. If successful, show success message with links
-4. If errors occur, diagnose and report
+1. Determine which component(s) are being released (extension, mcp, or both)
+2. For each component, update its CHANGELOG.md:
+   - packages/extension/CHANGELOG.md for extension releases
+   - packages/mcp/CHANGELOG.md for MCP releases
+3. Add new version section at the top with format:
+   ## [X.Y.Z] - YYYY-MM-DD
+   
+   ### Added
+   - [List new features]
+   
+   ### Changed
+   - [List changes to existing functionality]
+   
+   ### Fixed
+   - [List bug fixes]
+   
+   ### Removed
+   - [List removed features]
+4. Move relevant items from [Unreleased] section to new version section
+5. Keep [Unreleased] section at top for future changes
+6. Save the file(s) - they will be committed with version bump
 ```
 
-**Step 4: Confirm Success** with this format:
+**Step 4: Execute Release** after CHANGELOGs updated and user confirms bump type:
+```
+1. Run: .\scripts\release.ps1 -BumpType [user's choice]
+2. Script will automatically include CHANGELOG.md in the commit (uses 'git add -A')
+3. Monitor terminal output for errors
+4. If successful, show success message with links
+5. If errors occur, diagnose and report
+```
+
+**Step 5: Confirm Success** with this format:
 ```
 🚀 Release v0.2.4 initiated successfully!
 

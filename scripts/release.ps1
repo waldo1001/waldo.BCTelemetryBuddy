@@ -197,16 +197,16 @@ if ($tagExists) {
     Write-Success "Existing tag deleted"
 }
 
-# Commit the version bump (including package-lock.json)
+# Commit the version bump (including package-lock.json and CHANGELOG.md)
 Write-Step "Committing version bump..."
 if ($Component -eq 'both') {
-    git add packages/extension/package.json packages/mcp/package.json package-lock.json
+    git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/package.json packages/mcp/CHANGELOG.md package-lock.json
     git commit -m "chore: bump version to $tagVersion (extension + mcp)"
 } elseif ($Component -eq 'extension') {
-    git add packages/extension/package.json package-lock.json
+    git add packages/extension/package.json packages/extension/CHANGELOG.md package-lock.json
     git commit -m "chore: bump extension version to $tagVersion"
 } else {
-    git add packages/mcp/package.json package-lock.json
+    git add packages/mcp/package.json packages/mcp/CHANGELOG.md package-lock.json
     git commit -m "chore: bump mcp version to $tagVersion"
 }
 

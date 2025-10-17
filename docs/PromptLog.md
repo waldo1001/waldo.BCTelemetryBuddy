@@ -973,4 +973,14 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #200 — 2025-10-17 20:30
+> "Release this version"
+
+---
+
+### Entry #201 — 2025-10-17 20:45
+> "Add to the GitHub Copilot Instructions: Whenever I ask to create a release, I need to update CHANGELOG.md with all the changes for this version. Add it to that release workflow! Also make sure that it's committed after bumping the versions so that same commit also includes the new changelog."
+
+---
+
 
