@@ -5,6 +5,11 @@ All notable changes to the BC Telemetry Buddy MCP backend will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-10-17
+
+### Changed
+- Launcher: renamed from `server.cjs` to `launcher.js` to ensure reliable VSIX packaging and installation across all VSCode versions. Preserves CommonJS semantics while using `.js` extension that VSCode handles correctly.
+
 ## [0.2.0] - 2025-10-17
 
 ### Fixed

@@ -5,6 +5,14 @@ All notable changes to the BC Telemetry Buddy VSCode extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2025-10-17
+
+### Fixed
+- VSIX installation: renamed `server.cjs` launcher to `launcher.js` to work around VSCode/vsce not properly extracting `.cjs` files from VSIX packages. The `.js` extension with CommonJS code works reliably across all VSCode installations.
+
+### Changed
+- MCP launcher: renamed from `server.cjs` to `launcher.js` while preserving CommonJS semantics to ensure reliable VSIX packaging and installation.
+
 ## [0.2.7] - 2025-10-17
 
 ### Fixed

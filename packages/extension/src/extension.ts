@@ -37,8 +37,8 @@ function registerMCPServerDefinitionProvider(context: vscode.ExtensionContext): 
 
             const config = vscode.workspace.getConfiguration('bctb');
             // Fixed for marketplace: MCP server bundled at mcp/dist/server.js within extension directory
-            // Prefer the .cjs launcher so Node treats the bundled server as CommonJS
-            const mcpScriptPath = path.join(context.extensionPath, 'mcp', 'dist', 'server.cjs');
+            // Use launcher.js to force CommonJS interpretation (avoids VSIX .cjs installation issues)
+            const mcpScriptPath = path.join(context.extensionPath, 'mcp', 'dist', 'launcher.js');
 
             // Build environment variables from workspace settings
             const env = buildMCPEnvironment(config, workspacePath);
@@ -514,8 +514,8 @@ async function startMCP(): Promise<void> {
     outputChannel.appendLine(`Workspace: ${workspacePath}`);
 
     // Find MCP server executable
-    // Use .cjs launcher to force CommonJS module semantics when spawned by Node
-    const mcpServerPath = path.join(__dirname, '..', '..', 'mcp', 'dist', 'server.cjs');
+    // Use launcher.js to force CommonJS module semantics (avoids VSIX .cjs installation issues)
+    const mcpServerPath = path.join(__dirname, '..', '..', 'mcp', 'dist', 'launcher.js');
 
     // Spawn MCP process
     const proc = child_process.spawn('node', [mcpServerPath], {

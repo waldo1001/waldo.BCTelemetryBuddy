@@ -1019,3 +1019,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Make the running of tests in release script optional, and default false."
 
 ---
+### Entry ID: 8540dc3c-260f-4f60-bf2e-178a971f36f3  2025-10-17 14:11
+> "Still an error. Come on, man ... [Shows v0.2.5 still installed from marketplace with Dynamic require error]"
+
+---
+### Entry ID: 0d0331ad-8664-4473-88d9-e50e5647a535  2025-10-17 14:26
+> "Option A" (Rename server.cjs to launcher.js to fix VSIX installation issue)
+
+---
+### Entry ID: 6567c357-c17e-4bbd-b717-30b3b7e8949c  2025-10-17 14:33
+> "Can I test this locally?"
+
+---
+### Entry ID: ee0b1045-2016-407a-999f-5285f76528b6  2025-10-17 14:35
+> "I did option 2 - seems to work! Release through a patch release, please!"
+
+---

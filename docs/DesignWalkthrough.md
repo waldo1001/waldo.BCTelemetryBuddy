@@ -553,3 +553,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Made test execution optional in release script (default: false). [Entry: e8003f4c-9f5a-4882-a783-a9e688e896ac]
   - **Why:** Speed up releases by skipping tests unless explicitly requested with -RunTests flag.
   - **How:** Added -RunTests switch parameter (default false), wrapped test execution in conditional, added warning when tests are skipped.
+- **2025-10-17**  User still sees v0.2.5 error from marketplace. [Entry: 8540dc3c-260f-4f60-bf2e-178a971f36f3]
+  - **Why:** Marketplace hasn't updated yet with v0.2.6/v0.2.7 fixes.
+  - **How:** Packaged v0.2.7 VSIX locally (includes server.cjs), ready for manual installation.
+- **2025-10-17**  Renamed server.cjs to launcher.js to fix VSIX installation issue. [Entry: 0d0331ad-8664-4473-88d9-e50e5647a535]
+  - **Why:** VSCode/vsce doesn't properly extract .cjs files from VSIX packages, causing 'Cannot find module' errors in marketplace installations.
+  - **How:** Renamed launcher to launcher.js (preserving CommonJS code), updated extension spawn paths, updated copy-mcp script, tested with all 311 tests passing.
