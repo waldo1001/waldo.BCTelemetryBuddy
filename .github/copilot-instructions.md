@@ -258,6 +258,102 @@ Apply these software engineering principles to all code:
          Changes are ready - please review and commit when you're satisfied."
 ```
 
+### 12. Release workflow automation
+**Conversational Release Triggers**: When the user says phrases like:
+- "Release this version" / "Release this"
+- "Publish a new version" / "Publish this"
+- "Let's ship this" / "Ship it"
+- "I want to release" / "Time to release"
+- "Create a release" / "Make a release"
+
+**Your Response Protocol:**
+
+**Step 1: Gather Context** - Check current state:
+```
+1. Read current version from packages/extension/package.json
+2. Run git status to check working directory is clean
+3. Check current branch (should be main)
+4. Optionally run git log to see recent changes
+```
+
+**Step 2: Present Pre-flight Check** with this format:
+```
+Ready to release BC Telemetry Buddy!
+
+📋 Pre-flight check:
+✅ Current version: 0.2.3
+✅ Git working directory clean
+✅ On main branch
+✅ Last commit: [brief description]
+
+📦 What I'll do:
+1. Run all tests (311 tests)
+2. Bump version: 0.2.3 → 0.2.4 (example)
+3. Commit: "chore: bump extension version to 0.2.4"
+4. Create git tag: v0.2.4
+5. Push to GitHub (triggers CI/CD pipeline)
+6. Monitor deployment to VS Code Marketplace
+
+Which version bump would you like?
+• patch (0.2.3 → 0.2.4) - Bug fixes, small improvements
+• minor (0.2.3 → 0.3.0) - New features, backward compatible
+• major (0.2.3 → 1.0.0) - Breaking changes
+
+Type: patch, minor, or major (or 'cancel' to abort)
+```
+
+**Step 3: Execute Release** after user confirms bump type:
+```
+1. Run: .\scripts\release.ps1 -BumpType [user's choice]
+2. Monitor terminal output for errors
+3. If successful, show success message with links
+4. If errors occur, diagnose and report
+```
+
+**Step 4: Confirm Success** with this format:
+```
+🚀 Release v0.2.4 initiated successfully!
+
+✅ Version bumped and committed
+✅ Tag v0.2.4 created and pushed
+✅ GitHub Actions triggered
+
+📊 Monitor progress:
+• GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
+• Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.4
+• Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+
+The extension will be live on the marketplace in ~5-10 minutes after CI completes.
+```
+
+**Error Handling:**
+- **Tests fail** → Report which tests failed, show output, suggest fixes, DO NOT proceed
+- **Git not clean** → Show `git status` output, ask user to commit/stash, DO NOT proceed
+- **Not on main** → Warn user, ask if they want to continue anyway
+- **Tag already exists** → Script handles this (prompts to delete/recreate)
+- **Script fails** → Show error output, diagnose issue, suggest manual steps if needed
+
+**Special Cases:**
+- If user says "release both" or "release extension and mcp" → use `-Component both`
+- If user says "dry run first" → run with `-DryRun` flag first, then ask to proceed
+- If user wants to review before pushing → use `-NoCommit` flag
+
+**CRITICAL RULES:**
+1. **NEVER auto-release without user confirmation** - Always present pre-flight check and wait for bump type
+2. **NEVER skip tests** - Tests must pass before releasing (unless user explicitly overrides with -DryRun)
+3. **Follow Rule #11** - Use `.\scripts\release.ps1` script, don't run git commands directly
+4. **Log the interaction** - Log the "release this version" prompt to PromptLog.md as usual
+
+**Example Interaction:**
+
+User: "Release this version"
+
+You: [Present pre-flight check with current state and ask for bump type]
+
+User: "patch"
+
+You: [Run .\scripts\release.ps1 -BumpType patch, monitor output, show success message with links]
+
 ---
 
 ## Notes for maintainers

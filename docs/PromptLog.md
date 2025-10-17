@@ -958,3 +958,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #197 — 2025-10-17 18:45
+> "ok next, I would like to be able to just ask YOU something like 'Release this version', where you will ask - are you sure to bump, commit, and all you're about to do to manage this. how? Add this to the instructions? Create a prompt? Tell me."
+
+---
+
