@@ -5,9 +5,18 @@ All notable changes to the BC Telemetry Buddy MCP backend will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-10-17
+
+### Fixed
+- Marketplace bundling: bundle MCP server into a single `dist/server.js` (esbuild) and ensure the extension copies the bundle into `packages/extension/mcp/dist/server.js` before packaging. Fixes runtime errors in marketplace installs where MCP couldn't be found and ensures the MCP server runs without requiring separate node_modules in the published extension.
+
+## [0.1.0] - 2025-10-15
 
 ### Added
+- Project structure and configuration
+- TypeScript setup with ES2022 + ESM
+- Jest testing framework
+- Package.json with dependencies
 - Initial MCP backend scaffold
 - Express server with JSON-RPC protocol support
 - MSAL authentication (device_code and client_credentials flows)
@@ -17,11 +26,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - External references fetching (GitHub API)
 - PII sanitization (opt-in)
 - Recommendations engine (heuristics-based)
-
-## [0.1.0] - 2025-10-15
-
-### Added
-- Project structure and configuration
-- TypeScript setup with ES2022 + ESM
-- Jest testing framework
-- Package.json with dependencies
