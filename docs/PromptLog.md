@@ -1007,3 +1007,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Add to copilot-instructions.md: use GUID-based EntryId instead of sequential entry numbers. This eliminates need to read last line of PromptLog.md and prevents merge conflicts when multiple prompts are processed. DesignWalkthrough references the GUID for cross-referencing."
 
 ---
+### Entry ID: 9b33d603-5567-4626-844b-7dfb883b3d03  2025-10-17 13:33
+> "Do a patch release of the extension"
+
+---

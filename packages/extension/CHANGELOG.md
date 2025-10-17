@@ -5,6 +5,17 @@ All notable changes to the BC Telemetry Buddy VSCode extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2025-10-17
+
+### Fixed
+- MCP server runtime error: fixed "Dynamic require of 'path' is not supported" and "Cannot use import statement outside a module" errors that prevented marketplace-installed extension from starting MCP server. Added CommonJS launcher (`server.cjs`) that forces Node to treat entrypoint as CommonJS, ensuring bundled server loads correctly in all user environments.
+
+### Changed
+- MCP package: switched from ESM to CommonJS (`"type": "commonjs"`, esbuild `--format=cjs`) to eliminate bundler dynamic-require shims and ESM/CJS mismatches at runtime.
+- Extension spawn: updated to prefer `mcp/dist/server.cjs` launcher for reliable MCP process startup.
+- Test configuration: converted `jest.config.js` from ESM `export default` to CommonJS `module.exports` to match package.json type.
+- Documentation: migrated logging system to GUID-based EntryIds for conflict-free concurrent prompt processing.
+
 ## [0.2.5] - 2025-10-17
 
 ### Fixed
