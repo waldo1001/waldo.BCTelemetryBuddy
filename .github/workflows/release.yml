@@ -146,13 +146,15 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          npx vsce publish --packagePath ./artifacts/*.vsix -p ${VSCE_PAT}
+          VSIX_FILE=$(ls ./artifacts/*.vsix)
+          npx vsce publish --packagePath "$VSIX_FILE" -p ${VSCE_PAT}
       
       - name: Publish to Open VSX Registry
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          npx ovsx publish ./artifacts/*.vsix -p ${OVSX_PAT}
+          VSIX_FILE=$(ls ./artifacts/*.vsix)
+          npx ovsx publish "$VSIX_FILE" -p ${OVSX_PAT}
         continue-on-error: true  # Don't fail if Open VSX publish fails
 
   publish-prerelease:
@@ -184,4 +186,5 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          npx vsce publish --pre-release --packagePath ./artifacts/*.vsix -p ${VSCE_PAT}
+          VSIX_FILE=$(ls ./artifacts/*.vsix)
+          npx vsce publish --pre-release --packagePath "$VSIX_FILE" -p ${VSCE_PAT}
