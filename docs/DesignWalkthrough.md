@@ -559,3 +559,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17**  Renamed server.cjs to launcher.js to fix VSIX installation issue. [Entry: 0d0331ad-8664-4473-88d9-e50e5647a535]
   - **Why:** VSCode/vsce doesn't properly extract .cjs files from VSIX packages, causing 'Cannot find module' errors in marketplace installations.
   - **How:** Renamed launcher to launcher.js (preserving CommonJS code), updated extension spawn paths, updated copy-mcp script, tested with all 311 tests passing.
+- **2025-10-17**  Released v0.2.8 with launcher.js fix. [Entry: ee0b1045-2016-407a-999f-5285f76528b6]
+  - **Why:** Fix critical VSIX installation bug where .cjs files weren't extracted, causing marketplace installations to fail.
+  - **How:** Renamed server.cjs to launcher.js, updated all references, committed changes, ran release script (patch bump), pushed tag to GitHub triggering CI/CD.
