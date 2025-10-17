@@ -13,12 +13,12 @@ This file provides persistent instructions to GitHub Copilot (the AI assistant) 
 For every user prompt or request, you MUST append entries to both `docs/PromptLog.md` and `docs/DesignWalkthrough.md`. Do NOT update `docs/CHANGELOG.md` for every prompt — update `docs/CHANGELOG.md` only for releases, major API/architecture changes, or when the user explicitly requests a changelog entry.
 
 - `docs/PromptLog.md` — **ALWAYS log the user's original prompt FIRST**:
-   - Format: `### Entry #N — YYYY-MM-DD HH:MM`
+   - Format: `### Entry ID: <guid> — YYYY-MM-DD HH:MM`
    - Next line: `> "<user's prompt verbatim or paraphrased>"`
-   - Increment entry number sequentially (check the file for the last entry number)
+   - Use GUID-based EntryId (generate with `[guid]::NewGuid().ToString()`)
    - **Do this for EVERY user request**, even questions or small edits — PromptLog.md is the authoritative chronological record.
 
-- `docs/DesignWalkthrough.md` — **ALWAYS append a short narrative entry** (1-3 lines) in the "Stepwise implementation log" section for every prompt or change, using the blind-append template below. Include the prompt reference `[Prompt #N]` so entries can be cross-referenced to the PromptLog.
+- `docs/DesignWalkthrough.md` — **ALWAYS append a short narrative entry** (1-3 lines) in the "Stepwise implementation log" section for every prompt or change, using the blind-append template below. Include the entry reference `[Entry: <guid>]` so entries can be cross-referenced to the PromptLog.
    - What to include: Date (YYYY-MM-DD), short title, one-line Why, one-line How
 
 - `docs/CHANGELOG.md` — update this file ONLY for releases, major changes, or when the user explicitly requests a CHANGELOG entry:
@@ -27,7 +27,7 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
     - **How to update when required:** read only the first 30 lines to find the "Recent entries" section and insert the new entry directly after it (reverse chronological order).
     - Rationale: `docs/CHANGELOG.md` is a project-level, release-focused log and updating it for every prompt creates noise and slows iteration.
 
-**CRITICAL**: Log the prompt to PromptLog.md BEFORE making changes, so you have the entry number to reference in DesignWalkthrough.md. **ALWAYS use exact timestamps (HH:MM format), NEVER use placeholders like "[Current Time]".**
+**CRITICAL**: Log the prompt to PromptLog.md BEFORE making changes, so you have the EntryId (GUID) to reference in DesignWalkthrough.md. **ALWAYS use exact timestamps (HH:MM format), NEVER use placeholders like "[Current Time]". ALWAYS generate a new GUID for each entry.**
 
 ### 3. What counts as "significant"
 - New files or directories
@@ -49,7 +49,7 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 **docs/DesignWalkthrough.md** (append under "Stepwise implementation log"):
 
 ```markdown
-- **2025-10-15** — Added MCP JSON contract and workspace settings. [Prompt #3]
+- **2025-10-15** — Added MCP JSON contract and workspace settings. [Entry: a1b2c3d4-e5f6-7890-abcd-ef1234567890]
   - **Why:** Define a small, explicit data contract for agents to consume.
   - **How:** Created `Instructions.md` with endpoint specs, added example workspace `settings.json` keys.
 ```
@@ -60,10 +60,10 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 - 2025-10-15 14:32 — Added `.github/copilot-instructions.md` — Instructs Copilot to ask "why" and log every change to docs (chat-driven)
 ```
 
-**docs/PromptLog.md** (append at end with sequential entry number):
+**docs/PromptLog.md** (append at end with GUID-based EntryId):
 
 ```markdown
-### Entry #3 — 2025-10-15 14:32
+### Entry ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890 — 2025-10-15 14:32
 > "Add a cache.ts file for the MCP with file-based caching and TTL support."
 ```
 
@@ -83,37 +83,68 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 
 **CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
 
-**FAST LOGGING STRATEGY** (speeds up documentation from ~30s to ~5s):
+**FAST LOGGING STRATEGY** (fast, reliable, no reading):
 
-**Use `read_file` with `offset` and `limit` parameters for targeted reading:**
-- **PromptLog.md**: Read ONLY last 20 lines (offset=860, limit=20 for 880-line file) to get latest entry number, then append new entry
-- **DesignWalkthrough.md**: DO NOT READ, PARSE, OR SEARCH THIS FILE — blindly append new entries to the end using the exact template above. Never attempt to read or parse `DesignWalkthrough.md` before appending; doing so defeats the fast-append workflow and increases merge conflicts.
-- **CHANGELOG.md**: Read ONLY first 30 lines (limit=30) to find "Recent entries" section, then prepend new entry
+**CRITICAL: Use PowerShell `Add-Content` for ALL log appends - NEVER read the files:**
 
-**Why this is fast:**
-- PromptLog.md: Read last 20 lines only (~860 offset) instead of 880 lines - 40x faster
-- DesignWalkthrough.md: Do not read; always blind-append to the end
-- CHANGELOG.md: Read first 30 lines only instead of 120 lines - 4x faster
-- Use `replace_string_in_file` to make changes visible in VSCode change tracking
-- Total time: ~5 seconds instead of ~30 seconds per prompt
+**PromptLog.md**: 
+```powershell
+# Generate GUID-based EntryId (NO reading files, NO counting, NO conflicts)
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
+$entryId = [guid]::NewGuid().ToString()
+
+# Append new entry (NEVER read any file)
+$entry = "`n### Entry ID: $entryId — $timestamp`n> `"$userPrompt`"`n`n---"
+Add-Content -Path "docs/PromptLog.md" -Value $entry -NoNewline
+```
+
+**DesignWalkthrough.md**:
+```powershell
+# Append new entry (NEVER read file, NEVER parse, NEVER search)
+# Reference the GUID from PromptLog instead of entry number
+$date = Get-Date -Format "yyyy-MM-dd"
+$entry = "`n- **$date** — $shortTitle [Entry: $entryId]`n  - **Why:** $reason`n  - **How:** $implementation"
+Add-Content -Path "docs/DesignWalkthrough.md" -Value $entry -NoNewline
+```
+
+**CHANGELOG.md** (only for releases/major changes):
+```powershell
+# Read ONLY first 30 lines to find insertion point
+$lines = Get-Content "docs/CHANGELOG.md" -Head 30
+# Find "Recent entries" line, insert after it
+# (Only when explicitly needed for releases)
+```
+
+**Why PowerShell `Add-Content` is best:**
+- ✅ **NEVER reads any files** - generates GUID, appends to end
+- ✅ **Zero file I/O overhead** - no need to read last line for entry number
+- ✅ **Atomic operation** - no merge conflicts from concurrent prompts
+- ✅ **Fast** - instant append regardless of file size
+- ✅ **Reliable** - Windows native, works every time
+- ✅ **Simple** - two commands (generate GUID, append), no parsing logic
+
+**ABSOLUTE RULES:**
+1. **NEVER use `read_file` on PromptLog.md or DesignWalkthrough.md**
+2. **NEVER read last line to get entry number** - use GUID instead
+3. **ALWAYS use PowerShell `Add-Content` to append**
+4. **ALWAYS generate new GUID for each entry** - use `[guid]::NewGuid().ToString()`
+5. **Changes appear immediately in VSCode** - user can see diffs
 
 **Example workflow:**
 ```
-1. PromptLog.md:
-   - read_file("docs/PromptLog.md", offset=860, limit=20) → get "Entry #180"
-   - Calculate next: #181
-   - Append with replace_string_in_file (find last "---", add after it)
+1. Generate GUID for PromptLog entry:
+   - run_in_terminal: $entryId = [guid]::NewGuid().ToString()
 
-2. DesignWalkthrough.md:
-   - read_file("docs/DesignWalkthrough.md", offset=430, limit=10) → get last entry
-   - Append new entry with replace_string_in_file (add after last entry)
+2. Append to PromptLog.md:
+   - run_in_terminal: Add-Content with "Entry ID: $entryId" (includes user prompt verbatim)
 
-3. CHANGELOG.md:
-   - read_file("docs/CHANGELOG.md", limit=30) → find "Recent entries\n--------------\n"
-   - Prepend with replace_string_in_file (insert right after that line)
+3. Append to DesignWalkthrough.md:
+   - run_in_terminal: Add-Content with Why/How template [Entry: $entryId]
+
+4. DONE - both files updated, ZERO file reading
 ```
 
-**Key principle:** Read ONLY the specific lines you need (first/last N lines), not entire files. Changes appear in VSCode's change tracking.
+**Key principle:** APPEND ONLY, NEVER READ. Use GUID-based EntryId to eliminate all file I/O overhead.
 
 ### 7. Example interaction
 

@@ -983,4 +983,27 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #202 — 2025-10-17 20:52
+> "Run smoke test to validate the CommonJS launcher (packages/mcp/dist/server.cjs) fixes the dynamic-require / ESM mismatch and allows the MCP process to start when spawned by the extension."
 
+---
+
+### Entry #203 — 2025-10-17 21:05
+> "Smoke test successful! The CommonJS launcher fixed the runtime error. The server now loads correctly (reaches config validation as expected). All 213 MCP tests pass. Need to update jest.config.js to CommonJS format and run extension tests to ensure no regressions."
+
+---
+
+
+
+### Entry #xx  2025-10-17 13:24
+> "User corrected logging workflow: instructed to NEVER read PromptLog.md or DesignWalkthrough.md, instead ALWAYS use PowerShell Add-Content to append to end of files. Updated copilot-instructions.md to mandate PowerShell Add-Content approach for fast, reliable, conflict-free logging."
+
+---
+### Entry #xx  2025-10-17 13:28  ID: c32c75d3-9751-4ef3-b61c-4857a173bfa7
+> "Add to copilot-instructions.md: use GUID-based EntryId instead of sequential entry numbers. This eliminates need to read last line of PromptLog.md and prevents merge conflicts when multiple prompts are processed. DesignWalkthrough references the GUID for cross-referencing."
+
+---
+### Entry ID: f27c81fc-fd40-46d3-bbaa-32772ad5ecc7  2025-10-17 13:28
+> "Add to copilot-instructions.md: use GUID-based EntryId instead of sequential entry numbers. This eliminates need to read last line of PromptLog.md and prevents merge conflicts when multiple prompts are processed. DesignWalkthrough references the GUID for cross-referencing."
+
+---
