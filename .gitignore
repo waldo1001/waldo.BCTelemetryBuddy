@@ -10,6 +10,9 @@ dist/
 out/
 *.vsix
 
+# Copied MCP bundle (created during extension packaging, not committed)
+packages/extension/mcp/
+
 # Test coverage
 coverage/
 .nyc_output/

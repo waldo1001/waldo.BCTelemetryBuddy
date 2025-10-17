@@ -968,3 +968,9 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ---
 
+### Entry #199 — 2025-10-26 20:15
+> "Fix the GitHub Actions v0.2.4 packaging failure at https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18589689745/job/53001675806 - ERROR invalid relative path: extension/../mcp/dist/server.js.map when running vsce package"
+
+---
+
+

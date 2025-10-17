@@ -1,13 +1,16 @@
 # Parent directories (critical - prevent including workspace root)
 ../../
 
+# Exclude entire MCP package (we copy mcp/dist/server.js locally before packaging)
+../mcp/**
+
 # Source files (only include compiled dist/)
 src/
 tsconfig.json
 tsconfig.tsbuildinfo
 
 # Node modules (bundled into dist/extension.js by esbuild)
-# MCP dependencies are bundled into ../mcp/dist/server.js
+# MCP dependencies are bundled into mcp/dist/server.js (copied from ../mcp/)
 node_modules/
 
 # Test files
@@ -34,7 +37,4 @@ docs/
 # Misc
 .vscode-test/
 *.vsix
-
-# Explicitly include MCP server bundle
-!../mcp/dist/server.js
 

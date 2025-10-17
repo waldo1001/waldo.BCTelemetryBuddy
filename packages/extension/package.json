@@ -416,15 +416,16 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run build",
+        "vscode:prepublish": "npm run build && npm run copy-mcp",
         "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify",
         "dev": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
         "compile": "tsc --noEmit",
         "test": "jest",
         "test:coverage": "jest --coverage",
         "test:integration": "npm run build && node ./dist/test/runTest.js",
+        "copy-mcp": "node -e \"const fs=require('fs');const path=require('path');const targetDir=path.join(__dirname,'mcp','dist');fs.mkdirSync(targetDir,{recursive:true});fs.copyFileSync(path.join(__dirname,'..','mcp','dist','server.js'),path.join(targetDir,'server.js'));console.log('Copied MCP server bundle to extension/mcp/dist/server.js')\"",
         "package": "vsce package",
-        "clean": "rimraf dist out"
+        "clean": "rimraf dist out mcp"
     },
     "dependencies": {
         "axios": "^1.6.0"
