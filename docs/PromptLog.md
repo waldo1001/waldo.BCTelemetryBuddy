@@ -877,3 +877,68 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "We have an issue logged on github that we need to solve: https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/20. Someone seems to install it for the first time ever, and there are some dependency issues?"
 
 ---
+
+### Entry #181 — 2025-10-17 14:32
+> "So - can you create a generic script for next time?"
+
+---
+
+### Entry #182 — 2025-10-17 14:33
+> "Ok, I want to start logging again"
+
+---
+
+### Entry #183 — 2025-10-17 14:35
+> "I see prompts were logged, but not the rest?"
+
+---
+
+### Entry #184 — 2025-10-17 15:01
+> "When releasing the app, there are problems in the pipeline. https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18587668170/job/52995284915 in the job 'Publish to VS Code Marketplace', the artifact download works but listing shows 'ls: cannot access './artifacts/packages/extension/': No such file or directory'"
+
+---
+
+### Entry #185 — 2025-10-17 15:15
+> "I would like to use this release script - how do I do that?"
+
+---
+
+### Entry #186 — 2025-10-17 15:20
+> "I don't get it - I see it bumping the version, but that version in package json is not committed to main. How can the pipeline then compile this version and publish it?"
+
+---
+
+### Entry #187 — 2025-10-17 15:30
+> "New problem on the release: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18587942040/job/52996178890 It was able to list artifacts it seems, but now, it fails on publishing to the marketplace - where again, it can't find a file. 'Error: ENOENT: no such file or directory, open ./artifacts/*.vsix'"
+
+---
+
+### Entry #188 — 2025-10-17 15:45
+> "That didn't work. https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18588112477/job/52996711312 Still seems the same: 'ls: cannot access ./artifacts/*.vsix: No such file or directory'"
+
+---
+
+### Entry #189 — 2025-10-17 16:00
+> "After running the script, I see the new version in package.json and such, not committed to main. Add an option (parameter) to automatically commit to main (default)"
+
+---
+
+### Entry #190 — 2025-10-17 16:15
+> "There is still something off. Look at this pipeline: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/18588224916 the release works, but the tag is 0.2.2, while the actual upload of the app is 0.2.1. Also the Open VSX Registry publish step fails with 'error: option -p, --pat <token> argument missing'"
+
+---
+
+### Entry #191 — 2025-10-17 16:35
+> "What is Open VSX, how do I create such a PAT (is it the same as the one for VSCE?)"
+
+---
+
+### Entry #192 — 2025-10-17 16:40
+> "You can comment out the Open VSX step in the release pipeline. For now, i won't use it."
+
+---
+
+### Entry #193 — 2025-10-17 16:45
+> "You haven't been logging anything - please log what's missing."
+
+---
