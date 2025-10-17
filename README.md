@@ -35,7 +35,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 ## Quick Start
 
 ### 1. Install the Extension
-Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bctb) or search for "BC Telemetry Buddy" in VSCode Extensions.
+Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy) or search for "BC Telemetry Buddy" in VSCode Extensions.
 
 ### 2. Run Setup Wizard
 Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run:
