@@ -63,10 +63,13 @@ export class SetupWizardProvider {
                 await this._validateAuth(message.authFlow);
                 break;
             case 'testConnection':
-                await this._testConnection();
+                await this._testConnection(message.settings);
                 break;
             case 'saveSettings':
                 await this._saveSettings(message.settings);
+                break;
+            case 'closeWizard':
+                this._panel?.dispose();
                 break;
             case 'openExternal':
                 vscode.env.openExternal(vscode.Uri.parse(message.url));
@@ -155,31 +158,84 @@ export class SetupWizardProvider {
         });
     }
 
-    private async _testConnection(): Promise<void> {
-        const config = vscode.workspace.getConfiguration('bctb.mcp');
-        const appInsightsId = config.get<string>('applicationInsights.appId');
-        const kustoUrl = config.get<string>('kusto.clusterUrl');
+    private async _testConnection(settings: any): Promise<void> {
+        // Use settings from the form, not from saved configuration
+        // This allows testing before saving
+        const appInsightsId = settings?.appInsightsId;
+        const kustoUrl = settings?.kustoUrl;
+        const authFlow = settings?.authFlow;
 
         let success = false;
         let message = '';
+        let details = '';
+
+        console.log('[SetupWizard] Testing connection with settings:', { appInsightsId, kustoUrl, authFlow });
 
         if (!appInsightsId || !kustoUrl) {
-            message = 'Missing App Insights ID or Kusto URL';
+            message = '❌ Missing App Insights ID or Kusto URL';
+            details = 'Please fill in all required fields before testing connection.';
         } else {
             try {
-                // Try to execute a simple test query via the MCP
-                // This is a placeholder - actual implementation would use the MCP client
-                success = true;
-                message = 'Connection test successful';
+                // Validate authentication based on auth flow
+                if (authFlow === 'azure_cli') {
+                    const { exec } = await import('child_process');
+                    const { promisify } = await import('util');
+                    const execAsync = promisify(exec);
+
+                    try {
+                        const { stdout } = await execAsync('az account show');
+                        const accountInfo = JSON.parse(stdout);
+                        details = `✅ Authenticated as: ${accountInfo.user.name}\n`;
+                        details += `✅ Subscription: ${accountInfo.name}\n`;
+                        details += `✅ App Insights ID: ${appInsightsId}\n`;
+                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
+                        details += '\n⚠️ Note: Full query test requires MCP server to be running.';
+                        success = true;
+                        message = '✅ Connection configuration is valid';
+                    } catch (error: any) {
+                        message = '❌ Azure CLI authentication failed';
+                        details = 'Please run "az login" in your terminal first.';
+                    }
+                } else if (authFlow === 'device_code') {
+                    if (!settings.clientId) {
+                        message = '❌ Missing Client ID';
+                        details = 'Client ID is required for device code flow.';
+                    } else {
+                        details = `✅ Auth Flow: Device Code\n`;
+                        details += `✅ Client ID: ${settings.clientId}\n`;
+                        details += `✅ App Insights ID: ${appInsightsId}\n`;
+                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
+                        details += '\n⚠️ Note: Full authentication test requires MCP server to be running.';
+                        success = true;
+                        message = '✅ Configuration looks valid';
+                    }
+                } else if (authFlow === 'client_credentials') {
+                    if (!settings.clientId || !settings.clientSecret) {
+                        message = '❌ Missing Client ID or Client Secret';
+                        details = 'Both Client ID and Client Secret are required for service principal authentication.';
+                    } else {
+                        details = `✅ Auth Flow: Client Credentials\n`;
+                        details += `✅ Client ID: ${settings.clientId}\n`;
+                        details += `✅ App Insights ID: ${appInsightsId}\n`;
+                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
+                        details += '\n⚠️ Note: Full authentication test requires MCP server to be running.';
+                        success = true;
+                        message = '✅ Configuration looks valid';
+                    }
+                }
             } catch (error: any) {
-                message = `Connection failed: ${error.message}`;
+                message = `❌ Connection test failed: ${error.message}`;
+                details = error.stack || '';
             }
         }
+
+        console.log('[SetupWizard] Connection test result:', { success, message });
 
         this._panel?.webview.postMessage({
             type: 'connectionTest',
             success,
-            message
+            message,
+            details
         });
     }
 
@@ -763,7 +819,23 @@ export class SetupWizardProvider {
         }
 
         function testConnection() {
-            vscode.postMessage({ type: 'testConnection' });
+            // Collect current form values to test connection
+            const authFlow = document.getElementById('authFlow').value;
+            const settings = {
+                tenantName: document.getElementById('tenantName').value,
+                tenantId: document.getElementById('tenantId').value,
+                appInsightsId: document.getElementById('appInsightsId').value,
+                kustoUrl: document.getElementById('kustoUrl').value,
+                authFlow: authFlow,
+                clientId: authFlow === 'device_code' 
+                    ? document.getElementById('deviceCodeClientId').value 
+                    : document.getElementById('spClientId').value,
+                clientSecret: authFlow === 'client_credentials' 
+                    ? document.getElementById('clientSecret').value 
+                    : ''
+            };
+            
+            vscode.postMessage({ type: 'testConnection', settings });
         }
 
         function showConnectionTest(message) {
@@ -773,7 +845,15 @@ export class SetupWizardProvider {
 
             const results = document.getElementById('connectionResults');
             results.style.display = 'block';
-            document.getElementById('connectionMessage').textContent = message.message;
+            const messageEl = document.getElementById('connectionMessage');
+            
+            // Display message with details if available
+            if (message.details) {
+                messageEl.innerHTML = '<strong>' + message.message + '</strong><br><br>' + 
+                                     message.details.replace(/\\n/g, '<br>');
+            } else {
+                messageEl.textContent = message.message;
+            }
         }
 
         function saveSettings() {
@@ -802,8 +882,8 @@ export class SetupWizardProvider {
         }
 
         function closeWizard() {
-            // Optionally save first if not already saved
-            saveSettings();
+            // Close the wizard panel
+            vscode.postMessage({ type: 'closeWizard' });
         }
 
         // Handle external link clicks

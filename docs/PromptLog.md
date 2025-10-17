@@ -942,3 +942,14 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "You haven't been logging anything - please log what's missing."
 
 ---
+
+### Entry #194 — 2025-10-17 17:00
+> "I think we need to fix the following in the setup wizard. When I set up a new environment, the setup is not saved yet, the test connection (to Kusto Cluster) will fail, simply because it (presumably) doesn't have settings. If I save the setup, and test again the connection is successful. Make sure you save the settings before you test connection."
+
+---
+
+### Entry #195 — 2025-10-17 17:05
+> "When I press 'Finish', please close the page"
+
+---
+
