@@ -72,15 +72,47 @@ After completing any significant change (new file, refactor, feature addition, c
 
 ### 6. Workflow summary
 1. User makes ANY request or asks ANY question
-2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using the `replace_string_in_file` tool (to get entry number)
+2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number)
 3. If no "why" provided for a change → ask for purpose
 4. Make the change or answer the question
-5. If significant change: Append log entries to `docs/DesignWalkthrough.md` (with `[Prompt #N]` reference) and `docs/CHANGELOG.md` using the `replace_string_in_file` tool
+5. If significant change: 
+   - Append to `docs/DesignWalkthrough.md` using FAST APPEND (no reading, just append to end)
+   - Prepend to `docs/CHANGELOG.md` using TARGETED READ (read first 30 lines only to find insertion point)
 6. Confirm completion and show the log entry
 
 **CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
 
-**TOOL USAGE**: Always use the `replace_string_in_file` tool to update documentation files. NEVER use PowerShell commands (Add-Content, Out-File, etc.) or terminal commands to modify PromptLog.md, DesignWalkthrough.md, or CHANGELOG.md. The file editing tools ensure proper formatting and avoid encoding issues.
+**FAST LOGGING STRATEGY** (speeds up documentation from ~30s to ~5s):
+
+**Use `read_file` with `offset` and `limit` parameters for targeted reading:**
+- **PromptLog.md**: Read ONLY last 20 lines (offset=860, limit=20 for 880-line file) to get latest entry number, then append new entry
+- **DesignWalkthrough.md**: NO READING - just append to end of file (chronological order)
+- **CHANGELOG.md**: Read ONLY first 30 lines (limit=30) to find "Recent entries" section, then prepend new entry
+
+**Why this is fast:**
+- PromptLog.md: Read last 20 lines only (~860 offset) instead of 880 lines - 40x faster
+- DesignWalkthrough.md: Zero reading (0 lines) - just blind append to end
+- CHANGELOG.md: Read first 30 lines only instead of 120 lines - 4x faster
+- Use `replace_string_in_file` to make changes visible in VSCode change tracking
+- Total time: ~5 seconds instead of ~30 seconds per prompt
+
+**Example workflow:**
+```
+1. PromptLog.md:
+   - read_file("docs/PromptLog.md", offset=860, limit=20) → get "Entry #180"
+   - Calculate next: #181
+   - Append with replace_string_in_file (find last "---", add after it)
+
+2. DesignWalkthrough.md:
+   - read_file("docs/DesignWalkthrough.md", offset=430, limit=10) → get last entry
+   - Append new entry with replace_string_in_file (add after last entry)
+
+3. CHANGELOG.md:
+   - read_file("docs/CHANGELOG.md", limit=30) → find "Recent entries\n--------------\n"
+   - Prepend with replace_string_in_file (insert right after that line)
+```
+
+**Key principle:** Read ONLY the specific lines you need (first/last N lines), not entire files. Changes appear in VSCode's change tracking.
 
 ### 7. Example interaction
 
@@ -91,11 +123,11 @@ After completing any significant change (new file, refactor, feature addition, c
 **User:** "We need a simple file-based cache to store query results locally with TTL support."
 
 **Copilot:** 
-1. *(First, logs prompt to PromptLog.md as Entry #X)*
+1. *(First, logs prompt to PromptLog.md as Entry #X using fast append)*
 2. *(Creates cache.ts)*
-3. *(Logs to DesignWalkthrough.md with [Prompt #X] reference)*
-4. *(Logs to CHANGELOG.md)*
-5. "Done. Added cache.ts with file-based caching and TTL. Logged to docs/PromptLog.md (#X), docs/DesignWalkthrough.md, and docs/CHANGELOG.md."
+3. *(Logs to DesignWalkthrough.md with [Prompt #X] reference using fast append)*
+4. *(Logs to CHANGELOG.md using light prepend)*
+5. "Done. Added cache.ts with file-based caching and TTL. Logged to docs (Entry #X)."
 
 ---
 
