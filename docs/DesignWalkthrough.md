@@ -99,6 +99,10 @@ Stepwise implementation log
 
 - **2025-01-14 17:20** — Scaffolded complete VSCode extension implementation. [Prompt #31]
   - **Why:** Create extension to provide user interface for telemetry querying, manage MCP lifecycle, and integrate with GitHub Copilot. Extension completes the end-to-end solution.
+
+- **2025-10-17** — Updated npm dependencies to resolve deprecation warnings. [Prompt #179]
+  - **Why:** npm install reported warnings about deprecated packages (inflight@1.0.6 leaking memory, glob@7.2.3 and rimraf@2.7.1 unsupported) from transitive dependencies. These warnings cluttered installation output and indicated potential security/maintenance issues.
+  - **How:** Updated @vscode/vsce from ^2.22.0 to ^3.2.1 (uses modern glob), upgraded rimraf from ^5.0.0 to ^6.0.1 (uses glob v11) in both packages, removed ts-node-dev@2.0.0 from MCP package (replaced with native "tsc --watch"). npm install now completes with 0 vulnerabilities and zero deprecation warnings.
   - **How:** Created 3 TypeScript modules in `packages/extension/src/`: `extension.ts` (activation, 4 commands registration, MCP lifecycle management with child_process spawning, workspace settings to env vars mapping, auto-start MCP when settings detected, graceful shutdown), `mcpClient.ts` (JSON-RPC 2.0 client for MCP communication, typed request/response interfaces, error handling with retries, health checks), `resultsWebview.ts` (HTML webview for displaying query results with tables, syntax-highlighted KQL, recommendations, VSCode theme integration, sorting support). Extension auto-starts MCP passing workspace path via BCTB_WORKSPACE_PATH env var. Verified compilation success with `npm run build`.
 
 - **2025-10-15 17:30** — Created comprehensive Jest tests for all 7 MCP modules. [Prompt #32, #33]
