@@ -433,7 +433,7 @@
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",
-        "@types/node": "^22.18.11",
+        "@types/node": "^24.8.1",
         "@types/vscode": "^1.85.0",
         "@vscode/test-electron": "^2.3.0",
         "@vscode/vsce": "^3.2.1",
