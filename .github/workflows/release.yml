@@ -164,6 +164,10 @@ jobs:
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "⚠️  OVSX_PAT secret not configured - skipping Open VSX publish"
+            exit 0
+          fi
           VSIX_FILE=$(find ./artifacts -name "*.vsix" -type f | head -n 1)
           if [ -n "$VSIX_FILE" ]; then
             echo "Publishing to Open VSX: $VSIX_FILE"

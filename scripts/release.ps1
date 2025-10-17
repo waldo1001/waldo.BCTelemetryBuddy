@@ -8,11 +8,14 @@
     Type of version bump: patch (0.1.1 -> 0.1.2), minor (0.1.1 -> 0.2.0), or major (0.1.1 -> 1.0.0)
 .PARAMETER Component
     Which component to release: extension, mcp, or both (default: extension)
+.PARAMETER NoCommit
+    Don't commit and push changes (useful for manual review before pushing)
 .PARAMETER DryRun
     Show what would happen without actually making changes
 .EXAMPLE
     .\scripts\release.ps1 -BumpType patch
     .\scripts\release.ps1 -BumpType minor -Component both
+    .\scripts\release.ps1 -BumpType patch -NoCommit
     .\scripts\release.ps1 -BumpType patch -DryRun
 #>
 
@@ -24,6 +27,9 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidateSet('extension', 'mcp', 'both')]
     [string]$Component = 'extension',
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$NoCommit,
     
     [Parameter(Mandatory=$false)]
     [switch]$DryRun
@@ -147,6 +153,24 @@ if ($DryRun) {
     Write-Host ""
     Write-Host "To actually release, run:" -ForegroundColor Yellow
     Write-Host "  .\scripts\release.ps1 -BumpType $BumpType -Component $Component" -ForegroundColor White
+    exit 0
+}
+
+if ($NoCommit) {
+    Write-Host ""
+    Write-Host "═══════════════════════════════════════════════" -ForegroundColor Yellow
+    Write-Host "  Version Bumped (Not Committed)" -ForegroundColor Yellow
+    Write-Host "═══════════════════════════════════════════════" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Warning "Changes made but not committed (-NoCommit flag)"
+    Write-Host ""
+    Write-Host "Review the changes, then manually:" -ForegroundColor Cyan
+    Write-Host "  git add packages/*/package.json package-lock.json" -ForegroundColor White
+    Write-Host "  git commit -m 'chore: bump version to $tagVersion'" -ForegroundColor White
+    Write-Host "  git tag v$tagVersion" -ForegroundColor White
+    Write-Host "  git push origin main" -ForegroundColor White
+    Write-Host "  git push origin v$tagVersion" -ForegroundColor White
+    Write-Host ""
     exit 0
 }
 
