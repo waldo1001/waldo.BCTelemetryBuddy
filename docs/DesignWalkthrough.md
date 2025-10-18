@@ -592,3 +592,13 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-17** — Corrected MCP tool count from 13 to 10 [Entry: 97220b35-2532-477d-a0ff-f5ed9b69ed7d]
   - **Why:** User questioned the count - actual implementation has 10 tools (query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries, get_event_catalog, get_event_schema, get_tenant_mapping).
   - **How:** Updated all documentation files (README.md, UserGuide.md, MONOREPO.md, extension README.md, MCP README.md, DesignWalkthrough.md) to reflect correct count of 10 MCP tools.
+- **2025-10-18** — Reviewed proposal to remove natural language processing from query_telemetry tool [Entry: 10fdad16-567c-4edb-a953-9d001a3ddc5e]
+  - **Why:** User provided detailed improvement plan to remove NL parameter that misleads GitHub Copilot and returns generic/incorrect queries.
+  - **How:** Analyzed current pattern-matching implementation, identified false advertising issue where tool description claims NL capability but delivers unreliable keyword-based results.
+- **2025-10-18** — Reviewed proposal to remove natural language processing from query_telemetry tool [Entry: 10fdad16-567c-4edb-a953-9d001a3ddc5e]
+  - **Why:** User provided detailed improvement plan to remove NL parameter that misleads GitHub Copilot and returns generic/incorrect queries.
+  - **How:** Analyzed current pattern-matching implementation, identified false advertising issue where tool description claims NL capability but delivers unreliable keyword-based results.
+
+- **2025-10-18** — Phase 1: Remove NL parameter from query_telemetry tool [Entry: 87f3d5a2-1c74-4917-a623-5dfd0f65c807]
+  - **Why:** NL parameter misleads GitHub Copilot with false advertising of natural language capability, causing unreliable keyword-based query generation.
+  - **How:** Remove nl parameter from tool schema, delete translateNLToKQL and supporting pattern-matching code, make kql parameter required, update tool descriptions to guide toward discovery tools.

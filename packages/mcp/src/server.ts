@@ -32,29 +32,7 @@ interface JSONRPCResponse {
 }
 
 /**
- * Query pattern metadata for provenance tracking
- */
-interface QueryPatternMetadata {
-    source: string;                     // "external:reference-name/path/file.kql" | "local:Category/Query.kql" | "ai-generated"
-    sourceReference?: string;           // Human-readable reference name from MCP config
-    similarity?: number;                // 0-1 confidence score for pattern matching
-    modifications?: string[];           // List of adaptations made to pattern
-    alternativePatterns?: PatternMatch[]; // Other relevant patterns found
-}
-
-/**
- * Pattern match result
- */
-interface PatternMatch {
-    source: string;                     // Where pattern came from
-    sourceReference?: string;           // Human-readable reference name
-    similarity: number;                 // Match confidence 0-1
-    query: SavedQuery | ExternalQuery;  // The matched query
-    keywords: string[];                 // Matching keywords
-}
-
-/**
- * Query result for LLM consumption (enhanced with metadata)
+ * Query result for LLM consumption
  */
 interface QueryResult {
     type: 'table' | 'chart' | 'summary' | 'error';
@@ -65,7 +43,6 @@ interface QueryResult {
     chart?: any;
     recommendations?: string[];
     cached: boolean;
-    metadata?: QueryPatternMetadata;    // NEW: Pattern provenance
 }
 
 /**
@@ -268,15 +245,15 @@ export class MCPServer {
                         tools: [
                             {
                                 name: 'query_telemetry',
-                                description: 'Query Business Central telemetry using KQL or natural language',
+                                description: 'Execute a KQL query against Business Central telemetry data. IMPORTANT: Use get_event_catalog() to discover available events and get_event_field_samples() to understand field structure before constructing queries.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string' },
-                                        nl: { type: 'string', description: 'Natural language query' },
-                                        useContext: { type: 'boolean', description: 'Use saved queries as context', default: true },
+                                        kql: { type: 'string', description: 'KQL query string (REQUIRED)' },
+                                        useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
-                                    }
+                                    },
+                                    required: ['kql']
                                 }
                             },
                             {
@@ -372,23 +349,11 @@ export class MCPServer {
                     break;
 
                 case 'query_telemetry':
-                    // Handle both KQL and natural language queries
-                    let kqlQuery = rpcRequest.params.kql;
-                    let queryMetadata: QueryPatternMetadata | undefined;
+                    // Execute KQL query
+                    const kqlQuery = rpcRequest.params.kql;
 
-                    if (!kqlQuery && rpcRequest.params.nl) {
-                        // Natural language query - translate to KQL using pattern matching
-                        const translation = await this.translateNLToKQL(
-                            rpcRequest.params.nl,
-                            rpcRequest.params.useContext || false,
-                            rpcRequest.params.includeExternal || false
-                        );
-                        kqlQuery = translation.kql;
-                        queryMetadata = translation.metadata;
-                    }
-
-                    if (!kqlQuery) {
-                        throw new Error('Either kql or nl parameter is required');
+                    if (!kqlQuery || kqlQuery.trim() === '') {
+                        throw new Error('kql parameter is required. Use get_event_catalog() to discover events and get_event_field_samples() to understand field structure.');
                     }
 
                     result = await this.executeQuery(
@@ -396,11 +361,6 @@ export class MCPServer {
                         rpcRequest.params.useContext || false,
                         rpcRequest.params.includeExternal || false
                     );
-
-                    // Add metadata to result if available
-                    if (queryMetadata) {
-                        result.metadata = queryMetadata;
-                    }
                     break;
 
                 case 'get_saved_queries':
@@ -571,365 +531,6 @@ export class MCPServer {
                 cached: false
             };
         }
-    }
-
-    /**
-     * Find similar query patterns from saved and external sources
-     */
-    private async findSimilarPatterns(
-        intent: string,
-        useContext: boolean,
-        includeExternal: boolean
-    ): Promise<PatternMatch[]> {
-        const keywords = this.extractKeywords(intent);
-        const matches: PatternMatch[] = [];
-
-        console.log(`Searching for patterns matching keywords: ${keywords.join(', ')}`);
-
-        // Search local saved queries
-        if (useContext) {
-            const savedQueries = this.queries.getAllQueries();
-            for (const query of savedQueries) {
-                const similarity = this.calculateSimilarity(query, keywords);
-                if (similarity > 0.3) { // Minimum threshold
-                    matches.push({
-                        source: `local:${query.category || 'Uncategorized'}/${query.name}`,
-                        similarity,
-                        query,
-                        keywords: this.getMatchingKeywords(query, keywords)
-                    });
-                }
-            }
-        }
-
-        // Search external references
-        if (includeExternal) {
-            const externalQueries = await this.references.getAllExternalQueries();
-            for (const query of externalQueries) {
-                const similarity = this.calculateExternalSimilarity(query, keywords);
-                if (similarity > 0.3) { // Minimum threshold
-                    matches.push({
-                        source: `external:${query.source}/${query.fileName}`,
-                        sourceReference: query.source, // Reference name from MCP config
-                        similarity,
-                        query,
-                        keywords: this.getMatchingKeywordsExternal(query, keywords)
-                    });
-                }
-            }
-        }
-
-        // Sort by similarity (best matches first)
-        matches.sort((a, b) => b.similarity - a.similarity);
-
-        console.log(`Found ${matches.length} matching patterns`);
-        if (matches.length > 0) {
-            console.log(`Best match: ${matches[0].source} (similarity: ${matches[0].similarity.toFixed(2)})`);
-        }
-
-        return matches;
-    }
-
-    /**
-     * Extract keywords from natural language intent
-     */
-    private extractKeywords(intent: string): string[] {
-        const lower = intent.toLowerCase();
-        const keywords: string[] = [];
-
-        // Time-related keywords
-        if (lower.includes('24 hour') || lower.includes('last day') || lower.includes('yesterday')) keywords.push('24h', 'recent', 'daily');
-        if (lower.includes('hour')) keywords.push('1h', 'hourly');
-        if (lower.includes('week') || lower.includes('7 day')) keywords.push('7d', 'weekly');
-        if (lower.includes('month') || lower.includes('30 day')) keywords.push('30d', 'monthly');
-
-        // Error-related keywords
-        if (lower.includes('error')) keywords.push('error', 'errors', 'severitylevel');
-        if (lower.includes('warning')) keywords.push('warning', 'warnings');
-        if (lower.includes('exception')) keywords.push('exception', 'exceptions');
-        if (lower.includes('fail')) keywords.push('failure', 'failed', 'error');
-
-        // Performance keywords
-        if (lower.includes('slow')) keywords.push('performance', 'duration', 'slow');
-        if (lower.includes('performance')) keywords.push('performance', 'duration');
-        if (lower.includes('timeout')) keywords.push('timeout', 'duration', 'slow');
-
-        // Telemetry type keywords
-        if (lower.includes('page') || lower.includes('view')) keywords.push('pageviews', 'page');
-        if (lower.includes('request')) keywords.push('requests', 'http');
-        if (lower.includes('dependency') || lower.includes('database') || lower.includes('sql')) keywords.push('dependencies', 'sql', 'database');
-        if (lower.includes('trace')) keywords.push('traces', 'trace');
-
-        // Business Central specific
-        if (lower.includes('bc') || lower.includes('business central')) keywords.push('bc', 'businesscentral');
-        if (lower.includes('user')) keywords.push('user', 'users');
-        if (lower.includes('session')) keywords.push('session', 'sessions');
-
-        // Monitoring keywords
-        if (lower.includes('monitor')) keywords.push('monitoring', 'health');
-        if (lower.includes('health')) keywords.push('health', 'monitoring');
-
-        return [...new Set(keywords)]; // Remove duplicates
-    }
-
-    /**
-     * Calculate similarity between saved query and keywords
-     */
-    private calculateSimilarity(query: SavedQuery, keywords: string[]): number {
-        let score = 0;
-        const maxScore = keywords.length;
-
-        if (maxScore === 0) return 0;
-
-        // Check tags
-        if (query.tags) {
-            for (const keyword of keywords) {
-                if (query.tags.some(tag => tag.toLowerCase().includes(keyword) || keyword.includes(tag.toLowerCase()))) {
-                    score += 1;
-                }
-            }
-        }
-
-        // Check purpose and use case
-        const text = `${query.purpose || ''} ${query.useCase || ''} ${query.name || ''}`.toLowerCase();
-        for (const keyword of keywords) {
-            if (text.includes(keyword)) {
-                score += 0.5;
-            }
-        }
-
-        // Check KQL content
-        const kql = (query.kql || '').toLowerCase();
-        for (const keyword of keywords) {
-            if (kql.includes(keyword)) {
-                score += 0.3;
-            }
-        }
-
-        return Math.min(score / maxScore, 1.0);
-    }
-
-    /**
-     * Calculate similarity for external query
-     */
-    private calculateExternalSimilarity(query: ExternalQuery, keywords: string[]): number {
-        let score = 0;
-        const maxScore = keywords.length;
-
-        if (maxScore === 0) return 0;
-
-        // Check filename
-        const fileName = query.fileName.toLowerCase();
-        for (const keyword of keywords) {
-            if (fileName.includes(keyword)) {
-                score += 1;
-            }
-        }
-
-        // Check content
-        const content = (query.content || '').toLowerCase();
-        for (const keyword of keywords) {
-            if (content.includes(keyword)) {
-                score += 0.5;
-            }
-        }
-
-        return Math.min(score / maxScore, 1.0);
-    }
-
-    /**
-     * Get matching keywords from saved query
-     */
-    private getMatchingKeywords(query: SavedQuery, keywords: string[]): string[] {
-        const matches: string[] = [];
-        const text = `${query.purpose || ''} ${query.useCase || ''} ${query.name || ''} ${query.tags?.join(' ') || ''}`.toLowerCase();
-
-        for (const keyword of keywords) {
-            if (text.includes(keyword)) {
-                matches.push(keyword);
-            }
-        }
-
-        return matches;
-    }
-
-    /**
-     * Get matching keywords from external query
-     */
-    private getMatchingKeywordsExternal(query: ExternalQuery, keywords: string[]): string[] {
-        const matches: string[] = [];
-        const text = `${query.fileName} ${query.content || ''}`.toLowerCase();
-
-        for (const keyword of keywords) {
-            if (text.includes(keyword)) {
-                matches.push(keyword);
-            }
-        }
-
-        return matches;
-    }
-
-    /**
-     * Adapt pattern to user intent (extract and modify parameters)
-     */
-    private adaptPattern(patternKql: string, intent: string): { kql: string; modifications: string[] } {
-        let adaptedKql = patternKql;
-        const modifications: string[] = [];
-
-        // Extract time range from intent
-        const intentLower = intent.toLowerCase();
-
-        // Time range adaptation
-        if (intentLower.includes('24 hour') || intentLower.includes('last day') || intentLower.includes('yesterday')) {
-            if (patternKql.includes('ago(')) {
-                adaptedKql = adaptedKql.replace(/ago\([^)]+\)/g, 'ago(1d)');
-                modifications.push('Changed time range to 24 hours');
-            }
-        } else if (intentLower.includes('last hour')) {
-            if (patternKql.includes('ago(')) {
-                adaptedKql = adaptedKql.replace(/ago\([^)]+\)/g, 'ago(1h)');
-                modifications.push('Changed time range to 1 hour');
-            }
-        } else if (intentLower.includes('week') || intentLower.includes('7 day')) {
-            if (patternKql.includes('ago(')) {
-                adaptedKql = adaptedKql.replace(/ago\([^)]+\)/g, 'ago(7d)');
-                modifications.push('Changed time range to 7 days');
-            }
-        } else if (intentLower.includes('month') || intentLower.includes('30 day')) {
-            if (patternKql.includes('ago(')) {
-                adaptedKql = adaptedKql.replace(/ago\([^)]+\)/g, 'ago(30d)');
-                modifications.push('Changed time range to 30 days');
-            }
-        }
-
-        // Severity level adaptation for errors
-        if (intentLower.includes('error') && !patternKql.includes('severityLevel')) {
-            if (patternKql.includes('| where timestamp')) {
-                adaptedKql = adaptedKql.replace('| where timestamp', '| where severityLevel >= 3\n| where timestamp');
-                modifications.push('Added error severity filter');
-            }
-        }
-
-        return { kql: adaptedKql, modifications };
-    }
-
-    /**
-     * Translate natural language to KQL using pattern matching
-     * Phase 1: Search for similar patterns
-     * Phase 2: Adapt best match or fall back to keyword-based generation
-     */
-    private async translateNLToKQL(
-        nl: string,
-        useContext: boolean,
-        includeExternal: boolean
-    ): Promise<{ kql: string; metadata: QueryPatternMetadata }> {
-        console.log(`Translating NL to KQL: "${nl}"`);
-
-        // Phase 1: Find similar patterns
-        const patterns = await this.findSimilarPatterns(nl, useContext, includeExternal);
-
-        // Phase 2: Use best pattern if similarity is high enough
-        if (patterns.length > 0 && patterns[0].similarity >= 0.5) {
-            const bestMatch = patterns[0];
-            console.log(`Using pattern: ${bestMatch.source} (similarity: ${bestMatch.similarity.toFixed(2)})`);
-
-            // Extract KQL from pattern
-            let patternKql: string;
-            if ('kql' in bestMatch.query) {
-                // SavedQuery
-                patternKql = (bestMatch.query as SavedQuery).kql || '';
-            } else {
-                // ExternalQuery
-                patternKql = (bestMatch.query as ExternalQuery).content || '';
-            }
-
-            // Adapt pattern to user intent
-            const { kql, modifications } = this.adaptPattern(patternKql, nl);
-
-            // Build metadata
-            const metadata: QueryPatternMetadata = {
-                source: bestMatch.source,
-                sourceReference: bestMatch.sourceReference,
-                similarity: bestMatch.similarity,
-                modifications: modifications.length > 0 ? modifications : undefined,
-                alternativePatterns: patterns.slice(1, 4).map(p => ({ // Top 3 alternatives
-                    source: p.source,
-                    sourceReference: p.sourceReference,
-                    similarity: p.similarity,
-                    query: p.query,
-                    keywords: p.keywords
-                }))
-            };
-
-            console.log(`Adapted query with ${modifications.length} modifications`);
-            return { kql, metadata };
-        }
-
-        // Phase 3: Fall back to keyword-based generation
-        console.log('No suitable pattern found, falling back to keyword-based generation');
-        const kql = this.generateKQLFromKeywords(nl);
-
-        const metadata: QueryPatternMetadata = {
-            source: 'ai-generated',
-            alternativePatterns: patterns.slice(0, 3).map(p => ({ // Show alternatives even if not used
-                source: p.source,
-                sourceReference: p.sourceReference,
-                similarity: p.similarity,
-                query: p.query,
-                keywords: p.keywords
-            }))
-        };
-
-        return { kql, metadata };
-    }
-
-    /**
-     * Generate KQL from keywords (fallback method)
-     */
-    private generateKQLFromKeywords(nl: string): string {
-
-        // Simple keyword-based translation (basic implementation)
-        // This is a fallback for command palette - Copilot Chat will do better
-        const nlLower = nl.toLowerCase();
-        let kql = '';
-
-        // Detect table
-        let table = 'traces';
-        if (nlLower.includes('request') || nlLower.includes('page')) {
-            table = 'requests';
-        } else if (nlLower.includes('dependency') || nlLower.includes('database') || nlLower.includes('sql')) {
-            table = 'dependencies';
-        } else if (nlLower.includes('exception')) {
-            table = 'exceptions';
-        } else if (nlLower.includes('pageview')) {
-            table = 'pageViews';
-        }
-
-        kql = table;
-
-        // Detect time range
-        if (nlLower.includes('last 24 hour') || nlLower.includes('last day')) {
-            kql += ' | where timestamp > ago(1d)';
-        } else if (nlLower.includes('last hour')) {
-            kql += ' | where timestamp > ago(1h)';
-        } else if (nlLower.includes('last 7 day') || nlLower.includes('last week')) {
-            kql += ' | where timestamp > ago(7d)';
-        } else {
-            kql += ' | where timestamp > ago(1d)'; // Default
-        }
-
-        // Detect filters
-        if (nlLower.includes('error')) {
-            kql += ' | where severityLevel >= 3';
-        } else if (nlLower.includes('warning')) {
-            kql += ' | where severityLevel == 2';
-        }
-
-        // Add limit
-        kql += ' | take 100';
-
-        console.log(`Generated KQL: ${kql}`);
-        return kql;
     }
 
     /**
@@ -1242,15 +843,15 @@ traces
                         tools: [
                             {
                                 name: 'query_telemetry',
-                                description: 'Query Business Central telemetry using KQL or natural language',
+                                description: 'Execute a KQL query against Business Central telemetry data. IMPORTANT: Use get_event_catalog() to discover available events and get_event_field_samples() to understand field structure before constructing queries.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string' },
-                                        nl: { type: 'string', description: 'Natural language query' },
-                                        useContext: { type: 'boolean', description: 'Use saved queries as context', default: true },
+                                        kql: { type: 'string', description: 'KQL query string (REQUIRED)' },
+                                        useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
-                                    }
+                                    },
+                                    required: ['kql']
                                 }
                             },
                             {
@@ -1372,23 +973,11 @@ traces
                     break;
 
                 case 'query_telemetry':
-                    // Handle both KQL and natural language queries
-                    let kqlQuery2 = params.kql;
-                    let queryMetadata2: QueryPatternMetadata | undefined;
+                    // Execute KQL query
+                    const kqlQuery2 = params.kql;
 
-                    if (!kqlQuery2 && params.nl) {
-                        // Natural language query - translate to KQL using pattern matching
-                        const translation2 = await this.translateNLToKQL(
-                            params.nl,
-                            params.useContext || false,
-                            params.includeExternal || false
-                        );
-                        kqlQuery2 = translation2.kql;
-                        queryMetadata2 = translation2.metadata;
-                    }
-
-                    if (!kqlQuery2) {
-                        throw new Error('Either kql or nl parameter is required');
+                    if (!kqlQuery2 || kqlQuery2.trim() === '') {
+                        throw new Error('kql parameter is required. Use get_event_catalog() to discover events and get_event_field_samples() to understand field structure.');
                     }
 
                     result = await this.executeQuery(
@@ -1396,11 +985,6 @@ traces
                         params.useContext || false,
                         params.includeExternal || false
                     );
-
-                    // Add metadata to result if available
-                    if (queryMetadata2) {
-                        result.metadata = queryMetadata2;
-                    }
                     break;
 
                 case 'get_saved_queries':
@@ -1503,22 +1087,11 @@ traces
     private async executeToolCall(toolName: string, params: any): Promise<any> {
         switch (toolName) {
             case 'query_telemetry':
-                // Handle both KQL and natural language queries
-                let kqlQuery3 = params.kql;
-                let queryMetadata3: QueryPatternMetadata | undefined;
+                // Execute KQL query
+                const kqlQuery3 = params.kql;
 
-                if (!kqlQuery3 && params.nl) {
-                    const translation3 = await this.translateNLToKQL(
-                        params.nl,
-                        params.useContext || false,
-                        params.includeExternal || false
-                    );
-                    kqlQuery3 = translation3.kql;
-                    queryMetadata3 = translation3.metadata;
-                }
-
-                if (!kqlQuery3) {
-                    throw new Error('Either kql or nl parameter is required');
+                if (!kqlQuery3 || kqlQuery3.trim() === '') {
+                    throw new Error('kql parameter is required. Use get_event_catalog() to discover events and get_event_field_samples() to understand field structure.');
                 }
 
                 const result3 = await this.executeQuery(
@@ -1526,11 +1099,6 @@ traces
                     params.useContext || false,
                     params.includeExternal || false
                 );
-
-                // Attach metadata if available
-                if (queryMetadata3) {
-                    result3.metadata = queryMetadata3;
-                }
 
                 return result3;
 

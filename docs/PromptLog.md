@@ -1083,3 +1083,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "13 MCP tools?"
 
 ---
+### Entry ID: 10fdad16-567c-4edb-a953-9d001a3ddc5e — 2025-10-18 10:54
+> "Following is a description I made in my test-environment. It's a set of instructions to improve this application. Please review and give your own opinion first. Don't change code just yet! [Long improvement document about removing NL processing]"
+
+---
+### Entry ID: 3b796e55-c5da-4421-ba80-f5c1cacfd400 — 2025-10-18 10:54
+> "Question: Does this tool currently HAVE natural language processing? True, but GitHub copilot DOES think it has, and tries to use the tool as such."
+
+---
+### Entry ID: e2b7c7c2-0672-4618-a66f-7a59ab58e6aa — 2025-10-18 10:54
+> "Let's do it step by step. What's your plan/suggestions (and remember - log all prompts)"
+
+---
+### Entry ID: 87f3d5a2-1c74-4917-a623-5dfd0f65c807 — 2025-10-18 11:19
+> "Answers: 1. yes (review each phase), 2. no (work on main), 3. Yes (test get_event_field_samples first), 4. RT0005 (use for testing). Implement Phase 1: Remove NL parameter"
+
+---
