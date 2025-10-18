@@ -678,14 +678,14 @@ function calculatePrevalence(fieldEventCount: number, totalEvents: number): numb
 
 function getDominantType(samples: Array<{ type: string }>): string {
     const typeCounts = new Map<string, number>();
-    
+
     samples.forEach(sample => {
         typeCounts.set(sample.type, (typeCounts.get(sample.type) || 0) + 1);
     });
 
     let maxCount = 0;
     let dominantType = 'unknown';
-    
+
     typeCounts.forEach((count, type) => {
         if (count > maxCount) {
             maxCount = count;
@@ -712,7 +712,7 @@ function sortFieldsByPrevalence(fields: Array<{ fieldName: string; prevalence: n
 
 function analyzeFieldDistribution(fieldEventMap: Map<string, Set<string>>, totalEvents: number): Map<string, { prevalence: number }> {
     const distribution = new Map<string, { prevalence: number }>();
-    
+
     fieldEventMap.forEach((eventSet, fieldName) => {
         const prevalence = Math.round((eventSet.size / totalEvents) * 1000) / 10; // Round to 1 decimal
         distribution.set(fieldName, { prevalence });

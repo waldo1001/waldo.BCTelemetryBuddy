@@ -624,7 +624,7 @@ ${status !== 'all' ? `| where status == "${status}"` : ''}
     private async analyzeCommonFields(daysBack: number, eventIds: string[]): Promise<any> {
         // Sample a subset of events to analyze fields (max 50 events to keep performance reasonable)
         const eventsToAnalyze = eventIds.slice(0, 50);
-        
+
         // Build KQL to get field names for each event
         const kql = `
 traces
@@ -675,7 +675,7 @@ traces
             .map(([fieldName, eventSet]) => {
                 const eventCount = eventSet.size;
                 const prevalence = (eventCount / totalUniqueEvents) * 100;
-                
+
                 // Determine most common type
                 const typeMap = fieldTypeMap.get(fieldName)!;
                 const dominantType = Array.from(typeMap.entries())
