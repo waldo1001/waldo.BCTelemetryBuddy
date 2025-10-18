@@ -1,6 +1,6 @@
 # BC Telemetry Buddy - User Guide
 
-Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code using natural language and GitHub Copilot.
+Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code with GitHub Copilot and data-driven discovery tools.
 
 ## Table of Contents
 
@@ -24,12 +24,13 @@ Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Busin
 
 BC Telemetry Buddy enables you to:
 
-- 🔍 **Query Business Central telemetry** from Application Insights/Kusto using KQL or natural language
-- 🤖 **Use GitHub Copilot** to generate KQL queries from your questions
+- 🔍 **Query Business Central telemetry** from Application Insights/Kusto using KQL queries
+- 🤖 **Use GitHub Copilot** with discovery tools to generate accurate KQL queries from your questions
 - 💾 **Save and reuse queries** as `.kql` files in your workspace
 - 🧠 **Build context** from saved queries and external sources for better query generation
 - 📊 **Visualize results** in rich tables and charts
 - 💡 **Get recommendations** based on telemetry patterns and best practices
+- 🔎 **Discover event structure** with field analysis and prevalence detection across events
 
 The extension runs a lightweight MCP (Model Context Protocol) backend that handles authentication, query execution, caching, and context management, making it easy to integrate with GitHub Copilot.
 
@@ -47,7 +48,7 @@ Before installing BC Telemetry Buddy, ensure you have:
 - **Azure tenant** with permissions to authenticate
 
 ### Optional
-- **GitHub Copilot** subscription (for natural language queries)
+- **GitHub Copilot** subscription (for intelligent query generation with discovery tools)
 - **Azure service principal** (for unattended/automated scenarios)
 
 ---
@@ -240,7 +241,7 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 | Command | Description |
 |---------|-------------|
 | `BC Telemetry Buddy: Start MCP Server` | Start the MCP backend server |
-| `BC Telemetry Buddy: Run Natural Language Query` | Query telemetry using plain English |
+| `BC Telemetry Buddy: Run KQL Query` | Execute a KQL query directly |
 | `BC Telemetry Buddy: Save Query` | Save a query as a `.kql` file |
 | `BC Telemetry Buddy: Open Queries Folder` | Open saved queries folder in explorer |
 
@@ -248,7 +249,7 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 
 ## Querying Telemetry
 
-### Using Natural Language (with GitHub Copilot)
+### Using GitHub Copilot (Recommended) ⭐
 
 GitHub Copilot provides the best experience with BC Telemetry Buddy through a **systematic discovery workflow**:
 
@@ -447,12 +448,12 @@ In your `.vscode/settings.json`:
 
 ### How It Works
 
-When you query with natural language:
-1. Copilot generates search terms
-2. MCP searches your saved `.kql` files
+When Copilot generates KQL queries:
+1. Copilot analyzes your question and determines which discovery tools to use
+2. MCP searches your saved `.kql` files for similar patterns
 3. MCP fetches and searches configured external references
-4. All matching examples are returned to Copilot
-5. Copilot generates the final KQL using the most relevant examples
+4. All matching examples are returned to Copilot as context
+5. Copilot generates the final KQL using the most relevant examples and discovered field structure
 
 **Benefits:**
 - Better query accuracy with more context
@@ -464,30 +465,27 @@ When you query with natural language:
 
 ### GitHub Copilot Integration
 
-BC Telemetry Buddy exposes **10 MCP tools** to GitHub Copilot for comprehensive telemetry analysis.
+BC Telemetry Buddy exposes **11 MCP tools** to GitHub Copilot for comprehensive telemetry analysis.
 
 ### Available Tools
 
 | Tool | Description | When Copilot Uses It |
 |------|-------------|----------------------|
-| **Discovery Tools** |
-| `bctb_get_event_catalog` | List available BC telemetry events with descriptions and frequency | When you ask generic questions about errors, performance, or "what's available" |
-| `bctb_get_event_schema` | Get customDimensions fields for a specific event ID | After discovering relevant events, to understand available fields |
-| `bctb_get_tenant_mapping` | Map company names to Azure tenant IDs | When you mention a specific customer/company name in your query |
+| **Discovery Tools** ⭐ |
+| `bctb_get_event_catalog` | List BC telemetry events with descriptions, frequency, and Learn URLs. Optional `includeCommonFields` analyzes customDimensions field prevalence across events | When you ask questions like "what events are available" or "show me common fields across events" |
+| `bctb_get_event_field_samples` | Analyze customDimensions structure for a specific event ID - returns field names, types, occurrence rates, sample values | Before writing queries for a specific event to discover exact field structure |
+| `bctb_get_event_schema` | Get detailed schema information for a specific event ID | After discovering relevant events, to understand patterns and related events |
+| `bctb_get_categories` | Get available event categories (Lifecycle, Performance, Security, Error, Integration, Configuration, Custom) | To understand event categorization and filter by category |
+| `bctb_get_tenant_mapping` | Map company names to Azure tenant IDs and environment names | When you mention a specific customer/company name in your query |
 | **Query Execution** |
-| `bctb_query_telemetry` | Execute KQL or natural language queries | For every telemetry query (after discovery steps) |
+| `bctb_query_telemetry` | Execute KQL queries against telemetry (NL translation removed in v1.0.0 - use discovery tools first) | For every telemetry query (after using discovery tools to understand structure) |
 | **Query Library** |
 | `bctb_get_saved_queries` | List saved queries (with optional tag filtering) | To find existing patterns before generating new queries |
 | `bctb_search_queries` | Search saved queries by keywords | When your question matches common patterns (errors, slow, login, etc.) |
 | `bctb_save_query` | Save a successful query for future reference | When you ask to save a query or Copilot recommends saving |
-| `bctb_get_categories` | List query categories/folders | To understand your workspace organization |
+| `bctb_get_external_queries` | Fetch KQL examples from configured external references (GitHub repos, blogs) | For additional context when generating queries |
 | **Analysis & Recommendations** |
 | `bctb_get_recommendations` | Analyze results and provide actionable insights | After query execution, to suggest next steps or optimizations |
-| `bctb_get_external_queries` | Fetch KQL examples from configured references | For additional context when generating queries |
-| **Cache Management** |
-| `bctb_get_cache_stats` | Get cache size and statistics | When you ask about cache performance |
-| `bctb_clear_cache` | Clear all cached results | When you explicitly ask to clear cache |
-| `bctb_cleanup_cache` | Remove only expired cache entries | For routine maintenance |
 
 ### Usage Examples
 
@@ -510,6 +508,50 @@ BC Telemetry Buddy exposes **10 MCP tools** to GitHub Copilot for comprehensive 
 ```
 @workspace Analyze these errors and recommend fixes
 ```
+
+### Discovery-First Workflow (Recommended) ⭐
+
+Version 1.0.0 introduces a **data-driven discovery approach** instead of unreliable natural language translation. Here's the recommended workflow:
+
+**1. Discover available events:**
+```
+@workspace What error events are available in the last 7 days?
+```
+Copilot uses `get_event_catalog` with `status="error"` to show actual events in your data.
+
+**2. Analyze field structure for a specific event:**
+```
+@workspace Show me the field structure for event RT0005
+```
+Copilot uses `get_event_field_samples` to discover:
+- All customDimensions field names
+- Data types (string, number, boolean, datetime, JSON)
+- Occurrence rates (% of events with each field)
+- Sample values for each field
+- Ready-to-use KQL template
+
+**3. Write precise KQL query:**
+```
+@workspace Query RT0005 events where executionTimeInMs > 1000
+```
+Copilot uses discovered fields to generate accurate KQL with correct field names.
+
+**4. Analyze common fields across multiple events:**
+```
+@workspace Show me common fields across all error events
+```
+Copilot uses `get_event_catalog` with `includeCommonFields=true` to categorize fields by prevalence:
+- **Universal fields** (80%+ prevalence): Safe for cross-event queries
+- **Common fields** (50-79%): Frequently available
+- **Occasional fields** (20-49%): Event-type specific
+- **Rare fields** (<20%): Highly specific
+
+**Benefits of this approach:**
+- ✅ No guessing about field names or structure
+- ✅ Accurate queries based on real telemetry data
+- ✅ Discover event-specific vs. universal fields
+- ✅ Works with any BC version, custom events, partner extensions
+- ✅ Adapts automatically as your telemetry evolves
 
 ### Context Awareness
 
@@ -635,7 +677,7 @@ For **client_credentials flow:**
 1. Ensure queries are saved in `.vscode/bctb/queries/` folder
 2. Check query files follow the correct format (with comment headers)
 3. Verify MCP server is running
-4. Try including more context in your natural language query
+4. Try using discovery tools first (get_event_catalog, get_event_field_samples) to understand available events and fields
 
 ### External References Not Working
 
@@ -654,11 +696,11 @@ For **client_credentials flow:**
 ### Do I need GitHub Copilot to use this extension?
 
 No! You can use the extension without Copilot by:
-- Running `BC Telemetry Buddy: Run Natural Language Query` command
-- Writing KQL queries directly in saved `.kql` files
+- Running `BC Telemetry Buddy: Run KQL Query` command to execute KQL directly
+- Writing KQL queries directly in saved `.kql` files and using CodeLens to run them
 - Using the extension's commands to query and save queries
 
-However, **Copilot integration provides the best experience** for natural language queries and contextual assistance.
+However, **Copilot integration provides the best experience** for intelligent query generation with automatic discovery workflows and contextual assistance.
 
 ### Will this work with GitHub Copilot Free?
 
@@ -670,10 +712,11 @@ Yes! Each VSCode workspace can connect to a different Application Insights insta
 
 ### Are my queries and telemetry data sent to OpenAI?
 
-When using natural language queries with GitHub Copilot:
-- Your **natural language question** is sent to Copilot's LLM
+When using GitHub Copilot with BC Telemetry Buddy:
+- Your **questions to Copilot** are sent to Copilot's LLM
 - **Saved query metadata** (comments, descriptions) is sent as context
 - **External reference content** (KQL examples) is sent as context
+- **Discovered event/field information** (from discovery tools) is sent as context
 - **Raw telemetry data** is NOT sent to the LLM (only query results summary if you ask for analysis)
 
 The MCP backend runs locally and only sends what's necessary for query generation.
@@ -716,10 +759,11 @@ VSCode will automatically notify you when updates are available. You can also:
 
 Now that you're set up:
 
-1. ✅ **Save your first query** - Run a simple KQL query and save it
-2. ✅ **Add external references** - Configure the BCTech GitHub samples
-3. ✅ **Try natural language** - Ask Copilot a question about your telemetry
-4. ✅ **Build your query library** - Save queries as you discover useful patterns
-5. ✅ **Share with your team** - Commit `.kql` files to your repository
+1. ✅ **Explore discovery tools** - Ask Copilot "what events are available?" to see get_event_catalog in action
+2. ✅ **Analyze event structure** - Use get_event_field_samples to understand customDimensions for specific events
+3. ✅ **Save your first query** - Run a KQL query and save it for future reference
+4. ✅ **Add external references** - Configure the BCTech GitHub samples for additional context
+5. ✅ **Build your query library** - Save queries as you discover useful patterns
+6. ✅ **Share with your team** - Commit `.kql` files to your repository
 
 Happy querying! 🚀

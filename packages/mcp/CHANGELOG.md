@@ -8,10 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- launcher.js as source file (in package root) that gets copied to dist/ during build, ensuring CI/CD can reliably package it.
+- `get_event_field_samples` tool: Analyzes customDimensions structure for specific event IDs with field types, occurrence rates, sample values, and ready-to-use KQL templates
+- `get_event_catalog` enhancement: Added `includeCommonFields` parameter that analyzes field prevalence across events, categorizing fields into Universal (80%+), Common (50-79%), Occasional (20-49%), and Rare (<20%) with type detection and actionable recommendations
+- Dynamic event category lookup: Analyzes event messages and metadata to determine appropriate categorization (Lifecycle, Performance, Security, Error, Integration, Configuration, Custom)
+- Message field priority in event analysis: Enhanced custom event categorization by analyzing actual telemetry message content
 
 ### Changed
-- Build script: now copies launcher.js from source to dist/ after esbuild completes.
+- **BREAKING**: Removed natural language translation from `query_telemetry` tool - removed `nl` parameter and all pattern-matching logic. Users should use discovery tools (`get_event_catalog`, `get_event_field_samples`) to understand telemetry structure before writing KQL queries
+- `query_telemetry` now only accepts explicit KQL queries (no NL translation)
+- Tool descriptions updated to guide users toward data-driven discovery workflow
+
+### Removed
+- `translateNLToKQL` method and supporting pattern-matching code (unreliable keyword-based translation that misled GitHub Copilot)
 
 ## [0.2.1] - 2025-10-17
 

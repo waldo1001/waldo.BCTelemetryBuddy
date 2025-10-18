@@ -32,8 +32,8 @@ The setup wizard automatically appears on first activation and guides you throug
 - **🗺️ Tenant Mapping**: Automatically discover company names and map them to Azure tenant IDs for customer queries
 
 ### Query Execution
-- **🤖 GitHub Copilot Integration**: 10 MCP tools enable Copilot to systematically discover → understand → search → execute queries
-- **💬 Natural Language Queries**: Ask questions in plain English - Copilot follows structured workflow for accurate results
+- **🤖 GitHub Copilot Integration**: 11 MCP tools enable Copilot to systematically discover → understand → search → execute queries
+- **💬 Intelligent Query Generation**: Ask questions in plain English - Copilot uses discovery tools to build accurate KQL
 - **📝 KQL Support**: Write and execute KQL queries directly; create `.kql` files with syntax highlighting
 - **👁️ CodeLens**: "▶ Run Query" links appear above queries in `.kql` files for one-click execution
 - **📋 Rich Results**: View query results in formatted tables with row counts, execution timing, and recommendations
@@ -156,12 +156,13 @@ This extension manages an MCP (Model Context Protocol) backend server that:
 
 2. **HTTP Mode (Command Palette)**: Manually started via "Start MCP Server" command for direct queries through Command Palette commands.
 
-### Telemetry Workflow
-1. **Discovery First**: Use Event Catalog to see what telemetry events exist (RT0001, RT0005, etc.)
-2. **Understand Schema**: Check Event Schema to see available customDimensions fields for each event
-3. **Reuse Patterns**: Search saved queries for proven patterns before writing new KQL
-4. **Execute Query**: Run queries via Copilot, Command Palette, or CodeLens links in `.kql` files
-5. **Save for Team**: Save useful queries to workspace library for team reuse
+### Telemetry Workflow (Discovery-First Approach)
+1. **Discovery**: Use Event Catalog to see what telemetry events exist (RT0001, RT0005, etc.) with field prevalence analysis
+2. **Field Analysis**: Use Field Samples tool to understand exact customDimensions structure with types and sample values
+3. **Schema Understanding**: Check Event Schema for detailed field information and patterns
+4. **Reuse Patterns**: Search saved queries for proven patterns before writing new KQL
+5. **Execute Query**: Run queries via Copilot, Command Palette, or CodeLens links in `.kql` files
+6. **Save for Team**: Save useful queries to workspace library for team reuse
 
 ### Authentication
 - Authenticates to Azure using MSAL (Microsoft Authentication Library)
@@ -174,11 +175,11 @@ This extension manages an MCP (Model Context Protocol) backend server that:
 - Default TTL: 1 hour (configurable via `bctb.mcp.cache.ttlSeconds`)
 - Manual cache management: Clear all caches or view statistics via Command Palette
 
-### Context & Auto-Generation
+### Context & Intelligent Generation
 - Scans workspace `queries/` folder for saved KQL patterns
 - Optionally fetches external reference queries from GitHub repos
-- When you ask natural language questions, backend matches patterns from saved queries to generate accurate KQL
-- Copilot automatically uses MCP tools for systematic discovery → understanding → execution workflow
+- When you ask questions, Copilot uses discovery tools to understand event structure and build accurate KQL
+- Systematic workflow: discover events → analyze fields → search patterns → generate KQL → execute query
 
 ## License
 

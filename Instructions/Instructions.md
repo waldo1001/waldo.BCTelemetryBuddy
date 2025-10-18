@@ -192,22 +192,66 @@ Copilot Agent integration
 The extension registers the MCP server following the standard MCP protocol for VSCode (similar to community MCP servers). GitHub Copilot can then discover and call the MCP tools directly.
 
 MCP Tools exposed to Copilot:
-- `query_telemetry` — Query Business Central telemetry using KQL or natural language
-  - Parameters: `query` (string, required), `queryType` ("kql" | "natural", required), `maxRows` (number, optional), `useContext` (boolean, optional, default: true), `includeExternal` (boolean, optional, default: true)
+
+### Core Query Tools
+- `query_telemetry` — Execute KQL queries against Business Central telemetry
+  - Parameters: `kql` (string, required), `maxRows` (number, optional), `useContext` (boolean, optional, default: true), `includeExternal` (boolean, optional, default: true)
   - Returns: Query results with summary, recommendations, and chart suggestions
-  - Context: When `useContext` is true and `queryType` is "natural", the MCP automatically loads all saved `.kql` files from the workspace as examples. When `includeExternal` is true, the MCP also fetches KQL examples from configured external references (GitHub repos, blogs) to maximize context and improve translation accuracy
+  - Context: When `useContext` is true, the MCP automatically loads all saved `.kql` files from the workspace as examples. When `includeExternal` is true, the MCP also fetches KQL examples from configured external references (GitHub repos, blogs)
+  - **Note**: Natural language translation removed in v1.0.0 - use discovery tools instead
 
 - `get_saved_queries` — List all saved queries in the current workspace
   - Parameters: `tags` (string[], optional) — filter by tags
   - Returns: List of saved query metadata (name, description, tags, file path)
 
+- `search_queries` — Search saved queries by keywords in name or description
+  - Parameters: `keywords` (string, required)
+  - Returns: Matching saved queries
+
 - `save_query` — Save a successful query for future reference
   - Parameters: `name` (string), `kql` (string), `description` (string, optional), `tags` (string[], optional)
   - Returns: Confirmation and file path where query was saved
 
+- `get_external_queries` — Fetch KQL examples from configured external references (GitHub repos, blogs)
+  - Parameters: none
+  - Returns: List of KQL query examples with metadata from external sources
+  - **Use case**: Provides additional context and examples for query generation
+
 - `get_recommendations` — Analyze telemetry results and provide actionable recommendations
   - Parameters: `kql` (string, optional), `rows` (array, optional)
   - Returns: List of recommendations based on patterns, thresholds, and best practices
+
+### Discovery Tools (NEW in v1.0.0)
+- `get_event_catalog` — Discover available Business Central telemetry events with frequencies and Learn URLs
+  - Parameters: `daysBack` (number, default: 10), `status` ("all" | "success" | "error" | "too slow", default: "all"), `minCount` (number, default: 1), `includeCommonFields` (boolean, default: false)
+  - Returns: List of event IDs with descriptions, occurrence counts, status categorization, and Microsoft Learn URLs
+  - **Common Fields Analysis**: When `includeCommonFields` is true, analyzes customDimensions fields across events and categorizes them into:
+    - **Universal** (80%+ prevalence): Fields that appear in most events, safe for cross-event queries
+    - **Common** (50-79% prevalence): Frequently available fields
+    - **Occasional** (20-49% prevalence): Event-type specific fields
+    - **Rare** (<20% prevalence): Highly specific fields
+  - Includes field type detection, prevalence percentages, and actionable recommendations
+
+- `get_event_field_samples` — Analyze customDimensions structure for a specific event ID
+  - Parameters: `eventId` (string, required), `daysBack` (number, default: 3), `maxSamples` (number, default: 100)
+  - Returns: Detailed field analysis including:
+    - Field names and data types (with type detection for string, number, boolean, datetime, JSON)
+    - Occurrence rates across sampled events (% of events containing each field)
+    - Sample values for each field (up to 5 examples)
+    - Ready-to-use KQL query template with all discovered fields
+  - **Use case**: Before writing queries for an event, use this tool to discover the exact field structure
+
+- `get_event_schema` — Get detailed schema information for a specific event ID
+  - Parameters: `eventId` (string, required)
+  - Returns: Event description, related events, common query patterns
+
+- `get_categories` — Get available event categories (Lifecycle, Performance, Security, Error, Integration, Configuration, Custom)
+  - Returns: List of categories with descriptions and example event IDs
+
+- `get_tenant_mapping` — Discover customer/tenant environment mappings
+  - Parameters: `tenantId` (string, optional)
+  - Returns: Environment names, AAD tenant IDs, company names for workspace telemetry data
+  - **Use case**: Map technical tenant IDs to friendly customer/environment names
 
 Installation:
 - Users install the extension from the VSCode marketplace

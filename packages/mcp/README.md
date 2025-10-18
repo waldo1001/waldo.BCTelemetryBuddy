@@ -10,9 +10,9 @@ This is the backend server component that provides telemetry access to the VSCod
 
 - **Authentication**: Azure CLI, Device Code, and Client Credentials flows via MSAL
 - **Query Execution**: Execute KQL queries against Application Insights/Kusto
-- **Event Discovery**: Browse available telemetry event catalog and schemas
+- **Event Discovery**: Browse available telemetry event catalog with field prevalence analysis and schemas
+- **Field Analysis**: Analyze customDimensions structure with types, occurrence rates, and sample values
 - **Query Management**: Save/load queries with metadata and automatic organization
-- **Pattern Matching**: Generate KQL from natural language using saved query patterns
 - **Caching**: File-based result caching with configurable TTL
 - **Tenant Mapping**: Resolve company names to Azure tenant IDs
 - **External References**: Fetch KQL examples from GitHub repositories
@@ -20,13 +20,19 @@ This is the backend server component that provides telemetry access to the VSCod
 
 ## MCP Tools
 
-The server exposes **10 tools** to language models (GitHub Copilot) for systematic telemetry analysis:
+The server exposes **11 tools** to language models (GitHub Copilot) for systematic telemetry analysis:
 
 ### Discovery Tools (Step 1 & 2 of workflow)
 - **`bctb_get_event_catalog`**: List available BC telemetry events with descriptions, frequency, status, and Learn URLs
-  - Parameters: `daysBack` (default: 10), `status` filter, `minCount` threshold
+  - Parameters: `daysBack` (default: 10), `status` filter, `minCount` threshold, `includeCommonFields` (optional boolean)
   - Returns: Event IDs sorted by frequency with occurrence counts and documentation links
-  - **When to use**: Start of any exploratory query - discover what events are firing
+  - When `includeCommonFields=true`: Includes field prevalence analysis (Universal 80%+, Common 50-79%, Occasional 20-49%, Rare <20%)
+  - **When to use**: Start of any exploratory query - discover what events are firing and understand cross-event field patterns
+
+- **`bctb_get_event_field_samples`**: Analyze customDimensions structure for a specific event ID with field-level detail
+  - Parameters: `eventId` (required), `maxEvents` (default: 50), `daysBack` (default: 10)
+  - Returns: Field names, data types, occurrence rates, sample values, and ready-to-use KQL template
+  - **When to use**: Before writing queries for a specific event - discover exact field structure from real data
 
 - **`bctb_get_event_schema`**: Get detailed schema (customDimensions fields) for a specific event ID
   - Parameters: `eventId` (required), `sampleSize` (default: 100)
@@ -39,10 +45,10 @@ The server exposes **10 tools** to language models (GitHub Copilot) for systemat
   - **When to use**: For customer-specific queries - map friendly names to tenant IDs
 
 ### Query Execution (Step 4 of workflow)
-- **`bctb_query_telemetry`**: Execute KQL or natural language queries
-  - Parameters: `kql` (direct query) OR `nl` (natural language), `useContext`, `includeExternal`
+- **`bctb_query_telemetry`**: Execute KQL queries (NL translation removed in v1.0.0 - use discovery tools first)
+  - Parameters: `kql` (required KQL query string)
   - Returns: Query results with summary, recommendations, and chart suggestions
-  - **When to use**: After discovery and understanding phases - execute the actual query
+  - **When to use**: After discovery and understanding phases - execute the actual query with precise KQL
 
 ### Query Library (Step 3 of workflow)
 - **`bctb_get_saved_queries`**: List all saved queries with optional tag filtering
@@ -88,10 +94,11 @@ The MCP tools are designed to be used in a systematic workflow by Copilot:
 - **When**: Start of any exploratory/generic BC telemetry question
 - **Example**: "Show me errors" → Discover RT0010 (AL runtime errors), RT0020 (web service errors), etc.
 
-### 2. Understand Schema (`bctb_get_event_schema`)
-- **Purpose**: Learn what customDimensions fields are available for each event
+### 2. Analyze Field Structure (`bctb_get_event_field_samples` or `bctb_get_event_schema`)
+- **Purpose**: Learn what customDimensions fields are available for each event with detailed analysis
 - **When**: After discovering relevant event IDs
-- **Example**: Get schema for RT0010 → See fields like `alObjectType`, `alObjectName`, `alStackTrace`, etc.
+- **Example**: Get field samples for RT0010 → See fields like `alObjectType`, `alObjectName`, `alStackTrace` with types, occurrence rates, and sample values
+- **Alternative**: Use `bctb_get_event_schema` for quicker schema overview
 
 ### 3. Check Saved Queries (`bctb_search_queries` or `bctb_get_saved_queries`)
 - **Purpose**: Find existing proven patterns before writing new KQL
@@ -101,7 +108,7 @@ The MCP tools are designed to be used in a systematic workflow by Copilot:
 ### 4. Execute Query (`bctb_query_telemetry`)
 - **Purpose**: Run the KQL query against Application Insights
 - **When**: After discovery, understanding, and pattern checking
-- **Context**: Backend includes saved queries and external references for NL-to-KQL translation
+- **Note**: Requires explicit KQL (v1.0.0 removed NL translation - use discovery tools to build accurate queries)
 
 ### 5. Analyze Results (`bctb_get_recommendations`)
 - **Purpose**: Get actionable insights and next steps

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- MCP tool registration: Updated tool descriptions to reflect removal of natural language translation and promote discovery-first workflow with `get_event_catalog`, `get_event_field_samples`, and field prevalence analysis
+
 ## [0.2.10] - 2025-10-17
 
 ### Fixed
