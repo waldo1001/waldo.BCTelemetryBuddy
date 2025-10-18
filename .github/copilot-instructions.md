@@ -81,7 +81,7 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 6. Update `docs/CHANGELOG.md` only when it's a release/major change or the user explicitly asks for a changelog entry. When updating, do a targeted read of the first 30 lines to find the insertion point and prepend the new entry there.
 7. Confirm completion and show the log entry
 
-**CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, after doing everything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
+**CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md, after doing everything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
 **CRITICAL RULE**: EVERY log entry must include a timestamp and a unique entry ID.
 **CRITICAL RULE**: Use FAST APPEND strategy to avoid reading files unnecessarily.
 **FAST LOGGING STRATEGY** (fast, reliable, no reading):

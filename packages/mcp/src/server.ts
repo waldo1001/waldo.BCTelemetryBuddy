@@ -6,6 +6,7 @@ import { CacheService } from './cache.js';
 import { QueriesService, SavedQuery } from './queries.js';
 import { ReferencesService, ExternalQuery } from './references.js';
 import { sanitizeObject } from './sanitize.js';
+import { lookupEventCategory, EventCategoryInfo } from './eventLookup.js';
 
 /**
  * JSON-RPC 2.0 request structure
@@ -346,7 +347,7 @@ export class MCPServer {
                             },
                             {
                                 name: 'get_event_field_samples',
-                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Returns ready-to-use example query with proper type conversions. Use this to understand the exact structure of customDimensions before writing queries.',
+                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Also provides event category information (Performance, Lifecycle, Security, etc.) dynamically fetched from Microsoft Learn documentation. Returns ready-to-use example query with proper type conversions and documentation links. Use this to understand the exact structure of customDimensions before writing queries.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
@@ -678,7 +679,7 @@ traces
 | where timestamp >= ago(${daysBack}d)
 | where tostring(customDimensions.eventId) == "${eventId}"
 | take ${sampleCount}
-| project timestamp, customDimensions
+| project timestamp, message, customDimensions
         `.trim();
 
         console.log(`Getting field samples for event ${eventId} (${sampleCount} samples, ${daysBack} days back)...`);
@@ -705,7 +706,7 @@ traces
         const fieldStats = new Map<string, FieldStats>();
 
         result.rows.forEach((row: any[]) => {
-            const customDims = row[1]; // customDimensions is second column
+            const customDims = row[2]; // customDimensions is now third column (timestamp, message, customDimensions)
 
             if (!customDims || typeof customDims !== 'object') {
                 return;
@@ -777,8 +778,21 @@ traces
 ${extendStatements}
 | take 100`;
 
+        // Lookup event category from Microsoft Learn
+        const firstSampleMessage = result.rows[0][1]; // message from first sample
+        const firstSampleDimensions = result.rows[0][2]; // customDimensions from first sample
+        const categoryInfo = await lookupEventCategory(eventId, firstSampleDimensions, firstSampleMessage);
+
         return {
             eventId,
+            // Event category information (from Microsoft Learn or inferred)
+            category: categoryInfo.category,
+            subcategory: categoryInfo.subcategory,
+            documentationUrl: categoryInfo.documentationUrl,
+            description: categoryInfo.description,
+            isStandardEvent: categoryInfo.isStandardEvent,
+            categorySource: categoryInfo.source, // 'microsoft-learn', 'custom-analysis', or 'cache'
+            // Field analysis
             samplesAnalyzed: result.rows.length,
             timeRange: {
                 from: result.rows[result.rows.length - 1][0], // First timestamp
@@ -792,6 +806,9 @@ ${extendStatements}
             },
             exampleQuery,
             recommendations: [
+                categoryInfo.isStandardEvent && categoryInfo.documentationUrl
+                    ? `📖 Official documentation: ${categoryInfo.documentationUrl}`
+                    : `💡 This appears to be a custom event - analyze customDimensions to understand its purpose`,
                 `Use the exampleQuery above as a starting point for your analysis`,
                 `Fields with 100% occurrence rate are always available`,
                 fields.filter(f => !f.isAlwaysPresent).length > 0
@@ -1101,7 +1118,7 @@ ${extendStatements}
                             },
                             {
                                 name: 'get_event_field_samples',
-                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Returns ready-to-use example query with proper type conversions. Use this to understand the exact structure of customDimensions before writing queries.',
+                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Also provides event category information (Performance, Lifecycle, Security, etc.) dynamically fetched from Microsoft Learn documentation. Returns ready-to-use example query with proper type conversions and documentation links. Use this to understand the exact structure of customDimensions before writing queries.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {

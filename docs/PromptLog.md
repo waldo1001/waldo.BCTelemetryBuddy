@@ -1108,3 +1108,71 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Create comprehensive tests for get_event_field_samples tool to verify functionality and accessibility"
 
 ---
+### Entry ID: a0fad342-2eaa-48ed-89cd-fd75144dee8d — 2025-10-18 11:47
+> "What's the next phase?"
+
+---
+### Entry ID: 3883d421-9f15-4941-aeca-e9d2e9ad911c — 2025-10-18 11:47
+> "Explain analyze_event_patterns again - What should it improve?"
+
+---
+### Entry ID: f35d9916-f9d5-40de-b26c-bae5815dd16d — 2025-10-18 11:48
+> "How does this tool make the link?"
+
+---
+### Entry ID: 8fef30e3-dc30-449d-8b60-52621de7a7ad — 2025-10-18 11:48
+> "I don't think you are right. The only way to make that connection is to analyze https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview and its subpages/links and categorize this way. Please read that link, and verify if what I'm saying is correct. If not correct, tell me."
+
+---
+### Entry ID: 41da0074-e05f-49b7-8584-102271cf6faf — 2025-10-18 11:49
+> "Why are we not logging prompts? (followed by) In fact, it's: EVERY user prompt gets logged to PromptLog.md, after doing everything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md."
+
+---
+### Entry ID: b7715129-df39-4125-b8bd-5aa2122072ab - 2025-10-18 11:54
+> "Back to the new tool. Would it be an idea that you scrape https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview, categorize all eventids, and then present that in the same tool, but a hardcoded way?"
+
+---
+### Entry ID: 7bd60924-7aae-49f2-a887-03cf64fc89eb - 2025-10-18 11:55
+> "The only downside - what if there are new events - and what with events that are custom. We for example can create custom events to telemetry - they won't be in this list. So this list is secondary to the complete list (catalog)"
+
+---
+### Entry ID: 909303f7-074e-4a78-8177-42e421991414 - 2025-10-18 11:55
+> "log prompts, please"
+
+---
+### Entry ID: aa691b8b-a8a1-4e36-8c2d-b457a49ca9d9 - 2025-10-18 11:59
+> "To answer your question .. yes it does meet my concerns, so start implementation. I need to make sure you list all events .. (include the link to the event details, by the way) - how can I be sure?"
+
+---
+### Entry ID: 32696623-7db8-407d-b249-851e2f0910df - 2025-10-18 11:59
+> "C"
+
+---
+### Entry ID: 425b683c-9c37-479a-93c9-2d41da20816d - 2025-10-18 11:59
+> "Looks good - go ahead"
+
+---
+### Entry ID: d2413524-d59e-44be-af82-2b0b3468cc74 — 2025-10-18 12:35
+> "Complete the implementation of dynamic event category lookup and create comprehensive tests"
+
+---
+
+### Entry ID: 5c1d660a-8ea8-4abf-930c-6d83879d7412 — 2025-10-18 12:41
+> "Enhance custom event analysis to use message field from telemetry data, not just customDimensions field names"
+
+---
+
+### Entry ID: 9df755e5-7fe9-4a1e-954b-8a9d0e4eae71 — 2025-10-18 12:48
+> "So, as I said, Microsoft learn doesn't always have the answer. Sometimes it's simply a new event, an undocumented event, a custom event from partners. In that case, the event catalog should give info, since that is based on a kql query, and has the 'message' field and customdimensions that might indicate what it is about. Is the setup now like that that this is a fallback, or at least that we don't fully rely on Microsoft Learn?"
+
+---
+
+### Entry ID: 8564240b-080b-44f0-9761-df277e7a164e — 2025-10-18 12:48
+> "Are the changes logged?"
+
+---
+
+### Entry ID: 97fbe684-0a1d-4474-a35e-a66a9ae769ed — 2025-10-18 12:48
+> "No, not all my prompts are logged!"
+
+---

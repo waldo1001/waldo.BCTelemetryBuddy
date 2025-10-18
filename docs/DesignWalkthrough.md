@@ -616,3 +616,10 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-18** — Created comprehensive test suite for get_event_field_samples [Entry: 9c8d5cbd-f234-44d9-b348-7f289568e794]
   - **Why:** Verify tool works correctly and is accessible via MCP protocol - ensure field analysis, type detection, and recommendations work as expected
   - **How:** Added 28 tests covering query generation, field analysis, data types, output structure, error handling, recommendations, and tool registration (241 total tests passing)
+- **2025-10-18** — Completed dynamic event category lookup integration [Entry: d2413524-d59e-44be-af82-2b0b3468cc74]
+  - **Why:** Enable comprehensive, always-current event categorization without maintenance burden
+  - **How:** Updated tool schemas, fixed cache structure in tests, created 15 comprehensive tests (all 256 tests passing)
+
+- **2025-10-18** — Enhanced custom event analysis with message field [Entry: 5c1d660a-8ea8-4abf-930c-6d83879d7412]
+  - **Why:** Use actual telemetry message content for better categorization instead of only field names
+  - **How:** Added message parameter to lookupEventCategory, updated analyzeCustomEvent to prioritize message content, added 6 new tests (262 total passing)
