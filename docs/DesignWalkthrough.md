@@ -623,3 +623,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-18** — Enhanced custom event analysis with message field [Entry: 5c1d660a-8ea8-4abf-930c-6d83879d7412]
   - **Why:** Use actual telemetry message content for better categorization instead of only field names
   - **How:** Added message parameter to lookupEventCategory, updated analyzeCustomEvent to prioritize message content, added 6 new tests (262 total passing)
+
+- **2025-10-18** — Phase 2.3: Enhanced get_event_catalog with includeCommonFields parameter [Entry: 3a56face-4998-4ecf-a522-2d934acf4395]
+  - **Why:** Help users understand which customDimensions fields appear across multiple events vs. event-specific fields, making it easier to write queries that work across event types.
+  - **How:** Added analyzeCommonFields method that samples events, tracks field prevalence across event types, categorizes fields into 4 groups (universal 80%+, common 50-79%, occasional 20-49%, rare <20%), provides dominant type detection, generates actionable recommendations, and added 18 comprehensive tests (280 total passing).

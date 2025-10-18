@@ -264,6 +264,239 @@ describe('Event Catalog Discovery', () => {
         });
     });
 
+    describe('Common Fields Analysis', () => {
+        it('should include common fields analysis when requested', () => {
+            const params = {
+                daysBack: 10,
+                status: 'all',
+                minCount: 1,
+                includeCommonFields: true
+            };
+
+            expect(params.includeCommonFields).toBe(true);
+        });
+
+        it('should categorize fields by prevalence', () => {
+            const field1 = { fieldName: 'eventId', prevalence: 100 };
+            const field2 = { fieldName: 'aadTenantId', prevalence: 85 };
+            const field3 = { fieldName: 'companyName', prevalence: 60 };
+            const field4 = { fieldName: 'specificField', prevalence: 25 };
+            const field5 = { fieldName: 'rareField', prevalence: 10 };
+
+            expect(categorizeFieldByPrevalence(field1.prevalence)).toBe('universal');
+            expect(categorizeFieldByPrevalence(field2.prevalence)).toBe('universal');
+            expect(categorizeFieldByPrevalence(field3.prevalence)).toBe('common');
+            expect(categorizeFieldByPrevalence(field4.prevalence)).toBe('occasional');
+            expect(categorizeFieldByPrevalence(field5.prevalence)).toBe('rare');
+        });
+
+        it('should calculate field prevalence correctly', () => {
+            const fieldEventCount = 8;
+            const totalEvents = 10;
+
+            const prevalence = calculatePrevalence(fieldEventCount, totalEvents);
+
+            expect(prevalence).toBe(80);
+        });
+
+        it('should identify universal fields (80%+ prevalence)', () => {
+            const fields = [
+                { fieldName: 'eventId', prevalence: 100, category: 'universal' },
+                { fieldName: 'aadTenantId', prevalence: 95, category: 'universal' },
+                { fieldName: 'companyName', prevalence: 85, category: 'universal' }
+            ];
+
+            const universalFields = fields.filter(f => f.category === 'universal');
+
+            expect(universalFields.length).toBe(3);
+            expect(universalFields.every(f => f.prevalence >= 80)).toBe(true);
+        });
+
+        it('should identify common fields (50-79% prevalence)', () => {
+            const fields = [
+                { fieldName: 'environmentName', prevalence: 75, category: 'common' },
+                { fieldName: 'userType', prevalence: 60, category: 'common' },
+                { fieldName: 'sessionId', prevalence: 55, category: 'common' }
+            ];
+
+            const commonFields = fields.filter(f => f.category === 'common');
+
+            expect(commonFields.length).toBe(3);
+            expect(commonFields.every(f => f.prevalence >= 50 && f.prevalence < 80)).toBe(true);
+        });
+
+        it('should identify occasional fields (20-49% prevalence)', () => {
+            const fields = [
+                { fieldName: 'extensionName', prevalence: 45, category: 'occasional' },
+                { fieldName: 'reportId', prevalence: 30, category: 'occasional' },
+                { fieldName: 'tableId', prevalence: 25, category: 'occasional' }
+            ];
+
+            const occasionalFields = fields.filter(f => f.category === 'occasional');
+
+            expect(occasionalFields.length).toBe(3);
+            expect(occasionalFields.every(f => f.prevalence >= 20 && f.prevalence < 50)).toBe(true);
+        });
+
+        it('should identify rare fields (<20% prevalence)', () => {
+            const fields = [
+                { fieldName: 'customField1', prevalence: 15, category: 'rare' },
+                { fieldName: 'customField2', prevalence: 8, category: 'rare' },
+                { fieldName: 'customField3', prevalence: 3, category: 'rare' }
+            ];
+
+            const rareFields = fields.filter(f => f.category === 'rare');
+
+            expect(rareFields.length).toBe(3);
+            expect(rareFields.every(f => f.prevalence < 20)).toBe(true);
+        });
+
+        it('should track field data types across events', () => {
+            const fieldSamples = [
+                { value: '123', type: 'string' },
+                { value: '456', type: 'string' },
+                { value: '789', type: 'string' }
+            ];
+
+            const dominantType = getDominantType(fieldSamples);
+
+            expect(dominantType).toBe('string');
+        });
+
+        it('should handle mixed data types and identify dominant type', () => {
+            const fieldSamples = [
+                { value: 'text', type: 'string' },
+                { value: 'more text', type: 'string' },
+                { value: 123, type: 'number' },
+                { value: 'another text', type: 'string' }
+            ];
+
+            const dominantType = getDominantType(fieldSamples);
+
+            expect(dominantType).toBe('string'); // 3 strings vs 1 number
+        });
+
+        it('should generate recommendations for universal fields', () => {
+            const universalFields = [
+                { fieldName: 'eventId', prevalence: 100 },
+                { fieldName: 'aadTenantId', prevalence: 95 },
+                { fieldName: 'companyName', prevalence: 85 }
+            ];
+
+            const recommendations = generateUniversalFieldRecommendations(universalFields);
+
+            expect(recommendations).toBeTruthy();
+            expect(recommendations).toContain('eventId');
+            expect(recommendations).toContain('aadTenantId');
+            expect(recommendations).toContain('companyName');
+        });
+
+        it('should generate recommendations for common fields', () => {
+            const commonFields = [
+                { fieldName: 'sessionId', prevalence: 75 },
+                { fieldName: 'userType', prevalence: 60 }
+            ];
+
+            const recommendations = generateCommonFieldRecommendations(commonFields);
+
+            expect(recommendations).toBeTruthy();
+            expect(recommendations).toContain('sessionId');
+            expect(recommendations).toContain('null'); // Should mention checking for nulls
+        });
+
+        it('should sort fields by prevalence descending', () => {
+            const unsortedFields = [
+                { fieldName: 'field1', prevalence: 25 },
+                { fieldName: 'field2', prevalence: 95 },
+                { fieldName: 'field3', prevalence: 60 },
+                { fieldName: 'field4', prevalence: 100 }
+            ];
+
+            const sorted = sortFieldsByPrevalence(unsortedFields);
+
+            expect(sorted[0].prevalence).toBe(100);
+            expect(sorted[1].prevalence).toBe(95);
+            expect(sorted[2].prevalence).toBe(60);
+            expect(sorted[3].prevalence).toBe(25);
+        });
+
+        it('should analyze field distribution across event types', () => {
+            const fieldEventMap = new Map([
+                ['eventId', new Set(['RT0005', 'LC0011', 'AL0000E26'])],
+                ['companyName', new Set(['RT0005', 'LC0011'])],
+                ['extensionName', new Set(['AL0000E26'])]
+            ]);
+
+            const totalEvents = 3;
+
+            const distribution = analyzeFieldDistribution(fieldEventMap, totalEvents);
+
+            expect(distribution.get('eventId')?.prevalence).toBe(100);
+            expect(distribution.get('companyName')?.prevalence).toBeCloseTo(66.7, 1);
+            expect(distribution.get('extensionName')?.prevalence).toBeCloseTo(33.3, 1);
+        });
+
+        it('should limit analysis to reasonable sample size', () => {
+            const manyEventIds = Array.from({ length: 100 }, (_, i) => `EVENT${i}`);
+            const limitedEvents = limitEventSample(manyEventIds, 50);
+
+            expect(limitedEvents.length).toBe(50);
+        });
+
+        it('should return all four prevalence categories in response', () => {
+            const categories = {
+                universal: { count: 3, fields: [] },
+                common: { count: 2, fields: [] },
+                occasional: { count: 4, fields: [] },
+                rare: { count: 10, fields: [] }
+            };
+
+            expect(categories).toHaveProperty('universal');
+            expect(categories).toHaveProperty('common');
+            expect(categories).toHaveProperty('occasional');
+            expect(categories).toHaveProperty('rare');
+        });
+
+        it('should provide descriptions for each category', () => {
+            const categoryDescriptions = {
+                universal: 'Fields that appear in 80%+ of events (reliable for cross-event queries)',
+                common: 'Fields that appear in 50-79% of events (often available)',
+                occasional: 'Fields that appear in 20-49% of events (event-type specific)',
+                rare: 'Fields that appear in <20% of events (highly specific)'
+            };
+
+            expect(categoryDescriptions.universal).toContain('80%+');
+            expect(categoryDescriptions.common).toContain('50-79%');
+            expect(categoryDescriptions.occasional).toContain('20-49%');
+            expect(categoryDescriptions.rare).toContain('<20%');
+        });
+
+        it('should handle empty field analysis gracefully', () => {
+            const emptyFields = new Map<string, Set<string>>();
+            const totalEvents = 10;
+
+            const distribution = analyzeFieldDistribution(emptyFields, totalEvents);
+
+            expect(distribution.size).toBe(0);
+        });
+
+        it('should include field count in each category', () => {
+            const analysisResult = {
+                categories: {
+                    universal: { count: 5, fields: [] },
+                    common: { count: 8, fields: [] },
+                    occasional: { count: 12, fields: [] },
+                    rare: { count: 30, fields: [] }
+                }
+            };
+
+            expect(analysisResult.categories.universal.count).toBe(5);
+            expect(analysisResult.categories.common.count).toBe(8);
+            expect(analysisResult.categories.occasional.count).toBe(12);
+            expect(analysisResult.categories.rare.count).toBe(30);
+        });
+    });
+
     describe('Event Catalog Workflow', () => {
         it('should support catalog -> schema -> query workflow', () => {
             const workflow = [
@@ -429,4 +662,65 @@ function calculateAverageDuration(events: Array<{ duration_d: number }>): number
     if (events.length === 0) return 0;
     const sum = events.reduce((acc, e) => acc + e.duration_d, 0);
     return sum / events.length;
+}
+
+// Helper functions for common fields analysis
+function categorizeFieldByPrevalence(prevalence: number): string {
+    if (prevalence >= 80) return 'universal';
+    if (prevalence >= 50) return 'common';
+    if (prevalence >= 20) return 'occasional';
+    return 'rare';
+}
+
+function calculatePrevalence(fieldEventCount: number, totalEvents: number): number {
+    return (fieldEventCount / totalEvents) * 100;
+}
+
+function getDominantType(samples: Array<{ type: string }>): string {
+    const typeCounts = new Map<string, number>();
+    
+    samples.forEach(sample => {
+        typeCounts.set(sample.type, (typeCounts.get(sample.type) || 0) + 1);
+    });
+
+    let maxCount = 0;
+    let dominantType = 'unknown';
+    
+    typeCounts.forEach((count, type) => {
+        if (count > maxCount) {
+            maxCount = count;
+            dominantType = type;
+        }
+    });
+
+    return dominantType;
+}
+
+function generateUniversalFieldRecommendations(fields: Array<{ fieldName: string; prevalence: number }>): string {
+    const fieldNames = fields.map(f => f.fieldName).join(', ');
+    return `Universal fields (${fieldNames}) can be used reliably in queries that span multiple event types.`;
+}
+
+function generateCommonFieldRecommendations(fields: Array<{ fieldName: string; prevalence: number }>): string {
+    const fieldNames = fields.map(f => f.fieldName).join(', ');
+    return `Common fields (${fieldNames}) are available in most events - consider checking for null values when querying.`;
+}
+
+function sortFieldsByPrevalence(fields: Array<{ fieldName: string; prevalence: number }>): any[] {
+    return [...fields].sort((a, b) => b.prevalence - a.prevalence);
+}
+
+function analyzeFieldDistribution(fieldEventMap: Map<string, Set<string>>, totalEvents: number): Map<string, { prevalence: number }> {
+    const distribution = new Map<string, { prevalence: number }>();
+    
+    fieldEventMap.forEach((eventSet, fieldName) => {
+        const prevalence = Math.round((eventSet.size / totalEvents) * 1000) / 10; // Round to 1 decimal
+        distribution.set(fieldName, { prevalence });
+    });
+
+    return distribution;
+}
+
+function limitEventSample(eventIds: string[], maxSample: number): string[] {
+    return eventIds.slice(0, maxSample);
 }

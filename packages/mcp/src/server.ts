@@ -323,13 +323,14 @@ export class MCPServer {
                             },
                             {
                                 name: 'get_event_catalog',
-                                description: 'Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available.',
+                                description: 'Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Optionally includes analysis of common fields that appear across multiple events.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
                                         daysBack: { type: 'number', description: 'Number of days to analyze (default: 10)', default: 10 },
                                         status: { type: 'string', enum: ['all', 'success', 'error', 'too slow', 'unknown'], description: 'Filter by event status', default: 'all' },
-                                        minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 }
+                                        minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 },
+                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
                                     }
                                 }
                             },
@@ -420,7 +421,8 @@ export class MCPServer {
                     result = await this.getEventCatalog(
                         rpcRequest.params?.daysBack || 10,
                         rpcRequest.params?.status || 'all',
-                        rpcRequest.params?.minCount || 1
+                        rpcRequest.params?.minCount || 1,
+                        rpcRequest.params?.includeCommonFields || false
                     );
                     break;
 
@@ -561,7 +563,7 @@ export class MCPServer {
     /**
      * Get event catalog - recent BC telemetry event IDs with descriptions, frequencies, and Learn URLs
      */
-    private async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1): Promise<any> {
+    private async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1, includeCommonFields: boolean = false): Promise<any> {
         const kql = `
 traces
 | where timestamp >= ago(${daysBack}d)
@@ -582,7 +584,7 @@ ${status !== 'all' ? `| where status == "${status}"` : ''}
 | order by count desc
         `.trim();
 
-        console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount})...`);
+        console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, includeCommonFields: ${includeCommonFields})...`);
 
         // Execute the query
         const result = await this.executeQuery(kql, false, false);
@@ -591,20 +593,172 @@ ${status !== 'all' ? `| where status == "${status}"` : ''}
             throw new Error(result.summary);
         }
 
-        // Format the response
-        return {
-            summary: `Found ${result.rows?.length || 0} event IDs in the last ${daysBack} days`,
+        const events = result.rows?.map((row: any[]) => ({
+            eventId: row[0],
+            shortMessage: row[1],
+            status: row[2],
+            count: row[3],
+            learnUrl: row[4]
+        })) || [];
+
+        const response: any = {
+            summary: `Found ${events.length} event IDs in the last ${daysBack} days`,
             daysBack,
             statusFilter: status,
             minCount,
-            events: result.rows?.map((row: any[]) => ({
-                eventId: row[0],
-                shortMessage: row[1],
-                status: row[2],
-                count: row[3],
-                learnUrl: row[4]
-            })) || []
+            events
         };
+
+        // If includeCommonFields is true, analyze customDimensions fields across events
+        if (includeCommonFields && events.length > 0) {
+            console.log('Analyzing common fields across events...');
+            response.commonFields = await this.analyzeCommonFields(daysBack, events.map(e => e.eventId));
+        }
+
+        return response;
+    }
+
+    /**
+     * Analyze common customDimensions fields across multiple events
+     */
+    private async analyzeCommonFields(daysBack: number, eventIds: string[]): Promise<any> {
+        // Sample a subset of events to analyze fields (max 50 events to keep performance reasonable)
+        const eventsToAnalyze = eventIds.slice(0, 50);
+        
+        // Build KQL to get field names for each event
+        const kql = `
+traces
+| where timestamp >= ago(${daysBack}d)
+| extend eventId = tostring(customDimensions.eventId)
+| where eventId in (${eventsToAnalyze.map(id => `"${id}"`).join(', ')})
+| take 1000
+| project eventId, customDimensions
+        `.trim();
+
+        const result = await this.executeQuery(kql, false, false);
+
+        if (result.type === 'error') {
+            throw new Error(result.summary);
+        }
+
+        // Map to track which fields appear in which events
+        const fieldEventMap = new Map<string, Set<string>>();
+        const fieldTypeMap = new Map<string, Map<string, number>>(); // field -> type -> count
+
+        result.rows?.forEach((row: any[]) => {
+            const eventId = row[0];
+            const customDims = row[1];
+
+            if (typeof customDims === 'object' && customDims !== null) {
+                Object.entries(customDims).forEach(([fieldName, fieldValue]) => {
+                    // Track which events have this field
+                    if (!fieldEventMap.has(fieldName)) {
+                        fieldEventMap.set(fieldName, new Set());
+                    }
+                    fieldEventMap.get(fieldName)!.add(eventId);
+
+                    // Track field type
+                    if (!fieldTypeMap.has(fieldName)) {
+                        fieldTypeMap.set(fieldName, new Map());
+                    }
+                    const typeMap = fieldTypeMap.get(fieldName)!;
+                    const fieldType = typeof fieldValue;
+                    typeMap.set(fieldType, (typeMap.get(fieldType) || 0) + 1);
+                });
+            }
+        });
+
+        const totalUniqueEvents = eventsToAnalyze.length;
+
+        // Calculate prevalence and categorize fields
+        const commonFields = Array.from(fieldEventMap.entries())
+            .map(([fieldName, eventSet]) => {
+                const eventCount = eventSet.size;
+                const prevalence = (eventCount / totalUniqueEvents) * 100;
+                
+                // Determine most common type
+                const typeMap = fieldTypeMap.get(fieldName)!;
+                const dominantType = Array.from(typeMap.entries())
+                    .sort((a, b) => b[1] - a[1])[0][0];
+
+                return {
+                    fieldName,
+                    appearsInEvents: eventCount,
+                    totalEvents: totalUniqueEvents,
+                    prevalence: Math.round(prevalence * 10) / 10, // Round to 1 decimal
+                    dominantType,
+                    category: this.categorizeField(fieldName, prevalence)
+                };
+            })
+            .sort((a, b) => b.prevalence - a.prevalence);
+
+        // Group by category
+        const universal = commonFields.filter(f => f.category === 'universal');
+        const common = commonFields.filter(f => f.category === 'common');
+        const occasional = commonFields.filter(f => f.category === 'occasional');
+        const rare = commonFields.filter(f => f.category === 'rare');
+
+        return {
+            summary: `Analyzed ${result.rows?.length || 0} event samples across ${totalUniqueEvents} unique event types`,
+            categories: {
+                universal: {
+                    description: 'Fields that appear in 80%+ of events (reliable for cross-event queries)',
+                    count: universal.length,
+                    fields: universal
+                },
+                common: {
+                    description: 'Fields that appear in 50-79% of events (often available)',
+                    count: common.length,
+                    fields: common
+                },
+                occasional: {
+                    description: 'Fields that appear in 20-49% of events (event-type specific)',
+                    count: occasional.length,
+                    fields: occasional
+                },
+                rare: {
+                    description: 'Fields that appear in <20% of events (highly specific)',
+                    count: rare.length,
+                    fields: rare
+                }
+            },
+            recommendations: this.generateFieldRecommendations(universal, common)
+        };
+    }
+
+    /**
+     * Categorize a field based on its prevalence
+     */
+    private categorizeField(fieldName: string, prevalence: number): string {
+        if (prevalence >= 80) return 'universal';
+        if (prevalence >= 50) return 'common';
+        if (prevalence >= 20) return 'occasional';
+        return 'rare';
+    }
+
+    /**
+     * Generate recommendations for using common fields
+     */
+    private generateFieldRecommendations(universal: any[], common: any[]): string[] {
+        const recommendations: string[] = [];
+
+        if (universal.length > 0) {
+            recommendations.push(
+                `Universal fields (${universal.map(f => f.fieldName).join(', ')}) can be used reliably in queries that span multiple event types.`
+            );
+        }
+
+        if (common.length > 0) {
+            recommendations.push(
+                `Common fields (${common.map(f => f.fieldName).join(', ')}) are available in most events - consider checking for null values when querying.`
+            );
+        }
+
+        recommendations.push(
+            'For event-specific fields, use get_event_field_samples(eventId) to understand the exact structure before writing queries.'
+        );
+
+        return recommendations;
     }
 
     /**
@@ -1094,13 +1248,14 @@ ${extendStatements}
                             },
                             {
                                 name: 'get_event_catalog',
-                                description: 'Discover available Business Central telemetry event IDs with descriptions, status, and documentation URLs',
+                                description: 'Discover available Business Central telemetry event IDs with descriptions, status, and documentation URLs. Optionally includes analysis of common fields that appear across multiple events.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
                                         daysBack: { type: 'number', description: 'Number of days to look back (default: 10)', default: 10 },
                                         status: { type: 'string', description: 'Filter by status: all, success, error, too slow, unknown (default: all)', default: 'all' },
-                                        minCount: { type: 'number', description: 'Minimum occurrence count to include (default: 1)', default: 1 }
+                                        minCount: { type: 'number', description: 'Minimum occurrence count to include (default: 1)', default: 1 },
+                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
                                     }
                                 }
                             },
@@ -1211,7 +1366,8 @@ ${extendStatements}
                     result = await this.getEventCatalog(
                         params?.daysBack || 10,
                         params?.status || 'all',
-                        params?.minCount || 1
+                        params?.minCount || 1,
+                        params?.includeCommonFields || false
                     );
                     break;
 
@@ -1331,7 +1487,8 @@ ${extendStatements}
                 return await this.getEventCatalog(
                     params?.daysBack || 10,
                     params?.status || 'all',
-                    params?.minCount || 1
+                    params?.minCount || 1,
+                    params?.includeCommonFields || false
                 );
 
             case 'get_event_schema':
