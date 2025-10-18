@@ -602,3 +602,17 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-18** — Phase 1: Remove NL parameter from query_telemetry tool [Entry: 87f3d5a2-1c74-4917-a623-5dfd0f65c807]
   - **Why:** NL parameter misleads GitHub Copilot with false advertising of natural language capability, causing unreliable keyword-based query generation.
   - **How:** Remove nl parameter from tool schema, delete translateNLToKQL and supporting pattern-matching code, make kql parameter required, update tool descriptions to guide toward discovery tools.
+
+- **2025-10-18** — Phase 2.1: Implement get_event_field_samples discovery tool [Entry: a1af1a08-e6c1-4c17-a990-4118d06c5e4a]
+  - **Why:** Provide GitHub Copilot and users with ability to discover actual customDimensions field structure from real telemetry events, replacing guesswork with data-driven insights.
+  - **How:** Create new tool that samples recent events for specified eventId, analyzes all customDimensions fields, returns field names with data types, occurrence rates, sample values, and ready-to-use example query. Test with RT0005 event.
+
+- **2025-10-18** — Completed get_event_field_samples discovery tool [Entry: 125a6ccd-d460-4ea5-91f8-0d1913dcb694]
+  - **Why:** Phase 2.1: Replace unreliable NL with explicit field discovery - analyzes real event data from customDimensions
+  - **How:** Added 145-line method with data type detection, occurrence rates, sample values; registered in 3 handler locations (HTTP/stdio/executeToolCall)
+- **2025-10-18** — Completed get_event_field_samples discovery tool [Entry: b4ac4474-c4f7-44dd-b568-f4c13ee43bdc]
+  - **Why:** Phase 2.1: Replace unreliable NL with explicit field discovery - analyzes real event data from customDimensions
+  - **How:** Added 145-line method with data type detection, occurrence rates, sample values; registered in 3 handler locations (HTTP/stdio/executeToolCall)
+- **2025-10-18** — Created comprehensive test suite for get_event_field_samples [Entry: 9c8d5cbd-f234-44d9-b348-7f289568e794]
+  - **Why:** Verify tool works correctly and is accessible via MCP protocol - ensure field analysis, type detection, and recommendations work as expected
+  - **How:** Added 28 tests covering query generation, field analysis, data types, output structure, error handling, recommendations, and tool registration (241 total tests passing)

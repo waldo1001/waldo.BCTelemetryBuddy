@@ -1099,3 +1099,12 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Answers: 1. yes (review each phase), 2. no (work on main), 3. Yes (test get_event_field_samples first), 4. RT0005 (use for testing). Implement Phase 1: Remove NL parameter"
 
 ---
+
+### Entry ID: b4ac4474-c4f7-44dd-b568-f4c13ee43bdc — 2025-10-18 11:34
+> "Complete Phase 2.1: Implement get_event_field_samples tool"
+
+---
+### Entry ID: 9c8d5cbd-f234-44d9-b348-7f289568e794 — 2025-10-18 11:40
+> "Create comprehensive tests for get_event_field_samples tool to verify functionality and accessibility"
+
+---

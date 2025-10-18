@@ -69,10 +69,10 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 
 ### 6. Workflow summary
 1. User makes ANY request or asks ANY question
-2. **IMMEDIATELY log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number). This gives you the `[Prompt #N]` to reference.
+2. **AT THE END OF THE PROCESS - log the prompt to `docs/PromptLog.md`** using FAST APPEND (read last 20 lines only to get next entry number). This gives you the `[Prompt #N]` to reference.
 3. If no "why" provided for a change → ask for purpose
 4. Make the change or answer the question
-5. **Always append to `docs/DesignWalkthrough.md`** by blindly appending the exact template below. DO NOT read, parse, search, or attempt to merge against `DesignWalkthrough.md` — always append to the end. Use the `[Prompt #N]` from PromptLog.md in the entry.
+5. **AT THE END OF THE PROCESS - Always append to `docs/DesignWalkthrough.md`** by blindly appending the exact template below. DO NOT read, parse, search, or attempt to merge against `DesignWalkthrough.md` — always append to the end. Use the `[Prompt #N]` from PromptLog.md in the entry.
    - Template to append (exact structure):
       - `- **YYYY-MM-DD** — <Short title> [Prompt #N]`
          - `  - **Why:** <one-line reason>`
@@ -81,11 +81,12 @@ For every user prompt or request, you MUST append entries to both `docs/PromptLo
 6. Update `docs/CHANGELOG.md` only when it's a release/major change or the user explicitly asks for a changelog entry. When updating, do a targeted read of the first 30 lines to find the insertion point and prepend the new entry there.
 7. Confirm completion and show the log entry
 
-**CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, before doing anything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
-
+**CRITICAL RULE**: EVERY user prompt gets logged to PromptLog.md FIRST, after doing everything else. Questions, changes, clarifications — EVERYTHING goes to PromptLog.md.
+**CRITICAL RULE**: EVERY log entry must include a timestamp and a unique entry ID.
+**CRITICAL RULE**: Use FAST APPEND strategy to avoid reading files unnecessarily.
 **FAST LOGGING STRATEGY** (fast, reliable, no reading):
-
 **CRITICAL: Use PowerShell `Add-Content` for ALL log appends - NEVER read the files:**
+**CRITICAL RULE**: execute the entire prompt first, then log to PromptLog and DesignWalkthrough at the end.
 
 **PromptLog.md**: 
 ```powershell

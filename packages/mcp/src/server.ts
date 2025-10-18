@@ -343,6 +343,19 @@ export class MCPServer {
                                     },
                                     required: ['eventId']
                                 }
+                            },
+                            {
+                                name: 'get_event_field_samples',
+                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Returns ready-to-use example query with proper type conversions. Use this to understand the exact structure of customDimensions before writing queries.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011)' },
+                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
+                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
+                                    },
+                                    required: ['eventId']
+                                }
                             }
                         ]
                     };
@@ -417,6 +430,17 @@ export class MCPServer {
                     result = await this.getEventSchema(
                         rpcRequest.params.eventId,
                         rpcRequest.params?.sampleSize || 100
+                    );
+                    break;
+
+                case 'get_event_field_samples':
+                    if (!rpcRequest.params?.eventId) {
+                        throw new Error('eventId parameter is required');
+                    }
+                    result = await this.getEventFieldSamples(
+                        rpcRequest.params.eventId,
+                        rpcRequest.params?.sampleCount || 10,
+                        rpcRequest.params?.daysBack || 30
                     );
                     break;
 
@@ -641,6 +665,139 @@ traces
                 mostCommonFields: fields.slice(0, 10).map(f => f.fieldName),
                 exampleQuery: `traces\n| where timestamp >= ago(1d)\n| where tostring(customDimensions.eventId) == "${eventId}"\n| project timestamp, message, ${fields.slice(0, 5).map(f => `customDimensions.${f.fieldName}`).join(', ')}`
             }
+        };
+    }
+
+    /**
+     * Get event field samples - Enhanced field discovery with data types and occurrence rates
+     * Shows actual customDimensions structure from real telemetry events
+     */
+    private async getEventFieldSamples(eventId: string, sampleCount: number = 10, daysBack: number = 30): Promise<any> {
+        const kql = `
+traces
+| where timestamp >= ago(${daysBack}d)
+| where tostring(customDimensions.eventId) == "${eventId}"
+| take ${sampleCount}
+| project timestamp, customDimensions
+        `.trim();
+
+        console.log(`Getting field samples for event ${eventId} (${sampleCount} samples, ${daysBack} days back)...`);
+
+        // Execute the query
+        const result = await this.executeQuery(kql, false, false);
+
+        if (result.type === 'error') {
+            throw new Error(result.summary);
+        }
+
+        if (!result.rows || result.rows.length === 0) {
+            throw new Error(`No events found for eventId "${eventId}" in the last ${daysBack} days. Try increasing daysBack or check if the eventId is correct.`);
+        }
+
+        // Analyze all customDimensions to find field patterns
+        interface FieldStats {
+            types: Set<string>;
+            values: any[];
+            nullCount: number;
+            totalCount: number;
+        }
+
+        const fieldStats = new Map<string, FieldStats>();
+
+        result.rows.forEach((row: any[]) => {
+            const customDims = row[1]; // customDimensions is second column
+
+            if (!customDims || typeof customDims !== 'object') {
+                return;
+            }
+
+            Object.entries(customDims).forEach(([key, value]) => {
+                if (!fieldStats.has(key)) {
+                    fieldStats.set(key, {
+                        types: new Set<string>(),
+                        values: [],
+                        nullCount: 0,
+                        totalCount: 0
+                    });
+                }
+
+                const stats = fieldStats.get(key)!;
+                stats.totalCount++;
+
+                if (value === null || value === undefined || value === '') {
+                    stats.nullCount++;
+                } else {
+                    // Detect actual type
+                    const actualType = typeof value === 'number' ? 'number' :
+                        typeof value === 'boolean' ? 'boolean' :
+                            value instanceof Date ? 'datetime' :
+                                'string';
+                    stats.types.add(actualType);
+
+                    // Store up to 3 distinct sample values
+                    if (stats.values.length < 3 && !stats.values.includes(value)) {
+                        stats.values.push(value);
+                    }
+                }
+            });
+        });
+
+        // Convert to output format
+        const fields = Array.from(fieldStats.entries())
+            .map(([fieldName, stats]) => ({
+                fieldName,
+                dataType: Array.from(stats.types)[0] || 'string', // Primary type
+                occurrenceRate: Math.round((stats.totalCount / result.rows!.length) * 100), // Percentage
+                sampleValues: stats.values.slice(0, 3),
+                isAlwaysPresent: stats.totalCount === result.rows!.length,
+                nullCount: stats.nullCount
+            }))
+            .sort((a, b) => b.occurrenceRate - a.occurrenceRate); // Most common first
+
+        // Generate example query with proper extends for top fields
+        const topFields = fields
+            .filter(f => f.occurrenceRate >= 50) // Only fields in >50% of samples
+            .slice(0, 10); // Max 10 fields
+
+        const extendStatements = topFields
+            .map(f => {
+                // Use appropriate conversion based on data type
+                const conversion = f.dataType === 'number' ? 'toreal' :
+                    f.dataType === 'boolean' ? 'tobool' :
+                        f.dataType === 'datetime' ? 'todatetime' :
+                            'tostring';
+                return `    ${f.fieldName} = ${conversion}(customDimensions.${f.fieldName})`;
+            })
+            .join(',\n');
+
+        const exampleQuery = `traces
+| where timestamp > ago(7d)
+| where tostring(customDimensions.eventId) == "${eventId}"
+| extend
+${extendStatements}
+| take 100`;
+
+        return {
+            eventId,
+            samplesAnalyzed: result.rows.length,
+            timeRange: {
+                from: result.rows[result.rows.length - 1][0], // First timestamp
+                to: result.rows[0][0] // Last timestamp
+            },
+            fields,
+            summary: {
+                totalFields: fields.length,
+                alwaysPresentFields: fields.filter(f => f.isAlwaysPresent).length,
+                optionalFields: fields.filter(f => !f.isAlwaysPresent).length
+            },
+            exampleQuery,
+            recommendations: [
+                `Use the exampleQuery above as a starting point for your analysis`,
+                `Fields with 100% occurrence rate are always available`,
+                fields.filter(f => !f.isAlwaysPresent).length > 0
+                    ? `${fields.filter(f => !f.isAlwaysPresent).length} optional fields may be null - handle accordingly`
+                    : 'All fields are consistently present'
+            ]
         };
     }
 
@@ -943,6 +1100,19 @@ traces
                                 }
                             },
                             {
+                                name: 'get_event_field_samples',
+                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Returns ready-to-use example query with proper type conversions. Use this to understand the exact structure of customDimensions before writing queries.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011)' },
+                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
+                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
+                                    },
+                                    required: ['eventId']
+                                }
+                            },
+                            {
                                 name: 'get_tenant_mapping',
                                 description: 'IMPORTANT: BC telemetry uses aadTenantId (not company names) for filtering. Use this tool to map company/customer names to tenant IDs before querying. Always call this first when user asks about a specific customer/company.',
                                 inputSchema: {
@@ -1035,6 +1205,17 @@ traces
                     result = await this.getEventSchema(
                         params.eventId,
                         params?.sampleSize || 100
+                    );
+                    break;
+
+                case 'get_event_field_samples':
+                    if (!params?.eventId) {
+                        throw new Error('eventId parameter is required');
+                    }
+                    result = await this.getEventFieldSamples(
+                        params.eventId,
+                        params?.sampleCount || 10,
+                        params?.daysBack || 30
                     );
                     break;
 
@@ -1143,6 +1324,16 @@ traces
                 return await this.getEventSchema(
                     params.eventId,
                     params?.sampleSize || 100
+                );
+
+            case 'get_event_field_samples':
+                if (!params?.eventId) {
+                    throw new Error('eventId parameter is required');
+                }
+                return await this.getEventFieldSamples(
+                    params.eventId,
+                    params?.sampleCount || 20,
+                    params?.daysBack || 7
                 );
 
             case 'get_tenant_mapping':
