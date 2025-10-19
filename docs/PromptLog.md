@@ -1197,3 +1197,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Ok, now document all the changes in our documentation. I guess that's the last phase?"
 
 ---
+### Entry ID: 9c94497a-63d9-42f6-9711-2c8519bca2c7 — 2025-10-18 23:05
+> "For the changes I did this day - tell me the best way to manually test it."
+
+---
+### Entry ID: 8a8fc87c-2717-4d39-8528-903321487d54 — 2025-10-18 23:06
+> "When I run (F5), and start the MCP, I get this: [Error: Cannot find module launcher.js]"
+
+---
+### Entry ID: 1250f921-a9f7-4339-958a-0e9990a9129b — 2025-10-18 23:14
+> "now also check the readme.md of the mcp and the extension and see if all is up-to-date."
+
+---
+### Entry ID: 9b324d7a-e9f2-44c2-b0aa-d2eaa155b9ea — 2025-10-18 23:15
+> "So again, for the past day, I haven been requesting changes - what is the best way to test them?"
+
+---

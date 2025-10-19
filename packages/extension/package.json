@@ -417,7 +417,7 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run build && npm run copy-mcp",
-        "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify",
+        "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify && npm run copy-mcp",
         "dev": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
         "compile": "tsc --noEmit",
         "test": "jest",

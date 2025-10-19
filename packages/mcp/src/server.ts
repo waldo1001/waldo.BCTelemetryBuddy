@@ -860,7 +860,17 @@ traces
         const fieldStats = new Map<string, FieldStats>();
 
         result.rows.forEach((row: any[]) => {
-            const customDims = row[2]; // customDimensions is now third column (timestamp, message, customDimensions)
+            let customDims = row[2]; // customDimensions is now third column (timestamp, message, customDimensions)
+
+            // Application Insights returns customDimensions as a JSON string - parse it
+            if (typeof customDims === 'string') {
+                try {
+                    customDims = JSON.parse(customDims);
+                } catch (e) {
+                    console.warn(`Failed to parse customDimensions for row:`, customDims);
+                    return;
+                }
+            }
 
             if (!customDims || typeof customDims !== 'object') {
                 return;
@@ -934,7 +944,17 @@ ${extendStatements}
 
         // Lookup event category from Microsoft Learn
         const firstSampleMessage = result.rows[0][1]; // message from first sample
-        const firstSampleDimensions = result.rows[0][2]; // customDimensions from first sample
+        let firstSampleDimensions = result.rows[0][2]; // customDimensions from first sample
+
+        // Parse customDimensions if it's a JSON string
+        if (typeof firstSampleDimensions === 'string') {
+            try {
+                firstSampleDimensions = JSON.parse(firstSampleDimensions);
+            } catch (e) {
+                console.warn(`Failed to parse customDimensions for category lookup:`, firstSampleDimensions);
+            }
+        }
+
         const categoryInfo = await lookupEventCategory(eventId, firstSampleDimensions, firstSampleMessage);
 
         return {

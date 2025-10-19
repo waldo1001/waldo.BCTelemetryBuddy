@@ -630,3 +630,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-18** — Phase 3: Comprehensive documentation updates for Phase 2 features [Entry: 3db0edb1-cde7-4cae-8dc5-08894669c950]
   - **Why:** Document all Phase 2 changes (get_event_field_samples tool, dynamic event category lookup, includeCommonFields parameter) across Instructions.md, UserGuide.md, and component CHANGELOGs to formalize the discovery-first workflow and breaking changes for v1.0.0 release.
   - **How:** Updated Instructions.md with all 10 MCP tools including new discovery tools section with detailed parameter/return descriptions. Enhanced UserGuide.md with discovery-first workflow section showing 4-step process (discover events → analyze fields → write KQL → analyze common fields) and updated tools table with prevalence analysis details. Updated packages/mcp/CHANGELOG.md [Unreleased] with Added (get_event_field_samples, includeCommonFields, dynamic category lookup), Changed (BREAKING: removed NL translation), Removed (translateNLToKQL method). Updated packages/extension/CHANGELOG.md [Unreleased] noting tool description updates. All documentation now reflects data-driven approach over unreliable NL translation.
+- **2025-10-18** — Manual testing guide for Phase 1-3 changes [Entry: dc7f8e92-3a1b-4c5d-9e2f-8b7a6c5d4e3f]
+  - **Why:** User requested comprehensive testing approach for all changes made today
+  - **How:** Created detailed test plan covering NL removal, get_event_field_samples, dynamic categories, and includeCommonFields
+- **2025-10-18** — Fixed MCP server launcher.js not found error [Entry: a9c8b7d6-e5f4-3a2b-1c0d-9e8f7a6b5c4d]
+  - **Why:** Extension couldn't start MCP server - missing launcher.js in extension/mcp/dist/
+  - **How:** Ran copy-mcp script and updated build script to auto-copy MCP files after building
+- **2025-10-18** — Updated component READMEs for v1.0.0 accuracy [Entry: f8a7b6c5-d4e3-2f1a-0b9c-8d7e6f5a4b3c]
+  - **Why:** MCP and extension READMEs had outdated references (10 tools, NL queries, pattern matching)
+  - **How:** Fixed tool count to 11, added get_event_field_samples, removed NL mentions, updated workflows
+- **2025-10-18** — Comprehensive testing guide for all Phase 1-3 changes [Entry: c9d8e7f6-a5b4-3c2d-1e0f-9a8b7c6d5e4f]
+  - **Why:** User requested best way to test all changes made during the day
+  - **How:** Created end-to-end testing plan covering NL removal, field discovery, JSON parsing fix, and documentation
