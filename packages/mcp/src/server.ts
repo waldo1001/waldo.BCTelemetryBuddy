@@ -246,11 +246,11 @@ export class MCPServer {
                         tools: [
                             {
                                 name: 'query_telemetry',
-                                description: 'Execute a KQL query against Business Central telemetry data. IMPORTANT: Use get_event_catalog() to discover available events and get_event_field_samples() to understand field structure before constructing queries.',
+                                description: 'Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITE: You MUST call get_event_catalog() FIRST to discover available event IDs, then call get_event_field_samples() to understand field structure BEFORE constructing any KQL query. DO NOT use this tool without completing the discovery flow first.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string (REQUIRED)' },
+                                        kql: { type: 'string', description: 'KQL query string constructed using event IDs from get_event_catalog() and field names from get_event_field_samples()' },
                                         useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
                                     },
@@ -1191,11 +1191,11 @@ ${extendStatements}
                         tools: [
                             {
                                 name: 'query_telemetry',
-                                description: 'Execute a KQL query against Business Central telemetry data. IMPORTANT: Use get_event_catalog() to discover available events and get_event_field_samples() to understand field structure before constructing queries.',
+                                description: 'Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITE: You MUST call get_event_catalog() FIRST to discover available event IDs, then call get_event_field_samples() to understand field structure BEFORE constructing any KQL query. DO NOT use this tool without completing the discovery flow first.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string (REQUIRED)' },
+                                        kql: { type: 'string', description: 'KQL query string constructed using event IDs from get_event_catalog() and field names from get_event_field_samples()' },
                                         useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
                                     },
@@ -1465,7 +1465,7 @@ ${extendStatements}
                 const kqlQuery3 = params.kql;
 
                 if (!kqlQuery3 || kqlQuery3.trim() === '') {
-                    throw new Error('kql parameter is required. Use get_event_catalog() to discover events and get_event_field_samples() to understand field structure.');
+                    throw new Error('kql parameter is required. PREREQUISITE: Call get_event_catalog() to discover events and get_event_field_samples() to understand field structure BEFORE constructing queries.');
                 }
 
                 const result3 = await this.executeQuery(

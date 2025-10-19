@@ -1213,3 +1213,47 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "So again, for the past day, I haven been requesting changes - what is the best way to test them?"
 
 ---
+### Entry ID: 39db6aee-6a23-4a05-a6e2-fa930309d771  2025-10-19 10:59
+> "Doing Test 1, I asked "Show me all error events from the last 7 days". It goes straight to query_telemetry with this input: {kql: "traces | where timestamp > ago(7d)..."} So, I guess the "no nl parameter" is a success, but the flow is not there?"
+
+---
+### Entry ID: f44f50b0-337d-497f-97e2-6ea4ae9ae2a1  2025-10-19 11:07
+> "Wait, I thought we removed the nl parameter?"
+
+---
+### Entry ID: 0e87506c-45ac-4abb-8c6a-3695ecb79be8  2025-10-19 11:09
+> "2 (Option B: Stronger description language)"
+
+---
+### Entry ID: bf862897-10f3-4d53-8e9d-56332b2cc2cc  2025-10-19 11:37
+> "For Test 2 (Show me the field structure for event RT0005), got output with isStandardEvent: false and category: Custom event (Database-related) - should be Performance and true"
+
+---
+### Entry ID: ba0078a2-12ed-4066-bcee-93d2f2d10c21  2025-10-19 11:40
+> "I don't want you to implement option B. I don't care too much about the fact it knows or not if it's a standard event or not. Also the category should be guessed from the message ... does it do that?"
+
+---
+### Entry ID: 8d7018ad-29b0-4ef7-836b-fe87ab96e545  2025-10-19 11:43
+> "thing is - it says "custom event" - it's not - even more, there is no way to analyse whether it's custom or not other than parsing the HTML. Doing that, it's actually simple. On this page, you find all events: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-available-telemetry couldn't you get it from there and DO implement whether it's a Microsoft event or not?"
+
+---
+### Entry ID: 5ce64f37-ab70-43bc-9aac-e020ae16119e  2025-10-19 11:47
+> "After implementing HTML parsing, still getting cached result with isStandardEvent: false and categorySource: cache for RT0005"
+
+---
+### Entry ID: a4233acb-1fc4-4451-a3fa-8ede4ca2b754  2025-10-19 12:12
+> "Fixed RT0005 showing as custom event - implemented HTML parsing from Microsoft Learn"
+
+---
+### Entry ID: a9a28960-804f-4bee-a5cd-6ab85d3d9ac6  2025-10-19 12:26
+> "User asked about Test 3 cache behavior: 'Does this also use cache?' after running common fields analysis"
+
+---
+### Entry ID: 6c0f75ab-be38-4d2b-a75b-49dc2f71c153  2025-10-19 12:26
+> "User reported Test 4 results: 'For test 4 - strange thing is, it says it ran get_categories with an empty input and empty output.. though.. the answer is: [lists 11 event categories correctly]'"
+
+---
+### Entry ID: 289fdb0a-5115-4e56-b342-840e04cc793a  2025-10-19 12:26
+> "User requested: 'Let's update test 4' - to clarify get_categories vs event catalog distinction"
+
+---

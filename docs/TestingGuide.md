@@ -101,21 +101,25 @@ In Copilot Chat, type:
 
 ---
 
-### Test 4: Category Detection (Dynamic)
+### Test 4: Event Category Discovery (Dynamic)
 
 ```
-@workspace What categories of events do I have?
+@workspace Show me all events grouped by category
 ```
 
-**Expected**:
-- ✅ Shows standard categories: Error, Performance, Lifecycle, Integration, etc.
+**Expected behavior**:
+- ✅ Copilot calls `get_event_catalog` (may fall back to using earlier catalog data)
+- ✅ Shows standard categories from telemetry events: Error, Performance, Lifecycle, Integration, etc.
 - ✅ If you have custom events, they're categorized based on message content
 - ✅ No hardcoded mapping errors
 
+**Note**: If Copilot calls `get_categories` and returns empty, that's expected - `get_categories` lists saved query folders (e.g., queries/Performance/), not telemetry event categories. Copilot should analyze the event catalog to extract categories.
+
 **Verification checklist**:
-- [ ] Standard BC events show correct categories
+- [ ] Standard BC events show correct categories (RT0005=Performance, RT0010=Error, etc.)
 - [ ] Custom events are categorized (not all "Unknown")
 - [ ] Category sources are identified (microsoft-learn, custom-analysis, cache)
+- [ ] Events are logically grouped (Performance events together, Error events together, etc.)
 
 ---
 

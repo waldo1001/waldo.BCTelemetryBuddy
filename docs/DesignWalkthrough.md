@@ -642,3 +642,27 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-18** — Comprehensive testing guide for all Phase 1-3 changes [Entry: c9d8e7f6-a5b4-3c2d-1e0f-9a8b7c6d5e4f]
   - **Why:** User requested best way to test all changes made during the day
   - **How:** Created end-to-end testing plan covering NL removal, field discovery, JSON parsing fix, and documentation
+- **2025-10-19**  Made nl parameter mandatory for query_telemetry to enforce discovery flow [Entry: 39db6aee-6a23-4a05-a6e2-fa930309d771]
+  - **Why:** Copilot was bypassing get_event_catalog() and going straight to query execution, breaking the intended discovery-first flow
+  - **How:** Added required 'nl' parameter to query_telemetry tool definition and validation in executeToolCall handler
+- **2025-10-19**  Reverted nl parameter, strengthened query_telemetry description with directive language [Entry: 0e87506c-45ac-4abb-8c6a-3695ecb79be8]
+  - **Why:** Adding nl parameter back was wrong - user had just removed it. Need to enforce discovery flow through stronger instructions instead
+  - **How:** Changed description to use 'CRITICAL PREREQUISITE' and 'MUST call get_event_catalog() FIRST' and 'DO NOT use without discovery flow' - more commanding language
+- **2025-10-19**  Implemented proper HTML parsing to detect Microsoft standard events from learn.microsoft.com [Entry: 8d7018ad-29b0-4ef7-836b-fe87ab96e545]
+  - **Why:** RT0005 and other standard events were incorrectly classified as custom events because the HTML parsing was not implemented
+  - **How:** Fetch telemetry-available-telemetry page and parse table rows with regex pattern to extract event ID, category, and description
+- **2025-10-19**  Cleared event lookup cache after implementing HTML parsing [Entry: 5ce64f37-ab70-43bc-9aac-e020ae16119e]
+  - **Why:** Old cached results (with isStandardEvent: false) were being returned instead of fetching from Microsoft Learn with new parsing logic
+  - **How:** Deleted *.json files from packages/mcp/.cache/events/ directory to force re-lookup with new implementation
+- **2025-10-19**  Fixed Microsoft Learn HTML parsing for event categorization [Entry: a4233acb-1fc4-4451-a3fa-8ede4ca2b754]
+  - **Why:** RT0005 was incorrectly showing as custom event because regex was looking for markdown table syntax instead of HTML <td> tags
+  - **How:** Changed regex pattern from pipe-delimited markdown to HTML table cell parsing, now correctly identifies RT0005 as standard Performance event
+- **2025-10-19**  Explained two-tier caching system for Test 3 verification [Entry: a9a28960-804f-4bee-a5cd-6ab85d3d9ac6]
+  - **Why:** User asked if common fields analysis uses cache after seeing natural language output from Copilot
+  - **How:** Documented that getEventCatalog calls executeQuery which checks KQL-based cache (2h TTL) separate from event category file cache (24h TTL)
+- **2025-10-19**  Identified get_categories tool confusion in Test 4 [Entry: 6c0f75ab-be38-4d2b-a75b-49dc2f71c153]
+  - **Why:** User reported Test 4 showed empty get_categories result but Copilot still correctly categorized events - tool name was misleading
+  - **How:** Discovered get_categories lists saved query folders (queries/Performance/), not telemetry event categories - Copilot correctly fell back to event catalog analysis
+- **2025-10-19**  Updated TestingGuide.md Test 4 to clarify event category discovery [Entry: 289fdb0a-5115-4e56-b342-840e04cc793a]
+  - **Why:** Test 4 prompt 'What categories of events do I have?' was ambiguous - could mean saved query folders OR telemetry event categories
+  - **How:** Changed prompt to 'Show me all events grouped by category', added note explaining get_categories (query folders) vs get_event_catalog (telemetry events), added fourth verification item for logical grouping

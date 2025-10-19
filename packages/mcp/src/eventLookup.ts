@@ -132,66 +132,41 @@ async function fetchMicrosoftLearnPage(url: string): Promise<string> {
  * Search Microsoft Learn documentation for an event ID
  * 
  * Strategy:
- * 1. Check telemetry overview page for event ID
- * 2. If found, extract category and documentation link
- * 3. Optionally fetch detail page for more context
+ * 1. Fetch the "Telemetry by Event ID" page which lists all standard events
+ * 2. Parse the HTML to extract event ID, category, and description from tables
+ * 3. Return event info if found, null if not (indicating custom event)
  */
 async function lookupOnMicrosoftLearn(eventId: string): Promise<EventCategoryInfo | null> {
     try {
-        // Telemetry overview page
-        const overviewUrl = 'https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview';
-        const overviewHtml = await fetchMicrosoftLearnPage(overviewUrl);
+        // Telemetry by Event ID page - the definitive list of all standard events
+        const telemetryUrl = 'https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-available-telemetry';
+        const html = await fetchMicrosoftLearnPage(telemetryUrl);
 
-        // Search for event ID in the page
-        const eventIdPattern = new RegExp(`eventId.*?${eventId}`, 'i');
+        // Search for event ID in HTML table rows
+        // Format in HTML: <td>RT0005</td><td>Performance</td><td><a>Operation exceeded...</a></td>
+        const eventPattern = new RegExp(`<td>${eventId}</td>\\s*<td>([^<]+)</td>\\s*<td[^>]*>(?:<a[^>]*>)?([^<]+)`, 'i');
+        const match = html.match(eventPattern);
 
-        if (!eventIdPattern.test(overviewHtml)) {
-            // Event ID not found in overview - likely custom event
-            return null;
-        }
+        if (match) {
+            const category = match[1].trim();
+            const description = match[2].trim();
 
-        // Extract category context (look for table rows containing this event ID)
-        // This is a simplified extraction - in production, would use proper HTML parsing
-        const categoryMatch = extractCategoryFromHtml(overviewHtml, eventId);
-
-        if (categoryMatch) {
             return {
                 eventId,
-                category: categoryMatch.category,
-                subcategory: categoryMatch.subcategory,
-                documentationUrl: categoryMatch.url,
-                description: categoryMatch.description,
+                category,
+                documentationUrl: telemetryUrl,
+                description,
                 isStandardEvent: true,
                 source: 'microsoft-learn'
             };
         }
 
+        // Event ID not found in Microsoft Learn - likely custom event
         return null;
     } catch (error) {
         console.warn(`Failed to lookup ${eventId} on Microsoft Learn:`, error);
         return null;
     }
-}
-
-/**
- * Extract category information from HTML
- * (Simplified implementation - would use cheerio or similar in production)
- */
-function extractCategoryFromHtml(html: string, eventId: string): {
-    category: string;
-    subcategory?: string;
-    url: string;
-    description: string;
-} | null {
-    // This is a placeholder for actual HTML parsing logic
-    // In a real implementation, we would:
-    // 1. Parse HTML with cheerio or similar
-    // 2. Find the table row containing the event ID
-    // 3. Extract the category name and "Learn more" link
-    // 4. Optionally fetch the detail page for subcategory/description
-
-    // For now, return null to trigger custom event analysis
-    return null;
 }
 
 /**
@@ -300,6 +275,7 @@ export async function lookupEventCategory(
         saveToCache(eventId, msLearnResult);
         return msLearnResult;
     }
+
 
     // Step 3: Analyze as custom event using both message and customDimensions
     const customResult = analyzeCustomEvent(eventId, customDimensions, message);
