@@ -69,6 +69,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Build MCP (required by extension)
+        run: npm run build --workspace=packages/mcp
+      
       - name: Build Extension
         run: npm run build --workspace=packages/extension
       
@@ -113,7 +116,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Check TypeScript compilation
+      - name: Check TypeScript compilation (MCP must build first)
         run: |
           npm run build --workspace=packages/mcp
           npm run build --workspace=packages/extension
