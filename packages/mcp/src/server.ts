@@ -571,11 +571,26 @@ traces
 | extend shortMessage = iif(substring(message, 0, 4) == "Task", "Task Executed",
                     iif(eventId == "AL0000JRG", "Job Queue Error",
                         iff(indexof(message, ":") <= 0, message, substring(message, 0, indexof(message, ":")))))
-| extend eventStatus = 
-    iif(shortMessage has_any ("called","executed","succeeded","rendered","successfully","success","opened", "added", "started", "finished"),"success",
-        iif(shortMessage has_any ("error","fail","failed","deadlock","timed out"), "error",
-            iif(shortMessage has_any ("exceeded"),"too slow",
-                "unknown")))
+| extend eventStatus = case(
+    // ERROR - clear failures that need attention
+    shortMessage has_any ("error","fail","failed","deadlock","timed out", "timeout", "cannot", "unable", "invalid", "could not", "missing") or
+    eventId has_any ("AL0000JRG", "RT0012", "RT0028", "RT0030", "RT0031"), 
+    "error",
+    // TOO SLOW - performance issues requiring optimization
+    shortMessage has_any ("exceeded", "too slow") or 
+    eventId in ("RT0005", "RT0018"), 
+    "too slow",
+    // WARNING - potential issues, not critical but noteworthy
+    shortMessage has_any ("warning", "orphans found", "unequal", "license update", "rescheduled", "cancelled", "canceled") or
+    eventId in ("RT0007", "RT0011", "RT0038", "LC0227"), 
+    "warning",
+    // SUCCESS - operations completed successfully
+    shortMessage has_any ("called","executed","succeeded","rendered","successfully","success","completed","finished","posted","sent","created","generated","applied","authenticated","connected","committed","registered") or
+    eventId has_any ("LC0010", "LC0011", "LC0020", "LC0021"), 
+    "success",
+    // INFO - informational/operational events (everything else)
+    "info"
+)
 | summarize count = count() by tostring(eventId), tostring(shortMessage), eventStatus
 | extend LearnUrl = strcat("https://learn.microsoft.com/en-us/search/?scope=BusinessCentral&terms=",eventId, "+", replace_string(shortMessage," ","+"))
 | project eventId, shortMessage, status=eventStatus, count, LearnUrl
