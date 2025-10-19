@@ -666,3 +666,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-19**  Updated TestingGuide.md Test 4 to clarify event category discovery [Entry: 289fdb0a-5115-4e56-b342-840e04cc793a]
   - **Why:** Test 4 prompt 'What categories of events do I have?' was ambiguous - could mean saved query folders OR telemetry event categories
   - **How:** Changed prompt to 'Show me all events grouped by category', added note explaining get_categories (query folders) vs get_event_catalog (telemetry events), added fourth verification item for logical grouping
+- **2025-10-19** — Updated TestingGuide for GitHub Copilot STDIO mode [Entry: b5c6d7e8-f9a0-1b2c-3d4e-5f6a7b8c9d0e]
+  - **Why:** User noted Output panel doesn't show tool calls with GitHub Copilot (STDIO mode vs HTTP mode)
+  - **How:** Clarified Test 5 and Feature 4 sections to explain STDIO mode behavior and indirect verification methods

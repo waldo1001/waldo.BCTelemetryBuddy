@@ -1257,3 +1257,9 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "User requested: 'Let's update test 4' - to clarify get_categories vs event catalog distinction"
 
 ---
+### Entry ID: c90c1d6b-f375-4123-adee-0eb058d02110 — 2025-10-19 23:05
+> "For Test 5 - all seems to work fine, but I don't see anything in the output panel when tools are getting called. Remember, I'm using github copilot"
+
+---
+### Entry ID: 41b81574-1e89-41e6-b90a-bbc3d4922664 — 2025-10-19 23:56
+> "Did you log all prompts?"

@@ -129,17 +129,30 @@ In Copilot Chat, type:
 @workspace Query RT0005 events where executionTimeInMs > 1000 in the last 24 hours
 ```
 
-**Verification**:
-1. Open **Output** panel (View → Output)
-2. Select **"BC Telemetry Buddy"** from dropdown
-3. Look for tool calls - should show `query_telemetry` with ONLY `kql` parameter
-4. Should NOT see `nl` parameter anywhere
+**Verification** (GitHub Copilot):
+
+**Note**: When using GitHub Copilot, MCP tools run in STDIO mode and communicate directly with Copilot. You won't see tool calls in the Output panel. Instead, verify the breaking change this way:
+
+1. **In Copilot Chat**, look for the tool usage indicators:
+   - Copilot will show "Used bctb_query_telemetry" or similar indicators
+   - The response should include query results without mentioning "natural language translation"
+
+2. **Verify the workflow**: Copilot should:
+   - First call `get_event_catalog` or `get_event_field_samples` to discover RT0005 structure
+   - Then call `query_telemetry` with generated KQL
+   - Show you the query results
+
+3. **Check query accuracy**: The generated KQL should use correct field names:
+   - `tostring(customDimensions.eventId) == "RT0005"` ✅
+   - `toreal(customDimensions.executionTimeInMs) > 1000` ✅
+   - Field names match the discovered structure
 
 **Verification checklist**:
-- [ ] Tool call shows `{"kql": "traces | where ..."}`
-- [ ] No `nl` parameter in tool call
+- [ ] Copilot discovers event structure before querying (shows it's using discovery tools)
+- [ ] Generated KQL uses correct field names from discovery
 - [ ] Query executes successfully
 - [ ] Results are displayed
+- [ ] No errors about "natural language translation failed"
 
 ---
 
@@ -254,17 +267,32 @@ Expected:
 
 ### Feature 4: NL Parameter Removal (Breaking Change)
 
-**Check MCP Output panel** after any Copilot query:
+**How to verify with GitHub Copilot**:
 
-1. Open **Output** panel (View → Output)
-2. Select **"BC Telemetry Buddy"** from dropdown
-3. Look for tool calls
+Since GitHub Copilot uses STDIO mode (direct communication with MCP), you won't see tool calls in the Output panel. Instead, verify the breaking change indirectly:
+
+1. **Ask questions in natural language** - Copilot should still work:
+   ```
+   @workspace Show me slow operations from yesterday
+   @workspace What errors happened in the last hour?
+   @workspace Find database locks that lasted more than 5 seconds
+   ```
+
+2. **Verify Copilot uses discovery-first workflow**:
+   - Look for Copilot mentioning "discovering events" or "analyzing field structure"
+   - Copilot should show event catalog results before querying
+   - Generated KQL should use correct field names (not guessed)
+
+3. **Check for error messages that would indicate NL translation**:
+   - ❌ Should NOT see: "translating natural language to KQL"
+   - ❌ Should NOT see: "pattern matching failed"
+   - ✅ Should see: Copilot using discovery tools, then executing KQL
 
 **Verification checklist**:
-- [ ] No `"nl"` parameter in any tool calls
-- [ ] All queries use `"kql"` parameter
-- [ ] Copilot still generates accurate KQL from natural language questions
-- [ ] Discovery tools are used before query execution
+- [ ] Natural language questions still work (Copilot converts them internally)
+- [ ] Copilot uses `get_event_catalog` or `get_event_field_samples` before querying
+- [ ] Generated KQL is accurate (correct field names from discovery)
+- [ ] No error messages about NL translation or pattern matching
 
 ---
 
