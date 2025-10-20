@@ -1363,3 +1363,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Fix integration test build failure on Ubuntu CI - added compile-tests script to compile TypeScript test files before running integration tests"
 
 ---
+### Entry ID: 5d8f5780-dd00-43c0-8b17-df203adacc8f — 2025-10-20 10:03
+> "Release v0.2.11 - patch release with chat participant enhancements, chatmode installation, test fixes, and CI improvements"
+
+---

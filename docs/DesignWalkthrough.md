@@ -721,3 +721,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Fixed integration test compilation in CI pipeline [Entry: 998cb47c-1bc2-442b-89e5-1463f6396637]
   - **Why:** CI failing on Ubuntu with 'Cannot find module ./dist/test/runTest.js' - test:integration script only built main extension, not test runner files
   - **How:** Added 'compile-tests' npm script (tsc -p ./ --outDir dist) and updated test:integration to run 'npm run build && npm run compile-tests && node ./dist/test/runTest.js'
+- **2025-10-20** — Released v0.2.11 (patch) [Entry: 5d8f5780-dd00-43c0-8b17-df203adacc8f]
+  - **Why:** Deliver chat participant enhancements, chatmode feature, test fixes, and CI improvements to users
+  - **How:** Updated extension CHANGELOG with release notes, ran release script with patch bump (0.2.10→0.2.11), created git tag v0.2.11, pushed to GitHub triggering CI/CD pipeline for VS Code Marketplace deployment
