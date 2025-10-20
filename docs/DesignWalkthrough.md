@@ -714,3 +714,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Integrated chatmode installation into setup wizard [Entry: j0l7m2n1-8k3n-3j0l-7m1n-0n2j4k6l8m9n]
   - **Why:** Seamless onboarding - users should get chatmode during initial setup
   - **How:** Added checkbox (checked by default) in Step 5, _installChatmode() method in SetupWizardProvider, showChatmodeStatus() for feedback
+
+- **2025-10-20** — Fixed chatParticipant.test.ts after tool naming refactor [Entry: 19feccd5-f7e5-47f3-965a-25f6db26faec]
+  - **Why:** Tests failing with 'No BC Telemetry tools available' - mock not providing MCP tools, expectations using old bctb_* names
+  - **How:** Updated vscode.lm.tools mock with 11 mcp_bc_telemetry__* tools, changed all tool name assertions from bctb_* to mcp_bc_telemetry__*, updated system prompt checks for 'Understanding User Intent'

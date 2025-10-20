@@ -1354,3 +1354,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Integrate chatmode installation into setup wizard - add checkbox (checked by default) in Step 5 with automatic installation on save"
 
 ---
+
+### Entry ID: 19feccd5-f7e5-47f3-965a-25f6db26faec — 2025-10-20 08:56
+> "Fix failing chatParticipant.test.ts tests - updated mock to include mcp_bc_telemetry__* tools, changed tool name expectations from bctb_* to mcp_bc_telemetry__*, updated system prompt checks to match new intent detection structure"
+
+---

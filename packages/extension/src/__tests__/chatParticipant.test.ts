@@ -6,7 +6,20 @@ jest.mock('vscode', () => ({
     lm: {
         selectChatModels: jest.fn(),
         invokeTool: jest.fn(),
-        tools: [] // Array of registered tools
+        tools: [
+            { name: 'mcp_bc_telemetry__query_telemetry', description: 'Execute KQL queries', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_event_catalog', description: 'List BC telemetry events', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_event_schema', description: 'Get event schema', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_tenant_mapping', description: 'Map company names to tenant IDs', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_saved_queries', description: 'List saved queries', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__search_queries', description: 'Search saved queries', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__save_query', description: 'Save a query', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_event_field_samples', description: 'Analyze event fields', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_recommendations', description: 'Get recommendations', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_categories', description: 'Get event categories', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_external_queries', description: 'Fetch external query examples', tags: ['mcp'] },
+            { name: 'some_other_tool', description: 'Not a BC Telemetry tool', tags: [] }
+        ] // Array of registered tools - includes MCP tools with mcp_bc_telemetry__ prefix
     },
     LanguageModelChatMessage: {
         User: jest.fn((content: string) => ({ role: 'user', content })),
@@ -312,13 +325,13 @@ describe('Chat Participant', () => {
 
             const systemPrompt = (mockModel.sendRequest as jest.Mock).mock.calls[0][0][0].content;
 
-            // Updated to match the new system prompt structure
-            expect(systemPrompt).toContain('Workflow for Analysis');
+            // Updated to match the new system prompt structure with intent detection
+            expect(systemPrompt).toContain('Understanding User Intent');
             expect(systemPrompt).toContain('Identify the Customer');
             expect(systemPrompt).toContain('Understand the Events');
             expect(systemPrompt).toContain('Query and Analyze');
-            expect(systemPrompt).toContain('bctb_get_event_catalog');
-            expect(systemPrompt).toContain('bctb_get_event_schema');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_catalog');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_schema');
         });
 
         it('should mention key MCP tools', async () => {
@@ -346,12 +359,12 @@ describe('Chat Participant', () => {
 
             const systemPrompt = (mockModel.sendRequest as jest.Mock).mock.calls[0][0][0].content;
 
-            expect(systemPrompt).toContain('bctb_get_event_catalog');
-            expect(systemPrompt).toContain('bctb_get_event_schema');
-            expect(systemPrompt).toContain('bctb_get_tenant_mapping');
-            expect(systemPrompt).toContain('bctb_query_telemetry');
-            expect(systemPrompt).toContain('bctb_save_query');
-            expect(systemPrompt).toContain('bctb_search_queries');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_catalog');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_schema');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__get_tenant_mapping');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__query_telemetry');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__save_query');
+            expect(systemPrompt).toContain('mcp_bc_telemetry__search_queries');
         });
     });
 });
