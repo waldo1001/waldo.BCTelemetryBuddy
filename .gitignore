@@ -9,6 +9,7 @@ yarn-error.log*
 dist/
 out/
 *.vsix
+*.tsbuildinfo
 
 # Copied MCP bundle (created during extension packaging, not committed)
 packages/extension/mcp/
@@ -16,6 +17,9 @@ packages/extension/mcp/
 # Test coverage
 coverage/
 .nyc_output/
+
+# VSCode test artifacts
+.vscode-test/
 
 # IDE
 .vscode/bctb/cache/

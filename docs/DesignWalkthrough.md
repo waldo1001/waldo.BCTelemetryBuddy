@@ -718,3 +718,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Fixed chatParticipant.test.ts after tool naming refactor [Entry: 19feccd5-f7e5-47f3-965a-25f6db26faec]
   - **Why:** Tests failing with 'No BC Telemetry tools available' - mock not providing MCP tools, expectations using old bctb_* names
   - **How:** Updated vscode.lm.tools mock with 11 mcp_bc_telemetry__* tools, changed all tool name assertions from bctb_* to mcp_bc_telemetry__*, updated system prompt checks for 'Understanding User Intent'
+- **2025-10-20** — Fixed integration test compilation in CI pipeline [Entry: 998cb47c-1bc2-442b-89e5-1463f6396637]
+  - **Why:** CI failing on Ubuntu with 'Cannot find module ./dist/test/runTest.js' - test:integration script only built main extension, not test runner files
+  - **How:** Added 'compile-tests' npm script (tsc -p ./ --outDir dist) and updated test:integration to run 'npm run build && npm run compile-tests && node ./dist/test/runTest.js'

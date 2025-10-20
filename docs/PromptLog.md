@@ -1359,3 +1359,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Fix failing chatParticipant.test.ts tests - updated mock to include mcp_bc_telemetry__* tools, changed tool name expectations from bctb_* to mcp_bc_telemetry__*, updated system prompt checks to match new intent detection structure"
 
 ---
+### Entry ID: 998cb47c-1bc2-442b-89e5-1463f6396637 — 2025-10-20 09:02
+> "Fix integration test build failure on Ubuntu CI - added compile-tests script to compile TypeScript test files before running integration tests"
+
+---
