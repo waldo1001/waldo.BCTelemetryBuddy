@@ -28,9 +28,10 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 - **� Query Library**: Save queries organized by category; customer-specific queries automatically organized in `Companies/[CompanyName]/` folders
 - **👁️ CodeLens Support**: "▶ Run Query" links appear in .kql files for one-click execution
 - **🧠 Context-Aware**: Uses saved queries and external references for better KQL generation
-- **�️ Tenant Mapping**: Map friendly company names to Azure tenant IDs for customer queries
+- **🗺️ Tenant Mapping**: Map friendly company names to Azure tenant IDs for customer queries
 - **🔒 Privacy-Focused**: Optional PII sanitization, workspace-scoped settings
-- **🤖 Copilot Integration**: MCP tools available to GitHub Copilot for natural language telemetry analysis
+- **🤖 Chat Participant**: `@bc-telemetry-buddy` in GitHub Copilot Chat for expert BC telemetry analysis with MCP tool integration
+- **💬 Chatmode**: `#BCTelemetryBuddy` activates expert mode in Copilot Chat with specialized BC telemetry knowledge, KQL patterns, and systematic workflow guidance
 
 ## Quick Start
 
@@ -50,10 +51,41 @@ The 5-step wizard guides you through:
 - **Step 4 - Connection Testing**: Validates settings and tests your connection with a sample query
 - **Step 5 - Complete**: Saves settings and provides quick-start tips
 
+**Optional**: The wizard can also install the chatmode file (`.github/chatmodes/BCTelemetryBuddy.chatmode.md`) for enhanced Copilot Chat integration.
+
 **No manual configuration needed!** The wizard validates everything and saves to `.vscode/settings.json` automatically.
 
 ### 3. Start Querying
-**With Copilot** (recommended - follows systematic discovery workflow):
+
+**With Chat Participant**:
+Use `@bc-telemetry-buddy` in GitHub Copilot Chat for expert BC telemetry analysis:
+```
+@bc-telemetry-buddy show me all errors from the last 24 hours
+@bc-telemetry-buddy analyze performance for customer Contoso
+@bc-telemetry-buddy /patterns  # Get KQL pattern examples (no query execution)
+```
+
+Available slash commands:
+- `/patterns` - Common KQL patterns and best practices
+- `/events` - BC event types and categories
+- `/errors` - Error analysis techniques
+- `/performance` - Performance analysis guidance
+- `/customer` - Customer-specific analysis workflow
+- `/explain` - Explain concepts or provide examples
+
+**With Chatmode** (optional enhanced mode):
+Activate `#BCTelemetryBuddy` in Copilot Chat for expert mode with comprehensive BC telemetry knowledge:
+```
+#BCTelemetryBuddy show me all errors from last 24 hours
+#BCTelemetryBuddy analyze performance issues for Contoso
+```
+
+To install chatmode:
+- **Option 1**: Check the box in Setup Wizard Step 5 (automatic)
+- **Option 2**: Run command `BC Telemetry Buddy: Install Chatmode` (manual)
+- After installation, reload VS Code to activate
+
+**With @workspace** (follows systematic discovery workflow):
 ```
 @workspace Show me all errors from BC in the last 24 hours
 @workspace What are the slowest operations this week?

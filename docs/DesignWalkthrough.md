@@ -669,3 +669,48 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-19** — Updated TestingGuide for GitHub Copilot STDIO mode [Entry: b5c6d7e8-f9a0-1b2c-3d4e-5f6a7b8c9d0e]
   - **Why:** User noted Output panel doesn't show tool calls with GitHub Copilot (STDIO mode vs HTTP mode)
   - **How:** Clarified Test 5 and Feature 4 sections to explain STDIO mode behavior and indirect verification methods
+- **2025-10-20** — Enhanced chat participant with comprehensive chatmode system instructions [Entry: 50437c02-135f-4452-8990-757026b68e46]
+  - **Why:** Translate chatmode system instructions (KQL mastery, essential patterns, workflows, file organization, response style) into the chat participant to provide expert-level guidance
+  - **How:** Updated SYSTEM_PROMPT in chatParticipant.ts with full chatmode content (core expertise, KQL patterns, workflow steps, 10 MCP tools descriptions, response style guidelines, critical reminders, error handling). Enhanced package.json with enriched description and additional slash commands (/patterns, /customer, /performance, /errors). Updated tests to match new prompt structure. All 111 tests passing.
+- **2025-10-20** — Fixed chat participant tool filtering and error handling [Entry: 7c1b7fbe-635f-487b-a642-c2340c74cdd3]
+  - **Why:** Chat participant was getting routing errors ('No lowest priority node found') due to passing all 264 VS Code tools instead of only 10 BCTB tools. Tool errors weren't handled correctly causing Copilot API errors.
+  - **How:** Added proper filter (vscode.lm.tools.filter(tool => tool.name.startsWith('bctb_'))) with debug logging. Fixed tool error handling to provide proper error context to LLM. Tools now execute correctly - verified bctb_get_event_catalog is called. Remaining issue: MCP server connection (ECONNREFUSED) - needs manual start or workspace settings verification.
+- **2025-10-20** — Enhanced chat participant with comprehensive BC Telemetry expert system [Entry: 70b218db-e60e-4062-b537-6b9540c557d5]
+  - **Why:** Transform @bc-telemetry-buddy into expert assistant with KQL mastery, BC patterns knowledge, and structured workflow guidance
+  - **How:** Added 4KB SYSTEM_PROMPT with intent detection, tool descriptions (mcp_bc_telemetry__*), 3-step workflow, KQL patterns, slash commands, response guidelines, file organization
+
+- **2025-10-20** — Fixed chat participant routing error "No lowest priority node found" [Entry: a1c8f3d2-9b4e-4a1c-8d2f-1e3a5b7c9d0e]
+  - **Why:** GitHub Copilot router overwhelmed with 264 tools, causing routing failures
+  - **How:** Added tool filtering in chatParticipant.ts: filter to only mcp_bc_telemetry__* tools (13 found), reduced from 264 to 13
+
+- **2025-10-20** — Fixed OpenAI API tool result format error [Entry: b2d9e4f3-0c5f-5b2d-9e3f-2f4b6c8d0e1f]
+  - **Why:** API requires LanguageModelToolResultPart objects with matching callId, not plain strings
+  - **How:** Changed from string array to LanguageModelToolResultPart array: new vscode.LanguageModelToolResultPart(toolCall.callId, content)
+
+- **2025-10-20** — Resolved MCP architecture conflict - disabled HTTP manual tools [Entry: c3e0f5g4-1d6g-6c3e-0f4g-3g5c7d9e1f2g]
+  - **Why:** Manual HTTP-based tool registrations (bctb_*) conflicting with stdio MCP server, causing ECONNREFUSED errors
+  - **How:** Commented out registerLanguageModelTools() in extension.ts, removed languageModelTools from package.json, rely exclusively on stdio MCP
+
+- **2025-10-20** — Discovered MCP tool naming pattern [Entry: e5g2h7i6-3f8i-8e5g-2h6i-5i7e9f1g3h4i]
+  - **Why:** VS Code MCP integration uses pattern mcp_<server-id>__<tool_name> with double underscores, not unprefixed names
+  - **How:** Updated tool filter from unprefixed names to tool.name.startsWith('mcp_bc_telemetry__'), discovered via debug logging
+
+- **2025-10-20** — Implemented intent detection to prevent unwanted tool execution [Entry: f6h3i8j7-4g9j-9f6h-3i7j-6j8f0g2h4i5j]
+  - **Why:** User requesting /patterns (info) was triggering query_telemetry execution instead of providing knowledge
+  - **How:** Added "Understanding User Intent" section to system prompt: distinguish info requests (slash commands, "what is") from data requests ("show me", analyze)
+
+- **2025-10-20** — Attempted languageModelPrompts API for chatmode [Entry: g7i4j9k8-5h0k-0g7i-4j8k-7k9g1h3i5j6k]
+  - **Why:** User couldn't find chatmode in VS Code UI, needed workspace-specific prompt
+  - **How:** Added languageModelPrompts contribution to package.json - discovered API not visible/working in Extension Development Host
+
+- **2025-10-20** — Implemented file-based chatmode installation command [Entry: h8j5k0l9-6i1l-1h8j-5k9l-8l0h2i4j6k7l]
+  - **Why:** languageModelPrompts API unreliable, user wanted "real chatmode" in .github/chatmodes/ folder
+  - **How:** Created "BC Telemetry Buddy: Install Chatmode" command to generate .github/chatmodes/BCTelemetryBuddy.chatmode.md with YAML frontmatter + markdown instructions
+
+- **2025-10-20** — Made chatmode installation safe (non-destructive) [Entry: i9k6l1m0-7j2m-2i9k-6l0m-9m1i3j5k7l8m]
+  - **Why:** User requirement: don't overwrite existing files if already customized
+  - **How:** Added fs.existsSync check in installChatmodeCommand, shows info message with "Open File" option if exists
+
+- **2025-10-20** — Integrated chatmode installation into setup wizard [Entry: j0l7m2n1-8k3n-3j0l-7m1n-0n2j4k6l8m9n]
+  - **Why:** Seamless onboarding - users should get chatmode during initial setup
+  - **How:** Added checkbox (checked by default) in Step 5, _installChatmode() method in SetupWizardProvider, showChatmodeStatus() for feedback

@@ -1263,3 +1263,94 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ---
 ### Entry ID: 41b81574-1e89-41e6-b90a-bbc3d4922664 — 2025-10-19 23:56
 > "Did you log all prompts?"
+
+### Entry ID: e62e53dd-6a19-47a2-98d8-a56f5618905a — 2025-10-20 00:04
+> "I would like to add a chatmode from my extension. Just a predefined chatmode which gets added from the moment my extension gets installed - is that possible?"
+
+---
+### Entry ID: 7f50896e-7b78-49a2-963c-fa3276c0a52f — 2025-10-20 00:04
+> "Yes please - call it BC-Telemetry-Buddy"
+
+---
+### Entry ID: 28b198d2-364e-42f4-a0d7-14f706599ce6 — 2025-10-20 00:06
+> "while I test this - investigate why the build is failing: [GitHub Actions link] - the step 'build extension' fails because copy-mcp script can't find MCP dist files"
+
+---
+### Entry ID: 2875273e-7979-416f-91c5-9bf7ab2e6bad — 2025-10-20 00:09
+> "How can I test the new chatparticipant? when I just do F5, it's not under 'chatmodes'"
+
+---
+### Entry ID: 5bf1bf69-d1d2-4f93-9b78-871806fb3678 — 2025-10-20 00:13
+> "What is the advantage of a chatparticipant?"
+
+---
+### Entry ID: 215fe9b0-18cd-4568-bac7-7ab1be6fc26e — 2025-10-20 00:13
+> "What is the advantage of a chatparticipant?"
+
+---
+### Entry ID: 6f03e154-d635-47ec-a650-7663346aa735 — 2025-10-20 00:18
+> "It doesn't seem to be executing anything - Full conversation provided showing participant describes workflow but doesn't actually call tools"
+
+---
+### Entry ID: 50437c02-135f-4452-8990-757026b68e46 — 2025-10-20 00:29
+> "User provided comprehensive chatmode system instructions and asked to translate them into the chat participant implementation"
+
+---
+### Entry ID: 7c1b7fbe-635f-487b-a642-c2340c74cdd3 — 2025-10-20 00:41
+> "Troubleshoot chat participant 'No lowest priority node found' error - tools not executing, MCP server connection issues"
+
+---
+### Entry ID: 70b218db-e60e-4062-b537-6b9540c557d5 — 2025-10-20 01:00
+> "Translate comprehensive chatmode system instructions to chat participant - enhance @bc-telemetry-buddy with KQL mastery, BC telemetry patterns, 3-step workflow, tool descriptions, response style guidelines, file organization, and critical reminders"
+
+---
+
+### Entry ID: a1c8f3d2-9b4e-4a1c-8d2f-1e3a5b7c9d0e — 2025-10-20 01:15
+> "Debug chat participant routing error: 'No lowest priority node found (path: PU)' - discovered 264 tools being passed instead of filtered BC Telemetry tools"
+
+---
+
+### Entry ID: b2d9e4f3-0c5f-5b2d-9e3f-2f4b6c8d0e1f — 2025-10-20 01:20
+> "Fix tool result format error - OpenAI API rejecting responses. Changed from string array to LanguageModelToolResultPart with matching callId"
+
+---
+
+### Entry ID: c3e0f5g4-1d6g-6c3e-0f4g-3g5c7d9e1f2g — 2025-10-20 01:25
+> "Debug ECONNREFUSED error - discovered architectural mismatch between HTTP-based manual tool registrations (bctb_*) and stdio MCP server"
+
+---
+
+### Entry ID: d4f1g6h5-2e7h-7d4f-1g5h-4h6d8e0f2g3h — 2025-10-20 01:30
+> "Remove manual tool registrations - commented out registerLanguageModelTools() in extension.ts and deleted languageModelTools from package.json to rely on MCP stdio server"
+
+---
+
+### Entry ID: e5g2h7i6-3f8i-8e5g-2h6i-5i7e9f1g3h4i — 2025-10-20 01:35
+> "Discover actual MCP tool naming pattern - tools appear as mcp_bc_telemetry__<tool_name> with double underscores, not unprefixed names"
+
+---
+
+### Entry ID: f6h3i8j7-4g9j-9f6h-3i7j-6j8f0g2h4i5j — 2025-10-20 01:40
+> "Update system prompt to distinguish information vs data requests - /patterns should provide knowledge, not execute queries. Added intent recognition section."
+
+---
+
+### Entry ID: g7i4j9k8-5h0k-0g7i-4j8k-7k9g1h3i5j6k — 2025-10-20 01:45
+> "Add languageModelPrompts contribution to package.json for BC Telemetry Expert chatmode - discovered this doesn't work in current VS Code API"
+
+---
+
+### Entry ID: h8j5k0l9-6i1l-1h8j-5k9l-8l0h2i4j6k7l — 2025-10-20 01:50
+> "Create installChatmode command to generate .github/chatmodes/BCTelemetryBuddy.chatmode.md file with comprehensive system instructions"
+
+---
+
+### Entry ID: i9k6l1m0-7j2m-2i9k-6l0m-9m1i3j5k7l8m — 2025-10-20 01:55
+> "Update installChatmode command to NOT overwrite existing files - shows informational message instead"
+
+---
+
+### Entry ID: j0l7m2n1-8k3n-3j0l-7m1n-0n2j4k6l8m9n — 2025-10-20 01:29
+> "Integrate chatmode installation into setup wizard - add checkbox (checked by default) in Step 5 with automatic installation on save"
+
+---
