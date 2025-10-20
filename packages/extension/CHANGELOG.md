@@ -7,20 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.11] - 2025-10-20
+## [0.2.12] - 2025-10-20
 
 ### Added
-- Chat participant: Enhanced @bc-telemetry-buddy with comprehensive BC Telemetry expert system including KQL patterns, 3-step workflow, intent detection, and slash commands
-- Chatmode: Added chatmode installation feature (`.github/chatmodes/BCTelemetryBuddy.chatmode.md`) via command and setup wizard integration
-- Documentation: Updated README.md and UserGuide.md with chatmode usage instructions and chat participant examples
+
+#### Chat Participant Enhancements
+- **Comprehensive system prompt** (4KB): Expert BC telemetry guidance with embedded KQL patterns, common schema knowledge, and BC-specific telemetry best practices
+- **3-step workflow integration**: Guides users through "Identify Customer → Understand Events → Query/Analyze" methodology for structured telemetry investigation
+- **Intent detection system**: Automatically distinguishes between information requests (provide knowledge/guidance) vs. data requests (execute queries), preventing unwanted tool execution for conceptual questions
+- **6 slash commands**: `/patterns` (KQL templates), `/events` (event catalog), `/errors` (error analysis), `/performance` (performance patterns), `/customer` (customer-specific analysis), `/explain` (query explanations)
+- **Tool awareness**: Participant automatically filters to BC Telemetry Buddy tools (mcp_bc_telemetry__*) from global tool pool, providing targeted MCP integration
+- **Response style guidelines**: Professional tone with KQL code blocks, tabular data formatting, and educational explanations
+
+#### Chatmode Installation
+- **Command**: `BC Telemetry Buddy: Install Chatmode` creates `.github/chatmodes/BCTelemetryBuddy.chatmode.md` with YAML frontmatter
+- **Setup wizard integration**: Added Step 5 checkbox (checked by default) with "Chatmode installed" status feedback
+- **Non-destructive operations**: Installation checks for existing chatmode file and shows informational message instead of overwriting
+- **File structure**: YAML frontmatter with chatmode name, description, BC Telemetry expert system instructions matching chat participant capabilities
+
+#### Documentation
+- **README.md**: Added "GitHub Copilot Integration" section comparing chat participant vs. chatmode, documented 3 usage methods (participant with @, chatmode with #, workspace agent), included slash commands reference table
+- **UserGuide.md**: Comprehensive "GitHub Copilot Integration" section with detailed setup instructions for both interaction modes, chatmode installation steps (wizard vs. manual command), feature comparison table, slash commands guide with examples, customization instructions for modifying chatmode behavior
 
 ### Fixed
-- Tests: Fixed chat participant tests after MCP tool naming refactor (mcp_bc_telemetry__* pattern)
-- CI/CD: Fixed integration test compilation in Ubuntu CI pipeline by adding compile-tests script
+
+#### Test Suite
+- **Chat participant tests**: Updated `chatParticipant.test.ts` for MCP tool naming refactor
+  - Updated mock `vscode.lm.tools` array with 12 tools using `mcp_bc_telemetry__*` pattern (11 BC Telemetry tools + 1 unrelated tool)
+  - Changed 6 tool name expectations: `bctb_get_event_catalog` → `mcp_bc_telemetry__get_event_catalog` (and 5 others)
+  - Updated system prompt checks: `'Workflow for Analysis'` → `'Understanding User Intent'` to match intent detection system
+  - Result: All 111 tests passing across 7 test suites in 4.5 seconds
+
+#### CI/CD Pipeline
+- **Integration test compilation**: Fixed Ubuntu CI "Cannot find module ./dist/test/runTest.js" error
+  - Added `compile-tests` script: `"tsc -p ./ --outDir dist"` to compile test runner files
+  - Updated `test:integration` workflow: `"npm run build && npm run compile-tests && node ./dist/test/runTest.js"`
+  - Previously only built extension bundle (src/extension.ts), now compiles all TypeScript including test infrastructure
+
+#### Architecture
+- **MCP dual-mode conflict resolution**: Disabled manual HTTP-based tool registrations (`registerLanguageModelTools`) that conflicted with stdio MCP server, removed `bctb_*` tool definitions from package.json
+- **Tool result format**: Fixed OpenAI API compliance by changing from string array to `LanguageModelToolResultPart` with matching `callId` property
+- **Tool naming pattern discovery**: Identified actual MCP tool naming pattern (`mcp_bc_telemetry__<tool_name>` with double underscores) vs. expected unprefixed names, updated all references
 
 ### Changed
-- MCP tool registration: Updated tool descriptions to reflect removal of natural language translation and promote discovery-first workflow with `get_event_catalog`, `get_event_field_samples`, and field prevalence analysis
-- Build: Added .vscode-test/ and *.tsbuildinfo to .gitignore
+
+- **MCP tool descriptions**: Updated 11 tool descriptions to promote discovery-first workflow emphasizing `get_event_catalog`, `get_event_field_samples`, and field prevalence analysis over direct query construction
+- **.gitignore**: Added `.vscode-test/` (VSCode test-electron artifacts: cache, extensions, user data) and `*.tsbuildinfo` (TypeScript incremental build cache files)
+- **Git tracking**: Removed `packages/extension/tsconfig.tsbuildinfo` (1MB+ build cache) from version control via `git rm --cached`
+
+## [0.2.11] - 2025-10-20
+
+### Changed
+- CHANGELOG: Updated documentation format (superseded by v0.2.12)
 
 ## [0.2.10] - 2025-10-17
 
