@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.17] - 2025-10-20
+
+### Changed
+- **Event catalog**: Improved shortMessage logic for unique event identification - converted nested iif() to case() statement with specific handlers for RT0048, LC0169, and LC0170 events to prevent duplicate eventId entries in catalog
+
 ## [0.2.16] - 2025-10-20
 
 ### Fixed
