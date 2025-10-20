@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Release process**: Corrected release workflow to ensure version bump and CHANGELOG updates are committed together in a single atomic commit
+
 ## [0.2.14] - 2025-10-20
 
 ### Fixed
