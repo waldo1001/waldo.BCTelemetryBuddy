@@ -742,3 +742,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Improved shortMessage logic for event catalog [Entry: 2d99d2fb-3037-4595-a9a1-ae3b3d8c1d2d]
   - **Why:** Events RT0048, LC0169, LC0170 had long messages causing duplicate eventId entries in catalog
   - **How:** Converted nested iif() to case() statement with specific handlers for each event ID
+- **2025-10-20** — Ran all tests to verify shortMessage changes [Entry: a8f6f4ae-b706-4d9b-85f2-d14f1f85f75f]
+  - **Why:** Ensure the shortMessage improvements didn't break existing functionality
+  - **How:** Executed MCP backend tests (280 passed) and VSCode extension tests (111 passed)
