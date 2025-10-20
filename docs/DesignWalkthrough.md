@@ -724,3 +724,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Released v0.2.11 (patch) [Entry: 5d8f5780-dd00-43c0-8b17-df203adacc8f]
   - **Why:** Deliver chat participant enhancements, chatmode feature, test fixes, and CI improvements to users
   - **How:** Updated extension CHANGELOG with release notes, ran release script with patch bump (0.2.10→0.2.11), created git tag v0.2.11, pushed to GitHub triggering CI/CD pipeline for VS Code Marketplace deployment
+- **2025-10-20** — Released v0.2.12 with comprehensive CHANGELOG documentation
+  - **Why:** Original v0.2.11 CHANGELOG was incomplete, missing detailed feature descriptions from 2-day session work
+  - **How:** Expanded CHANGELOG with comprehensive sections for chat participant (system prompt, intent detection, slash commands), chatmode installation (command, wizard integration, safety), documentation updates (README, UserGuide), test fixes (mocks, CI compilation), and architecture discoveries (dual-mode conflict, tool result format, naming patterns). Released as v0.2.12 to properly communicate scope of work to users.

@@ -1367,3 +1367,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Release v0.2.11 - patch release with chat participant enhancements, chatmode installation, test fixes, and CI improvements"
 
 ---
+### Entry ID: 76fe4f12-1557-4c9c-91c8-e57a6b2dadb4 — 2025-10-20 10:11
+> "That's better - now create a new patch release and replease the 0.2.11 changelog with the 0.2.12"
+
+---
