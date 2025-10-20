@@ -517,6 +517,10 @@ async function startMCP(): Promise<void> {
     // Build environment variables from workspace settings
     const env = buildMCPEnvironment(config, workspacePath);
 
+    // CRITICAL: Force HTTP mode for command palette queries
+    // The stdio server (for Copilot) is managed separately by VSCode
+    env.BCTB_MODE = 'http';
+
     outputChannel.appendLine(`Starting MCP server on port ${port}...`);
     outputChannel.appendLine(`Workspace: ${workspacePath}`);
 

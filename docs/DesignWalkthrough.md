@@ -727,3 +727,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Released v0.2.12 with comprehensive CHANGELOG documentation
   - **Why:** Original v0.2.11 CHANGELOG was incomplete, missing detailed feature descriptions from 2-day session work
   - **How:** Expanded CHANGELOG with comprehensive sections for chat participant (system prompt, intent detection, slash commands), chatmode installation (command, wizard integration, safety), documentation updates (README, UserGuide), test fixes (mocks, CI compilation), and architecture discoveries (dual-mode conflict, tool result format, naming patterns). Released as v0.2.12 to properly communicate scope of work to users.
+- **2025-10-20** — Fixed CodeLens 'Run Query' HTTP/stdio conflict [Entry: 69a7eb0d-fe57-4427-8663-e25f483b82fd]
+  - **Why:** CodeLens commands tried to use HTTP client but MCP server was in stdio mode (for Copilot), causing ECONNREFUSED errors
+  - **How:** Added BCTB_MODE=http env var to startMCP() to force HTTP mode for command palette, keeping stdio mode for Copilot

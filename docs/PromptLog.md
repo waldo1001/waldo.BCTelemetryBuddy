@@ -1371,3 +1371,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "That's better - now create a new patch release and replease the 0.2.11 changelog with the 0.2.12"
 
 ---
+### Entry ID: 69a7eb0d-fe57-4427-8663-e25f483b82fd — 2025-10-20 11:37
+> "When I do 'Run Query' from a kql file, it seems that it's still mixing http stuff with stdio stuff... [followed by error logs showing ECONNREFUSED errors when trying to connect to http://localhost:52345]"
+
+---
