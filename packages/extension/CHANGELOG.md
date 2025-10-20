@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.14] - 2025-10-20
+
 ### Fixed
 - **First-run crash**: Extension now loads successfully in unconfigured workspaces instead of failing with "Process exited with code 1"
   - Root cause: MCP server validation threw exceptions when App Insights ID/Kusto URL were missing, preventing extension activation

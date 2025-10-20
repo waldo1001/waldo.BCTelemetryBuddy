@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.14] - 2025-10-20
+
 ### Added
 - `get_event_field_samples` tool: Analyzes customDimensions structure for specific event IDs with field types, occurrence rates, sample values, and ready-to-use KQL templates
 - `get_event_catalog` enhancement: Added `includeCommonFields` parameter that analyzes field prevalence across events, categorizing fields into Universal (80%+), Common (50-79%), Occasional (20-49%), and Rare (<20%) with type detection and actionable recommendations
