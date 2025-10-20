@@ -745,3 +745,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Ran all tests to verify shortMessage changes [Entry: a8f6f4ae-b706-4d9b-85f2-d14f1f85f75f]
   - **Why:** Ensure the shortMessage improvements didn't break existing functionality
   - **How:** Executed MCP backend tests (280 passed) and VSCode extension tests (111 passed)
+- **2025-10-20** — Updated release workflow to two-step process [Entry: f7f5ce3f-ba12-48bd-9ad2-9eedb84c98c1]
+  - **Why:** Ensure safe releases by requiring explicit user confirmation before pushing to GitHub
+  - **How:** Modified copilot-instructions.md section 12 to enforce prepare step first, then wait for user confirmation before executing push/tag

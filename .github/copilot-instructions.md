@@ -293,54 +293,92 @@ Apply these software engineering principles to all code:
 
 ### 12. Release workflow automation
 
-**SIMPLIFIED MANUAL RELEASE PROCESS** - Follow these 4 simple steps:
+**SIMPLIFIED MANUAL RELEASE PROCESS** - ALWAYS use two-step workflow:
 
-**Step 1: Update version in package.json**
-```
-1. Edit packages/extension/package.json
-2. Change "version": "0.2.X" to "0.2.Y" (patch bump)
-3. Save the file
-```
+## STEP 1: PREPARE RELEASE (when user says "prepare release", "release this", etc.)
 
-**Step 2: Update CHANGELOGs**
-```
-1. Edit packages/extension/CHANGELOG.md:
-   - Add new version section: ## [0.2.Y] - YYYY-MM-DD
-   - Add relevant changes under ### Fixed, ### Added, ### Changed, etc.
-   - Keep [Unreleased] section at top (empty)
+**Actions to perform:**
 
-2. Edit packages/mcp/CHANGELOG.md:
-   - Same format as extension CHANGELOG
-```
+1. **Read current version** from packages/extension/package.json
 
-**Step 3: Commit to main**
-```powershell
-git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/CHANGELOG.md
-cd packages/extension && npm install  # Update package-lock.json
-cd ../..
-git add packages/extension/package-lock.json
-git commit -m "chore: release v0.2.Y"
-git push origin main
-```
+2. **Update version in package.json**
+   - Edit packages/extension/package.json
+   - Bump version (e.g., 0.2.16 → 0.2.17 for patch)
+   - Save the file
 
-**Step 4: Create GitHub release**
-```powershell
-git tag v0.2.Y
-git push origin v0.2.Y
-```
+3. **Update CHANGELOGs**
+   - Edit packages/extension/CHANGELOG.md:
+     - Add new version section: ## [0.2.Y] - YYYY-MM-DD
+     - Add relevant changes under ### Fixed, ### Added, ### Changed, etc.
+     - Keep [Unreleased] section at top (empty)
+   - Edit packages/mcp/CHANGELOG.md:
+     - Same format as extension CHANGELOG
 
-This triggers GitHub Actions which builds and publishes to VS Code Marketplace.
+4. **Update package-lock.json**
+   - Run: `cd packages/extension && npm install`
 
-**Monitor deployment:**
-- GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
-- Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.Y
-- Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+5. **Commit changes**
+   ```powershell
+   git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/CHANGELOG.md packages/extension/package-lock.json
+   git commit -m "chore: release v0.2.Y"
+   ```
 
-**IMPORTANT RULES:**
-- Always update package-lock.json by running `npm install` after changing package.json version
-- Always commit package.json + CHANGELOGs + package-lock.json together in one commit
-- Tag must point to the commit containing the version bump
-- Keep it simple - manual edits, single commit, tag, push
+6. **Verify git log** to confirm commit looks correct
+
+7. **STOP HERE and present summary:**
+   ```
+   ✅ Release v0.2.Y prepared and committed locally!
+   
+   📦 Changes ready:
+   • Version bumped: 0.2.X → 0.2.Y
+   • CHANGELOGs updated (extension + MCP)
+   • package-lock.json updated
+   • Committed as "chore: release v0.2.Y"
+   
+   ⚠️  NOT YET PUSHED TO GITHUB
+   
+   Ready to publish? Reply "yes" to push and create GitHub release, or "cancel" to abort.
+   ```
+
+## STEP 2: EXECUTE RELEASE (ONLY after user confirms "yes", "go ahead", "publish", etc.)
+
+**Actions to perform:**
+
+1. **Push to main**
+   ```powershell
+   git push origin main
+   ```
+
+2. **Create and push tag**
+   ```powershell
+   git tag v0.2.Y
+   git push origin v0.2.Y
+   ```
+
+3. **Confirm success:**
+   ```
+   🚀 Release v0.2.Y initiated successfully!
+   
+   ✅ Pushed to main
+   ✅ Tag v0.2.Y created and pushed
+   ✅ GitHub Actions triggered
+   
+   📊 Monitor progress:
+   • GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
+   • Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.Y
+   • Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+   
+   The extension will be live on the marketplace in ~5-10 minutes after CI completes.
+   ```
+
+**CRITICAL RULES:**
+1. **NEVER skip Step 1** - Always prepare first, then ask for confirmation
+2. **NEVER auto-proceed to Step 2** - User must explicitly confirm with "yes", "go ahead", "publish", etc.
+3. **NEVER push or tag without user confirmation** - This is a safety measure
+4. If user says "cancel" after Step 1, you can undo with: `git reset --soft HEAD~1`
+5. Always update package-lock.json by running `npm install` after changing package.json version
+6. Always commit package.json + CHANGELOGs + package-lock.json together in one commit
+7. Tag must point to the commit containing the version bump
 
 **Old automated release script workflow** - DO NOT USE (deprecated):
 

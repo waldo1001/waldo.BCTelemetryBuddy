@@ -1395,3 +1395,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Test all"
 
 ---
+### Entry ID: fb560e85-007d-4b97-a1fc-997ce90a0b33 — 2025-10-20 15:54
+> "Ok, prepare all for the next release. Don't release just yet, just create the necessary changes and commits."
+
+---
+### Entry ID: 022c4cb1-5e7b-43b1-86b3-f065dfc3f33e — 2025-10-20 15:56
+> "ok, now perform the actual release."
+
+---
+### Entry ID: f7f5ce3f-ba12-48bd-9ad2-9eedb84c98c1 — 2025-10-20 16:00
+> "Change now the copilot-instructions.md to make sure this happens always now in two steps: prepare, then ask for confirmation to continue."
+
+---
