@@ -585,38 +585,55 @@ export class MCPServer {
      */
     private async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1, includeCommonFields: boolean = false): Promise<any> {
         const kql = `
-traces
-| where timestamp >= ago(${daysBack}d)
-| extend eventId = tostring(customDimensions.eventId)
-| extend shortMessage = iif(substring(message, 0, 4) == "Task", "Task Executed",
-                    iif(eventId == "AL0000JRG", "Job Queue Error",
-                        iff(indexof(message, ":") <= 0, message, substring(message, 0, indexof(message, ":")))))
-| extend eventStatus = case(
-    // ERROR - clear failures that need attention
-    shortMessage has_any ("error","fail","failed","deadlock","timed out", "timeout", "cannot", "unable", "invalid", "could not", "missing") or
-    eventId has_any ("AL0000JRG", "RT0012", "RT0028", "RT0030", "RT0031"), 
-    "error",
-    // TOO SLOW - performance issues requiring optimization
-    shortMessage has_any ("exceeded", "too slow") or 
-    eventId in ("RT0005", "RT0018"), 
-    "too slow",
-    // WARNING - potential issues, not critical but noteworthy
-    shortMessage has_any ("warning", "orphans found", "unequal", "license update", "rescheduled", "cancelled", "canceled") or
-    eventId in ("RT0007", "RT0011", "RT0038", "LC0227"), 
-    "warning",
-    // SUCCESS - operations completed successfully
-    shortMessage has_any ("called","executed","succeeded","rendered","successfully","success","completed","finished","posted","sent","created","generated","applied","authenticated","connected","committed","registered") or
-    eventId has_any ("LC0010", "LC0011", "LC0020", "LC0021"), 
-    "success",
-    // INFO - informational/operational events (everything else)
-    "info"
-)
-| summarize count = count() by tostring(eventId), tostring(shortMessage), eventStatus
-| extend LearnUrl = strcat("https://learn.microsoft.com/en-us/search/?scope=BusinessCentral&terms=",eventId, "+", replace_string(shortMessage," ","+"))
-| project eventId, shortMessage, status=eventStatus, count, LearnUrl
-${status !== 'all' ? `| where status == "${status}"` : ''}
-| where count >= ${minCount}
-| order by count desc
+        traces
+        | where timestamp >= ago(${daysBack}d)
+        | extend eventId = tostring(customDimensions.eventId)
+        | extend shortMessage = case(
+        // Specific event IDs that need unique short messages
+        eventId == "RT0048", "Multiple API web services with same path found",
+        eventId == "RT0029", "StopSession invoked",
+        eventId == "RT0011", "Operation canceled",
+        eventId == "LC0136", "Environment session cancellation started",
+        eventId == "LC0137", "Environment session cancelled successfully",
+        eventId == "LC0166", "Environment app requires dependency",
+        eventId == "LC0167", "Environment app 'Distri EDI Descartes' update scheduled",
+        eventId == "LC0169", "Environment app update started",
+        eventId == "LC0170", "Environment app update succeeded",
+        eventId == "LC0163", "Environment app installation started",
+        eventId == "LC0164", "Environment app installation succeeded",
+        eventId == "AL0000JRG", "Job Queue Error",
+        eventId == "ALADLSE-001", "Data export started",
+        eventId == "ALADLSE-902", "Export manifest with table id 17",
+        // Generic patterns
+        substring(message, 0, 4) == "Task", "Task Executed",
+        indexof(message, ":") <= 0, message,
+        // Default: extract text before first colon
+        substring(message, 0, indexof(message, ":"))
+        )
+        | extend eventStatus = case(
+        // ERROR - clear failures that need attention
+        shortMessage has_any ("error","fail","failed","deadlock","timed out", "timeout", "cannot", "unable", "invalid", "could not", "missing") or
+        eventId has_any ("AL0000JRG", "RT0012", "RT0028", "RT0030", "RT0031"), 
+        "error",
+        // TOO SLOW - performance issues requiring optimization
+        shortMessage has_any ("exceeded", "too slow") or 
+        eventId in ("RT0005", "RT0018"), 
+        "too slow",
+        // WARNING - potential issues, not critical but noteworthy
+        shortMessage has_any ("warn","warning"), "warning",
+        // SUCCESS - operations completed successfully
+        shortMessage has_any ("called","executed","succeeded","rendered","successfully","success","completed","finished","posted","sent","created","generated","applied","authenticated","connected","committed","registered") or
+        eventId has_any ("LC0010", "LC0011", "LC0020", "LC0021"), 
+        "success",
+        // INFO - informational/operational events (everything else)
+        "info"
+        )
+        | summarize count = count() by tostring(eventId), tostring(shortMessage), eventStatus
+        | extend LearnUrl = strcat("https://learn.microsoft.com/en-us/search/?scope=BusinessCentral&terms=",eventId, "+", replace_string(shortMessage," ","+"))
+        | project eventId, shortMessage, status=eventStatus, count, LearnUrl
+        ${status !== 'all' ? `| where status == "${status}"` : ''}
+        | where count >= ${minCount}
+        | order by count desc
         `.trim();
 
         console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, includeCommonFields: ${includeCommonFields})...`);

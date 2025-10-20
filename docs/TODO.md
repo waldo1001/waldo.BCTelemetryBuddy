@@ -14,3 +14,6 @@ add BC specific knowledge for the LLM to take into account
 LIke SQL Query details: what is what
 SHuld basically be some kind of file that the LLM can interpret to take into their analysis.
 
+
+Max token limit bij geteventcatalog sometimes exceeded.  
+  Need to chunk the data when sending to LLM.
