@@ -736,3 +736,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Released v0.2.14 - First-run experience fix [Entry: f53e2bdd-72fb-4f65-b631-0f1d2e351559]
   - **Why:** Fixed critical marketplace issue where extension crashed on first launch in unconfigured workspaces, preventing setup wizard from showing
   - **How:** Updated CHANGELOGs with v0.2.14 release notes, ran release script with patch bump (0.2.13→0.2.14), created git tag v0.2.14, pushed to GitHub triggering CI/CD pipeline for VS Code Marketplace deployment
+- **2025-10-20** — Released v0.2.16 - Documented simplified release process [Entry: 16c17b72-7668-46d0-8ca4-3f681fcc9a31]
+  - **Why:** User requested proper manual release workflow after script complications
+  - **How:** Updated package.json version, CHANGELOGs, ran npm install, committed with package-lock.json, created tag v0.2.16, pushed to GitHub. Documented 4-step manual process in copilot-instructions.md

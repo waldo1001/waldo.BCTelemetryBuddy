@@ -292,7 +292,59 @@ Apply these software engineering principles to all code:
 ```
 
 ### 12. Release workflow automation
-**Conversational Release Triggers**: When the user says phrases like:
+
+**SIMPLIFIED MANUAL RELEASE PROCESS** - Follow these 4 simple steps:
+
+**Step 1: Update version in package.json**
+```
+1. Edit packages/extension/package.json
+2. Change "version": "0.2.X" to "0.2.Y" (patch bump)
+3. Save the file
+```
+
+**Step 2: Update CHANGELOGs**
+```
+1. Edit packages/extension/CHANGELOG.md:
+   - Add new version section: ## [0.2.Y] - YYYY-MM-DD
+   - Add relevant changes under ### Fixed, ### Added, ### Changed, etc.
+   - Keep [Unreleased] section at top (empty)
+
+2. Edit packages/mcp/CHANGELOG.md:
+   - Same format as extension CHANGELOG
+```
+
+**Step 3: Commit to main**
+```powershell
+git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/CHANGELOG.md
+cd packages/extension && npm install  # Update package-lock.json
+cd ../..
+git add packages/extension/package-lock.json
+git commit -m "chore: release v0.2.Y"
+git push origin main
+```
+
+**Step 4: Create GitHub release**
+```powershell
+git tag v0.2.Y
+git push origin v0.2.Y
+```
+
+This triggers GitHub Actions which builds and publishes to VS Code Marketplace.
+
+**Monitor deployment:**
+- GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
+- Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.Y
+- Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+
+**IMPORTANT RULES:**
+- Always update package-lock.json by running `npm install` after changing package.json version
+- Always commit package.json + CHANGELOGs + package-lock.json together in one commit
+- Tag must point to the commit containing the version bump
+- Keep it simple - manual edits, single commit, tag, push
+
+**Old automated release script workflow** - DO NOT USE (deprecated):
+
+~~**Conversational Release Triggers**: When the user says phrases like:~~
 - "Release this version" / "Release this"
 - "Publish a new version" / "Publish this"
 - "Let's ship this" / "Ship it"

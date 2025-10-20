@@ -1383,3 +1383,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "create a release once more"
 
 ---
+### Entry ID: 16c17b72-7668-46d0-8ca4-3f681fcc9a31 — 2025-10-20 12:55
+> "Create a new release 0.2.16 and document the simplified manual release process in copilot-instructions.md"
+
+---
