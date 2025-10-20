@@ -739,3 +739,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Released v0.2.16 - Documented simplified release process [Entry: 16c17b72-7668-46d0-8ca4-3f681fcc9a31]
   - **Why:** User requested proper manual release workflow after script complications
   - **How:** Updated package.json version, CHANGELOGs, ran npm install, committed with package-lock.json, created tag v0.2.16, pushed to GitHub. Documented 4-step manual process in copilot-instructions.md
+- **2025-10-20** — Improved shortMessage logic for event catalog [Entry: 2d99d2fb-3037-4595-a9a1-ae3b3d8c1d2d]
+  - **Why:** Events RT0048, LC0169, LC0170 had long messages causing duplicate eventId entries in catalog
+  - **How:** Converted nested iif() to case() statement with specific handlers for each event ID

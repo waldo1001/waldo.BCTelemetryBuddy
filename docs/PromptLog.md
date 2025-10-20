@@ -1387,3 +1387,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Create a new release 0.2.16 and document the simplified manual release process in copilot-instructions.md"
 
 ---
+### Entry ID: 2d99d2fb-3037-4595-a9a1-ae3b3d8c1d2d — 2025-10-20 15:44
+> "I need to improve the 'shortmessage' a bit. Events RT0048, LC0169, LC0170 have messages that are too long and need to be shortened to ensure one eventId per record in the catalog."
+
+---
