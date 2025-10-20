@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.13] - 2025-10-20
+
+### Fixed
+- **CodeLens HTTP/stdio conflict**: Fixed "Run Query" button in .kql files throwing ECONNREFUSED errors
+  - Root cause: Extension tried to use HTTP client (`http://localhost:52345`) but MCP server was running in stdio mode (for Copilot)
+  - Solution: Added `BCTB_MODE=http` environment variable to force HTTP mode when `startMCP()` is called
+  - Result: Two separate MCP instances now run independently - stdio for Copilot, HTTP for command palette commands
+  - Related files: `packages/extension/src/extension.ts` (modified `startMCP()` function)
+
 ## [0.2.12] - 2025-10-20
 
 ### Added
