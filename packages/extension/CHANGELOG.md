@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **First-run crash**: Extension now loads successfully in unconfigured workspaces instead of failing with "Process exited with code 1"
+  - Root cause: MCP server validation threw exceptions when App Insights ID/Kusto URL were missing, preventing extension activation
+  - Solution: MCP server gracefully handles incomplete configuration, starts in degraded mode with helpful error messages
+  - Result: Setup wizard can be shown to new users, clear guidance provided when queries attempted without configuration
+  - Related files: `packages/mcp/src/config.ts`, `packages/mcp/src/server.ts`
+
 ## [0.2.13] - 2025-10-20
 
 ### Fixed

@@ -57,13 +57,14 @@ export class MCPServer {
     private cache: CacheService;
     private queries: QueriesService;
     private references: ReferencesService;
+    private configErrors: string[];
 
     constructor() {
         this.app = express();
 
         // Load and validate configuration
         this.config = loadConfig();
-        validateConfig(this.config);
+        this.configErrors = validateConfig(this.config);
 
         console.log('=== BC Telemetry Buddy MCP Server ===');
         console.log(`Workspace: ${this.config.workspacePath}`);
@@ -71,6 +72,12 @@ export class MCPServer {
         console.log(`Cache enabled: ${this.config.cacheEnabled}`);
         console.log(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
         console.log(`External references: ${this.config.references.length}`);
+
+        if (this.configErrors.length > 0) {
+            console.log(`⚠️  Configuration incomplete (${this.configErrors.length} issues)`);
+        } else {
+            console.log('✅ Configuration valid');
+        }
         console.log('=====================================\n');
 
         // Initialize services
@@ -490,6 +497,16 @@ export class MCPServer {
     }
 
     /**
+     * Check if configuration is complete
+     */
+    private checkConfigurationComplete(): void {
+        if (this.configErrors.length > 0) {
+            const errorMessage = `Configuration incomplete:\n${this.configErrors.join('\n')}\n\nPlease run "BC Telemetry Buddy: Setup Wizard" from the Command Palette to configure the extension.`;
+            throw new Error(errorMessage);
+        }
+    }
+
+    /**
      * Execute KQL query with optional context
      */
     private async executeQuery(
@@ -498,6 +515,9 @@ export class MCPServer {
         includeExternal: boolean
     ): Promise<QueryResult> {
         try {
+            // Check configuration before attempting query
+            this.checkConfigurationComplete();
+
             // Check cache first
             const cached = this.cache.get<QueryResult>(kql);
 
@@ -1097,16 +1117,21 @@ ${extendStatements}
             console.log(`Ready to receive requests\n`);
         });
 
-        // Authenticate immediately on startup
-        // For device_code flow, this triggers the browser login before any queries
-        // For client_credentials flow, this validates credentials early
-        console.log('Authenticating...');
-        try {
-            await this.auth.authenticate();
-            console.log('✓ Authentication successful\n');
-        } catch (error: any) {
-            console.error('❌ Authentication failed:', error.message);
-            console.error('You can retry authentication when running your first query.\n');
+        // Only authenticate if configuration is complete
+        if (this.configErrors.length === 0) {
+            // Authenticate immediately on startup
+            // For device_code flow, this triggers the browser login before any queries
+            // For client_credentials flow, this validates credentials early
+            console.log('Authenticating...');
+            try {
+                await this.auth.authenticate();
+                console.log('✓ Authentication successful\n');
+            } catch (error: any) {
+                console.error('❌ Authentication failed:', error.message);
+                console.error('You can retry authentication when running your first query.\n');
+            }
+        } else {
+            console.log('⚠️  Skipping authentication (configuration incomplete)\n');
         }
 
         // Graceful shutdown
@@ -1130,12 +1155,17 @@ ${extendStatements}
 
         console.log('BC Telemetry Buddy MCP Server starting in stdio mode');
 
-        // Authenticate silently (no console output that breaks JSON-RPC)
-        try {
-            await this.auth.authenticate();
-            console.log('Authentication successful');
-        } catch (error: any) {
-            console.error('Authentication failed:', error.message);
+        // Only authenticate if configuration is complete
+        if (this.configErrors.length === 0) {
+            // Authenticate silently (no console output that breaks JSON-RPC)
+            try {
+                await this.auth.authenticate();
+                console.log('Authentication successful');
+            } catch (error: any) {
+                console.error('Authentication failed:', error.message);
+            }
+        } else {
+            console.log('Skipping authentication (configuration incomplete)');
         }
 
         // Handle JSON-RPC messages from stdin
@@ -1605,9 +1635,12 @@ if (isStdioMode) {
             await server.startHTTP();
         }
     } catch (error: any) {
-        console.error('\n❌ Failed to start MCP server:');
+        console.error('\n⚠️  MCP Server encountered an error during startup:');
         console.error(error.message);
-        console.error('\nPlease check your environment variables and configuration.');
-        process.exit(1);
+        console.error('\nThe server will continue running but queries may fail.');
+        console.error('Please run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.\n');
+
+        // Don't exit - let the server run in degraded mode
+        // This allows VSCode extension to show setup wizard
     }
 })();

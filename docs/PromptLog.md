@@ -1375,3 +1375,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "When I do 'Run Query' from a kql file, it seems that it's still mixing http stuff with stdio stuff... [followed by error logs showing ECONNREFUSED errors when trying to connect to http://localhost:52345]"
 
 ---
+### Entry ID: 2d1d6ae9-fa04-4cd9-87f0-d05dd58da778 — 2025-10-20 12:37
+> "I have the marketplace version of the extension installed, and I get this in any workspace: Configuration Validation Failed - BCTB_APP_INSIGHTS_ID is required, BCTB_KUSTO_URL is required, Process exited with code 1"
+
+---

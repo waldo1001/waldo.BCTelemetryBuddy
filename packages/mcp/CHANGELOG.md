@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `query_telemetry` now only accepts explicit KQL queries (no NL translation)
 - Tool descriptions updated to guide users toward data-driven discovery workflow
 
+### Fixed
+- **First-run experience**: MCP server now starts gracefully with incomplete configuration instead of exiting with code 1, allowing setup wizard to guide new users through configuration. `validateConfig()` returns errors array instead of throwing exceptions, enabling degraded mode with helpful error messages directing users to setup wizard.
+
 ### Removed
 - `translateNLToKQL` method and supporting pattern-matching code (unreliable keyword-based translation that misled GitHub Copilot)
 

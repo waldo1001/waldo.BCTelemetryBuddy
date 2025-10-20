@@ -730,3 +730,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Fixed CodeLens 'Run Query' HTTP/stdio conflict [Entry: 69a7eb0d-fe57-4427-8663-e25f483b82fd]
   - **Why:** CodeLens commands tried to use HTTP client but MCP server was in stdio mode (for Copilot), causing ECONNREFUSED errors
   - **How:** Added BCTB_MODE=http env var to startMCP() to force HTTP mode for command palette, keeping stdio mode for Copilot
+- **2025-10-20** — Fixed first-run crash - graceful config validation [Entry: 2d1d6ae9-fa04-4cd9-87f0-d05dd58da778]
+  - **Why:** MCP server was exiting with code 1 when App Insights ID/Kusto URL missing, preventing extension from loading for new users
+  - **How:** Changed validateConfig() to return errors array instead of throwing, added checkConfigurationComplete() method, allow server to start in degraded mode with helpful error messages

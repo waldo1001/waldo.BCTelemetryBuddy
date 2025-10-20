@@ -153,7 +153,7 @@ describe('Configuration Module', () => {
             expect(() => validateConfig(config)).not.toThrow();
         });
 
-        it('should throw error when tenantId is missing', () => {
+        it('should return error when tenantId is missing', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -170,11 +170,14 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
         });
 
-        it('should throw error when applicationInsightsAppId is missing', () => {
+        it('should return error when applicationInsightsAppId is missing', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -191,11 +194,14 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('BCTB_APP_INSIGHTS_ID is required');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('BCTB_APP_INSIGHTS_ID is required');
         });
 
-        it('should throw error when kustoClusterUrl is missing', () => {
+        it('should return error when kustoClusterUrl is missing', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -212,11 +218,14 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('BCTB_KUSTO_URL is required');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('BCTB_KUSTO_URL is required');
         });
 
-        it('should throw error when clientId is missing for client_credentials flow', () => {
+        it('should return error when clientId is missing for client_credentials flow', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -233,11 +242,14 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_ID is required for client_credentials auth flow');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('BCTB_CLIENT_ID is required for client_credentials auth flow');
         });
 
-        it('should throw error when clientSecret is missing for client_credentials flow', () => {
+        it('should return error when clientSecret is missing for client_credentials flow', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -255,11 +267,14 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
         });
 
-        it('should throw error with multiple validation failures', () => {
+        it('should return multiple validation failures', () => {
             // Arrange
             const config: MCPConfig = {
                 connectionName: 'Test',
@@ -276,13 +291,15 @@ describe('Configuration Module', () => {
                 references: []
             };
 
-            // Act & Assert
-            expect(() => validateConfig(config)).toThrow('Configuration validation failed:');
-            expect(() => validateConfig(config)).toThrow('BCTB_TENANT_ID is required');
-            expect(() => validateConfig(config)).toThrow('BCTB_APP_INSIGHTS_ID is required');
-            expect(() => validateConfig(config)).toThrow('BCTB_KUSTO_URL is required');
-            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_ID is required');
-            expect(() => validateConfig(config)).toThrow('BCTB_CLIENT_SECRET is required');
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors).toContain('BCTB_APP_INSIGHTS_ID is required');
+            expect(errors).toContain('BCTB_KUSTO_URL is required');
+            expect(errors).toContain('BCTB_CLIENT_ID is required for client_credentials auth flow');
+            expect(errors).toContain('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
         });
     });
 });

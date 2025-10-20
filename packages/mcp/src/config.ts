@@ -94,8 +94,9 @@ function parseReferences(referencesJson: string): Reference[] {
 
 /**
  * Validate required configuration
+ * Returns validation errors instead of throwing - allows server to start gracefully
  */
-export function validateConfig(config: MCPConfig): void {
+export function validateConfig(config: MCPConfig): string[] {
     const errors: string[] = [];
 
     // Azure CLI doesn't need tenantId (uses current az login session)
@@ -120,9 +121,11 @@ export function validateConfig(config: MCPConfig): void {
     }
 
     if (errors.length > 0) {
-        console.error('\n❌ Configuration Validation Failed:');
+        console.error('\n⚠️  Configuration Incomplete:');
         errors.forEach(err => console.error(`   - ${err}`));
-        console.error('\nSet the required environment variables before starting the server.\n');
-        throw new Error(`Configuration validation failed:\n${errors.join('\n')}`);
+        console.error('\nServer will start but queries will fail until configuration is complete.');
+        console.error('Run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.\n');
     }
+
+    return errors;
 }
