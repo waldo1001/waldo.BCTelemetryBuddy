@@ -51,16 +51,19 @@
     "kusto.validationEnabled": false,
     // NPM
     "npm.packageManager": "npm",
-    "npm.enableRunFromFolder": true,
+    "npm.enableRunFromFolder": true
     // BC Telemetry Buddy - Test Configuration
-    "bcTelemetryBuddy.tenant.id": "12345678-1234-1234-1234-123456789abc",
-    "bcTelemetryBuddy.tenant.name": "Test Tenant",
-    "bcTelemetryBuddy.appInsights.id": "87654321-4321-4321-4321-cba987654321",
-    "bcTelemetryBuddy.kusto.url": "https://testcluster.westeurope.kusto.windows.net",
-    "bcTelemetryBuddy.kusto.database": "TestDatabase",
-    "bcTelemetryBuddy.kusto.cluster": "testcluster",
-    "bcTelemetryBuddy.auth.flow": "azure_cli",
-    "bcTelemetryBuddy.queries.folder": "queries",
-    "bcTelemetryBuddy.cache.ttl": 7200,
-    "bcTelemetryBuddy.codelens.enable": true
+    // ⚠️ DISABLED in development workspace to prevent auto-activation
+    // Use F5 to debug the extension instead
+    // Uncomment these settings to test extension activation:
+    // "bcTelemetryBuddy.tenant.id": "12345678-1234-1234-1234-123456789abc",
+    // "bcTelemetryBuddy.tenant.name": "Test Tenant",
+    // "bcTelemetryBuddy.appInsights.id": "87654321-4321-4321-4321-cba987654321",
+    // "bcTelemetryBuddy.kusto.url": "https://testcluster.westeurope.kusto.windows.net",
+    // "bcTelemetryBuddy.kusto.database": "TestDatabase",
+    // "bcTelemetryBuddy.kusto.cluster": "testcluster",
+    // "bcTelemetryBuddy.auth.flow": "azure_cli",
+    // "bcTelemetryBuddy.queries.folder": "queries",
+    // "bcTelemetryBuddy.cache.ttl": 7200,
+    // "bcTelemetryBuddy.codelens.enable": true
 }

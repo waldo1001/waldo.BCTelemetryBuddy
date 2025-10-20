@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint"
+    ],
+    "unwantedRecommendations": [
+        "waldoBC.bc-telemetry-buddy"
+    ]
+}
