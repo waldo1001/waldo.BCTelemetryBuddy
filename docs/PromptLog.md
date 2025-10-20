@@ -1379,3 +1379,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I have the marketplace version of the extension installed, and I get this in any workspace: Configuration Validation Failed - BCTB_APP_INSIGHTS_ID is required, BCTB_KUSTO_URL is required, Process exited with code 1"
 
 ---
+### Entry ID: f53e2bdd-72fb-4f65-b631-0f1d2e351559 — 2025-10-20 12:42
+> "create a release once more"
+
+---

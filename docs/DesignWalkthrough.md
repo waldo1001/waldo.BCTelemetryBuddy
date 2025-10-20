@@ -733,3 +733,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Fixed first-run crash - graceful config validation [Entry: 2d1d6ae9-fa04-4cd9-87f0-d05dd58da778]
   - **Why:** MCP server was exiting with code 1 when App Insights ID/Kusto URL missing, preventing extension from loading for new users
   - **How:** Changed validateConfig() to return errors array instead of throwing, added checkConfigurationComplete() method, allow server to start in degraded mode with helpful error messages
+- **2025-10-20** — Released v0.2.14 - First-run experience fix [Entry: f53e2bdd-72fb-4f65-b631-0f1d2e351559]
+  - **Why:** Fixed critical marketplace issue where extension crashed on first launch in unconfigured workspaces, preventing setup wizard from showing
+  - **How:** Updated CHANGELOGs with v0.2.14 release notes, ran release script with patch bump (0.2.13→0.2.14), created git tag v0.2.14, pushed to GitHub triggering CI/CD pipeline for VS Code Marketplace deployment
