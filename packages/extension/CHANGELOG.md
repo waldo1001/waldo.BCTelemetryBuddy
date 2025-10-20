@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11] - 2025-10-20
+
+### Added
+- Chat participant: Enhanced @bc-telemetry-buddy with comprehensive BC Telemetry expert system including KQL patterns, 3-step workflow, intent detection, and slash commands
+- Chatmode: Added chatmode installation feature (`.github/chatmodes/BCTelemetryBuddy.chatmode.md`) via command and setup wizard integration
+- Documentation: Updated README.md and UserGuide.md with chatmode usage instructions and chat participant examples
+
+### Fixed
+- Tests: Fixed chat participant tests after MCP tool naming refactor (mcp_bc_telemetry__* pattern)
+- CI/CD: Fixed integration test compilation in Ubuntu CI pipeline by adding compile-tests script
+
 ### Changed
 - MCP tool registration: Updated tool descriptions to reflect removal of natural language translation and promote discovery-first workflow with `get_event_catalog`, `get_event_field_samples`, and field prevalence analysis
+- Build: Added .vscode-test/ and *.tsbuildinfo to .gitignore
 
 ## [0.2.10] - 2025-10-17
 
