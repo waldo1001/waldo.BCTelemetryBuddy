@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.16] - 2025-10-20
+
+### Fixed
+- **Release process**: Simplified release workflow - manually update package.json version and CHANGELOG, commit, then create GitHub release
+
 ## [0.2.15] - 2025-10-20
 
 ### Fixed
