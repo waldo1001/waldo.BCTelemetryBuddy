@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.18] - 2025-10-22
+
+### Changed
+- **Queries folder**: Implemented lazy creation - queries folder only created when first query is saved, not on QueriesService initialization
+
 ## [0.2.17] - 2025-10-20
 
 ### Changed
