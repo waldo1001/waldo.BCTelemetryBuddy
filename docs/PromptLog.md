@@ -1407,3 +1407,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Change now the copilot-instructions.md to make sure this happens always now in two steps: prepare, then ask for confirmation to continue."
 
 ---
+### Entry ID: bf3f6722-28ab-4794-90b7-455e1085c072 — 2025-10-22 07:42
+> "I notice that when I open a new workspace, this extension just adds the 'queries' folder. Is that correct? [Answer: 2 - Lazy creation]"
+
+---

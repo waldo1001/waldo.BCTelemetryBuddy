@@ -748,3 +748,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-20** — Updated release workflow to two-step process [Entry: f7f5ce3f-ba12-48bd-9ad2-9eedb84c98c1]
   - **Why:** Ensure safe releases by requiring explicit user confirmation before pushing to GitHub
   - **How:** Modified copilot-instructions.md section 12 to enforce prepare step first, then wait for user confirmation before executing push/tag
+- **2025-10-22** — Implemented lazy creation for queries folder [Entry: bf3f6722-28ab-4794-90b7-455e1085c072]
+  - **Why:** Prevent automatic folder creation on workspace activation when no queries exist yet
+  - **How:** Removed ensureQueriesDir() call from QueriesService constructor, moved to saveQuery() method for lazy creation

@@ -22,7 +22,7 @@ describe('QueriesService', () => {
     });
 
     describe('constructor', () => {
-        it('should create queries directory if it does not exist', () => {
+        it('should not create queries directory on initialization (lazy creation)', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(false);
             mockedFs.mkdirSync.mockReturnValue(undefined);
@@ -30,19 +30,17 @@ describe('QueriesService', () => {
             // Act
             new QueriesService(workspacePath);
 
-            // Assert
-            expect(mockedFs.existsSync).toHaveBeenCalledWith(queriesDir);
-            expect(mockedFs.mkdirSync).toHaveBeenCalledWith(queriesDir, { recursive: true });
+            // Assert - directory should NOT be created during construction
+            expect(mockedFs.existsSync).not.toHaveBeenCalled();
+            expect(mockedFs.mkdirSync).not.toHaveBeenCalled();
         });
 
-        it('should not create directory if it already exists', () => {
-            // Arrange
-            mockedFs.existsSync.mockReturnValue(true);
-
+        it('should store workspace path correctly', () => {
             // Act
-            new QueriesService(workspacePath);
+            const service = new QueriesService(workspacePath);
 
-            // Assert
+            // Assert - service should be initialized without creating directories
+            expect(service).toBeDefined();
             expect(mockedFs.mkdirSync).not.toHaveBeenCalled();
         });
     });

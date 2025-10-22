@@ -27,11 +27,12 @@ export class QueriesService {
         this.workspacePath = workspacePath;
         // Use workspace root for queries (default: 'queries/' folder)
         this.queriesDir = path.join(workspacePath, queriesFolder);
-        this.ensureQueriesDir();
+        // Don't create directory on initialization - lazy creation when first query is saved
     }
 
     /**
-     * Create queries directory if it doesn't exist
+     * Create queries directory if it doesn't exist (lazy creation)
+     * Only called when actually needed (e.g., saving a query)
      */
     private ensureQueriesDir(): void {
         try {
@@ -260,6 +261,9 @@ export class QueriesService {
      */
     saveQuery(name: string, kql: string, purpose?: string, useCase?: string, tags?: string[], category?: string, companyName?: string): string {
         try {
+            // Ensure base queries directory exists (lazy creation)
+            this.ensureQueriesDir();
+
             // Auto-detect if query is customer-specific by checking for tenant/company filters
             const isCustomerQuery = companyName || this.detectCustomerQuery(kql);
 
