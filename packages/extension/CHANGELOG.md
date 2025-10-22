@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.19] - 2025-10-22
+
+### Fixed
+- **Settings validation**: Fixed config key mismatch causing "No BCTB settings found" warning after setup - validation now checks correct `bctb.mcp.*` keys that setup wizard actually creates (was incorrectly checking obsolete `bcTelemetryBuddy.*` namespace)
+
 ## [0.2.18] - 2025-10-22
 
 ### Changed
