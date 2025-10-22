@@ -757,3 +757,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-22** - Fixed settings validation config key mismatch [Entry: ebc7c539-2b21-4519-9a95-450884d1de00]
   - **Why:** hasWorkspaceSettings() was checking wrong config keys (bcTelemetryBuddy.*) instead of actual keys (bctb.mcp.*) created by setup wizard
   - **How:** Updated extension.ts (hasWorkspaceSettings), SetupWizardProvider.ts (_validateAuth), and setup-wizard.test.ts to use bctb.mcp.* config namespace consistently
+- **2025-10-22** — Extended 'install chatmode' to 'install chatmodes' with BC Performance Analysis chatmode [Entry: e40a1b3a-8927-47cd-bf73-a9876225c914]
+  - **Why:** Add specialized chatmode for systematic performance analysis focusing on deadlocks, lock timeouts, slow queries, and missing indexes
+  - **How:** Created chatmodeDefinitions.ts with 2 chatmodes (BCTelemetryBuddy general analysis and BCPerformanceAnalysis), updated installChatmodesCommand to install all chatmodes, updated Setup Wizard UI
+- **2025-10-22** - Renamed BC Performance Analysis chatmode filename to include BCTelemetryBuddy prefix [Entry: 20bfb757-ad59-4e9f-973b-8954ae262c1c]
+  - **Why:** Maintain consistent naming convention with main chatmode (BCTelemetryBuddy.chatmode.md)
+  - **How:** Changed filename from BCPerformanceAnalysis.chatmode.md to BCTelemetryBuddy.BCPerformanceAnalysis.chatmode.md in chatmodeDefinitions.ts
+- **2025-10-22** - Fixed chatmode usage instructions in Setup Wizard [Entry: ef4a2cc6-59ac-4f2f-b273-69bdb85d7497]
+  - **Why:** Chatmodes use @workspace selector, not # prefix (# is for chat participants)
+  - **How:** Changed instruction from '#BCTelemetryBuddy or #BCPerformanceAnalysis' to '@workspace then select chatmode from dropdown'

@@ -92,8 +92,8 @@
                 "title": "BC Telemetry Buddy: Show Cache Statistics"
             },
             {
-                "command": "bctb.installChatmode",
-                "title": "BC Telemetry Buddy: Install Chatmode"
+                "command": "bctb.installChatmodes",
+                "title": "BC Telemetry Buddy: Install Chatmodes"
             }
         ],
         "mcpServerDefinitionProviders": [

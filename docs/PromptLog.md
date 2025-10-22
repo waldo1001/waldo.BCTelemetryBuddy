@@ -1419,3 +1419,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "After following the install procedures, some people get the warning (notification): 'No BCTB settings found'. I suspect there is a deviation of settings creation and the settings validation. Maybe it has to do with multi-root workspaces, I don't know..."
 
 ---
+### Entry ID: e40a1b3a-8927-47cd-bf73-a9876225c914 — 2025-10-22 17:19
+> "Extend 'install chatmode' command to 'install chatmodes' and add BC Telemetry Performance Analysis chatmode for systematic performance analysis with deadlocks, lock timeouts, slow queries, and missing indexes."
+
+---
+### Entry ID: 20bfb757-ad59-4e9f-973b-8954ae262c1c - 2025-10-22 17:24
+> "Filename should be BCTelemetryBuddy.BCPerformanceAnalysis.chatmode.md instead of BCPerformanceAnalysis.chatmode.md"
+
+---
+### Entry ID: ef4a2cc6-59ac-4f2f-b273-69bdb85d7497 - 2025-10-22 17:41
+> "Be careful - it's about chatmodes, not about chatparticipants. I don't think this sentence is correct: 'type #BCTelemetryBuddy or #BCPerformanceAnalysis in Copilot Chat'"
+
+---

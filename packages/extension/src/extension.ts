@@ -6,6 +6,7 @@ import { MCPClient } from './mcpClient';
 import { ResultsWebview } from './resultsWebview';
 import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 import { registerChatParticipant } from './chatParticipant';
+import { CHATMODE_DEFINITIONS } from './chatmodeDefinitions';
 
 /**
  * MCP process handle
@@ -355,7 +356,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand()),
         vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
         vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
-        vscode.commands.registerCommand('bctb.installChatmode', () => installChatmodeCommand())
+        vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand())
     );
 
     // Register CodeLens provider for .kql files
@@ -1131,7 +1132,11 @@ async function showCacheStatsCommand(): Promise<void> {
  * Command: Install BC Telemetry Buddy chatmode
  * Creates .github/chatmodes/BCTelemetryBuddy.chatmode.md in workspace
  */
-async function installChatmodeCommand(): Promise<void> {
+/**
+ * Install multiple chatmodes command
+ * Creates .github/chatmodes directory with all available chatmode files
+ */
+async function installChatmodesCommand(): Promise<void> {
     try {
         const workspacePath = getWorkspacePath();
         if (!workspacePath) {
@@ -1139,197 +1144,78 @@ async function installChatmodeCommand(): Promise<void> {
         }
 
         const chatmodeDir = path.join(workspacePath, '.github', 'chatmodes');
-        const chatmodePath = path.join(chatmodeDir, 'BCTelemetryBuddy.chatmode.md');
-
-        // Check if chatmode already exists
-        if (fs.existsSync(chatmodePath)) {
-            const answer = await vscode.window.showInformationMessage(
-                '✅ BC Telemetry Buddy chatmode is already installed!\n\nLocation: .github/chatmodes/BCTelemetryBuddy.chatmode.md',
-                'Open File', 'OK'
-            );
-            if (answer === 'Open File') {
-                const doc = await vscode.workspace.openTextDocument(chatmodePath);
-                await vscode.window.showTextDocument(doc);
-            }
-            return;
-        }
 
         // Create .github/chatmodes directory if it doesn't exist
         if (!fs.existsSync(chatmodeDir)) {
             fs.mkdirSync(chatmodeDir, { recursive: true });
         }
 
-        // Chatmode content
-        const chatmodeContent = `---
-description: 'Expert assistant for analyzing Business Central telemetry data using KQL, with deep knowledge of BC events and performance optimization.'
-tools: ['edit', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'BC Telemetry Buddy/*', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'ms-dynamics-smb.al/al_build', 'ms-dynamics-smb.al/al_download_symbols', 'ms-dynamics-smb.al/al_download_source', 'ms-dynamics-smb.al/al_clear_credentials_cache', 'ms-dynamics-smb.al/al_insert_event', 'ms-dynamics-smb.al/al_clear_profile_codelenses', 'ms-dynamics-smb.al/al_initalize_snapshot_debugging', 'ms-dynamics-smb.al/al_finish_snapshot_debugging', 'ms-dynamics-smb.al/al_go', 'ms-dynamics-smb.al/al_new_project', 'ms-dynamics-smb.al/al_incremental_publish', 'ms-dynamics-smb.al/al_debug_without_publish', 'ms-dynamics-smb.al/al_full_package', 'ms-dynamics-smb.al/al_generate_cpu_profile_file', 'ms-dynamics-smb.al/al_generate_manifest', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects_as_xml', 'ms-dynamics-smb.al/al_open_event_recorder', 'ms-dynamics-smb.al/al_open_page_designer', 'ms-dynamics-smb.al/al_package', 'ms-dynamics-smb.al/al_publish', 'ms-dynamics-smb.al/al_publish_without_debug', 'ms-dynamics-smb.al/al_publish_existing_extension', 'ms-dynamics-smb.al/al_view_snapshots', 'extensions', 'todos']
----
+        // Check which chatmodes already exist
+        const existingChatmodes: string[] = [];
+        const newChatmodes: string[] = [];
 
-# BC Telemetry Buddy - System Instructions
+        for (const chatmode of CHATMODE_DEFINITIONS) {
+            const chatmodePath = path.join(chatmodeDir, chatmode.filename);
+            if (fs.existsSync(chatmodePath)) {
+                existingChatmodes.push(chatmode.title);
+            } else {
+                newChatmodes.push(chatmode.title);
+            }
+        }
 
-You are **BC Telemetry Buddy**, an expert assistant specialized in analyzing Microsoft Dynamics 365 Business Central telemetry data using Azure Application Insights and Kusto Query Language (KQL).
+        // If all chatmodes already exist, show info message
+        if (existingChatmodes.length === CHATMODE_DEFINITIONS.length) {
+            const answer = await vscode.window.showInformationMessage(
+                `✅ All BC Telemetry Buddy chatmodes are already installed!\n\nLocation: .github/chatmodes/\n\n${existingChatmodes.map(t => `• ${t}`).join('\n')}`,
+                'Open Folder', 'OK'
+            );
+            if (answer === 'Open Folder') {
+                const uri = vscode.Uri.file(chatmodeDir);
+                await vscode.commands.executeCommand('revealFileInOS', uri);
+            }
+            return;
+        }
 
-## Core Expertise
+        // Install new chatmodes
+        let installedCount = 0;
+        for (const chatmode of CHATMODE_DEFINITIONS) {
+            const chatmodePath = path.join(chatmodeDir, chatmode.filename);
+            if (!fs.existsSync(chatmodePath)) {
+                fs.writeFileSync(chatmodePath, chatmode.content, 'utf-8');
+                installedCount++;
+                outputChannel.appendLine(`✓ Installed: ${chatmode.title} → ${chatmode.filename}`);
+            }
+        }
 
-### KQL Mastery
-- Expert in writing efficient KQL queries for BC telemetry
-- Understanding of customDimensions schema and field extraction
-- Knowledge of performance optimization patterns
-- Ability to construct complex aggregations and time-series analyses
+        // Show summary message
+        const summaryLines: string[] = [];
+        if (installedCount > 0) {
+            summaryLines.push(`✅ Installed ${installedCount} chatmode(s):`);
+            newChatmodes.forEach(title => summaryLines.push(`  • ${title}`));
+        }
+        if (existingChatmodes.length > 0) {
+            summaryLines.push(`\n⏭️  Already installed (${existingChatmodes.length}):`);
+            existingChatmodes.forEach(title => summaryLines.push(`  • ${title}`));
+        }
+        summaryLines.push(`\nLocation: .github/chatmodes/`);
+        summaryLines.push(`\n💡 Reload VS Code to activate the chatmodes.`);
 
-### Essential Patterns
-Always use these patterns when querying BC telemetry:
-
-\`\`\`kql
-// Extract customDimensions properly
-| extend eventId = tostring(customDimensions.eventId)
-| extend aadTenantId = tostring(customDimensions.aadTenantId)
-| extend companyName = tostring(customDimensions.companyName)
-
-// Time filtering
-| where timestamp >= ago(30d)
-
-// Tenant filtering (CRITICAL - BC uses tenantId, not company names)
-| where tostring(customDimensions.aadTenantId) == "tenant-guid-here"
-\`\`\`
-
-## Available Tools
-
-### BC Telemetry Buddy MCP Tools
-**ALWAYS use these tools first before writing custom queries:**
-
-1. **mcp_bc_telemetry__get_tenant_mapping**
-   - **CRITICAL**: Use this FIRST when user mentions a company/customer name
-   - Maps company names to aadTenantId (required for all queries)
-   - BC telemetry uses tenant GUIDs, not company names for filtering
-
-2. **mcp_bc_telemetry__get_event_catalog**
-   - Discover available BC event IDs with descriptions and status
-   - Use before writing queries about unfamiliar events
-   - Provides documentation links and occurrence counts
-   - Supports filtering by status (success, error, too slow, warning, info)
-
-3. **mcp_bc_telemetry__get_event_field_samples**
-   - **RECOMMENDED**: Use this to understand event structure before querying
-   - Shows actual field names, data types, and sample values from real events
-   - Provides ready-to-use example queries with proper type conversions
-   - Returns event category information from Microsoft Learn
-
-4. **mcp_bc_telemetry__query_telemetry**
-   - Execute KQL queries against BC telemetry data
-   - Automatically includes context from saved queries
-   - Returns results with recommendations
-
-5. **mcp_bc_telemetry__save_query**
-   - Save reusable queries with metadata
-   - Builds knowledge base over time
-
-6. **mcp_bc_telemetry__search_queries**
-   - Find existing saved queries by keywords
-   - Reuse proven query patterns
-
-## Workflow for Analysis
-
-### Step 1: Identify the Customer
-When user mentions a company/customer name:
-\`\`\`
-1. Call mcp_bc_telemetry__get_tenant_mapping with company name
-2. Extract aadTenantId for use in all subsequent queries
-3. NEVER filter by companyName - always use aadTenantId
-\`\`\`
-
-### Step 2: Understand the Events
-Before writing queries about specific events:
-\`\`\`
-1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. Call mcp_bc_telemetry__get_event_field_samples for specific event IDs
-3. Review the example query and field structure provided
-\`\`\`
-
-### Step 3: Query and Analyze
-\`\`\`
-1. Use mcp_bc_telemetry__query_telemetry with proper KQL
-2. Interpret results in business context
-3. Provide actionable insights and recommendations
-4. Save useful queries with mcp_bc_telemetry__save_query
-\`\`\`
-
-## File Organization
-
-### Generic Queries
-Save general-purpose queries under:
-\`\`\`
-queries/
-  ├── Errors/
-  ├── Mapping/
-  └── [descriptive-name].kql
-\`\`\`
-
-### Customer-Specific Analysis
-Save customer-related work under:
-\`\`\`
-Customers/
-  └── [CustomerName]/
-      ├── [Topic]/
-      │   ├── queries/
-      │   └── [CustomerName]_[Topic]_Report.md
-      └── README.md
-\`\`\`
-
-Examples:
-- \`Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md\`
-- \`Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md\`
-
-## Response Style
-
-- **Be concise** but thorough in explanations
-- **Always provide context** - explain what the data means for the business
-- **Include sample queries** with comments explaining each part
-- **Proactive recommendations** - suggest optimizations and investigations
-- **Structure insights** using clear headers and bullet points
-- **Visual aids** - suggest charts/visualizations when appropriate
-- **Next steps** - always suggest what to investigate next
-
-## Critical Reminders
-
-1. **NEVER filter by company name** - always get tenantId first
-2. **ALWAYS check event structure** before writing complex queries
-3. **Use proper type casting** - tostring(), toint(), todouble() as needed
-4. **Save successful queries** - build the knowledge base
-5. **Provide business context** - explain technical findings in business terms
-6. **Focus on actionable insights** - not just data dumps
-
-## Error Handling
-
-- If tenant mapping fails, ask user to verify company name or provide tenantId
-- If query returns no results, suggest checking time range and filters
-- If event fields are unexpected, use mcp_bc_telemetry__get_event_field_samples to verify structure
-- If query fails, check syntax and provide corrected version with explanation
-
-## Your Goal
-
-Help users understand their Business Central system health, performance, and usage patterns through telemetry data analysis. Transform raw telemetry into actionable insights that drive business decisions and system improvements.
-`;
-
-        // Write chatmode file
-        fs.writeFileSync(chatmodePath, chatmodeContent, 'utf-8');
-
-        const openFile = await vscode.window.showInformationMessage(
-            `✅ BC Telemetry Buddy chatmode installed successfully!\n\nLocation: ${chatmodePath}\n\nReload VS Code to activate the chatmode.`,
-            'Open File', 'Reload Window'
+        const openFolder = await vscode.window.showInformationMessage(
+            summaryLines.join('\n'),
+            'Open Folder', 'Reload Window', 'OK'
         );
 
-        if (openFile === 'Open File') {
-            const doc = await vscode.workspace.openTextDocument(chatmodePath);
-            await vscode.window.showTextDocument(doc);
-        } else if (openFile === 'Reload Window') {
+        if (openFolder === 'Open Folder') {
+            const uri = vscode.Uri.file(chatmodeDir);
+            await vscode.commands.executeCommand('revealFileInOS', uri);
+        } else if (openFolder === 'Reload Window') {
             await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
 
-        outputChannel.appendLine(`✓ BC Telemetry Buddy chatmode installed: ${chatmodePath}`);
+        outputChannel.appendLine(`✓ Chatmodes installation complete (${installedCount} new, ${existingChatmodes.length} existing)`);
     } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to install chatmode: ${err.message}`);
-        outputChannel.appendLine(`✗ Install chatmode error: ${err.message}`);
+        vscode.window.showErrorMessage(`Failed to install chatmodes: ${err.message}`);
+        outputChannel.appendLine(`✗ Install chatmodes error: ${err.message}`);
         outputChannel.show();
     }
 }
