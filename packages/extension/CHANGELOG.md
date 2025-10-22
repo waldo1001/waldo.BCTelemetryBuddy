@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.20] - 2025-10-22
+
+### Added
+- **Multiple chatmodes**: Extended chatmode installation to support multiple specialized chatmodes instead of single chatmode
+- **BC Performance Analysis chatmode**: Added comprehensive chatmode for systematic performance analysis focusing on deadlocks, lock timeouts, slow queries, and missing indexes with detailed documentation structure guidelines
+
+### Changed
+- **Chatmode architecture**: Refactored chatmode system - created `chatmodeDefinitions.ts` to centralize chatmode definitions, updated `installChatmodesCommand` to install all chatmodes from array
+- **Chatmode naming**: Renamed BC Performance Analysis chatmode file to `BCTelemetryBuddy.BCPerformanceAnalysis.chatmode.md` for consistent naming with main chatmode
+- **Setup wizard**: Updated chatmode installation UI to show "Install chatmodes (2 specialized modes)" and corrected usage instructions to use `@workspace` selector instead of `#` prefix
+
 ## [0.2.19] - 2025-10-22
 
 ### Fixed
