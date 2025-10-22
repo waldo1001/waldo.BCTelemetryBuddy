@@ -766,3 +766,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-22** - Fixed chatmode usage instructions in Setup Wizard [Entry: ef4a2cc6-59ac-4f2f-b273-69bdb85d7497]
   - **Why:** Chatmodes use @workspace selector, not # prefix (# is for chat participants)
   - **How:** Changed instruction from '#BCTelemetryBuddy or #BCPerformanceAnalysis' to '@workspace then select chatmode from dropdown'
+- **2025-10-22** - Released v0.2.20 with multiple chatmodes support [Entry: 6fe3b5a2-3972-4acb-b9c9-ce01504e2e40]
+  - **Why:** Ship new features (multiple chatmodes + BC Performance Analysis chatmode) to users
+  - **How:** Bumped version 0.2.19→0.2.20, updated CHANGELOGs, committed, pushed to main, created and pushed tag v0.2.20 to trigger CI/CD

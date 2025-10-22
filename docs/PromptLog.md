@@ -1431,3 +1431,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Be careful - it's about chatmodes, not about chatparticipants. I don't think this sentence is correct: 'type #BCTelemetryBuddy or #BCPerformanceAnalysis in Copilot Chat'"
 
 ---
+### Entry ID: 6fe3b5a2-3972-4acb-b9c9-ce01504e2e40 - 2025-10-22 18:16
+> "prep a release [followed by: Ok, create the release]"
+
+---
