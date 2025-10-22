@@ -419,10 +419,10 @@ export function deactivate() {
  * Check if workspace has BCTB settings configured
  */
 function hasWorkspaceSettings(): boolean {
-    const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
-    const tenantId = config.get<string>('tenant.id');
-    const appInsightsId = config.get<string>('appInsights.id');
-    const kustoUrl = config.get<string>('kusto.url');
+    const config = vscode.workspace.getConfiguration('bctb.mcp');
+    const tenantId = config.get<string>('tenantId');
+    const appInsightsId = config.get<string>('applicationInsights.appId');
+    const kustoUrl = config.get<string>('kusto.clusterUrl');
 
     return !!(tenantId && appInsightsId && kustoUrl);
 }

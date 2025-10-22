@@ -132,9 +132,9 @@ export class SetupWizardProvider {
                         : 'Not logged in to Azure CLI (run: az login)';
                 }
             } else if (authFlow === 'device_code' || authFlow === 'client_credentials') {
-                const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
-                const tenantId = config.get<string>('tenant.id');
-                const clientId = config.get<string>('auth.clientId');
+                const config = vscode.workspace.getConfiguration('bctb.mcp');
+                const tenantId = config.get<string>('tenantId');
+                const clientId = config.get<string>('clientId');
 
                 if (authFlow === 'client_credentials') {
                     const clientSecret = config.get<string>('auth.clientSecret');

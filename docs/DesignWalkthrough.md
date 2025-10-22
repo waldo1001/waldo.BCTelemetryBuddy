@@ -751,3 +751,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-22** — Implemented lazy creation for queries folder [Entry: bf3f6722-28ab-4794-90b7-455e1085c072]
   - **Why:** Prevent automatic folder creation on workspace activation when no queries exist yet
   - **How:** Removed ensureQueriesDir() call from QueriesService constructor, moved to saveQuery() method for lazy creation
+- **2025-10-22** — Released v0.2.18 with lazy queries folder creation [Entry: 18d0466c-7c9b-46be-90cc-948df1477144]
+  - **Why:** Deploy lazy folder creation improvement to users
+  - **How:** Updated version to 0.2.18, updated CHANGELOGs, committed, pushed to main, created and pushed tag v0.2.18
+- **2025-10-22** - Fixed settings validation config key mismatch [Entry: ebc7c539-2b21-4519-9a95-450884d1de00]
+  - **Why:** hasWorkspaceSettings() was checking wrong config keys (bcTelemetryBuddy.*) instead of actual keys (bctb.mcp.*) created by setup wizard
+  - **How:** Updated extension.ts (hasWorkspaceSettings), SetupWizardProvider.ts (_validateAuth), and setup-wizard.test.ts to use bctb.mcp.* config namespace consistently

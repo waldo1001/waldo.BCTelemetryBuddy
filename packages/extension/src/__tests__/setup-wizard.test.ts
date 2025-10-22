@@ -112,10 +112,10 @@ describe('SetupWizardProvider Tests', () => {
 
 describe('Setup Wizard Configuration Tests', () => {
     test('should detect missing workspace configuration', async () => {
-        const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
-        const tenantId = config.get<string>('tenant.id');
-        const appInsightsId = config.get<string>('appInsights.id');
-        const kustoUrl = config.get<string>('kusto.url');
+        const config = vscode.workspace.getConfiguration('bctb.mcp');
+        const tenantId = config.get<string>('tenantId');
+        const appInsightsId = config.get<string>('applicationInsights.appId');
+        const kustoUrl = config.get<string>('kusto.clusterUrl');
 
         // This test just checks if we can read configuration
         // Actual values will vary by workspace
@@ -125,18 +125,18 @@ describe('Setup Wizard Configuration Tests', () => {
     });
 
     test('should be able to update workspace configuration', async () => {
-        const config = vscode.workspace.getConfiguration('bcTelemetryBuddy');
+        const config = vscode.workspace.getConfiguration('bctb.mcp');
         const target = vscode.ConfigurationTarget.Workspace;
 
         // Mock will return empty string by default
-        const originalValue = config.get<string>('tenant.name');
+        const originalValue = config.get<string>('connectionName');
         expect(originalValue).toBe('');
 
         // Update config (mock will resolve successfully)
-        await expect(config.update('tenant.name', 'Test Tenant', target)).resolves.toBeUndefined();
+        await expect(config.update('connectionName', 'Test Tenant', target)).resolves.toBeUndefined();
 
         // Verify update was called
-        expect(config.update).toHaveBeenCalledWith('tenant.name', 'Test Tenant', target);
+        expect(config.update).toHaveBeenCalledWith('connectionName', 'Test Tenant', target);
     });
 });
 

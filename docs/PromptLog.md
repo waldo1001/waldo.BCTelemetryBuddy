@@ -1411,3 +1411,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I notice that when I open a new workspace, this extension just adds the 'queries' folder. Is that correct? [Answer: 2 - Lazy creation]"
 
 ---
+### Entry ID: 18d0466c-7c9b-46be-90cc-948df1477144 — 2025-10-22 07:49
+> "Ok, let's prepare a release! [followed by: yes]"
+
+---
+### Entry ID: ebc7c539-2b21-4519-9a95-450884d1de00 - 2025-10-22 07:54
+> "After following the install procedures, some people get the warning (notification): 'No BCTB settings found'. I suspect there is a deviation of settings creation and the settings validation. Maybe it has to do with multi-root workspaces, I don't know..."
+
+---
