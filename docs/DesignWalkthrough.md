@@ -781,3 +781,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-29** — Release v0.2.21 executed [Entry: 9ecd2545-0de7-4ef1-aec4-2d0ce6645549]
   - **Why:** User confirmed to finish release
   - **How:** Pushed main, created and pushed tag v0.2.21; CI/CD triggered for marketplace publish
+- **2025-10-30** — Created release.prompt.md with extracted release workflow [Entry: 5e8f2441-d16d-4eb6-b98f-d19833925135]
+  - **Why:** Separate release instructions into dedicated promptfile for easier reference during releases
+  - **How:** Extracted section 12 (release workflow automation) from .github/copilot-instructions.md into standalone release.prompt.md file

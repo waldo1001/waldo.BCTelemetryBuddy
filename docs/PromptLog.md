@@ -1451,3 +1451,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I committed already - finish the release!"
 
 ---
+### Entry ID: 5e8f2441-d16d-4eb6-b98f-d19833925135 — 2025-10-30 00:08
+> "Copy the instructions about the release process to a new promptfile (release.prompt.md)"
+
+---
