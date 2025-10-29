@@ -1435,3 +1435,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "prep a release [followed by: Ok, create the release]"
 
 ---
+### Entry ID: 71d7512a-624c-4c28-b0d1-ca76f345ac75 — 2025-10-29 22:30
+> "It seems this software will create a ".vscode/.bctb/.cache" folder, even if the tool is not used.  Is that correct?"
+
+---
+### Entry ID: 3ea8de37-8805-44c0-8114-6094f6692c3a — 2025-10-29 23:04
+> "I actually want that the folder is only created when there is cache to be saved .."
+
+---

@@ -22,7 +22,7 @@ describe('CacheService', () => {
     });
 
     describe('constructor', () => {
-        it('should create cache directory when enabled', () => {
+        it('should NOT create cache directory on construction (lazy creation)', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(false);
             mockedFs.mkdirSync.mockReturnValue(undefined);
@@ -31,11 +31,11 @@ describe('CacheService', () => {
             new CacheService(workspacePath, ttlSeconds, true);
 
             // Assert
-            expect(mockedFs.existsSync).toHaveBeenCalledWith(cacheDir);
-            expect(mockedFs.mkdirSync).toHaveBeenCalledWith(cacheDir, { recursive: true });
+            expect(mockedFs.existsSync).not.toHaveBeenCalled();
+            expect(mockedFs.mkdirSync).not.toHaveBeenCalled();
         });
 
-        it('should not create cache directory when disabled', () => {
+        it('should not attempt to create cache directory when disabled', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(false);
 
@@ -45,34 +45,6 @@ describe('CacheService', () => {
             // Assert
             expect(mockedFs.existsSync).not.toHaveBeenCalled();
             expect(mockedFs.mkdirSync).not.toHaveBeenCalled();
-        });
-
-        it('should not create cache directory if it already exists', () => {
-            // Arrange
-            mockedFs.existsSync.mockReturnValue(true);
-
-            // Act
-            new CacheService(workspacePath, ttlSeconds, true);
-
-            // Assert
-            expect(mockedFs.existsSync).toHaveBeenCalledWith(cacheDir);
-            expect(mockedFs.mkdirSync).not.toHaveBeenCalled();
-        });
-
-        it('should handle errors when creating cache directory', () => {
-            // Arrange
-            mockedFs.existsSync.mockReturnValue(false);
-            mockedFs.mkdirSync.mockImplementation(() => {
-                throw new Error('Permission denied');
-            });
-
-            const consoleErrorSpy = jest.spyOn(console, 'error');
-
-            // Act
-            new CacheService(workspacePath, ttlSeconds, true);
-
-            // Assert
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create cache directory:', expect.any(Error));
         });
     });
 
@@ -214,6 +186,25 @@ describe('CacheService', () => {
             );
         });
 
+        it('should lazily create cache directory on first write', () => {
+            // Arrange: directory does not exist at write time
+            mockedFs.existsSync.mockImplementation((p: any) => {
+                return p === cacheDir ? false : true;
+            });
+            mockedFs.mkdirSync.mockReturnValue(undefined);
+            mockedFs.writeFileSync.mockReturnValue(undefined);
+
+            const service = new CacheService(workspacePath, ttlSeconds, true);
+            const testData = { columns: ['col1'], rows: [['value1']] };
+
+            // Act
+            service.set('test query', testData);
+
+            // Assert
+            expect(mockedFs.mkdirSync).toHaveBeenCalledWith(cacheDir, { recursive: true });
+            expect(mockedFs.writeFileSync).toHaveBeenCalled();
+        });
+
         it('should write cache with custom TTL', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(true);
@@ -250,6 +241,23 @@ describe('CacheService', () => {
                 expect.stringContaining('Failed to write cache for key'),
                 expect.any(Error)
             );
+        });
+
+        it('should handle errors creating cache directory on first write', () => {
+            // Arrange: directory doesn't exist and mkdir fails
+            mockedFs.existsSync.mockImplementation((p: any) => p === cacheDir ? false : true);
+            mockedFs.mkdirSync.mockImplementation(() => {
+                throw new Error('Permission denied');
+            });
+
+            const consoleErrorSpy = jest.spyOn(console, 'error');
+            const service = new CacheService(workspacePath, ttlSeconds, true);
+
+            // Act
+            service.set('test query', { data: 'x' });
+
+            // Assert
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create cache directory:', expect.any(Error));
         });
 
         it('should generate consistent cache keys for same query', () => {
@@ -377,6 +385,20 @@ describe('CacheService', () => {
             expect(mockedFs.unlinkSync).toHaveBeenCalledWith(path.join(cacheDir, 'file2.json'));
         });
 
+        it('should handle non-existent cache directory gracefully', () => {
+            // Arrange
+            mockedFs.existsSync.mockReturnValue(false);
+
+            const service = new CacheService(workspacePath, ttlSeconds, true);
+
+            // Act
+            service.clear();
+
+            // Assert
+            expect(mockedFs.readdirSync).not.toHaveBeenCalled();
+            expect(mockedFs.unlinkSync).not.toHaveBeenCalled();
+        });
+
         it('should handle errors clearing cache', () => {
             // Arrange
             mockedFs.existsSync.mockReturnValue(true);
@@ -440,6 +462,19 @@ describe('CacheService', () => {
             // Assert
             expect(mockedFs.unlinkSync).toHaveBeenCalledTimes(1);
             expect(mockedFs.unlinkSync).toHaveBeenCalledWith(path.join(cacheDir, 'expired.json'));
+        });
+
+        it('should handle non-existent cache directory gracefully', () => {
+            // Arrange
+            mockedFs.existsSync.mockReturnValue(false);
+            const service = new CacheService(workspacePath, ttlSeconds, true);
+
+            // Act
+            service.cleanupExpired();
+
+            // Assert
+            expect(mockedFs.readdirSync).not.toHaveBeenCalled();
+            expect(mockedFs.unlinkSync).not.toHaveBeenCalled();
         });
 
         it('should handle errors during cleanup', () => {

@@ -24,10 +24,6 @@ export class CacheService {
         this.cacheDir = path.join(workspacePath, '.vscode', '.bctb', 'cache');
         this.ttlSeconds = ttlSeconds;
         this.enabled = enabled;
-
-        if (this.enabled) {
-            this.ensureCacheDir();
-        }
     }
 
     /**
@@ -101,6 +97,9 @@ export class CacheService {
             return;
         }
 
+        // Lazily create the cache directory only when we actually write cache
+        this.ensureCacheDir();
+
         const key = this.generateKey(query);
         const filePath = this.getCacheFilePath(key);
 
@@ -148,6 +147,10 @@ export class CacheService {
         }
 
         try {
+            if (!fs.existsSync(this.cacheDir)) {
+                // Nothing to clear if directory doesn't exist yet
+                return;
+            }
             const files = fs.readdirSync(this.cacheDir);
 
             for (const file of files) {
@@ -216,6 +219,10 @@ export class CacheService {
         }
 
         try {
+            if (!fs.existsSync(this.cacheDir)) {
+                // Nothing to clean up if directory doesn't exist yet
+                return;
+            }
             const files = fs.readdirSync(this.cacheDir);
             let cleaned = 0;
 

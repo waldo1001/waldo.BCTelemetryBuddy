@@ -769,3 +769,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-22** - Released v0.2.20 with multiple chatmodes support [Entry: 6fe3b5a2-3972-4acb-b9c9-ce01504e2e40]
   - **Why:** Ship new features (multiple chatmodes + BC Performance Analysis chatmode) to users
   - **How:** Bumped version 0.2.19→0.2.20, updated CHANGELOGs, committed, pushed to main, created and pushed tag v0.2.20 to trigger CI/CD
+- **2025-10-29** — Clarified cache folder creation behavior [Entry: 71d7512a-624c-4c28-b0d1-ca76f345ac75]
+  - **Why:** User asked if the extension creates .vscode/.bctb/cache proactively
+  - **How:** Reviewed MCP CacheService and server initialization; folder created at MCP startup when cacheEnabled=true; actual path is .vscode/.bctb/cache
