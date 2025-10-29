@@ -772,3 +772,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-29** — Clarified cache folder creation behavior [Entry: 71d7512a-624c-4c28-b0d1-ca76f345ac75]
   - **Why:** User asked if the extension creates .vscode/.bctb/cache proactively
   - **How:** Reviewed MCP CacheService and server initialization; folder created at MCP startup when cacheEnabled=true; actual path is .vscode/.bctb/cache
+- **2025-10-29** — Make cache folder creation lazy [Entry: 3ea8de37-8805-44c0-8114-6094f6692c3a]
+  - **Why:** Avoid creating .vscode/.bctb/cache unless caching occurs
+  - **How:** Removed ensureCacheDir() from constructor; call it in set(); added exists checks in clear()/cleanupExpired(); updated unit tests
