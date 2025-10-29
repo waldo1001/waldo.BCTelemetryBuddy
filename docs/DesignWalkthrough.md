@@ -775,3 +775,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-29** — Make cache folder creation lazy [Entry: 3ea8de37-8805-44c0-8114-6094f6692c3a]
   - **Why:** Avoid creating .vscode/.bctb/cache unless caching occurs
   - **How:** Removed ensureCacheDir() from constructor; call it in set(); added exists checks in clear()/cleanupExpired(); updated unit tests
+- **2025-10-29** — Prepare release v0.2.21 [Entry: 681ea287-90c3-4dcd-bf34-f1436cd42e24]
+  - **Why:** Publish lazy cache folder creation and related docs
+  - **How:** Bumped extension version to 0.2.21; updated extension and MCP CHANGELOGs; ran npm install in extension to refresh package-lock; built MCP and extension

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.21] - 2025-10-29
+
+### Changed
+- Cache behavior aligned with backend: the cache folder `.vscode/.bctb/cache` is now created lazily only when a cache entry is written. This prevents the folder from appearing in workspaces where caching is not used.
+- No changes required for extension commands: existing "Clear Cache" and "Show Cache Statistics" commands already handle non-existent cache directories gracefully.
+
 ## [0.2.20] - 2025-10-22
 
 ### Added

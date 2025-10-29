@@ -1443,3 +1443,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I actually want that the folder is only created when there is cache to be saved .."
 
 ---
+### Entry ID: 681ea287-90c3-4dcd-bf34-f1436cd42e24 — 2025-10-29 23:31
+> "Prepare a release"
+
+---

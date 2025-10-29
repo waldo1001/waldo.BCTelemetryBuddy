@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.21] - 2025-10-29
+
+### Changed
+- Cache folder creation made lazy: `.vscode/.bctb/cache` is no longer created at server startup. It's created only on first cache write.
+- `clear()` and `cleanupExpired()` now return early if the cache directory does not exist, avoiding unnecessary filesystem operations.
+
 ## [0.2.20] - 2025-10-22
 
 ### Changed
