@@ -778,3 +778,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-29** — Prepare release v0.2.21 [Entry: 681ea287-90c3-4dcd-bf34-f1436cd42e24]
   - **Why:** Publish lazy cache folder creation and related docs
   - **How:** Bumped extension version to 0.2.21; updated extension and MCP CHANGELOGs; ran npm install in extension to refresh package-lock; built MCP and extension
+- **2025-10-29** — Release v0.2.21 executed [Entry: 9ecd2545-0de7-4ef1-aec4-2d0ce6645549]
+  - **Why:** User confirmed to finish release
+  - **How:** Pushed main, created and pushed tag v0.2.21; CI/CD triggered for marketplace publish
