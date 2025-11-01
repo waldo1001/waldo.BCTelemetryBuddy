@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.22] - 2025-11-01
+
+### Added
+- **Multi-root workspace blocking**: Setup Wizard now detects and blocks multi-root workspaces with clear error message and instructions to use single-folder workspace
+- **Settings pre-fill**: Setup Wizard now pre-fills existing settings when revealing the panel, improving user experience when reconfiguring
+- **Reload prompt**: Added prompt to reload VS Code after saving settings to ensure MCP server picks up configuration changes
+
+### Fixed
+- **Configuration reading**: Fixed configuration reading to use resource-scoped approach for workspace folder settings, ensuring settings are read correctly when saved to `.vscode/settings.json`
+- **Settings save location**: Ensured settings are always saved to `ConfigurationTarget.WorkspaceFolder` (`.vscode/settings.json`) for proper single-folder workspace support
+
+### Changed
+- **Documentation**: Updated UserGuide.md to clearly document multi-root workspace non-support with examples
+
 ## [0.2.21] - 2025-10-29
 
 ### Changed

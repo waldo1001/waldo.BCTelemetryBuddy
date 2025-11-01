@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.22] - 2025-11-01
+
+### Changed
+- No MCP backend changes in this release (extension-only changes for workspace validation and configuration handling)
+
 ## [0.2.21] - 2025-10-29
 
 ### Changed
