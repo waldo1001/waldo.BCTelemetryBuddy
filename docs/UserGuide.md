@@ -153,6 +153,46 @@ The extension will:
 
 ---
 
+## Multi-Root Workspace Support
+
+**⚠️ BC Telemetry Buddy does NOT support multi-root workspaces.**
+
+### Single-Root Workspaces (Supported)
+
+BC Telemetry Buddy works with **single-root workspaces only** (one folder open). Settings are saved to `.vscode/settings.json` in the workspace folder.
+
+### Multi-Root Workspaces (Not Supported)
+
+If you have multiple folders open in a multi-root workspace (`.code-workspace` file), the Setup Wizard will display an error and prevent configuration.
+
+**Why?** 
+- The MCP server requires settings to be stored in a folder's `.vscode/settings.json` file
+- Multi-root workspaces use workspace files (`.code-workspace`) which are not supported
+- This ensures clear, predictable configuration without ambiguity about which settings apply
+
+**Need different telemetry connections for different projects?**
+
+Open each project as a **separate single-root workspace**:
+1. Close the multi-root workspace
+2. Open each project individually (File → Open Folder)
+3. Configure each workspace independently with its own telemetry connection
+4. Switch between workspaces as needed
+
+**Example - Correct Setup:**
+
+```
+❌ DON'T: Multi-root workspace
+MyMultiRootWorkspace.code-workspace
+├── ProjectA/
+└── ProjectB/
+
+✅ DO: Separate single-root workspaces
+Workspace 1: C:\Projects\ProjectA\ (with .vscode/settings.json)
+Workspace 2: C:\Projects\ProjectB\ (with .vscode/settings.json)
+```
+
+---
+
 ## Authentication
 
 BC Telemetry Buddy supports three authentication methods:

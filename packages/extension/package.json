@@ -108,17 +108,20 @@
                 "bctb.mcp.connectionName": {
                     "type": "string",
                     "default": "",
-                    "description": "Friendly name for this telemetry connection"
+                    "description": "Friendly name for this telemetry connection",
+                    "scope": "resource"
                 },
                 "bctb.mcp.tenantId": {
                     "type": "string",
                     "default": "",
-                    "description": "Azure tenant ID (not needed for azure_cli flow, which uses current az login session)"
+                    "description": "Azure tenant ID (not needed for azure_cli flow, which uses current az login session)",
+                    "scope": "resource"
                 },
                 "bctb.mcp.clientId": {
                     "type": "string",
                     "default": "",
-                    "description": "Azure client ID (not needed for azure_cli or device_code flows, required for client_credentials)"
+                    "description": "Azure client ID (not needed for azure_cli or device_code flows, required for client_credentials)",
+                    "scope": "resource"
                 },
                 "bctb.mcp.authFlow": {
                     "type": "string",
@@ -128,57 +131,68 @@
                         "client_credentials"
                     ],
                     "default": "azure_cli",
-                    "description": "Authentication flow to use (azure_cli uses 'az login' cached credentials, device_code requires browser login each time, client_credentials uses service principal)"
+                    "description": "Authentication flow to use (azure_cli uses 'az login' cached credentials, device_code requires browser login each time, client_credentials uses service principal)",
+                    "scope": "resource"
                 },
                 "bctb.mcp.applicationInsights.appId": {
                     "type": "string",
                     "default": "",
-                    "description": "Application Insights application ID"
+                    "description": "Application Insights application ID",
+                    "scope": "resource"
                 },
                 "bctb.mcp.kusto.clusterUrl": {
                     "type": "string",
                     "default": "",
-                    "description": "Kusto cluster URL"
+                    "description": "Kusto cluster URL",
+                    "scope": "resource"
                 },
                 "bctb.mcp.cache.enabled": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable file-based caching"
+                    "description": "Enable file-based caching",
+                    "scope": "resource"
                 },
                 "bctb.mcp.cache.ttlSeconds": {
                     "type": "number",
                     "default": 3600,
-                    "description": "Cache TTL in seconds"
+                    "description": "Cache TTL in seconds",
+                    "scope": "resource"
                 },
                 "bctb.mcp.sanitize.removePII": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Enable PII sanitization (opt-in)"
+                    "description": "Enable PII sanitization (opt-in)",
+                    "scope": "resource"
                 },
                 "bctb.mcp.port": {
                     "type": "number",
                     "default": 52345,
-                    "description": "MCP server port"
+                    "description": "MCP server port",
+                    "scope": "resource"
                 },
                 "bctb.mcp.url": {
                     "type": "string",
                     "default": "http://localhost:52345",
-                    "description": "MCP server URL"
+                    "description": "MCP server URL",
+                    "scope": "resource"
                 },
                 "bctb.agent.maxRetries": {
                     "type": "number",
                     "default": 3,
-                    "description": "Maximum retry attempts for failed queries"
+                    "description": "Maximum retry attempts for failed queries",
+                    "scope": "resource"
                 },
                 "bctb.queries.folder": {
                     "type": "string",
                     "default": "queries",
-                    "description": "Folder for saved KQL queries (relative to workspace root)"
+                    "description": "Folder for saved KQL queries (relative to workspace root)",
+                    "scope": "resource"
                 },
                 "bctb.mcp.references": {
                     "type": "array",
                     "default": [],
                     "description": "External reference sources for KQL examples",
+                    "scope": "resource",
                     "items": {
                         "type": "object",
                         "properties": {

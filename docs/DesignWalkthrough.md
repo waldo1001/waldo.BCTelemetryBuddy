@@ -784,3 +784,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-10-30** — Created release.prompt.md with extracted release workflow [Entry: 5e8f2441-d16d-4eb6-b98f-d19833925135]
   - **Why:** Separate release instructions into dedicated promptfile for easier reference during releases
   - **How:** Extracted section 12 (release workflow automation) from .github/copilot-instructions.md into standalone release.prompt.md file
+- **2025-11-01** — Enhanced Setup Wizard with multiroot workspace and settings level support [Entry: ded80b2f-2dc9-4452-acb8-216b00ae16fd]
+  - **Why:** Users need control over where settings are saved in multiroot workspaces and visibility into which settings levels are active
+  - **How:** Added save target dropdown (workspace file vs folder), settings level detection UI, and configuration API support for folder-level settings
+- **2025-11-01** — Fixed folder selector in Setup Wizard with smart defaults [Entry: f983a36c-1f5c-48d4-afe8-281dd8db7476]
+  - **Why:** Folder dropdown was empty because workspace validation wasn't triggered on load, and no default folder was selected
+  - **How:** Added validateWorkspace message on load, detect active editor's folder index, populate dropdowns with workspace folders and set smart defaults
+- **2025-11-01** — Simplified multiroot workspace support with folder settings warning [Entry: 11d17a6a-dd03-4afd-a3d9-8bd0bb282455]
+  - **Why:** User wanted simple rule for multiroot workspaces: always use workspace file settings, ignore folder-level settings, warn when folder settings exist.
+  - **How:** Enhanced _validateWorkspace() to detect multiroot and check folder-level settings across all folders. Added multirootWarning div to HTML Step 5. Added JavaScript workspaceValidation handler to show/hide warning and update UI messages. Updated goToStep() to trigger validation on Step 5. Added "scope": "resource" to all bctb.* settings in package.json. Updated UserGuide.md with new multi-root workspace section explaining behavior and limitations.

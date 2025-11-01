@@ -1455,3 +1455,38 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Copy the instructions about the release process to a new promptfile (release.prompt.md)"
 
 ---
+### Entry ID: ded80b2f-2dc9-4452-acb8-216b00ae16fd — 2025-11-01 12:54
+> "I noticed that the Telemetry buddy in a multiroot workspace, the wizard will save the settings in the workspacefile. I want it to be an option: either save settings in the settings.json of one of the projects (dropdown), OR the workspacefile. Also when using settings, IF there are multiple levels of settings, the buddy should ask which settings to take into account."
+
+---
+### Entry ID: f983a36c-1f5c-48d4-afe8-281dd8db7476 — 2025-11-01 13:01
+> "In the setup wizard, it doesn't show any folders in the 'Select Folder' box. It should show the projects of the multiroot workspaces (the workspaces), by default the one that is opened in the active editor - if no document open, the first workspace."
+
+---
+### Entry ID: 11d17a6a-dd03-4afd-a3d9-8bd0bb282455 — 2025-11-01 13:31
+> "Simplified multiroot workspace approach: In multiroot, always use workspace file settings. In single-root, use folder settings. Add warning if folder-level settings exist in multiroot (they'll be ignored). If users need per-project settings, open projects separately as single-root workspaces."
+
+---
+
+### Entry ID: 7ef4bbd0-26c8-4fbc-b226-a10fe4faf350 — 2025-11-01 13:53
+> "User confirmed multiroot workspace blocking implementation is complete and ready for testing"
+
+
+### Entry ID: efa05cf9-1f2b-4899-91cb-a50cd342c25b — 2025-11-01 14:54
+> "User reported 'Unable to write to Folder Settings because no resource is provided' error when saving to single-folder workspace. Fixed by using resource-scoped configuration: getConfiguration('bctb.mcp', folderUri) instead of unscoped getConfiguration('bctb.mcp')."
+
+
+### Entry ID: 617034cb-4333-4791-9738-ce9f55459b17 — 2025-11-01 14:56
+> "User requested: After saving the settings, make sure the user reloads VSCode. Added information message with 'Reload Window' button that executes workbench.action.reloadWindow command."
+
+
+### Entry ID: c5e32817-87ca-4c18-8dc7-702cb228f141 — 2025-11-01 14:59
+> "User requested: When there are already settings in a settings file, the setup wizard must display them by pre-filling the boxes in the wizard. Fixed by making show() async and calling _sendCurrentSettings() when revealing existing panel, ensuring settings are always refreshed when wizard is opened."
+
+
+### Entry ID: 428455e2-b2c0-485c-ab9e-c249fc833f70 — 2025-11-01 15:02
+> "User reported settings still not pre-filling. Fixed by making _sendCurrentSettings() use resource-scoped configuration getConfiguration('bctb.mcp', folderUri) instead of unscoped getConfiguration('bctb.mcp'). Added console.log debug statements and null checks in populateSettings() to ensure elements exist before setting values."
+
+
+### Entry ID: f71963e1-ec33-49b7-bd52-a895515d060b — 2025-11-01 15:04
+> "CRITICAL FIX: User reported MCP server not loading settings (BCTB_APP_INSIGHTS_ID and BCTB_KUSTO_URL missing). Root cause: provideMcpServerDefinitions() was using unscoped getConfiguration('bctb') instead of resource-scoped getConfiguration('bctb', folderUri). Fixed to read from workspace folder's .vscode/settings.json like _saveSettings() and _sendCurrentSettings()."

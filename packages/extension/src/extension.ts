@@ -37,7 +37,13 @@ function registerMCPServerDefinitionProvider(context: vscode.ExtensionContext): 
                 return [];
             }
 
-            const config = vscode.workspace.getConfiguration('bctb');
+            // Get resource-scoped configuration for the workspace folder
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+            const config = vscode.workspace.getConfiguration('bctb', folderUri);
+
+            outputChannel.appendLine(`Reading configuration from workspace folder: ${folderUri?.fsPath || 'none'}`);
+
             // Fixed for marketplace: MCP server bundled at mcp/dist/server.js within extension directory
             // Use launcher.js to force CommonJS interpretation (avoids VSIX .cjs installation issues)
             const mcpScriptPath = path.join(context.extensionPath, 'mcp', 'dist', 'launcher.js');
@@ -343,8 +349,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('bctb.setupWizard', () => {
-            setupWizard?.show();
+        vscode.commands.registerCommand('bctb.setupWizard', async () => {
+            await setupWizard?.show();
         }),
         vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
         vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
@@ -448,8 +454,8 @@ async function checkAndShowSetupWizard(context: vscode.ExtensionContext): Promis
             await context.globalState.update('bctb.hasSeenSetupWizard', true);
 
             // Show wizard after a short delay to let activation complete
-            setTimeout(() => {
-                setupWizard?.show();
+            setTimeout(async () => {
+                await setupWizard?.show();
             }, 1000);
         }
     } else if (isConfigured) {

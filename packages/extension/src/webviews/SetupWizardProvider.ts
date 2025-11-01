@@ -14,14 +14,16 @@ export class SetupWizardProvider {
 
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
-    public show() {
+    public async show() {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, show it
+        // If we already have a panel, show it and refresh settings
         if (this._panel) {
             this._panel.reveal(column);
+            // Send current settings when revealing existing panel
+            await this._sendCurrentSettings();
             return;
         }
 
@@ -87,10 +89,12 @@ export class SetupWizardProvider {
     private async _validateWorkspace(): Promise<void> {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+        const isMultiRoot = workspaceFolders && workspaceFolders.length > 1;
 
         this._panel?.webview.postMessage({
             type: 'workspaceValidation',
             hasWorkspace,
+            isMultiRoot,
             workspacePath: hasWorkspace ? workspaceFolders[0].uri.fsPath : null
         });
     }
@@ -245,8 +249,20 @@ export class SetupWizardProvider {
 
     private async _saveSettings(settings: any): Promise<void> {
         try {
-            const config = vscode.workspace.getConfiguration('bctb.mcp');
-            const target = vscode.ConfigurationTarget.Workspace;
+            // Block multiroot workspaces
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                throw new Error('No workspace folder open. Please open a folder first.');
+            }
+            if (workspaceFolders.length > 1) {
+                throw new Error('Multi-root workspaces are not supported. Please open a single folder workspace.');
+            }
+
+            // ALWAYS save to WorkspaceFolder (single folder's .vscode/settings.json), NEVER to Workspace file
+            // Get resource-scoped configuration for the workspace folder
+            const folderUri = workspaceFolders[0].uri;
+            const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
+            const target = vscode.ConfigurationTarget.WorkspaceFolder;
 
             // Save connection name and tenant settings
             if (settings.tenantName) {
@@ -279,10 +295,19 @@ export class SetupWizardProvider {
             this._panel?.webview.postMessage({
                 type: 'settingsSaved',
                 success: true,
-                message: 'Settings saved to workspace configuration'
+                message: 'Settings saved to folder configuration (.vscode/settings.json)'
             });
 
-            vscode.window.showInformationMessage('BC Telemetry Buddy settings saved successfully!');
+            // Prompt user to reload VS Code for settings to take effect
+            const reloadAction = 'Reload Window';
+            const result = await vscode.window.showInformationMessage(
+                'BC Telemetry Buddy settings saved successfully! Please reload VS Code for the changes to take effect.',
+                reloadAction
+            );
+
+            if (result === reloadAction) {
+                await vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
         } catch (error: any) {
             this._panel?.webview.postMessage({
                 type: 'settingsSaved',
@@ -351,7 +376,10 @@ export class SetupWizardProvider {
     }
 
     private async _sendCurrentSettings(): Promise<void> {
-        const config = vscode.workspace.getConfiguration('bctb.mcp');
+        // Get resource-scoped configuration (same as _saveSettings)
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+        const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
 
         const settings = {
             tenantName: config.get<string>('connectionName') || '',
@@ -362,6 +390,8 @@ export class SetupWizardProvider {
             clientId: config.get<string>('clientId') || '',
             clientSecret: '' // Not stored in settings for security
         };
+
+        console.log('[SetupWizard] Sending current settings:', settings);
 
         this._panel?.webview.postMessage({
             type: 'currentSettings',
@@ -606,24 +636,40 @@ export class SetupWizardProvider {
             <h2>Welcome to BC Telemetry Buddy! 👋</h2>
             <p>This setup wizard will guide you through configuring your connection to Azure Data Explorer (Kusto) and Application Insights for analyzing Business Central telemetry.</p>
             
-            <h3>What you'll need:</h3>
-            <ul>
-                <li>✅ Azure subscription with access to Application Insights</li>
-                <li>✅ Application Insights resource with BC telemetry data</li>
-                <li>✅ Azure Data Explorer (Kusto) cluster URL and database</li>
-                <li>✅ Authentication credentials (Azure CLI recommended)</li>
-            </ul>
-
-            <div class="links">
-                <h4>📚 Helpful Resources:</h4>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview">Business Central Telemetry Overview</a>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview">Application Insights Documentation</a>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/azure/data-explorer/">Azure Data Explorer Documentation</a>
+            <!-- Multi-root workspace error -->
+            <div id="multirootError" style="display: none; background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <h3 style="margin-top: 0; color: #721c24;">⚠️ Multi-Root Workspaces Not Supported</h3>
+                <p><strong>BC Telemetry Buddy does not support multi-root workspaces.</strong></p>
+                <p>You currently have multiple folders open in this workspace. Settings must be saved to a single folder's <code>.vscode/settings.json</code> file, which is not possible with multi-root workspaces.</p>
+                <p><strong>To proceed:</strong></p>
+                <ol>
+                    <li>Close this workspace</li>
+                    <li>Open a single folder (File → Open Folder)</li>
+                    <li>Run the Setup Wizard again</li>
+                </ol>
+                <p>If you need different BC Telemetry configurations for different projects, open each project as a separate single-folder workspace.</p>
             </div>
 
-            <div class="button-group">
-                <div></div>
-                <button onclick="nextStep()">Next →</button>
+            <div id="welcomeContent">
+                <h3>What you'll need:</h3>
+                <ul>
+                    <li>✅ Azure subscription with access to Application Insights</li>
+                    <li>✅ Application Insights resource with BC telemetry data</li>
+                    <li>✅ Azure Data Explorer (Kusto) cluster URL and database</li>
+                    <li>✅ Authentication credentials (Azure CLI recommended)</li>
+                </ul>
+
+                <div class="links">
+                    <h4>📚 Helpful Resources:</h4>
+                    <a href="#" data-url="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview">Business Central Telemetry Overview</a>
+                    <a href="#" data-url="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview">Application Insights Documentation</a>
+                    <a href="#" data-url="https://learn.microsoft.com/en-us/azure/data-explorer/">Azure Data Explorer Documentation</a>
+                </div>
+
+                <div class="button-group">
+                    <div></div>
+                    <button id="nextButton" onclick="nextStep()">Next →</button>
+                </div>
             </div>
         </div>
 
@@ -766,9 +812,17 @@ export class SetupWizardProvider {
             <h2>🎉 Setup Complete!</h2>
             <p>Your BC Telemetry Buddy is ready to use.</p>
 
+            <!-- Warning for multiroot with folder-level settings -->
+            <div id="multirootWarning" class="links" style="display: none; margin-bottom: 20px; padding: 15px; background: #3a2d00; border-radius: 4px; border-left: 4px solid var(--vscode-editorWarning-foreground);">
+                <h4>⚠️ Multiroot Workspace Detected</h4>
+                <p>Your workspace has multiple folders, and some have folder-level BC Telemetry Buddy settings that <strong>will be ignored</strong>.</p>
+                <p id="multirootWarningDetails"></p>
+                <p style="margin-top: 10px;"><strong>Solution:</strong> To use per-project settings, open each project as a separate single-root workspace. In multiroot workspaces, only workspace file settings are used.</p>
+            </div>
+
             <div class="links">
                 <h4>✅ Configuration Summary</h4>
-                <p>Your settings will be saved to <code>.vscode/settings.json</code> in your workspace.</p>
+                <p id="settingsLocationMessage">Your settings will be saved to <code>.vscode/settings.json</code> in your workspace.</p>
                 <p><em>For optional features (queries folder, cache TTL, CodeLens), see the README.</em></p>
             </div>
 
@@ -812,8 +866,14 @@ export class SetupWizardProvider {
         let currentStep = 1;
         const totalSteps = 5;
 
-        // Request current settings on load
+        // State variables
+        let isMultiRoot = false;
+        let hasFolderLevelSettings = false;
+        let foldersWithSettings = [];
+
+        // Request current settings and validate workspace on load
         window.addEventListener('load', () => {
+            vscode.postMessage({ type: 'validateWorkspace' });
             vscode.postMessage({ type: 'requestCurrentSettings' });
         });
 
@@ -836,19 +896,55 @@ export class SetupWizardProvider {
                 case 'chatmodeInstalled':
                     showChatmodeStatus(message);
                     break;
+                case 'workspaceValidation':
+                    handleWorkspaceValidation(message);
+                    break;
             }
         });
 
+        function handleWorkspaceValidation(message) {
+            const isMultiRoot = message.isMultiRoot || false;
+            const errorDiv = document.getElementById('multirootError');
+            const welcomeContent = document.getElementById('welcomeContent');
+            const nextButton = document.getElementById('nextButton');
+
+            if (isMultiRoot) {
+                // Show error, hide welcome content, disable Next button
+                if (errorDiv) errorDiv.style.display = 'block';
+                if (welcomeContent) welcomeContent.style.display = 'none';
+                if (nextButton) nextButton.disabled = true;
+            } else {
+                // Hide error, show welcome content, enable Next button
+                if (errorDiv) errorDiv.style.display = 'none';
+                if (welcomeContent) welcomeContent.style.display = 'block';
+                if (nextButton) nextButton.disabled = false;
+            }
+        }
+
         function populateSettings(settings) {
-            document.getElementById('tenantName').value = settings.tenantName || '';
-            document.getElementById('tenantId').value = settings.tenantId || '';
-            document.getElementById('appInsightsId').value = settings.appInsightsId || '';
-            document.getElementById('kustoUrl').value = settings.kustoUrl || '';
-            document.getElementById('authFlow').value = settings.authFlow || 'azure_cli';
-            document.getElementById('deviceCodeClientId').value = settings.clientId || '';
-            document.getElementById('spClientId').value = settings.clientId || '';
-            document.getElementById('clientSecret').value = settings.clientSecret || '';
+            console.log('[SetupWizard] Populating settings:', settings);
             
+            const tenantNameEl = document.getElementById('tenantName');
+            const tenantIdEl = document.getElementById('tenantId');
+            const appInsightsIdEl = document.getElementById('appInsightsId');
+            const kustoUrlEl = document.getElementById('kustoUrl');
+            const authFlowEl = document.getElementById('authFlow');
+            
+            if (tenantNameEl) tenantNameEl.value = settings.tenantName || '';
+            if (tenantIdEl) tenantIdEl.value = settings.tenantId || '';
+            if (appInsightsIdEl) appInsightsIdEl.value = settings.appInsightsId || '';
+            if (kustoUrlEl) kustoUrlEl.value = settings.kustoUrl || '';
+            if (authFlowEl) authFlowEl.value = settings.authFlow || 'azure_cli';
+            
+            const deviceCodeClientIdEl = document.getElementById('deviceCodeClientId');
+            const spClientIdEl = document.getElementById('spClientId');
+            const clientSecretEl = document.getElementById('clientSecret');
+            
+            if (deviceCodeClientIdEl) deviceCodeClientIdEl.value = settings.clientId || '';
+            if (spClientIdEl) spClientIdEl.value = settings.clientId || '';
+            if (clientSecretEl) clientSecretEl.value = settings.clientSecret || '';
+            
+            console.log('[SetupWizard] Settings populated successfully');
             updateAuthFields();
         }
 
@@ -874,6 +970,11 @@ export class SetupWizardProvider {
             currentStep = step;
             document.querySelector(\`.step-content[data-step="\${currentStep}"]\`).classList.add('active');
             document.querySelector(\`.wizard-step[data-step="\${currentStep}"]\`).classList.add('active');
+
+            // Trigger workspace validation when entering Step 5 (Complete)
+            if (currentStep === 5) {
+                vscode.postMessage({ type: 'validateWorkspace' });
+            }
         }
 
         function updateAuthFields() {
