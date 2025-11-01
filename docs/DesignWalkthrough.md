@@ -793,3 +793,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-01** — Simplified multiroot workspace support with folder settings warning [Entry: 11d17a6a-dd03-4afd-a3d9-8bd0bb282455]
   - **Why:** User wanted simple rule for multiroot workspaces: always use workspace file settings, ignore folder-level settings, warn when folder settings exist.
   - **How:** Enhanced _validateWorkspace() to detect multiroot and check folder-level settings across all folders. Added multirootWarning div to HTML Step 5. Added JavaScript workspaceValidation handler to show/hide warning and update UI messages. Updated goToStep() to trigger validation on Step 5. Added "scope": "resource" to all bctb.* settings in package.json. Updated UserGuide.md with new multi-root workspace section explaining behavior and limitations.
+- **2025-11-01** — Release v0.2.22: Multi-root workspace blocking and configuration fixes [Entry: f9e1111f-5dff-4780-a702-8939f5eac51a]
+  - **Why:** Package and deploy changes for multi-root workspace blocking, resource-scoped configuration, settings pre-fill, and reload prompt.
+  - **How:** Bumped version to 0.2.22, updated extension and MCP CHANGELOGs, committed changes, created and pushed git tag v0.2.22 to trigger GitHub Actions CI/CD pipeline.

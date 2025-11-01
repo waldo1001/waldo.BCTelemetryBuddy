@@ -1490,3 +1490,8 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 
 ### Entry ID: f71963e1-ec33-49b7-bd52-a895515d060b — 2025-11-01 15:04
 > "CRITICAL FIX: User reported MCP server not loading settings (BCTB_APP_INSIGHTS_ID and BCTB_KUSTO_URL missing). Root cause: provideMcpServerDefinitions() was using unscoped getConfiguration('bctb') instead of resource-scoped getConfiguration('bctb', folderUri). Fixed to read from workspace folder's .vscode/settings.json like _saveSettings() and _sendCurrentSettings()."
+
+### Entry ID: f9e1111f-5dff-4780-a702-8939f5eac51a — 2025-11-01 15:44
+> "Prepare a release"
+
+---
