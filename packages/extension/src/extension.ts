@@ -339,8 +339,10 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy');
     outputChannel.appendLine('BC Telemetry Buddy extension activated');
 
-    // Initialize MCP client
-    const config = vscode.workspace.getConfiguration('bctb');
+    // Initialize MCP client with resource-scoped configuration
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+    const config = vscode.workspace.getConfiguration('bctb', folderUri);
     const mcpUrl = config.get<string>('mcp.url', 'http://localhost:52345');
     mcpClient = new MCPClient(mcpUrl, outputChannel);
 
@@ -426,7 +428,10 @@ export function deactivate() {
  * Check if workspace has BCTB settings configured
  */
 function hasWorkspaceSettings(): boolean {
-    const config = vscode.workspace.getConfiguration('bctb.mcp');
+    // CRITICAL: Use resource-scoped configuration for the workspace folder
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+    const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
     const tenantId = config.get<string>('tenantId');
     const appInsightsId = config.get<string>('applicationInsights.appId');
     const kustoUrl = config.get<string>('kusto.clusterUrl');
@@ -508,9 +513,28 @@ function handleDeviceCodeMessage(message: string): void {
  * Start MCP server process
  */
 async function startMCP(): Promise<void> {
-    if (mcpProcess) {
-        outputChannel.appendLine('MCP already running');
-        return;
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+    const config = vscode.workspace.getConfiguration('bctb', folderUri);
+
+    // IMPORTANT: Use different port for command palette queries vs Copilot Chat
+    // - Copilot Chat uses stdio mode (managed by VSCode, port doesn't matter)
+    // - Debug MCP Server launch config uses port 52345
+    // - Command palette HTTP server uses port 52346 to avoid conflicts
+    const configPort = config.get<number>('mcp.port', 52345);
+    const port = configPort === 52345 ? 52346 : configPort; // Shift to 52346 for commands
+
+    // Check if MCP is already running (only trust our own tracked process)
+    if (mcpProcess && mcpProcess.port === port) {
+        outputChannel.appendLine('MCP process already tracked - checking health...');
+        const isHealthy = await mcpClient?.healthCheck();
+        if (isHealthy) {
+            outputChannel.appendLine('✓ MCP server is healthy and running');
+            return;
+        } else {
+            outputChannel.appendLine('⚠️ MCP process exists but health check failed - will restart');
+            mcpProcess = null;
+        }
     }
 
     const workspacePath = getWorkspacePath();
@@ -518,8 +542,7 @@ async function startMCP(): Promise<void> {
         throw new Error('No workspace folder open');
     }
 
-    const config = vscode.workspace.getConfiguration('bctb');
-    const port = config.get<number>('mcp.port', 52345);
+    outputChannel.appendLine(`Reading configuration from workspace: ${folderUri?.fsPath || 'none'}`);
 
     // Build environment variables from workspace settings
     const env = buildMCPEnvironment(config, workspacePath);
@@ -528,14 +551,19 @@ async function startMCP(): Promise<void> {
     // The stdio server (for Copilot) is managed separately by VSCode
     env.BCTB_MODE = 'http';
 
-    outputChannel.appendLine(`Starting MCP server on port ${port}...`);
+    // Override port to use the shifted port (52346 instead of 52345)
+    env.BCTB_PORT = port.toString();
+
+    outputChannel.appendLine(`Starting MCP server on port ${port} (command palette mode)...`);
     outputChannel.appendLine(`Workspace: ${workspacePath}`);
+    outputChannel.appendLine(`Note: Debug MCP Server uses port 52345, command palette uses ${port}`);
 
     // Find MCP server executable
     // Use launcher.js to force CommonJS module semantics (avoids VSIX .cjs installation issues)
     const mcpServerPath = path.join(__dirname, '..', '..', 'mcp', 'dist', 'launcher.js');
 
     // Spawn MCP process
+    outputChannel.appendLine(`Spawning: node ${mcpServerPath}`);
     const proc = child_process.spawn('node', [mcpServerPath], {
         env: { ...process.env, ...env },
         cwd: workspacePath
@@ -550,9 +578,29 @@ async function startMCP(): Promise<void> {
     });
 
     proc.stderr?.on('data', (data) => {
-        // MCP server already prefixes stderr output with [MCP] or [MCP] ERROR:
-        // so just pass it through without adding another prefix
-        outputChannel.appendLine(data.toString().trim());
+        const errorMsg = data.toString().trim();
+        outputChannel.appendLine(errorMsg);
+
+        // Detect EADDRINUSE error
+        if (errorMsg.includes('EADDRINUSE') || errorMsg.includes('address already in use')) {
+            outputChannel.appendLine('⚠️ Port already in use - server may already be running');
+            // Try to connect to existing server
+            setTimeout(async () => {
+                try {
+                    const isHealthy = await mcpClient?.healthCheck();
+                    if (isHealthy) {
+                        outputChannel.appendLine('✓ Connected to existing MCP server');
+                    }
+                } catch (err) {
+                    outputChannel.appendLine('❌ Could not connect to server on port - may need to restart VSCode');
+                }
+            }, 1000);
+        }
+    });
+
+    proc.on('error', (err) => {
+        outputChannel.appendLine(`❌ MCP process error: ${err.message}`);
+        mcpProcess = null;
     });
 
     proc.on('close', (code) => {
@@ -576,22 +624,30 @@ async function startMCP(): Promise<void> {
  * Build environment variables for MCP from workspace settings
  */
 function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePath: string): Record<string, string> {
+    const tenantId = config.get<string>('mcp.tenantId', '');
+    const appInsightsId = config.get<string>('mcp.applicationInsights.appId', '');
+    const kustoUrl = config.get<string>('mcp.kusto.clusterUrl', '');
+
+    outputChannel.appendLine(`[Config Debug] Reading from config:`);
+    outputChannel.appendLine(`  - mcp.tenantId: ${tenantId || '(empty)'}`);
+    outputChannel.appendLine(`  - mcp.applicationInsights.appId: ${appInsightsId || '(empty)'}`);
+    outputChannel.appendLine(`  - mcp.kusto.clusterUrl: ${kustoUrl || '(empty)'}`);
+
     const env: Record<string, string> = {
         BCTB_WORKSPACE_PATH: workspacePath,
         BCTB_CONNECTION_NAME: config.get<string>('mcp.connectionName', 'default'),
-        BCTB_TENANT_ID: config.get<string>('mcp.tenantId', ''),
+        BCTB_TENANT_ID: tenantId,
         BCTB_CLIENT_ID: config.get<string>('mcp.clientId', ''),
         BCTB_CLIENT_SECRET: config.get<string>('mcp.clientSecret', ''),
         BCTB_AUTH_FLOW: config.get<string>('mcp.authFlow', 'device_code'),
         // MCP expects BCTB_APP_INSIGHTS_ID (no extra "_APP_")
-        BCTB_APP_INSIGHTS_ID: config.get<string>('mcp.applicationInsights.appId', ''),
+        BCTB_APP_INSIGHTS_ID: appInsightsId,
         // MCP expects BCTB_KUSTO_URL
-        BCTB_KUSTO_URL: config.get<string>('mcp.kusto.clusterUrl', ''),
+        BCTB_KUSTO_URL: kustoUrl,
         BCTB_CACHE_ENABLED: config.get<boolean>('mcp.cache.enabled', true) ? 'true' : 'false',
         // MCP expects BCTB_CACHE_TTL (seconds)
         BCTB_CACHE_TTL: config.get<number>('mcp.cache.ttlSeconds', 3600).toString(),
         BCTB_REMOVE_PII: config.get<boolean>('mcp.sanitize.removePII', false) ? 'true' : 'false',
-        BCTB_PORT: config.get<number>('mcp.port', 52345).toString(),
         BCTB_QUERIES_FOLDER: config.get<string>('queries.folder', 'queries')
     };
 
@@ -659,6 +715,22 @@ async function startMCPCommand(): Promise<void> {
  */
 async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<void> {
     try {
+        // Check if workspace has settings first
+        if (!hasWorkspaceSettings()) {
+            const action = await vscode.window.showErrorMessage(
+                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
+                'Open Copilot Chat',
+                'Run Setup Wizard'
+            );
+
+            if (action === 'Open Copilot Chat') {
+                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
+            } else if (action === 'Run Setup Wizard') {
+                await vscode.commands.executeCommand('bctb.setupWizard');
+            }
+            return;
+        }
+
         // Ensure MCP is running
         if (!mcpProcess) {
             await startMCP();
@@ -690,7 +762,10 @@ async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<voi
                 cancellable: false
             },
             async () => {
-                const config = vscode.workspace.getConfiguration('bctb');
+                // Use resource-scoped configuration
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+                const config = vscode.workspace.getConfiguration('bctb', folderUri);
                 const maxRetries = config.get<number>('agent.maxRetries', 3);
 
                 let lastError: Error | null = null;
@@ -736,6 +811,22 @@ async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<voi
  */
 async function runKQLFromDocumentCommand(context: vscode.ExtensionContext): Promise<void> {
     try {
+        // Check if workspace has settings first
+        if (!hasWorkspaceSettings()) {
+            const action = await vscode.window.showErrorMessage(
+                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
+                'Open Copilot Chat',
+                'Run Setup Wizard'
+            );
+
+            if (action === 'Open Copilot Chat') {
+                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
+            } else if (action === 'Run Setup Wizard') {
+                await vscode.commands.executeCommand('bctb.setupWizard');
+            }
+            return;
+        }
+
         // Ensure MCP is running
         if (!mcpProcess) {
             await startMCP();
@@ -774,7 +865,10 @@ async function runKQLFromDocumentCommand(context: vscode.ExtensionContext): Prom
                 cancellable: false
             },
             async () => {
-                const config = vscode.workspace.getConfiguration('bctb');
+                // Use resource-scoped configuration
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+                const config = vscode.workspace.getConfiguration('bctb', folderUri);
                 const maxRetries = config.get<number>('agent.maxRetries', 3);
 
                 let lastError: Error | null = null;
@@ -826,6 +920,22 @@ async function runKQLFromCodeLensCommand(
     queryText: string
 ): Promise<void> {
     try {
+        // Check if workspace has settings first
+        if (!hasWorkspaceSettings()) {
+            const action = await vscode.window.showErrorMessage(
+                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
+                'Open Copilot Chat',
+                'Run Setup Wizard'
+            );
+
+            if (action === 'Open Copilot Chat') {
+                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
+            } else if (action === 'Run Setup Wizard') {
+                await vscode.commands.executeCommand('bctb.setupWizard');
+            }
+            return;
+        }
+
         // Ensure MCP is running
         if (!mcpProcess) {
             await startMCP();
@@ -846,7 +956,10 @@ async function runKQLFromCodeLensCommand(
                 cancellable: false
             },
             async () => {
-                const config = vscode.workspace.getConfiguration('bctb');
+                // Use resource-scoped configuration
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+                const config = vscode.workspace.getConfiguration('bctb', folderUri);
                 const maxRetries = config.get<number>('agent.maxRetries', 3);
 
                 let lastError: Error | null = null;
@@ -995,7 +1108,10 @@ async function openQueriesFolderCommand(): Promise<void> {
             throw new Error('No workspace folder open');
         }
 
-        const config = vscode.workspace.getConfiguration('bctb');
+        // Use resource-scoped configuration
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+        const config = vscode.workspace.getConfiguration('bctb', folderUri);
         const queriesFolder = config.get<string>('queries.folder', 'queries');
         const queriesPath = path.join(workspacePath, queriesFolder);
 
@@ -1070,7 +1186,10 @@ async function showCacheStatsCommand(): Promise<void> {
             throw new Error('No workspace folder open');
         }
 
-        const config = vscode.workspace.getConfiguration('bctb');
+        // Use resource-scoped configuration
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+        const config = vscode.workspace.getConfiguration('bctb', folderUri);
         const ttlSeconds = config.get<number>('mcp.cache.ttl', 3600);
         const cachePath = path.join(workspacePath, '.vscode', '.bctb', 'cache');
 
@@ -1238,8 +1357,12 @@ class KQLCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]> {
+        outputChannel.appendLine(`[CodeLens] provideCodeLenses called for: ${document.fileName}`);
+        outputChannel.appendLine(`[CodeLens] Language ID: ${document.languageId}`);
+
         // Only provide CodeLenses for .kql files
         if (document.languageId !== 'kql' && !document.fileName.endsWith('.kql')) {
+            outputChannel.appendLine(`[CodeLens] Skipping - not a KQL file (languageId: ${document.languageId})`);
             return [];
         }
 
@@ -1300,6 +1423,7 @@ class KQLCodeLensProvider implements vscode.CodeLensProvider {
             codeLenses.push(codeLens);
         }
 
+        outputChannel.appendLine(`[CodeLens] Returning ${codeLenses.length} CodeLens items`);
         return codeLenses;
     }
 }

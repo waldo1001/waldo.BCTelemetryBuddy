@@ -1495,3 +1495,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Prepare a release"
 
 ---
+### Entry ID: e59ade69-097b-4708-875c-e0f3518b5325  2025-11-02 16:36
+> "when executing kql from document, there is still an issue"
+
+---
+### Entry ID: 9f7c6159-9929-4be5-8cb9-2ab10175ba3d  2025-11-02 19:56
+> "Can't you just use the stdio that the Github Copilot is using?"
+
+---

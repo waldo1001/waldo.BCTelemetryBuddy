@@ -796,3 +796,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-01** — Release v0.2.22: Multi-root workspace blocking and configuration fixes [Entry: f9e1111f-5dff-4780-a702-8939f5eac51a]
   - **Why:** Package and deploy changes for multi-root workspace blocking, resource-scoped configuration, settings pre-fill, and reload prompt.
   - **How:** Bumped version to 0.2.22, updated extension and MCP CHANGELOGs, committed changes, created and pushed git tag v0.2.22 to trigger GitHub Actions CI/CD pipeline.
+- **2025-11-02**  Fixed resource-scoped configuration in all command functions [Entry: e59ade69-097b-4708-875c-e0f3518b5325]
+  - **Why:** KQL document execution failed with configuration errors (BCTB_APP_INSIGHTS_ID/KUSTO_URL missing) and port conflicts because extension read config from wrong workspace in multi-root scenario.
+  - **How:** Updated 7 functions (activate, hasWorkspaceSettings, startMCP, runKQLQueryCommand, runKQLFromDocumentCommand, runKQLFromCodeLensCommand, openQueriesFolderCommand, showCacheStatsCommand) to use vscode.workspace.getConfiguration with folderUri parameter for resource-scoped config reading.
+- **2025-11-02**  Added configuration check before starting HTTP MCP server [Entry: 9f7c6159-9929-4be5-8cb9-2ab10175ba3d]
+  - **Why:** Command palette queries failed with configuration errors when no workspace settings exist; user wanted to use stdio server like Copilot does, but that requires toolInvocationToken only available in chat context.
+  - **How:** Added hasWorkspaceSettings() check at start of runKQLQueryCommand, runKQLFromDocumentCommand, and runKQLFromCodeLensCommand; shows user-friendly error with options to 'Open Copilot Chat' or 'Run Setup Wizard' instead of cryptic configuration error.
