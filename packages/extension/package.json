@@ -237,7 +237,7 @@
     },
     "dependencies": {
         "@azure/msal-node": "^3.8.0",
-        "axios": "^1.6.0"
+        "axios": "^1.13.1"
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",
