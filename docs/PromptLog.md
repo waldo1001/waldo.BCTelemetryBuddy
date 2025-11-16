@@ -1503,3 +1503,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Can't you just use the stdio that the Github Copilot is using?"
 
 ---
+### Entry ID: cc66e1d6-2a43-4f3a-9c88-feb35b6e8f35 — 2025-11-16 23:32
+> "Create a new release."
+
+---

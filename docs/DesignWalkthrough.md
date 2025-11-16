@@ -802,3 +802,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-02**  Added configuration check before starting HTTP MCP server [Entry: 9f7c6159-9929-4be5-8cb9-2ab10175ba3d]
   - **Why:** Command palette queries failed with configuration errors when no workspace settings exist; user wanted to use stdio server like Copilot does, but that requires toolInvocationToken only available in chat context.
   - **How:** Added hasWorkspaceSettings() check at start of runKQLQueryCommand, runKQLFromDocumentCommand, and runKQLFromCodeLensCommand; shows user-friendly error with options to 'Open Copilot Chat' or 'Run Setup Wizard' instead of cryptic configuration error.
+- **2025-11-16** — Released v0.2.23 with chatmode documentation enhancements and configuration fixes [Entry: cc66e1d6-2a43-4f3a-9c88-feb35b6e8f35]
+  - **Why:** Package and publish changes from Nov 7 (resource-scoped config) and Nov 14 (chatmode docs)
+  - **How:** Updated CHANGELOG.md, bumped version 0.2.22→0.2.23, committed, tagged v0.2.23, pushed to GitHub to trigger CI/CD
