@@ -236,7 +236,7 @@
         "clean": "rimraf dist out mcp"
     },
     "dependencies": {
-        "@azure/msal-node": "^3.8.0",
+        "@azure/msal-node": "^3.8.2",
         "axios": "^1.6.0"
     },
     "devDependencies": {
