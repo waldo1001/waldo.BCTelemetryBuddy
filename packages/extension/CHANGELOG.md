@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.23] - 2025-11-16
+
+### Changed
+- Enhanced chatmode documentation with data visualization guidelines and preferred approaches for better query results presentation
+
+### Fixed
+- Improved resource-scoped configuration for MCP client and commands to ensure proper workspace folder context
+
 ## [0.2.22] - 2025-11-01
 
 ### Added
