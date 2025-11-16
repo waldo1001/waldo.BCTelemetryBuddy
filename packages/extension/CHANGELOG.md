@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.24] - 2025-11-16
+
 ### Fixed
 - **MCP server path resolution**: Fixed issue #56 where MCP server failed to start in installed extensions due to incorrect path resolution using `__dirname` instead of `extensionContext.extensionPath`
 
