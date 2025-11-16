@@ -805,3 +805,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-16** — Released v0.2.23 with chatmode documentation enhancements and configuration fixes [Entry: cc66e1d6-2a43-4f3a-9c88-feb35b6e8f35]
   - **Why:** Package and publish changes from Nov 7 (resource-scoped config) and Nov 14 (chatmode docs)
   - **How:** Updated CHANGELOG.md, bumped version 0.2.22→0.2.23, committed, tagged v0.2.23, pushed to GitHub to trigger CI/CD
+- **2025-11-16** — Fixed MCP server path resolution (Issue #56) [Entry: 38f8be33-b816-41d5-828a-6f9fef51505a]
+  - **Why:** MCP server failed to start in installed extensions due to __dirname resolving incorrectly
+  - **How:** Replaced __dirname with extensionContext.extensionPath in startMCP() function

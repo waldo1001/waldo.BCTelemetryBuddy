@@ -21,6 +21,7 @@ let mcpProcess: MCPProcess | null = null;
 let mcpClient: MCPClient | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
+let extensionContext: vscode.ExtensionContext;
 
 /**
  * Register MCP server definition provider with VSCode
@@ -336,6 +337,7 @@ function registerLanguageModelTools(context: vscode.ExtensionContext): void {
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
+    extensionContext = context;
     outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy');
     outputChannel.appendLine('BC Telemetry Buddy extension activated');
 
@@ -560,7 +562,7 @@ async function startMCP(): Promise<void> {
 
     // Find MCP server executable
     // Use launcher.js to force CommonJS module semantics (avoids VSIX .cjs installation issues)
-    const mcpServerPath = path.join(__dirname, '..', '..', 'mcp', 'dist', 'launcher.js');
+    const mcpServerPath = path.join(extensionContext.extensionPath, 'mcp', 'dist', 'launcher.js');
 
     // Spawn MCP process
     outputChannel.appendLine(`Spawning: node ${mcpServerPath}`);
