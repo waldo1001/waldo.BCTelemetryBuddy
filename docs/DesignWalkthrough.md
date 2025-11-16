@@ -808,3 +808,27 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-16** — Fixed MCP server path resolution (Issue #56) [Entry: 38f8be33-b816-41d5-828a-6f9fef51505a]
   - **Why:** MCP server failed to start in installed extensions due to __dirname resolving incorrectly
   - **How:** Replaced __dirname with extensionContext.extensionPath in startMCP() function
+- **2025-11-16** — Created comprehensive MCP refactoring plan [Entry: f9b729be-37e8-41ac-8378-b138ae14f55b]
+  - **Why:** User requested major redesign to separate MCP from extension, publish to NPM, support Copilot Studio
+  - **How:** Created Instructions/MCP-Refactoring-Plan.md with complete architecture, 6-phase implementation plan, config examples, usage scenarios
+- **2025-11-17** — Added detailed workflow with testable steps to MCP refactoring plan [Entry: 21bb03d5-f339-4b31-92db-dd313434def0]
+  - **Why:** User requested actionable, testable workflow for executing the refactoring
+  - **How:** Added 8-phase workflow with 40+ testable steps, validation criteria, success metrics, rollback plan, and final validation checklist
+- **2025-11-17** — Enhanced refactoring plan with comprehensive local testing phase [Entry: 7c613636-6732-4000-a1c7-d7df392b092f]
+  - **Why:** User needs to test all functionality locally before publishing to npm/marketplace
+  - **How:** Split Phase 8 into local testing (npm link, .vsix install, Claude Desktop, integration tests) and Phase 9 for actual publishing - 10 testable steps for local validation
+- **2025-11-17** — Enhanced refactoring plan with comprehensive local testing phase
+  - **Why:** User needs to test all functionality locally before publishing to npm/marketplace
+  - **How:** Split Phase 8 into local testing (npm link, .vsix install, Claude Desktop, integration tests) and Phase 9 for actual publishing - 10 testable steps for local validation
+- **2025-11-17** — Added Phase 5.5 to refactoring plan for CI/CD pipeline updates [Entry: 9a8bc872-0f0a-4881-af33-1ebd57b0cadd]
+  - **Why:** User identified critical gap - pipelines need updates for shared package build order and NPM publishing
+  - **How:** New workflows for NPM publishing, updated CI to build shared→mcp→extension, separate tagging strategy (v*.*.* for extension, mcp-v*.*.* for NPM)
+- **2025-11-17** — Finalized critical design decisions for MCP refactoring [Entry: f44a3ef0-afb4-4739-8668-ae085a266bf2]
+  - **Why:** User clarified all 12 assumptions before implementation - bundling strategy, unscoped NPM package, extension reads MCP config file, automatic install, migration UX
+  - **How:** Added 'Critical Design Decisions' section to refactoring plan with bundling (esbuild), config architecture (.bctb-config.json as single source), extension independence (never uses MCP), CLI commands (init/validate), TypeScript 5.6.x, MCP v1.0.0, automatic installation
+- **2025-11-17** - Added multi-profile architecture to MCP refactoring plan [Entry: 39366098-5e67-46fc-980f-e39f2b15129d]
+  - **Why:** Users work with multiple customers (different telemetry endpoints) - need easy way to switch between them without managing multiple configs
+  - **How:** Approach A (Single MCP Instance with Profile Switching) - named profiles in .bctb-config.json, status bar dropdown for switching, BCTB_PROFILE env var, profile inheritance with 'extends', environment variable substitution for secrets, comprehensive documentation added
+- **2025-11-17** — Applied all feasibility review corrections to refactoring plan [Entry: bf60c1a7-927b-49b9-bd7d-21f296c9536a]
+  - **Why:** Addressed 5 issues: config types export, MCP restart mechanism, config conflict detection, precedence rules, testing gaps
+  - **How:** Added config types to shared, kill/spawn MCP restart, checkConfigConflicts() warning, precedence docs, 3 new tests. Plan ready for implementation.

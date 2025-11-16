@@ -1511,3 +1511,83 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Look at: https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/56 - What could be the cause of this? Can you solve it?"
 
 ---
+### Entry ID: 0dadb05f-503b-41cf-8f35-c571baa3e562 — 2025-11-16 23:54
+> "I want to do a major redesign. The MCP is now bundled with the extension. I want the MCP be a real MCP that is getting settings like a real MCP. What would that mean for the refactor? How would settings work - where would I do the settings in that case if I would have to set this up for VSCode?"
+
+---
+### Entry ID: fb111318-21b6-48d4-8ee4-612367622c9c — 2025-11-16 23:54
+> "1. yes 2. publish separately. I want to publish the mcp TO NPM. No clue what I should to for that. 3. I want users to configure it through a config file. This config file should be very easy to set up. The extension might be able to help with that. 4. yes please. In addition. It would be really nice if the MCP server would also be useable in Copilot Studio. Do you see any steps towards that?"
+
+---
+### Entry ID: 68a2f12d-8ea5-46e4-aa05-43f8caf631ff — 2025-11-16 23:54
+> "Isn't it a better idea to get rid of the bundled solution? So I would only make the mcp available through npm. And the VSCode extension should make it simple to install it, configure it. But the MCP should have its own documentation on npm the describes the installation and configuration."
+
+---
+### Entry ID: 23e0be1e-6807-4196-99e2-90bd6dc27981 — 2025-11-16 23:54
+> "For the extension to work, it should be able to execute KQL, but not be dependent from anything from the MCP. it should have its own server/execution of kql."
+
+---
+### Entry ID: f9b729be-37e8-41ac-8378-b138ae14f55b — 2025-11-16 23:54
+> "Please create an instructionset in the instructions folder for all this."
+
+---
+### Entry ID: 506840aa-1942-4a0f-8668-4f8ec395df0d — 2025-11-16 23:54
+> "I see you're not logging my prompts."
+
+---
+### Entry ID: 21bb03d5-f339-4b31-92db-dd313434def0 — 2025-11-17 00:00
+> "Include in this refactoring plan a workflow with testable steps."
+
+---
+### Entry ID: 7c613636-6732-4000-a1c7-d7df392b092f — 2025-11-17 00:03
+> "Did you take into account that I'll have to be able to test this without publishing anything to anywhere?"
+
+---
+### Entry ID: fc471430-bbbf-4f17-b677-5d23a48c4738 — 2025-11-17 00:03
+> "Did you take into account that I'll have to be able to test this without publishing anything to anywhere?"
+
+---
+### Entry ID: 9a8bc872-0f0a-4881-af33-1ebd57b0cadd — 2025-11-17 00:08
+> "Can I keep everything in one repo? Don't you have to update pipelines either?"
+
+---
+### Entry ID: e1397745-17fc-45d0-8f1c-4b3f6bcb9e9e — 2025-11-17 00:13
+> "I thought we agreed the extension would bundle the MCP, but would install it from NPM to get the dependency?"
+
+---
+### Entry ID: 8aae7d7c-fae6-4a99-a8af-3eeffb7c2c90 — 2025-11-17 00:13
+> "what is the @bctb/shared? How and where will that be available to users?"
+
+---
+### Entry ID: 1e953f0e-fe04-40f0-9bbb-c8430aeabfe9 — 2025-11-17 00:13
+> "Option B is current and looks good."
+
+---
+### Entry ID: 79cd4a04-1e55-4dd4-8347-6fdc9211f220 — 2025-11-17 00:13
+> "Is it documented? Also the changes to the pipelines - is that documented. Also my prompts .. MY PROMPTs"
+
+---
+### Entry ID: 87183a42-883e-47d7-90f4-38576001ba9c — 2025-11-17 00:24
+> "So judging from what we agreed (described in this document), if I would ask you to code it - what would be the assumptions you would make. Let me tackle them now first."
+
+---
+### Entry ID: f44a3ef0-afb4-4739-8668-ae085a266bf2 — 2025-11-17 00:24
+> "1. It is fine to bundle. Just keep in mind that the user should have a smooth install experience. 2. I don't know what the difference is. Please explain first 3. Look good. Seems the system will be able to use the settings we have in the current version? 4. Never use the MCP, always use its own TelemetryService. I do see an issue in the configuration, though - because the extension won't be able to read the MCP settings, true? 5. yes. both. configuration should be as easy as possible, and also as easy troubleshootable as possible. 6. Correct. 7. I didn't - we just have to be able to set up a connection 8. A migration-guide (like in the form of a 'notification' and a button 'migrate settings') would be nice 9. Yes, please rename extension settings to align with MCP config keys for consistancy 10. Whatever is most recommended. 11. 1.0.0 is ok. 12. Let the extension offer to install automatically."
+
+---
+### Entry ID: ab8be8b3-5adf-46ca-9c1e-607cedd442c5 — 2025-11-17 00:24
+> "2. unscoped is ok 4. Extension reads MCP config file"
+
+---
+### Entry ID: 39366098-5e67-46fc-980f-e39f2b15129d — 2025-11-17 00:34
+> "I'll go for Approach A: Single MCP Instance with Profile Switching. But this needs to be very well described in documentation!"
+
+---
+### Entry ID: df6fe9ad-336d-43c0-b139-1e51a3f772df — 2025-11-17 00:38
+> "Review the document and see if everything is feasible."
+
+---
+### Entry ID: bf60c1a7-927b-49b9-bd7d-21f296c9536a - 2025-11-17 00:48
+> "Extension Restarting MCP: what is the cleanest option? Dual Config Sources: can it show a warning when a conflict scenario exists? Fill in the testing gaps! Option A: Move config types to shared"
+
+---
