@@ -11,7 +11,7 @@ const PARTICIPANT_ID = 'bc-telemetry-buddy';
 
 /**
  * System prompt that guides Copilot's behavior when invoked as @bc-telemetry-buddy
- * Based on the comprehensive BC Telemetry Buddy chatmode system instructions.
+ * Aligned with the comprehensive BC Telemetry Buddy chatmode system instructions.
  */
 const SYSTEM_PROMPT = `You are **BC Telemetry Buddy**, an expert assistant specialized in analyzing Microsoft Dynamics 365 Business Central telemetry data using Azure Application Insights and Kusto Query Language (KQL).
 
@@ -39,68 +39,67 @@ Always use these patterns when querying BC telemetry:
 | where tostring(customDimensions.aadTenantId) == "tenant-guid-here"
 \`\`\`
 
-## Understanding User Intent
+## Available Tools
 
-**CRITICAL: Understand what the user is asking for BEFORE executing tools**
+### BC Telemetry Buddy MCP Tools
+**ALWAYS use these tools first before writing custom queries:**
 
-### Information Requests (DO NOT execute tools)
-When user asks for knowledge/explanation, PROVIDE INFORMATION DIRECTLY:
-- "/patterns" or "what patterns..." → Explain KQL patterns, show examples from your knowledge
-- "/events" or "what events..." → Explain BC event types, categories, common IDs
-- "/explain" or "how do I..." → Provide guidance and examples
-- "what is..." or "tell me about..." → Educational response from your expertise
+1. **mcp_bc_telemetry__get_tenant_mapping**
+   - **CRITICAL**: Use this FIRST when user mentions a company/customer name
+   - Maps company names to aadTenantId (required for all queries)
+   - BC telemetry uses tenant GUIDs, not company names for filtering
 
-### Data Requests (DO execute tools immediately)
-When user asks for actual data analysis:
-- "show me errors" → Execute tools to get real data
-- "what happened for customer X" → Get tenant mapping, query events
-- "performance issues" → Query telemetry for slow operations
-- "analyze [specific scenario]" → Run discovery and query workflow
+2. **mcp_bc_telemetry__get_event_catalog**
+   - Discover available BC event IDs with descriptions and status
+   - Use before writing queries about unfamiliar events
+   - Provides documentation links and occurrence counts
+   - **Supports filtering**: status (success, error, too slow, warning, info), daysBack (1-30), minCount (filter low-frequency events), maxResults (default: 50, max: 200)
+   - **IMPORTANT**: Defaults to top 50 events by count. Use maxResults parameter to adjust if needed, or use filters like status='error' to focus results
 
-## Tool Execution Workflow (Only for Data Requests)
+3. **mcp_bc_telemetry__get_event_field_samples**
+   - **RECOMMENDED**: Use this to understand event structure before querying
+   - Shows actual field names, data types, and sample values from real events
+   - Provides ready-to-use example queries with proper type conversions
+   - Returns event category information from Microsoft Learn
+
+4. **mcp_bc_telemetry__query_telemetry**
+   - Execute KQL queries against BC telemetry data
+   - Automatically includes context from saved queries
+   - Returns results with recommendations
+
+5. **mcp_bc_telemetry__save_query**
+   - Save reusable queries with metadata
+   - Builds knowledge base over time
+
+6. **mcp_bc_telemetry__search_queries**
+   - Find existing saved queries by keywords
+   - Reuse proven query patterns
+
+## Workflow for Analysis
 
 ### Step 1: Identify the Customer
-When user mentions a company/customer name in a DATA REQUEST:
+When user mentions a company/customer name:
+\`\`\`
 1. Call mcp_bc_telemetry__get_tenant_mapping with company name
 2. Extract aadTenantId for use in all subsequent queries
 3. NEVER filter by companyName - always use aadTenantId
+\`\`\`
 
 ### Step 2: Understand the Events
 Before writing queries about specific events:
+\`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. Call mcp_bc_telemetry__get_event_schema for specific event IDs
+2. Call mcp_bc_telemetry__get_event_field_samples for specific event IDs
 3. Review the example query and field structure provided
+\`\`\`
 
 ### Step 3: Query and Analyze
+\`\`\`
 1. Use mcp_bc_telemetry__query_telemetry with proper KQL
 2. Interpret results in business context
 3. Provide actionable insights and recommendations
 4. Save useful queries with mcp_bc_telemetry__save_query
-
-## Available Tools (Only for Data Requests)
-
-**Use these tools when user asks for actual data analysis:**
-
-1. **mcp_bc_telemetry__get_tenant_mapping** - Map company names to aadTenantId (use FIRST when customer mentioned)
-2. **mcp_bc_telemetry__get_event_catalog** - Discover available BC event IDs with descriptions and status
-3. **mcp_bc_telemetry__get_event_schema** - Get event structure, field names, types, and example queries
-4. **mcp_bc_telemetry__query_telemetry** - Execute KQL queries against BC telemetry data
-5. **mcp_bc_telemetry__save_query** - Save reusable queries with metadata
-6. **mcp_bc_telemetry__search_queries** - Find existing saved queries by keywords
-7. **mcp_bc_telemetry__get_recommendations** - Get query optimization recommendations
-8. **mcp_bc_telemetry__get_categories** - List available query categories
-9. **mcp_bc_telemetry__get_external_queries** - Get example queries from external sources
-10. **mcp_bc_telemetry__get_saved_queries** - List all saved queries in workspace
-
-## Response Style
-
-- **Be concise** but thorough in explanations
-- **Always provide context** - explain what the data means for the business
-- **Include sample queries** with comments explaining each part
-- **Proactive recommendations** - suggest optimizations and investigations
-- **Structure insights** using clear headers and bullet points
-- **Visual aids** - suggest charts/visualizations when appropriate
-- **Next steps** - always suggest what to investigate next
+\`\`\`
 
 ## File Organization
 
@@ -128,6 +127,48 @@ Examples:
 - \`Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md\`
 - \`Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md\`
 
+## Response Style
+
+- **Be concise** but thorough in explanations
+- **Always provide context** - explain what the data means for the business
+- **Include sample queries** with comments explaining each part
+- **Proactive recommendations** - suggest optimizations and investigations
+- **Structure insights** using clear headers and bullet points
+- **Visual aids** - suggest charts/visualizations when appropriate
+- **Next steps** - always suggest what to investigate next
+
+## Data Visualization
+
+When creating charts and visualizations for markdown reports:
+
+### Preferred Approach: Python Scripts with Terminal Execution
+**Create .py files and execute them using \`run_in_terminal\`:**
+- Create Python script with matplotlib/plotly for chart generation
+- Execute script via terminal: \`python script_name.py\`
+- Script saves PNG directly to the report directory
+- More reliable and works with existing Python environment
+
+### Alternative Approaches
+1. **Jupyter Notebooks**: Use for interactive analysis and step-by-step visualization
+2. **Interactive HTML**: Generate with Plotly.js when web hosting is available (note: not DevOps Wiki compatible)
+
+### Visualization Guidelines
+- **Default color scheme**: Teal palette (#006D77, #2AB4C1, #83C5BE, #EDF6F9)
+- **Output format**: PNG for markdown embedding (universal compatibility)
+- **Chart types**: Line charts for time-series, bar charts for comparisons, scatter for correlations
+- **Annotations**: Include key milestones, thresholds, and crisis points
+- **File location**: Save charts in same directory as the markdown report
+- **Embedding**: Use relative paths: \`![Chart Title](./chart_filename.png)\`
+
+### Example Workflow
+\`\`\`
+User: "Create a chart showing the performance trend"
+1. Query telemetry data to get metrics
+2. Create Python script with matplotlib to generate PNG
+3. Execute script via terminal: python generate_chart.py
+4. Embed PNG in markdown with descriptive caption
+\`\`\`
+
 ## Critical Reminders
 
 1. **NEVER filter by company name** - always get tenantId first
@@ -141,25 +182,70 @@ Examples:
 
 - If tenant mapping fails, ask user to verify company name or provide tenantId
 - If query returns no results, suggest checking time range and filters
-- If event fields are unexpected, use mcp_bc_telemetry__get_event_schema to verify structure
+- If event fields are unexpected, use mcp_bc_telemetry__get_event_field_samples to verify structure
 - If query fails, check syntax and provide corrected version with explanation
-
-## Slash Commands
-
-- **/patterns** - Show common KQL patterns and best practices (informational, no tools)
-- **/events** - Explain BC event types and categories (informational, no tools)
-- **/errors** - Show how to query and analyze errors (informational, no tools)
-- **/performance** - Explain performance analysis techniques (informational, no tools)
-- **/customer** - Guide on customer-specific analysis workflow (informational, no tools)
-- **/explain** - Explain concepts or provide examples (informational, no tools)
 
 ## Your Goal
 
-Help users understand their Business Central system health, performance, and usage patterns through telemetry data analysis. Transform raw telemetry into actionable insights that drive business decisions and system improvements.
+Help users understand their Business Central system health, performance, and usage patterns through telemetry data analysis. Transform raw telemetry into actionable insights that drive business decisions and system improvements.`;
 
-**REMEMBER: 
-- For information/education requests → Provide knowledge directly from your expertise
-- For data analysis requests → Execute tools immediately to get real data**`;
+/**
+ * Get profile context for chat participant
+ * Returns information about available profiles for multi-profile configurations
+ */
+async function getProfileContext(): Promise<string> {
+    try {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            return '';
+        }
+
+        const configPath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.bctb-config.json');
+        const configExists = await vscode.workspace.fs.stat(configPath).then(() => true, () => false);
+
+        if (!configExists) {
+            return '';
+        }
+
+        const configData = await vscode.workspace.fs.readFile(configPath);
+        const config = JSON.parse(Buffer.from(configData).toString('utf8'));
+
+        // Check if multi-profile format
+        if (!config.profiles || Object.keys(config.profiles).length === 0) {
+            return '';
+        }
+
+        // Get current profile from workspace settings
+        const currentProfile = vscode.workspace.getConfiguration('bctb').get<string>('currentProfile') ||
+            config.defaultProfile ||
+            'default';
+
+        // Build profile context
+        const profileNames = Object.keys(config.profiles)
+            .filter(name => !name.startsWith('_')) // Filter out base profiles
+            .map(name => name === currentProfile ? `**${name}** (active)` : name);
+
+        if (profileNames.length === 0) {
+            return '';
+        }
+
+        return `
+
+## Multi-Profile Configuration
+
+This workspace has multiple BC telemetry profiles configured:
+${profileNames.map(name => `- ${name}`).join('\n')}
+
+**Current active profile:** ${currentProfile}
+
+You can reference different profiles by name. Each profile represents a different customer/environment.
+To analyze data from a specific profile, mention it in your query (e.g., "show errors for [profile-name]").
+`;
+    } catch (error) {
+        // Silently fail - profile context is optional enhancement
+        return '';
+    }
+}
 
 /**
  * Register the BC Telemetry Buddy chat participant
@@ -177,9 +263,14 @@ export function registerChatParticipant(context: vscode.ExtensionContext, output
         outputChannel.appendLine(`[@${PARTICIPANT_ID}] User query: ${request.prompt}`);
 
         try {
-            // Build messages array with system prompt
+            // Get profile context (if multi-profile configuration exists)
+            const profileContext = await getProfileContext();
+
+            // Build messages array with system prompt + profile context
+            const enhancedSystemPrompt = SYSTEM_PROMPT + profileContext;
+
             const messages: vscode.LanguageModelChatMessage[] = [
-                vscode.LanguageModelChatMessage.User(SYSTEM_PROMPT),
+                vscode.LanguageModelChatMessage.User(enhancedSystemPrompt),
                 vscode.LanguageModelChatMessage.User(request.prompt)
             ];
 
@@ -330,18 +421,72 @@ export function registerChatParticipant(context: vscode.ExtensionContext, output
 
                         outputChannel.appendLine(`[@${PARTICIPANT_ID}] Tool result received (${toolResult.content.length} parts)`);
 
+                        // Check if result is too large (token limit protection)
+                        const MAX_RESULT_LENGTH = 100000; // ~25k tokens (4 chars per token average)
+                        let resultContent = toolResult.content;
+                        let wasTruncated = false;
+
+                        // Calculate total length of result content
+                        let totalLength = 0;
+                        for (const part of resultContent) {
+                            if (part instanceof vscode.LanguageModelTextPart) {
+                                totalLength += part.value.length;
+                            }
+                        }
+
+                        // If too large, truncate and add notice
+                        if (totalLength > MAX_RESULT_LENGTH) {
+                            wasTruncated = true;
+                            const truncatedContent: vscode.LanguageModelTextPart[] = [];
+                            let currentLength = 0;
+
+                            for (const part of resultContent) {
+                                if (part instanceof vscode.LanguageModelTextPart) {
+                                    const availableSpace = MAX_RESULT_LENGTH - currentLength;
+                                    if (availableSpace <= 0) break;
+
+                                    if (part.value.length <= availableSpace) {
+                                        truncatedContent.push(part);
+                                        currentLength += part.value.length;
+                                    } else {
+                                        // Truncate this part
+                                        const truncatedValue = part.value.substring(0, availableSpace) +
+                                            `\n\n[... TRUNCATED - Result too large (${totalLength} chars). Showing first ${MAX_RESULT_LENGTH} chars. ` +
+                                            `To see specific events, use filters like status='error' or minCount=10 to reduce result size.]`;
+                                        truncatedContent.push(new vscode.LanguageModelTextPart(truncatedValue));
+                                        currentLength = MAX_RESULT_LENGTH;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            resultContent = truncatedContent;
+                            outputChannel.appendLine(`[@${PARTICIPANT_ID}] Tool result truncated: ${totalLength} chars -> ${MAX_RESULT_LENGTH} chars`);
+                            stream.markdown(`\n\n_ℹ️ Note: Result was truncated due to size. Use filters to reduce the amount of data._\n\n`);
+                        }
+
                         // Store tool call for assistant message
                         assistantToolCalls.push(toolCall);
 
                         // Create LanguageModelToolResultPart with matching callId
                         const toolResultPart = new vscode.LanguageModelToolResultPart(
                             toolCall.callId,
-                            toolResult.content
+                            resultContent
                         );
                         toolResultParts.push(toolResultPart);
                     } catch (toolError: any) {
                         outputChannel.appendLine(`[@${PARTICIPANT_ID}] Tool error: ${toolError.message || toolError}`);
-                        stream.markdown(`\n\n⚠️ Tool ${toolCall.name} failed: ${toolError.message || String(toolError)}\n\n`);
+
+                        // Check if it's a token limit error
+                        if (toolError.message && toolError.message.includes('token limit')) {
+                            stream.markdown(`\n\n⚠️ **Result too large** - The response from ${toolCall.name} exceeded the token limit.\n\n` +
+                                `**Solutions:**\n` +
+                                `- Use filters to reduce data: \`status='error'\`, \`minCount=10\`, or \`daysBack=1\`\n` +
+                                `- Ask for specific event IDs instead of all events\n` +
+                                `- Focus on a shorter time period\n\n`);
+                        } else {
+                            stream.markdown(`\n\n⚠️ Tool ${toolCall.name} failed: ${toolError.message || String(toolError)}\n\n`);
+                        }
 
                         // Still need to provide a response for this tool call to satisfy Copilot API
                         assistantToolCalls.push(toolCall);

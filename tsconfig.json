@@ -18,6 +18,17 @@
         "composite": true,
         "incremental": true
     },
+    "references": [
+        {
+            "path": "./packages/shared"
+        },
+        {
+            "path": "./packages/mcp"
+        },
+        {
+            "path": "./packages/extension"
+        }
+    ],
     "exclude": [
         "node_modules",
         "dist",

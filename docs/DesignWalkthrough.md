@@ -832,3 +832,404 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-17** — Applied all feasibility review corrections to refactoring plan [Entry: bf60c1a7-927b-49b9-bd7d-21f296c9536a]
   - **Why:** Addressed 5 issues: config types export, MCP restart mechanism, config conflict detection, precedence rules, testing gaps
   - **How:** Added config types to shared, kill/spawn MCP restart, checkConfigConflicts() warning, precedence docs, 3 new tests. Plan ready for implementation.
+- **2025-11-17** — Phase 1 Complete - Created @bctb/shared package [Entry: 8ed619ee-f3c5-4c1e-b061-f618b9e04d05]
+  - **Why:** Extract common business logic into reusable package shared between MCP and extension
+  - **How:** Created packages/shared/ with all core modules (auth, kusto, cache, queries, sanitize, eventLookup, references), configured TypeScript build, Jest tests (179 passing), workspace structure
+- **2025-11-17** — Completed Phase 2 - MCP refactoring to use @bctb/shared + CLI [Entry: 1f8e4f0c-a4f3-4bec-8994-6fe43cd47620]
+  - **Why:** Make MCP a standalone, publishable package with file-based config and CLI commands
+  - **How:** Updated imports to @bctb/shared, created cli.ts with 5 commands (start/init/validate/test-auth/list-profiles), extended config.ts with file loading and profile support, fixed module system to CommonJS, all 282 tests pass
+- **2025-11-17** — Fixed command handlers to use TelemetryService [Entry: 318dd477-021c-4a40-8a49-ce97fde284ef]
+  - **Why:** Commands were still calling startMCP() and mcpClient instead of using telemetryService for Phase 3 independence
+  - **How:** Updated runKQLQueryCommand, runKQLFromDocumentCommand, runKQLFromCodeLensCommand, and saveQueryCommand to use telemetryService.executeKQL() and telemetryService.saveQuery()
+- **2025-11-17** — Added comprehensive test coverage for Phase 1-3 validation [Entry: 6dc61d4a-2b11-43b4-9bd3-b85c9862eb08]
+  - **Why:** Manual testing revealed TypeScript resolution and command handler issues that should have been caught by automated tests
+  - **How:** Created telemetryService.test.ts, command-handlers.test.ts, shared-package-integration.test.ts, and mcp-standalone.test.ts with 80% coverage requirements and updated TestingGuide.md with phase validation strategies
+- **2025-11-17** — Fixed TelemetryService bugs identified by tests [Entry: 03fdc487-6b1b-41a4-927e-0f819d5959fc]
+  - **Why:** Tests revealed 5 real bugs in Phase 3 TelemetryService implementation (wrong API calls to @bctb/shared)
+  - **How:** Fixed cache.get/set calls, sanitizeObject parameter, saveQuery signature, getAllQueries method. Reduced test failures from 38 to 19.- **2025-11-17** — Dev vs Global MCP in debug [Entry: 9a1207f7-4938-4872-803e-bcc6117108e2]
+  - **Why:** Clarify using global MCP during debugging and add a toggle
+  - **How:** Added setting 'bctb.mcp.preferGlobal' and provider auto-detects dev vs global; rebuild extension
+- **2025-11-17** — Confirm dev MCP launcher and global toggle [Entry: 21ed4eac-e735-4a8a-a2e8-58be6c5550ef]
+  - **Why:** Ensure MCP optional; fix dev shebang error; align with plan
+  - **How:** Dev: node + ..\\mcp\\dist\\launcher.js; Prod/Global: 'bctb-mcp start --stdio'; setting 'bctb.mcp.preferGlobal'
+- **2025-11-17** — Add config visibility logging [Entry: 027c6c92-9b68-4067-9f96-bfb881b161c0]
+  - **Why:** Help users see which config/profile is active
+  - **How:** Log config file path and profile in loadConfigFromFile(); enhanced server startup banner with connection name, endpoints, cache TTL
+- **2025-11-17** — Fixed MCP config discovery fallback chain [Entry: 30d34f6d-f7ad-4bec-b87c-79ca62496754]
+  - **Why:** Config discovery was stopping after checking workspace path instead of falling back to user profile
+  - **How:** Changed if-else-if chain to if-if-if chain in config.ts; corrected dev mode workspace path to extension repo instead of user's open workspace
+- **2025-11-17** — Phase 5: User-facing documentation for v0.3.0 migration [Entry: e965ba88-0c28-479a-ae57-3f064aa5f9fb]
+  - **Why:** Users upgrading from bundled MCP (v0.2.x) need clear guidance on architectural changes, migration steps, and new configuration format
+  - **How:** Updated Extension README with What's New section and migration guide; Updated UserGuide.md with architecture explanation and troubleshooting; Created comprehensive MIGRATION.md with automatic/manual migration paths, settings mapping, and rollback instructions
+
+---
+
+## Architecture Evolution: Bundled to Standalone MCP (v0.2.x → v0.3.0)
+
+### The Problem: Tight Coupling
+
+**Original Architecture (v0.2.x):**
+```
+┌──────────────────────────────────────┐
+│      VSCode Extension Package        │
+│  ┌────────────────────────────────┐  │
+│  │    Extension Code (src/)       │  │
+│  │    - Commands                  │  │
+│  │    - Chat Participant          │  │
+│  │    - UI (Webviews)             │  │
+│  └────────────────────────────────┘  │
+│  ┌────────────────────────────────┐  │
+│  │  Bundled MCP Server (mcp/)     │  │
+│  │    - auth.ts, kusto.ts         │  │
+│  │    - cache.ts, queries.ts      │  │
+│  │    - server.ts (Express)       │  │
+│  └────────────────────────────────┘  │
+└──────────────────────────────────────┘
+         ↓ (both bundled together)
+    Published to VS Code Marketplace
+```
+
+**Problems:**
+1. **Tight Coupling**: Extension couldn't work without MCP; MCP couldn't work without extension
+2. **No Independence**: MCP server couldn't be used by other AI tools (Claude Desktop, Copilot Studio)
+3. **Duplicate Logic**: Extension proxied all requests to MCP instead of executing directly
+4. **Complex Build**: Build process copied MCP into extension package, creating maintenance overhead
+5. **Version Lock**: Couldn't version MCP independently from extension
+6. **Limited Reach**: Only available to VSCode users; inaccessible to broader MCP ecosystem
+
+### The Solution: Modular Independence
+
+**New Architecture (v0.3.0):**
+```
+┌─────────────────────────────────────────────────────┐
+│            Shared Business Logic                    │
+│  ┌──────────┬──────────┬────────┬──────────────┐   │
+│  │ auth.ts  │ kusto.ts │ cache  │ queries.ts   │   │
+│  └──────────┴──────────┴────────┴──────────────┘   │
+│              (bundled at build time)                │
+└──────────────────┬────────────────┬─────────────────┘
+                   │                │
+         ┌─────────┴──────┐  ┌──────┴──────────────┐
+         │                │  │                     │
+┌────────▼──────────┐   ┌─▼──────────────────┐    │
+│  MCP Server (NPM) │   │  VSCode Extension  │    │
+│                   │   │                    │    │
+│  • Standalone CLI │   │  • Direct KQL      │    │
+│  • NPM package    │   │  • Commands        │    │
+│  • Optional       │   │  • UI (Webviews)   │    │
+│  • stdio/HTTP     │   │  • Setup Wizard    │    │
+└────────┬──────────┘   └────────────────────┘    │
+         │                       │                 │
+         │                       └─────────────────┘
+         │                              │
+    ┌────▼────────┐               ┌────▼────────┐
+    │ Claude      │               │ Chat        │
+    │ Desktop     │               │ Participant │
+    │             │               │ (via MCP)   │
+    └─────────────┘               └─────────────┘
+    
+    ┌─────────────┐
+    │ Copilot     │
+    │ Studio      │
+    └─────────────┘
+```
+
+**Benefits:**
+1. ✅ **Extension Independence**: Works fully standalone for direct commands (no MCP required)
+2. ✅ **MCP Independence**: Can be used by Claude Desktop, Copilot Studio, or any MCP client
+3. ✅ **Shared Code**: Business logic bundled into both at build time (single source of truth)
+4. ✅ **Independent Versioning**: MCP and extension can release on different schedules
+5. ✅ **Broader Reach**: MCP published to NPM, available to entire MCP ecosystem
+6. ✅ **Simplified Build**: Each package builds independently, no copying/bundling complexity
+
+### Key Design Decisions
+
+#### 1. Bundling Strategy: Build-Time Sharing
+**Decision:** Shared business logic bundled into both packages via esbuild during build, not shared as runtime dependency.
+
+**Why:**
+- Users never install `@bctb/shared` package directly (zero friction)
+- Single source of truth for business logic (no duplication)
+- No version conflicts between extension and MCP
+- Smooth installation experience (no extra packages)
+
+**How:**
+- Monorepo structure: `packages/shared/`, `packages/mcp/`, `packages/extension/`
+- Build process bundles shared code into each package's dist/
+- TypeScript project references for type checking
+- npm workspaces for dependency management
+
+#### 2. Configuration: File-Based Single Source of Truth
+**Decision:** `.bctb-config.json` file as single source of truth for both extension and MCP.
+
+**Why:**
+- Eliminates VSCode-specific configuration (MCP can run anywhere)
+- Version controllable (can commit to git)
+- Multi-profile support (multiple customer endpoints in one file)
+- Environment variable substitution for secrets
+- Consistent experience across VSCode, Claude Desktop, CLI
+
+**How:**
+- Config discovery order: CLI arg → current dir → workspace → home directory → env vars
+- JSON schema for validation and IntelliSense
+- Extension reads same file as MCP (no duplication)
+- Profile inheritance with `extends` key (DRY)
+
+**Migration Path:**
+- Old VSCode settings (`bcTelemetryBuddy.*`) still work (backward compatible)
+- Setup Wizard creates `.bctb-config.json` for new users
+- Manual migration guide for existing users
+- Automatic migration (planned for v0.3.1)
+
+#### 3. Extension Independence: Direct Execution
+**Decision:** Extension executes queries directly via built-in `TelemetryService`, MCP only for chat.
+
+**Why:**
+- Extension works immediately without MCP installation
+- Faster query execution (no IPC overhead)
+- Simpler architecture (no localhost HTTP server)
+- MCP becomes optional enhancement, not requirement
+
+**How:**
+- Extension bundles shared business logic at build time
+- `TelemetryService` class provides direct KQL execution
+- Commands (`Run KQL Query`, `Save Query`) use `TelemetryService`
+- Chat participant still uses MCP via Language Model API
+- MCP server definition provider registers MCP with VS Code
+
+#### 4. Multi-Profile Support: Named Configurations
+**Decision:** Single config file with named profiles and profile switching.
+
+**Why:**
+- Consultants/ISVs work with multiple customers (2-10 different App Insights endpoints)
+- Single file easier to manage than multiple config files
+- Profile inheritance reduces duplication (DRY with base profiles)
+- Clear profile selection in UI (status bar dropdown)
+
+**How:**
+- Config structure: `{ profiles: { "customer-a": {...}, "customer-b": {...} } }`
+- Profile inheritance: `"extends": "base-profile"` for shared settings
+- Environment variables: `${VAR_NAME}` for secrets
+- Profile switching: Extension changes `BCTB_PROFILE` env var and restarts MCP
+- Default profile: `defaultProfile` key specifies startup profile
+
+#### 5. MCP Server Lifecycle: On-Demand vs Always Running
+**Decision:** MCP starts on-demand when chat participant is first used, not on extension activation.
+
+**Why:**
+- Resource efficiency (no MCP process if user doesn't use chat)
+- Extension works immediately for direct commands
+- MCP server optional (user may not have it installed)
+
+**How:**
+- Extension activation doesn't start MCP
+- First chat request triggers MCP server definition provider
+- Provider registers MCP server with VS Code Language Model API
+- Language Model API manages MCP lifecycle (start/stop)
+- Development mode uses local launcher; production uses global `bctb-mcp` CLI
+
+#### 6. Authentication: Default to azure_cli
+**Decision:** Default authentication flow is `azure_cli` (uses `az login` credentials).
+
+**Why:**
+- Zero configuration for users already signed into Azure CLI
+- No device code flow required (no browser interruption)
+- Works seamlessly in dev environments
+- Fallback to `device_code` and `client_credentials` still supported
+
+**How:**
+- MSAL library with Azure CLI token acquisition
+- Config option: `authFlow: "azure_cli" | "device_code" | "client_credentials"`
+- Auto-detection of `az login` credentials
+- Graceful fallback if Azure CLI not available
+
+### Implementation Phases
+
+**Phase 1-4: Core Refactoring** (Completed)
+- ✅ Created shared package with business logic
+- ✅ Refactored MCP as standalone NPM package (not yet published)
+- ✅ Refactored extension for independence (built-in TelemetryService)
+- ✅ Updated build system (npm workspaces, TypeScript project references)
+- ✅ File-based configuration with discovery and profiles
+- ✅ MCP server definition providers for VS Code Language Model API
+
+**Phase 5: Documentation** (Completed)
+- ✅ Updated Extension README with v0.3.0 architecture and migration guide
+- ✅ Updated UserGuide.md with "What's New" and migration section
+- ✅ Created comprehensive MIGRATION.md standalone guide
+- ✅ Updated Extension CHANGELOG.md with v0.3.0 breaking changes
+- ✅ Updated DesignWalkthrough.md with architecture evolution (this section)
+
+**Phase 6: Migration & Rollout** (Planned)
+- ⏳ Implement automatic migration detection (detect old `bcTelemetryBuddy.*` settings)
+- ⏳ Show migration notification with "Migrate Settings" button
+- ⏳ Automatic settings conversion to `.bctb-config.json`
+- ⏳ Profile management UI (create/edit/delete/switch profiles)
+- ⏳ MCP installer notification ("Install MCP Server" button)
+- ⏳ Publish MCP to NPM as `bc-telemetry-buddy-mcp`
+- ⏳ End-to-end testing of migration flow
+
+**Phase 7+: Future Enhancements** (Planned)
+- Profile status bar with quick switcher
+- Query history viewer
+- Visual query builder
+- Config encryption for secrets
+- MCP health monitoring
+
+### Migration Impact Analysis
+
+**User Impact:**
+- **Existing Users (v0.2.x)**: All direct commands continue working; chat features require MCP installation
+- **New Users**: Simplified setup with Setup Wizard creating `.bctb-config.json`
+- **Chat Users**: One-time MCP installation (`npm install -g bc-telemetry-buddy-mcp`)
+- **Configuration**: Old VSCode settings deprecated but still functional (backward compatible)
+
+**Developer Impact:**
+- **Build Process**: Changed from bundled MCP to independent builds
+- **Testing**: Separate test suites for shared, MCP, and extension
+- **Versioning**: Independent version numbers for MCP and extension
+- **Publishing**: Two publish targets (NPM for MCP, Marketplace for extension)
+
+**Ecosystem Impact:**
+- **MCP Ecosystem**: BC Telemetry Buddy now available to all MCP clients (Claude, Copilot Studio, etc.)
+- **Discoverability**: MCP listed on npmjs.com and Model Context Protocol directory
+- **Interoperability**: Standard MCP protocol enables integration with any AI tool
+
+### Lessons Learned
+
+1. **Bundling Strategy**: Build-time bundling (esbuild) provides best of both worlds - shared code without runtime dependency complexity
+2. **Configuration Evolution**: Moving from VSCode settings to file-based config enables cross-platform use and version control
+3. **Independence vs Integration**: Extension can work standalone while still offering optional MCP integration for advanced features
+4. **Migration UX**: Automatic detection + one-click migration reduces friction for existing users
+5. **Documentation First**: Writing comprehensive migration guides before implementing migration UI helps clarify user experience
+6. **Backward Compatibility**: Supporting old settings during transition period reduces user pain and allows gradual migration
+
+### Success Metrics
+
+**Technical:**
+- ✅ Shared package builds successfully with zero duplication
+- ✅ MCP compiles as standalone CLI tool
+- ✅ Extension works without MCP installed (all direct commands functional)
+- ✅ All 300+ tests pass across packages
+- ✅ Zero regression in functionality
+
+**User Experience:**
+- ✅ Clear migration documentation (README, UserGuide, MIGRATION.md)
+- ⏳ Automatic migration detection (planned for v0.3.1)
+- ⏳ One-click migration for existing users (planned)
+- ⏳ < 5 minute setup for new users (after MCP published to NPM)
+
+**Ecosystem:**
+- ⏳ MCP published to NPM (bc-telemetry-buddy-mcp)
+- ⏳ Listed on Model Context Protocol directory
+- ⏳ Documented for use with Claude Desktop, Copilot Studio
+- ⏳ Community adoption and feedback
+
+---
+- **2025-11-17** — Phase 5: Completed documentation updates (CHANGELOG, DesignWalkthrough) [Entry: 0b84ea59-eca2-43f2-b95c-8153a9f1a98c]
+  - **Why:** Finalize Phase 5 by documenting v0.3.0 breaking changes in CHANGELOG and architecture evolution story in DesignWalkthrough
+  - **How:** Updated Extension CHANGELOG.md with comprehensive v0.3.0 section (breaking changes, migration notes, technical details, known issues); Added Architecture Evolution section to DesignWalkthrough.md documenting bundled-to-standalone refactoring (problems, solutions, design decisions, implementation phases, lessons learned, success metrics)
+- **2025-11-17** — Phase 6: Implemented migration detection and automatic settings conversion [Entry: 2bbf1651-2d87-480c-a6a3-49e00078a752]
+  - **Why:** Users need automatic migration from old bcTelemetryBuddy.* settings to new .bctb-config.json format
+  - **How:** Created MigrationService class with detection logic, settings converter, notification UI, and manual migration command; Added migration notification on first launch; Created comprehensive test suite; Integrated into extension activation with 2-second delay
+- **2025-11-17** — Phase 6: Implemented migration detection and automatic settings conversion [Entry: 2bbf1651-2d87-480c-a6a3-49e00078a752]
+  - **Why:** Users need automatic migration from old bcTelemetryBuddy.* settings to new .bctb-config.json format
+  - **How:** Created MigrationService class with detection logic, settings converter, notification UI, and manual migration command; Added migration notification on first launch; Created comprehensive test suite; Integrated into extension activation with 2-second delay
+- **2025-11-17** — Dev host settings scan not applicable [Entry: c0b8ce6f-e2e4-4821-82ec-01f446c99245]
+  - **Why:** Migration notification won’t appear because dev host lacks legacy settings context
+  - **How:** Logged clarification; plan to add development-mode skip condition
+- **2025-11-17** — Added legacy dotted key support [Entry: 025f41b5-73d3-4a2f-851d-303f9b3d8985]
+  - **Why:** User's dev workspace has bcTelemetryBuddy.tenant.id, appInsights.id, kusto.url, auth.flow format (not newer appId/clusterUrl/authFlow variants)
+  - **How:** Updated hasOldSettings(), convertSettings(), cleanupOldSettings() to check 9 additional legacy dotted keys
+- **2025-11-17** — Fixed workspace-scoped config detection [Entry: ed139517-b98c-4651-a298-c4e4dda330cb]
+  - **Why:** getConfiguration() without scope returned undefined for all settings; needed workspace folder URI scope
+  - **How:** Changed to getConfiguration(undefined, workspaceFolder?.uri) - now detects folder-level settings correctly- **2025-11-17** — Migration changed to flat MCP config properties [Entry: 274a7236-f821-4540-86cc-7ea46b8d643f]
+  - **Why:** MCP server used flat pplicationInsightsAppId/kustoClusterUrl keys and failed to read nested pplicationInsights.appId/kusto.clusterUrl entries generated by migration.
+  - **How:** Updated convertSettings() to write flat keys and added tests to packages/extension/src/__tests__/migrationService.test.ts.
+- **2025-11-17** — Multiroot workspace support for migration [Entry: c5530104-50ac-471d-8607-8fb2efc1d0e6]
+  - **Why:** Extension only migrated first workspace folder in multiroot setups, ignoring other folders with BC projects.
+  - **How:** Updated migrationService to loop through all workspaceFolders, detect settings per folder, create .bctb-config.json in each, and clean up settings folder-by-folder. Added hasOldSettingsInFolder/hasConfigFileInFolder/cleanupOldSettingsInFolder private methods. Tests pass.
+- **2025-11-17** — Fixed multiroot migration - all folders now get config files [Entry: 4a8f2b7d-e9c3-4f1a-b5d6-8e2c9a7b3f1d]
+  - **Why:** User reported only first folder migrated, others had settings removed but no config created.
+  - **How:** Replaced migrate() method to loop all folders, create config in each with old settings, show summary.
+- **2025-11-17** — Updated all documentation to reflect v0.3.0 development status and test failures [Entry: bcb997f7-d173-46d1-9c55-6525607a5875]
+  - **Why:** Documentation claimed features were working (automatic migration, direct execution) but 21 tests are failing. Need to align docs with reality.
+  - **How:** Updated Extension CHANGELOG (marked v0.3.0 as IN DEVELOPMENT with test status), MIGRATION.md (added warnings about non-working features, multi-root blocking), README.md (added development status banner), UserGuide.md (separated current stable v0.2.24 vs future v0.3.0 features). All docs now clearly state what works vs what's in progress.
+- **2025-11-17** — Complete Phase 7 multi-profile infrastructure [Entry: c934def4-d8cf-4dbb-9fd6-96471fe877f8]
+  - **Why:** Enable multiple customer configurations in single workspace with profile inheritance and environment variables
+  - **How:** Added switchProfile/getCurrentProfileName/getConnectionName to TelemetryService, created ProfileStatusBar with status bar UI and quick pick switcher
+- **2025-11-17** — Wire up multi-profile UI and chat integration [Entry: 2a4202be-89e5-4cbf-a103-45ed47e77fa9]
+  - **Why:** Enable profile switching from status bar and expose all profiles to chat participant for multi-customer analysis
+  - **How:** Integrated ProfileStatusBar/ProfileManager into extension.ts, added switchProfile/refreshProfileStatusBar commands, enhanced chat participant with getProfileContext() to show available profiles in system prompt
+- **2025-11-17** — Add list_profiles MCP tool [Entry: f38df0eb-8cee-4e44-8558-0d00de154d2d]
+  - **Why:** Make MCP very clear about which profile is active and show all available profiles for multi-customer scenarios
+  - **How:** Added list_profiles tool to MCP server showing profileMode (single/multi), currentProfile (name, connectionName, isActive), availableProfiles array, and usage instructions. Updated chat participant to list this as first tool to call.
+- **2025-11-17** — Update Setup Wizard for multi-profile support [Entry: c172bdd1-8a72-47d5-a633-a23268c36787]
+  - **Why:** Enable users to create multi-profile .bctb-config.json files through the guided wizard, completing Phase 7 onboarding experience
+  - **How:** Added Configuration Mode choice (Single vs Multi-Profile) to Step 1, profile name input to Step 2, replaced VSCode settings save with .bctb-config.json file generation supporting both single and multi-profile modes, enabled Add Another Profile workflow, removed multi-root workspace restriction, exported ProfiledConfig/resolveProfileInheritance/expandEnvironmentVariables from @bctb/shared
+- **2025-11-17** — Remove multi-root workspace validation from Setup Wizard [Entry: ce04d55e-ea80-49a8-8320-4c81635980d0]
+  - **Why:** Simplify wizard UX - multi-root workspaces are fully supported, no need to validate or show warnings
+  - **How:** Removed _validateWorkspace method and all workspaceValidation message handlers. Wizard now silently prompts user to select target folder during save in multi-root scenarios via showWorkspaceFolderPick().
+- **2025-11-17** — Simplified Setup Wizard - Created ConfigEditorProvider with JSON editor
+  - **Why:** Old wizard had bugs loading settings (missing App Insights ID, Kusto URL) and couldn't support multi-profile arrays cleanly.
+  - **How:** Created new ConfigEditorProvider.ts webview with simple JSON textarea, example templates, validation. Registered view in Explorer sidebar. Backend methods already refactored to handle JSON.
+- **2025-11-17** — Replaced Setup Wizard with JSON editor [Entry: d19083b7-6dca-4474-92c7-c04b723040cd]
+  - **Why:** User wanted simplified configuration - single JSON textarea instead of multi-step wizard form
+  - **How:** Replaced 702 lines of wizard HTML with simple JSON editor, updated backend to read/write .bctb-config.json, removed ConfigEditorProvider view
+- **2025-11-17** — Replaced Setup Wizard with JSON editor [Entry: 3f60c398-b973-4fcf-bcde-9c41fee865de]
+  - **Why:** User wanted simplified configuration - single JSON textarea instead of multi-step wizard
+  - **How:** Replaced 702 lines of wizard HTML, updated backend for .bctb-config.json, removed ConfigEditorProvider
+- **2025-11-17** — Implemented Azure CLI auth validation in wizard Step 3 [Entry: cc6273e9-f010-4f29-bd57-a1cf107b5316]
+  - **Why:** User requested only Azure CLI functionality first
+  - **How:** Added updateAuthFields() to show/hide auth sections, validateAuth() to trigger backend validation via child_process exec, showAuthValidation() to display results, and wired up dropdown/button event listeners
+- **2025-11-17** — Enhanced Azure CLI validation to show account details [Entry: e8d34e21-7c60-4c09-a3c0-78323958ef11]
+  - **Why:** User requested to display current Azure account info
+  - **How:** Added accountDetails div in HTML to show account name and tenant ID, updated showAuthValidation() to populate and display account info on successful validation
+- **2025-11-17** — Added username to Azure CLI account display [Entry: e8c6aa87-447c-4bac-a2ba-574b055b224f]
+  - **Why:** User requested to show username in validation results
+  - **How:** Added userName field to accountDetails HTML, updated showAuthValidation() to populate it, and modified backend to extract user.name from az account show output
+- **2025-11-17** — Implemented Step 4 Test Connection with real KQL query [Entry: ed1903cb-d2ad-4f2f-83e5-07e8c0b17b34]
+  - **Why:** User requested actual KQL test to validate authentication and settings
+  - **How:** Added testConnection backend method using axios to execute 'traces | take 1' query against Application Insights API, added HTML form for tenant ID/App ID/cluster URL, added frontend testConnection() and showConnectionTest() functions, wired up message handlers and test button
+- **2025-11-17** — Redesigned Step 4 to display configured settings [Entry: 67497ae8-b873-4331-8c79-db4e3e646cb8]
+  - **Why:** User requested to show summary of settings from previous pages instead of input fields
+  - **How:** Replaced input fields with read-only configuration summary display, added populateConfigSummary() to extract values from Step 2 JSON editor, updated testConnection() to read config from editor instead of form inputs, auto-populate summary when showing step 4
+- **2025-11-17** — Fixed config loading to use workspace settings [Entry: 50feb454-9fae-416a-b5fa-8656df3ffa1b]
+  - **Why:** User noticed wizard was showing default config instead of current workspace settings
+  - **How:** Added _loadConfig() backend method to read bctb.mcp.* settings, added loadConfig message handler, renamed populateDefaultConfig to populateCurrentConfig to accept config parameter, now loads actual workspace config on page load
+- **2025-11-17** — Added debug logging for config loading [Entry: 5fe3739b-1b63-4743-815f-dda4a31d8851]
+  - **Why:** User reported config still not loading - need to debug
+  - **How:** Added console.log statements in _loadConfig backend and populateCurrentConfig frontend to trace message flow and verify config is being sent and received
+- **2025-11-17** — Fixed config loading to read .bctb-config.json file [Entry: 42a17175-4682-4118-b6ac-971acd265fbd]
+  - **Why:** Wizard was only reading workspace settings, not the .bctb-config.json file
+  - **How:** Modified _loadConfig() to first try reading .bctb-config.json file using vscode.workspace.fs.readFile, fall back to workspace settings if file doesn't exist
+- **2025-11-17** — Implemented Step 5 save configuration functionality [Entry: 0e5c2fea-c09f-41a1-a1dd-42dd178037b8]
+  - **Why:** Complete the wizard by allowing users to save their configuration to .bctb-config.json file
+  - **How:** Added _saveConfig backend method using vscode.workspace.fs.writeFile, updated Step 5 UI with config summary and save status display, added populateFinalSummary/saveConfiguration/handleConfigSaved JavaScript functions, wired Save Configuration button with success/error feedback
+- **2025-11-17** — Added logo header and top navigation buttons [Entry: f1534fe1-3c3d-430a-aa2e-9fd10b325523]
+  - **Why:** Improve wizard UI by replacing rocket emoji with actual waldo.png logo and adding navigation buttons at top of each step for better UX
+  - **How:** Added logo-header CSS with flex layout for logo + title, replaced h1 rocket with img tag using webview URI for waldo.png, added button-group.top CSS style with border-bottom, added top navigation buttons to all 5 steps (btn-next-1-top, btn-prev-2-top, etc.), wired all top buttons to same goNext/goPrev handlers as bottom buttons
+- **2025-11-17** — Aligned chat participant with chatmode definitions [Entry: 39b0609a-1104-4661-84bd-03defd2250c5]
+  - **Why:** The chatmode.md files work well, so align @bc-telemetry-buddy participant instructions with the same proven approach
+  - **How:** Simplified chat participant SYSTEM_PROMPT to match chatmodeDefinitions.ts structure, removed slash commands and information/data request distinction that complicated things, kept focus on MCP tools workflow (tenant mapping → event catalog → field samples → query), added data visualization guidelines matching chatmode, maintained same file organization and response style
+- **2025-11-18** — Added multi-profile support to Step 4 and JSON formatting [Entry: 61aebd07-4d4a-4e7d-bbd3-c94b5799a2ae]
+  - **Why:** Users with multiple profiles couldn't test specific profiles, and JSON editor lacked formatting help
+  - **How:** Added profile dropdown selector to Step 4 that appears when multiple profiles detected, updated testConnection and populateConfigSummary to handle selected profile, added Format JSON button to Step 2 editor, added tip about copying to .json file for IntelliSense
+- **2025-11-18** — Added multi-profile support to Step 4 and JSON formatting [Entry: fd49b231-ae39-4408-87ff-cd7b08c1d60a]
+  - **Why:** Users with multiple profiles couldn't test specific profiles, and JSON editor lacked formatting help
+  - **How:** Added profile dropdown selector to Step 4 that appears when multiple profiles detected, updated testConnection and populateConfigSummary to handle selected profile, added Format JSON button to Step 2 editor, added tip about copying to .json file for IntelliSense
+- **2025-11-18** — Added multi-profile support to Step 4 and JSON formatting [Entry: ea0a3be9-cf2a-42f0-b4a2-b964db441f16]
+  - **Why:** Users with multiple profiles couldn't test specific profiles, and JSON editor lacked formatting help
+  - **How:** Added profile dropdown selector to Step 4 that appears when multiple profiles detected, updated testConnection and populateConfigSummary to handle selected profile, added Format JSON button to Step 2 editor, added tip about copying to .json file for IntelliSense
+- **2025-11-18** — Added token limit protection for chat participant [Entry: 1e393f14-0788-4609-bc67-01705d45edbf]
+  - **Why:** Large tool results (like event catalog with hundreds of events) exceeded LLM token limits causing 'Message exceeds token limit' errors
+  - **How:** Truncate tool results over 100k chars (~25k tokens) before sending to LLM, show helpful message suggesting filters (status, daysBack, minCount), updated system prompt to recommend using filters for large datasets, added specific error handling for token limit errors
+- **2025-11-18** — Added maxResults parameter and TAKE limit to event catalog [Entry: 32948eee-580e-443f-b39e-646bd40ce31b]
+  - **Why:** Even with truncation, get_event_catalog still exceeded token limits because it returned all events. User cannot control filters in predefined KQL.
+  - **How:** Added maxResults parameter (default: 50, max: 200) to get_event_catalog tool, added TAKE clause to KQL query to limit results, updated both MCP protocol handlers, updated summary to indicate when results are limited, updated chat participant system prompt to document maxResults parameter
+- **2025-11-18** — Added inline field descriptions to Step 2 configuration examples [Entry: 6b96f02a-97cd-4448-b866-7b1843d149af]
+  - **Why:** Users needed guidance on what each config field means and how to obtain values from Azure Portal
+  - **How:** Added // comments after each field in both single and multi-profile examples explaining purpose and Azure Portal navigation
+- **2025-11-18** — Added JSON syntax highlighting to Step 2 configuration examples [Entry: 9867d682-3347-4de4-bb87-a971de8c5f1a]
+  - **Why:** User wanted green comments and typical JSON color coding to make examples more readable
+  - **How:** Added CSS classes (.json-comment, .json-key, .json-string, .json-number, .json-boolean) and wrapped all JSON content in span tags with appropriate classes

@@ -2,6 +2,52 @@
 
 Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code with GitHub Copilot and data-driven discovery tools.
 
+## 🆕 What's New in v0.3.0 (Development Build)?
+
+⚠️ **WARNING: v0.3.0 is NOT released and NOT ready for production use.**
+
+### Planned Changes (In Progress)
+
+**✅ What's Implemented:**
+- File-based configuration (`.bctb-config.json`) via Setup Wizard
+- Multi-profile support for managing multiple environments
+- Configuration discovery (workspace → home → env vars)
+- MCP server can run standalone
+
+**❌ What's Not Working (Test Failures):**
+- Automatic migration from v0.2.x settings (not implemented)
+- Direct command execution without MCP (command handlers incomplete)
+- Multi-root workspace support (explicitly blocked, tests failing)
+- TelemetryService integration (13 extension tests failing)
+
+**Current Test Status:** 21 of 178 tests failing
+
+### When v0.3.0 is Released (Future)
+
+The planned architecture changes include:
+
+**✅ Extension Works Standalone**
+- All Command Palette commands will work without MCP server
+- MCP only needed for GitHub Copilot chat features
+- Faster, simpler, more reliable
+
+**✅ Simplified Configuration**
+- Single `.bctb-config.json` file replaces VSCode settings
+- Clearer configuration with better validation
+- Easier to share configurations across team
+
+**✅ MCP Optional for Chat**
+- Chat participant (`@bc-telemetry-buddy`) requires separate MCP server
+- Install via: `npm install -g bc-telemetry-buddy-mcp` (when published)
+- Direct commands don't need MCP at all
+
+**✅ Automatic Migration**
+- Extension will detect and migrate old settings automatically
+- One-click migration from `bcTelemetryBuddy.*` to `.bctb-config.json`
+- Smooth upgrade experience
+
+See [MIGRATION.md](MIGRATION.md) for current development status and testing instructions.
+
 ## Table of Contents
 
 1. [What is BC Telemetry Buddy?](#what-is-bc-telemetry-buddy)
@@ -15,24 +61,53 @@ Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Busin
 9. [External References](#external-references)
 10. [GitHub Copilot Integration](#github-copilot-integration)
 11. [Advanced Configuration](#advanced-configuration)
-12. [Troubleshooting](#troubleshooting)
-13. [FAQ](#faq)
+12. [Migrating from v0.2.x](#migrating-from-v02x)
+13. [Troubleshooting](#troubleshooting)
+14. [FAQ](#faq)
 
 ---
 
 ## What is BC Telemetry Buddy?
 
-BC Telemetry Buddy enables you to:
+BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze Business Central telemetry data from Application Insights.
 
-- 🔍 **Query Business Central telemetry** from Application Insights/Kusto using KQL queries
-- 🤖 **Use GitHub Copilot** with discovery tools to generate accurate KQL queries from your questions
-- 💾 **Save and reuse queries** as `.kql` files in your workspace
-- 🧠 **Build context** from saved queries and external sources for better query generation
-- 📊 **Visualize results** in rich tables and charts
-- 💡 **Get recommendations** based on telemetry patterns and best practices
-- 🔎 **Discover event structure** with field analysis and prevalence detection across events
+**Current Version Status:**
+- **v0.2.24 (Stable)**: Fully functional, recommended for production use
+- **v0.3.0 (Development)**: In progress, 21 tests failing, not ready for release
 
-The extension runs a lightweight MCP (Model Context Protocol) backend that handles authentication, query execution, caching, and context management, making it easy to integrate with GitHub Copilot.
+### Core Features (v0.2.24 - Current Stable)
+
+- 🔍 **KQL Execution via MCP**: Write and run KQL queries through MCP server
+- 💾 **Query Library**: Save and organize queries by category/customer
+- 👁️ **CodeLens Integration**: Click "▶ Run Query" above queries in `.kql` files
+- 📋 **Rich Results Display**: View formatted tables with row counts and timing
+- 💡 **Smart Caching**: File-based caching with configurable TTL (default 1 hour)
+- 🔐 **Flexible Auth**: Azure CLI (recommended), Device Code, or Client Credentials
+- 📊 **Query Search**: Find existing queries by keywords before writing new ones
+- 🤖 **GitHub Copilot Chat**: Use `@bc-telemetry-buddy` participant for natural language queries
+- 📊 **Event Catalog**: Browse available BC telemetry events via MCP tools
+- 🔎 **Schema Discovery**: Understand field structure automatically
+
+### Planned Features (v0.3.0 - In Development)
+
+⚠️ **Not yet working - development in progress:**
+
+- ❌ **Direct KQL Execution**: Run queries without MCP server (command handlers incomplete)
+- ❌ **Automatic Migration**: Detect and migrate v0.2.x settings (UI not implemented)
+- ❌ **Multi-Root Workspace**: Configuration for multi-root setups (explicitly blocked)
+
+### Architecture (Current vs. Future)
+
+**Current (v0.2.24):**
+- Extension requires MCP server for all commands
+- MCP bundled with extension
+- Settings in `.vscode/settings.json`
+
+**Future (v0.3.0 - when released):**
+- Extension can execute queries directly (no MCP for commands)
+- MCP optional, only needed for chat features
+- Configuration in `.bctb-config.json`
+- MCP published as standalone NPM package
 
 ---
 
@@ -788,6 +863,159 @@ For **client_credentials flow:**
 2. Verify GitHub URLs are correct and public
 3. Check rate limiting (60 requests/hour for unauthenticated)
 4. Look for errors in Output panel
+
+---
+
+## Migrating from v0.2.x
+
+If you're upgrading from BC Telemetry Buddy v0.2.x, this section explains what changed and how to migrate smoothly.
+
+### What Changed in v0.3.0?
+
+| Aspect | v0.2.x (Old) | v0.3.0 (New) |
+|--------|-------------|--------------|
+| **MCP Server** | Bundled with extension | Separate optional package |
+| **Direct Commands** | Required MCP running | Built-in TelemetryService |
+| **Configuration** | Scattered VSCode settings (`bcTelemetryBuddy.*`) | Single `.bctb-config.json` file |
+| **Chat Features** | Bundled automatically | Requires `npm install -g bc-telemetry-buddy-mcp` |
+| **Performance** | HTTP mode required | Direct execution (faster) |
+| **Setup** | MCP auto-start on commands | Extension ready after Setup Wizard |
+
+### Migration Path
+
+#### Automatic Migration (Recommended)
+
+When you first launch v0.3.0 with existing v0.2.x settings:
+
+1. **Detection**: Extension detects old `bcTelemetryBuddy.*` settings in `.vscode/settings.json`
+2. **Notification**: Shows prompt: _"Migrate to new configuration format?"_
+3. **One-Click Migration**: Click **"Migrate Settings"**
+4. **Automatic Conversion**: Extension creates `.bctb-config.json` with your settings
+5. **Immediate Use**: All commands work right away
+6. **Optional MCP**: Install later if you want chat features
+
+**What Gets Migrated:**
+- ✅ Connection name
+- ✅ Tenant ID
+- ✅ Application Insights App ID
+- ✅ Kusto cluster URL
+- ✅ Auth flow settings
+- ✅ Cache configuration
+- ✅ Query folder location
+- ✅ PII sanitization settings
+- ✅ External references
+
+**What Happens to Old Settings:**
+- Old settings remain in `.vscode/settings.json` (not deleted)
+- Extension ignores old settings (reads `.bctb-config.json` instead)
+- Safe to delete old settings manually after migration
+
+#### Manual Migration
+
+If automatic migration didn't work or you prefer manual setup:
+
+1. **Note Your Current Settings**
+   
+   Check `.vscode/settings.json` for your configuration:
+   ```json
+   {
+     "bcTelemetryBuddy.connectionName": "Production",
+     "bcTelemetryBuddy.appInsights.appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+     "bcTelemetryBuddy.kusto.clusterUrl": "https://ade.applicationinsights.io/...",
+     "bcTelemetryBuddy.authFlow": "azure_cli"
+   }
+   ```
+
+2. **Run Setup Wizard**
+   
+   - Command Palette → `BC Telemetry Buddy: Setup Wizard`
+   - Enter your settings when prompted
+   - Wizard validates and creates `.bctb-config.json`
+
+3. **Verify Configuration**
+   
+   Check `.bctb-config.json` in workspace root:
+   ```json
+   {
+     "connectionName": "Production",
+     "authFlow": "azure_cli",
+     "applicationInsightsAppId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+     "kustoClusterUrl": "https://ade.applicationinsights.io/...",
+     "workspacePath": "${workspaceFolder}",
+     "queriesFolder": "queries",
+     "cacheEnabled": true,
+     "cacheTTLSeconds": 3600
+   }
+   ```
+
+4. **Test Direct Commands**
+   
+   - Run: `BC Telemetry Buddy: Run KQL Query`
+   - Should work immediately without installing MCP
+
+5. **(Optional) Clean Up Old Settings**
+   
+   - Remove `bcTelemetryBuddy.*` entries from `.vscode/settings.json`
+   - Extension no longer reads these
+
+### Installing MCP for Chat Features
+
+If you want to use the GitHub Copilot chat participant (`@bc-telemetry-buddy`):
+
+#### Option 1: Extension Prompt
+1. Use any command that would benefit from chat
+2. Extension shows: _"Install MCP Server for chat features?"_
+3. Click **"Install"**
+4. Extension runs `npm install -g bc-telemetry-buddy-mcp` in background
+5. Shows completion notification
+
+#### Option 2: Manual Install
+```bash
+# Install globally
+npm install -g bc-telemetry-buddy-mcp
+
+# Verify installation
+bctb-mcp --version
+```
+
+#### Verify Chat Works
+1. Open GitHub Copilot Chat
+2. Type: `@bc-telemetry-buddy show me the event catalog`
+3. Copilot should respond with BC telemetry events
+
+### Troubleshooting Migration
+
+**Q: Migration notification doesn't appear?**
+- Check if `.bctb-config.json` already exists (migration skipped)
+- Manually run: `BC Telemetry Buddy: Migrate Settings`
+- Or use Setup Wizard to create fresh config
+
+**Q: Commands don't work after migration?**
+- Verify `.bctb-config.json` exists in workspace root
+- Check file has valid JSON (no syntax errors)
+- Run Setup Wizard to validate configuration
+- Check Output panel for error messages
+
+**Q: Chat participant not found after installing MCP?**
+- Reload VSCode window: `Developer: Reload Window`
+- Verify MCP installed: `bctb-mcp --version` in terminal
+- Check extension detected MCP: Look for "Using globally-installed MCP" in Output
+
+**Q: Can I use both v0.2.x and v0.3.0 configurations?**
+- No - v0.3.0 only reads `.bctb-config.json`
+- Old `bcTelemetryBuddy.*` settings ignored
+- Choose one version and stick with it
+
+**Q: How do I rollback to v0.2.x?**
+- Uninstall v0.3.0 from Extensions
+- Install v0.2.x from Marketplace (may need to download VSIX)
+- Restore `.vscode/settings.json` with old settings
+- Delete `.bctb-config.json` (optional, v0.2.x ignores it)
+
+**Q: My saved queries still work after migration?**
+- Yes! Query folder location migrated automatically
+- Queries remain in same location (`queries/` by default)
+- No changes needed to existing `.kql` files
 
 ---
 

@@ -64,6 +64,11 @@
                 "icon": "$(gear)"
             },
             {
+                "command": "bctb.migrateSettings",
+                "title": "BC Telemetry Buddy: Migrate Settings to .bctb-config.json",
+                "icon": "$(arrow-right)"
+            },
+            {
                 "command": "bctb.startMCP",
                 "title": "BC Telemetry Buddy: Start MCP Server"
             },
@@ -94,17 +99,25 @@
             {
                 "command": "bctb.installChatmodes",
                 "title": "BC Telemetry Buddy: Install Chatmodes"
-            }
-        ],
-        "mcpServerDefinitionProviders": [
+            },
             {
-                "id": "bc-telemetry-buddy.mcp-server",
-                "label": "BC Telemetry Buddy MCP Server"
+                "command": "bctb.switchProfile",
+                "title": "BC Telemetry Buddy: Switch Profile"
+            },
+            {
+                "command": "bctb.refreshProfileStatusBar",
+                "title": "BC Telemetry Buddy: Refresh Profile Status Bar"
             }
         ],
         "configuration": {
             "title": "BC Telemetry Buddy",
             "properties": {
+                "bctb.currentProfile": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Currently active profile (for multi-profile configurations)",
+                    "scope": "resource"
+                },
                 "bctb.mcp.connectionName": {
                     "type": "string",
                     "default": "",
@@ -164,6 +177,12 @@
                     "description": "Enable PII sanitization (opt-in)",
                     "scope": "resource"
                 },
+                "bctb.mcp.preferGlobal": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Prefer using globally installed 'bctb-mcp' during development (ignore local monorepo build)",
+                    "scope": "resource"
+                },
                 "bctb.mcp.port": {
                     "type": "number",
                     "default": 52345,
@@ -220,26 +239,39 @@
                     }
                 }
             }
-        }
+        },
+        "mcpServerDefinitionProviders": [
+            {
+                "id": "bctb",
+                "label": "BC Telemetry Buddy",
+                "description": "Query Business Central telemetry data using KQL",
+                "serverPath": "bctb-mcp",
+                "args": [
+                    "start",
+                    "--stdio"
+                ]
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run build && npm run copy-mcp",
-        "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify && npm run copy-mcp",
+        "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify",
+        "copy-mcp": "node -e \"const fs=require('fs'); const path=require('path'); const srcDir=path.join(__dirname,'..','mcp','dist'); const destDir=path.join(__dirname,'mcp','dist'); fs.mkdirSync(destDir,{recursive:true}); ['launcher.js','server.js','cli.js'].forEach(f=>{const src=path.join(srcDir,f); const dest=path.join(destDir,f); if(fs.existsSync(src)){fs.copyFileSync(src,dest); console.log('Copied '+f);}});\"",
         "dev": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
         "compile": "tsc --noEmit",
         "compile-tests": "tsc -p ./ --outDir dist",
         "test": "jest",
         "test:coverage": "jest --coverage",
         "test:integration": "npm run build && npm run compile-tests && node ./dist/test/runTest.js",
-        "copy-mcp": "node -e \"const fs=require('fs');const path=require('path');const targetDir=path.join(__dirname,'mcp','dist');fs.mkdirSync(targetDir,{recursive:true});fs.copyFileSync(path.join(__dirname,'..','mcp','dist','server.js'),path.join(targetDir,'server.js'));fs.copyFileSync(path.join(__dirname,'..','mcp','dist','launcher.js'),path.join(targetDir,'launcher.js'));console.log('Copied MCP server bundle to extension/mcp/dist/')\"",
         "package": "vsce package",
-        "clean": "rimraf dist out mcp"
+        "clean": "rimraf dist out mcp",
+        "install-mcp-dev": "cd ../mcp && npm link"
     },
     "dependencies": {
-        "@azure/msal-node": "^3.8.0",
         "axios": "^1.6.0"
     },
     "devDependencies": {
+        "@bctb/shared": "file:../shared",
         "@types/jest": "^30.0.0",
         "@types/node": "^22.18.11",
         "@types/vscode": "^1.85.0",

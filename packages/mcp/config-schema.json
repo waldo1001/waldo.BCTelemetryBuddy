@@ -1,0 +1,205 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "BC Telemetry Buddy MCP Configuration",
+    "description": "Configuration file for BC Telemetry Buddy MCP server",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "JSON Schema reference"
+        },
+        "profiles": {
+            "type": "object",
+            "description": "Named configuration profiles for multiple customers/environments",
+            "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                    "$ref": "#/definitions/profile"
+                }
+            }
+        },
+        "defaultProfile": {
+            "type": "string",
+            "description": "Default profile to use when none is specified"
+        },
+        "connectionName": {
+            "type": "string",
+            "description": "Friendly name for this connection"
+        },
+        "authFlow": {
+            "type": "string",
+            "enum": [
+                "azure_cli",
+                "device_code",
+                "client_credentials"
+            ],
+            "description": "Authentication flow to use"
+        },
+        "tenantId": {
+            "type": "string",
+            "description": "Azure AD tenant ID (optional for azure_cli)"
+        },
+        "clientId": {
+            "type": "string",
+            "description": "Azure AD client ID (required for client_credentials)"
+        },
+        "clientSecret": {
+            "type": "string",
+            "description": "Azure AD client secret (required for client_credentials, use ${ENV_VAR} for secrets)"
+        },
+        "applicationInsightsAppId": {
+            "type": "string",
+            "description": "Application Insights application ID"
+        },
+        "kustoClusterUrl": {
+            "type": "string",
+            "description": "Kusto cluster URL",
+            "default": "https://ade.applicationinsights.io"
+        },
+        "workspacePath": {
+            "type": "string",
+            "description": "Workspace path (use ${workspaceFolder} for current workspace)"
+        },
+        "queriesFolder": {
+            "type": "string",
+            "description": "Folder for saved queries",
+            "default": "queries"
+        },
+        "cache": {
+            "type": "object",
+            "description": "Cache configuration",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Enable query result caching",
+                    "default": true
+                },
+                "ttlSeconds": {
+                    "type": "number",
+                    "description": "Cache time-to-live in seconds",
+                    "default": 3600
+                }
+            }
+        },
+        "sanitize": {
+            "type": "object",
+            "description": "Data sanitization configuration",
+            "properties": {
+                "removePII": {
+                    "type": "boolean",
+                    "description": "Remove personally identifiable information",
+                    "default": false
+                }
+            }
+        },
+        "references": {
+            "type": "array",
+            "description": "External reference repositories",
+            "items": {
+                "$ref": "#/definitions/reference"
+            }
+        }
+    },
+    "definitions": {
+        "profile": {
+            "type": "object",
+            "description": "Configuration profile for a specific customer/environment",
+            "properties": {
+                "extends": {
+                    "type": "string",
+                    "description": "Parent profile to inherit settings from"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "description": "Friendly name for this connection"
+                },
+                "authFlow": {
+                    "type": "string",
+                    "enum": [
+                        "azure_cli",
+                        "device_code",
+                        "client_credentials"
+                    ],
+                    "description": "Authentication flow to use"
+                },
+                "tenantId": {
+                    "type": "string",
+                    "description": "Azure AD tenant ID"
+                },
+                "clientId": {
+                    "type": "string",
+                    "description": "Azure AD client ID"
+                },
+                "clientSecret": {
+                    "type": "string",
+                    "description": "Azure AD client secret (use ${ENV_VAR})"
+                },
+                "applicationInsightsAppId": {
+                    "type": "string",
+                    "description": "Application Insights application ID"
+                },
+                "kustoClusterUrl": {
+                    "type": "string",
+                    "description": "Kusto cluster URL"
+                },
+                "workspacePath": {
+                    "type": "string",
+                    "description": "Workspace path"
+                },
+                "queriesFolder": {
+                    "type": "string",
+                    "description": "Folder for saved queries"
+                },
+                "cacheEnabled": {
+                    "type": "boolean",
+                    "description": "Enable caching"
+                },
+                "cacheTTLSeconds": {
+                    "type": "number",
+                    "description": "Cache TTL in seconds"
+                },
+                "removePII": {
+                    "type": "boolean",
+                    "description": "Remove PII"
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/reference"
+                    }
+                }
+            }
+        },
+        "reference": {
+            "type": "object",
+            "description": "External reference repository",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Reference name"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "github",
+                        "web"
+                    ],
+                    "description": "Reference type"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Reference URL"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Whether this reference is enabled",
+                    "default": true
+                }
+            },
+            "required": [
+                "name",
+                "type",
+                "url"
+            ]
+        }
+    }
+}

@@ -1591,3 +1591,305 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Extension Restarting MCP: what is the cleanest option? Dual Config Sources: can it show a warning when a conflict scenario exists? Fill in the testing gaps! Option A: Move config types to shared"
 
 ---
+### Entry ID: 8ed619ee-f3c5-4c1e-b061-f618b9e04d05 — 2025-11-17 08:38
+> "Read carefully this file, and start implementing phase 1. Make sure to not publish any breaking changes to the online repo .. I want to test the entire process on this PC."
+
+---
+### Entry ID: 1f8e4f0c-a4f3-4bec-8994-6fe43cd47620 — 2025-11-17 08:56
+> "Ok .. up to phase 2."
+
+---
+### Entry ID: 318dd477-021c-4a40-8a49-ce97fde284ef — 2025-11-17 10:52
+> "User tested Phase 3 and found commands trying to use MCP server instead of TelemetryService - error: Cannot find module launcher.js"
+
+---
+### Entry ID: 6dc61d4a-2b11-43b4-9bd3-b85c9862eb08 — 2025-11-17 11:19
+> "User reported inadequate test coverage - too many issues detected only during manual testing in Phases 1-3"
+
+---
+### Entry ID: 03fdc487-6b1b-41a4-927e-0f819d5959fc — 2025-11-17 12:08
+> "Run all tests - discovered and fixed 5 TelemetryService bugs, reduced test failures from 38 to 19"
+
+---
+### Entry ID: cb00f971-151d-4e54-9eb0-609db9902e45 — 2025-11-17 09:15
+> "Start implementing phase 3."
+
+---
+### Entry ID: 0a580528-1468-45a4-ad82-11d594538e24 — 2025-11-17 09:45
+> "User pressed F5 to test - MCP server not appearing in development host"
+
+---
+### Entry ID: 698628ad-b99c-4dd5-8623-e2a020e459dc — 2025-11-17 10:05
+> "Add mcpServerDefinitionProviders to package.json for MCP server registration"
+
+---
+### Entry ID: 0d86263f-8c29-472d-bd3b-b31241885b30 — 2025-11-17 10:20
+> "Fix MCP server startup - missing start command argument and config issues"
+
+---
+### Entry ID: b5abb464-9713-4ea3-bc24-fecd08e4bb59 — 2025-11-17 10:35
+> "Create config file in user home directory (~/.bctb/config.json) for MCP"
+
+---
+### Entry ID: 28c0c116-9417-4771-8a0f-2fb953ef9768 — 2025-11-17 10:45
+> "Fix MCPServer constructor to accept optional config parameter"
+
+---
+### Entry ID: 05584096-aedd-4340-a7b0-cf14517e7c3b — 2025-11-17 11:00
+> "MCP server successfully started in development host"
+
+---
+### Entry ID: 3f50f1ab-2198-4fd0-b1e7-0f00a2d75ad1 — 2025-11-17 11:25
+> "Create comprehensive test suites for Phase 3 validation"
+
+---
+### Entry ID: 8ddea45a-153e-421e-8280-2316fa0b193a — 2025-11-17 11:50
+> "User asked to run all tests"
+
+---
+### Entry ID: 7bb8bff0-8401-4554-8d48-164323541899 — 2025-11-17 12:00
+> "Why wouldn't you fix it? (referring to test failures)"
+
+---
+### Entry ID: ac4a7eba-7fce-4d00-bafc-4af07da66e36 — 2025-11-17 12:05
+> "If the tests indicate there are bugs, solve the bugs. If not, fix the tests"
+
+---
+### Entry ID: fb4676e3-f5f8-4f5a-bdb0-3a1b79113704 — 2025-11-17 12:20
+> "Continue: Continue to iterate?"
+
+---
+### Entry ID: fb3a43c5-4595-45b4-9985-29eef17bebed — 2025-11-17 12:25
+> "All seems good. next phase please!"
+
+---
+### Entry ID: 2ac2a0f2-5093-43e0-a66f-eac085ff0e10 — 2025-11-17 12:30
+> "I see you missed pretty much all prompts?"
+
+---
+### Entry ID: cb00f971-151d-4e54-9eb0-609db9902e45 — 2025-11-17 09:15
+> "Start implementing phase 3."
+
+---
+### Entry ID: 0a580528-1468-45a4-ad82-11d594538e24 — 2025-11-17 09:45
+> "User pressed F5 to test - MCP server not appearing in development host"
+
+---
+### Entry ID: 698628ad-b99c-4dd5-8623-e2a020e459dc — 2025-11-17 10:05
+> "Add mcpServerDefinitionProviders to package.json for MCP server registration"
+
+---
+### Entry ID: 0d86263f-8c29-472d-bd3b-b31241885b30 — 2025-11-17 10:20
+> "Fix MCP server startup - missing start command argument and config issues"
+
+---
+### Entry ID: b5abb464-9713-4ea3-bc24-fecd08e4bb59 — 2025-11-17 10:35
+> "Create config file in user home directory (~/.bctb/config.json) for MCP"
+
+---
+### Entry ID: 28c0c116-9417-4771-8a0f-2fb953ef9768 — 2025-11-17 10:45
+> "Fix MCPServer constructor to accept optional config parameter"
+
+---
+### Entry ID: 05584096-aedd-4340-a7b0-cf14517e7c3b — 2025-11-17 11:00
+> "MCP server successfully started in development host"
+
+---
+### Entry ID: 3f50f1ab-2198-4fd0-b1e7-0f00a2d75ad1 — 2025-11-17 11:25
+> "Create comprehensive test suites for Phase 3 validation"
+
+---
+### Entry ID: 8ddea45a-153e-421e-8280-2316fa0b193a — 2025-11-17 11:50
+> "User asked to run all tests"
+
+---
+### Entry ID: 7bb8bff0-8401-4554-8d48-164323541899 — 2025-11-17 12:00
+> "Why wouldn't you fix it? (referring to test failures)"
+
+---
+### Entry ID: ac4a7eba-7fce-4d00-bafc-4af07da66e36 — 2025-11-17 12:05
+> "If the tests indicate there are bugs, solve the bugs. If not, fix the tests"
+
+---
+### Entry ID: fb4676e3-f5f8-4f5a-bdb0-3a1b79113704 — 2025-11-17 12:20
+> "Continue: Continue to iterate?"
+
+---
+### Entry ID: fb3a43c5-4595-45b4-9985-29eef17bebed — 2025-11-17 12:25
+> "All seems good. next phase please!"
+
+---
+### Entry ID: 2ac2a0f2-5093-43e0-a66f-eac085ff0e10 — 2025-11-17 12:30
+> "I see you missed pretty much all prompts?"
+
+---
+### Entry ID: fc0f957a-19fd-437b-af52-531b916e2564 — 2025-11-17 12:18
+> "yes (start Phase 4: Update Build System)"
+
+---
+### Entry ID: b133ced6-fd0a-44fd-86d9-0afc47ad705e — 2025-11-17 12:18
+> "yes (start Phase 4: Update Build System)"
+
+---### Entry ID: 9a1207f7-4938-4872-803e-bcc6117108e2 — 2025-11-17 13:15
+> "Really?  Can you globally instlal the mcp while debugging?"
+
+---
+### Entry ID: 21ed4eac-e735-4a8a-a2e8-58be6c5550ef — 2025-11-17 13:19
+> "Conversation summary + env info; confirm dev MCP launcher fix, ensure MCP remains optional, and outline next steps."
+
+---
+### Entry ID: 027c6c92-9b68-4067-9f96-bfb881b161c0 — 2025-11-17 13:32
+> "MCP works! Add logging to show config file path, profile name, and connection settings in output window."
+
+---
+### Entry ID: 30d34f6d-f7ad-4bec-b87c-79ca62496754 — 2025-11-17 13:44
+> "Fixed MCP config discovery to fall back to user profile when workspace config not found. Also corrected dev mode to use extension workspace instead of user's open workspace."
+
+---
+### Entry ID: e965ba88-0c28-479a-ae57-3f064aa5f9fb — 2025-11-17 13:52
+> "Phase 5: Created comprehensive user-facing documentation for v0.3.0 architecture changes - migration guides, updated README, UserGuide, and MIGRATION.md with focus on bundled-to-standalone transition."
+
+---
+### Entry ID: 0b84ea59-eca2-43f2-b95c-8153a9f1a98c — 2025-11-17 13:59
+> "Ok, Finish phase 5"
+
+---
+### Entry ID: 2bbf1651-2d87-480c-a6a3-49e00078a752 — 2025-11-17 14:05
+> "Let's start phase 6"
+
+---
+### Entry ID: c0b8ce6f-e2e4-4821-82ec-01f446c99245 — 2025-11-17 14:25
+> "Uhm - I'm testing int he dev host - it doesnt make sense to search for settings here."
+
+---
+### Entry ID: 025f41b5-73d3-4a2f-851d-303f9b3d8985 — 2025-11-17 14:29
+> "the Dev Host DOES represent a real workspace with old settings in the settings.json. These are its settings: C:\_Source\iFacto\iFacto.TelemetryResearch\Customers\.vscode\settings.json"
+
+---
+### Entry ID: ed139517-b98c-4651-a298-c4e4dda330cb — 2025-11-17 14:33
+> "Migration detection not finding bctb.mcp.* settings - all showing as undefined"
+
+---### Entry ID: 274a7236-f821-4540-86cc-7ea46b8d643f — 2025-11-17 15:19
+> "Fix MCP config loading — migration created nested properties but MCP expects flat keys; fixed convertSettings() to emit flat keys (applicationInsightsAppId, kustoClusterUrl, cacheEnabled, cacheTTLSeconds, workspacePath, queriesFolder) and added migrationService tests and compatibility kustoDatabase field. Ran extension + MCP unit tests."
+
+---
+### Entry ID: c5530104-50ac-471d-8607-8fb2efc1d0e6 — 2025-11-17 15:25
+> "Add multiroot workspace support to migration service — detect and migrate settings in all workspace folders independently, creating .bctb-config.json in each folder with old settings. Updated hasOldSettings, migrate, and cleanupOldSettings to process all folders."
+
+---
+### Entry ID: e2699058-438b-495d-bbde-9e2bff48e4f2 — 2025-11-17 15:42
+> "Migration successful."
+
+---
+### Entry ID: bcb997f7-d173-46d1-9c55-6525607a5875 — 2025-11-17 15:54
+> "Check Documentation again from start to finish if all is still in order after all the changes we are doing."
+
+---
+### Entry ID: c934def4-d8cf-4dbb-9fd6-96471fe877f8 — 2025-11-17 16:05
+> "Complete Phase 7 multi-profile support - finish TelemetryService methods and create ProfileStatusBar UI"
+
+---
+### Entry ID: 2a4202be-89e5-4cbf-a103-45ed47e77fa9 — 2025-11-17 16:18
+> "Wire up Phase 7 multi-profile infrastructure to extension.ts and make chat participant profile-aware"
+
+---
+### Entry ID: f38df0eb-8cee-4e44-8558-0d00de154d2d — 2025-11-17 16:29
+> "Add list_profiles MCP tool to show available profiles and current active profile"
+
+---
+### Entry ID: 9522765f-da65-4dd6-9adf-b424879a14f7 — 2025-11-17 16:45
+> "Yes please - update Setup Wizard to support multi-profile configuration"
+
+---
+### Entry ID: c172bdd1-8a72-47d5-a633-a23268c36787 — 2025-11-17 16:45
+> "Yes please - update Setup Wizard to support multi-profile configuration"
+
+---
+### Entry ID: ce04d55e-ea80-49a8-8320-4c81635980d0 — 2025-11-17 16:48
+> "I don't want the wizard to care about multi-root. When ran in a multiroot, select the workspace it runs against"
+
+---
+### Entry ID: bb5a1284-8413-4ef6-b56d-db6318722062 — 2025-11-17 17:08
+> "I'm testing the setup wizard in a dev host. It loads my settings - but not all of them. I don't see the Application Insights App id, nor the Kusto Customer, but I do see the Tenant and connectionname. I also don't see how I would add an array of connection. Let's simplify a lot: just one textbox with all settings for one connection in it - would that work?"
+
+---
+### Entry ID: d19083b7-6dca-4474-92c7-c04b723040cd — 2025-11-17 17:25
+> "I want the setup wizard to reflect the new JSON editor. Remove the new command, and replace the setup wizard."
+
+---
+### Entry ID: 3f60c398-b973-4fcf-bcde-9c41fee865de — 2025-11-17 17:25
+> "Replaced Setup Wizard with JSON editor instead of creating separate view"
+
+---
+### Entry ID: cc6273e9-f010-4f29-bd57-a1cf107b5316 — 2025-11-17 19:32
+> "Only implement AzureCLI for now."
+
+---
+### Entry ID: e8d34e21-7c60-4c09-a3c0-78323958ef11 — 2025-11-17 19:45
+> "When validating CLI, also display which account is currently loaded."
+
+---
+### Entry ID: e8c6aa87-447c-4bac-a2ba-574b055b224f — 2025-11-17 19:47
+> "Also display username"
+
+---
+### Entry ID: ed1903cb-d2ad-4f2f-83e5-07e8c0b17b34 — 2025-11-17 19:53
+> "Works - next page! make sure to do an actial kql call to test if the authentication and all the other settings are ok. The kql: traces | take 1"
+
+---
+### Entry ID: 67497ae8-b873-4331-8c79-db4e3e646cb8 — 2025-11-17 20:01
+> "page 4 is completely wrong. It should only display the settings that it's about to test. The testbutton should test the settings we have been setting up the previous pages."
+
+---
+### Entry ID: 50feb454-9fae-416a-b5fa-8656df3ffa1b — 2025-11-17 20:04
+> "wait - in step 2, it didn't load my current config .. ???"
+
+---
+### Entry ID: 5fe3739b-1b63-4743-815f-dda4a31d8851 — 2025-11-17 20:07
+> "Still doesn't load it in step 2"
+
+---
+### Entry ID: 42a17175-4682-4118-b6ac-971acd265fbd — 2025-11-17 20:14
+> "User showed config file vs wizard display - wizard was loading workspace settings instead of .bctb-config.json file"
+
+---
+### Entry ID: 0e5c2fea-c09f-41a1-a1dd-42dd178037b8 — 2025-11-17 20:21
+> "Works! Last step!"
+
+---
+### Entry ID: f1534fe1-3c3d-430a-aa2e-9fd10b325523 — 2025-11-17 23:14
+> "Now add my logo on top of the wizard - in place of the rocket if possible. Also add the 'back' and 'next' buttons on top of each page."
+
+---
+### Entry ID: 39b0609a-1104-4661-84bd-03defd2250c5 — 2025-11-17 23:44
+> "Could you compare the chatparticipant with the chatmode that I add.. . The chatmode works pretty good - could you align the chatparticipant with the chatmode?"
+
+---
+### Entry ID: 61aebd07-4d4a-4e7d-bbd3-c94b5799a2ae — 2025-11-18 00:06
+> "With a multiple profile, it doesn't do step 4 (test) correctly. Make it possible to select the profile, and test that profile. Also, on step 2, simply add a tip to copy/paste the example to an actual json-file, which is easier since you have intellisense and auto formatting. Or .. add formatting to the editor ;-)"
+
+---
+### Entry ID: fd49b231-ae39-4408-87ff-cd7b08c1d60a — 2025-11-18 00:06
+> "$userPrompt"
+
+---
+### Entry ID: ea0a3be9-cf2a-42f0-b4a2-b964db441f16 — 2025-11-18 00:06
+> "With a multiple profile, it doesn't do step 4 (test) correctly. Make it possible to select the profile, and test that profile. Also, on step 2, simply add a tip to copy/paste the example to an actual json-file, which is easier since you have intellisense and auto formatting. Or .. add formatting to the editor ;-)"
+
+---
+### Entry ID: 1e393f14-0788-4609-bc67-01705d45edbf — 2025-11-18 00:20
+> "When I ask: '@bc-telemetry-buddy how many events do I have in the customer profile the past day?' It says 'Error: Message exceeds token limit.' How can I manage these token limits?"
+
+---
+### Entry ID: 32948eee-580e-443f-b39e-646bd40ce31b — 2025-11-18 00:24
+> "Now it says: 'ℹ️ Note: Result was truncated due to size. Use filters to reduce the amount of data.' followed by '⚠️ Error: Message exceeds token limit.' Do know there is no way for me to add filters, since the 'get_event_catalog' is a predefined kql. May be add a 'take'-limit in that kql?"
+
+---
+### Entry ID: 6b96f02a-97cd-4448-b866-7b1843d149af — 2025-11-18 00:39
+> "in the setup wizard, I'd like to describe in a comment after each field in the examples (step 2) what it is, and how to get to the value of that field"
+
+---
+### Entry ID: 9867d682-3347-4de4-bb87-a971de8c5f1a — 2025-11-18 00:46
+> "Can you put the comment in green so it's more clear it's comment. Could you also do some typical json color coding for the rest?"
+
+---

@@ -7,6 +7,165 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-11-17 (IN DEVELOPMENT - NOT RELEASED)
+
+### ⚠️ DEVELOPMENT STATUS
+
+**This version is currently in active development and NOT ready for release.**
+
+**What's Working:**
+- ✅ Architecture redesign complete (MCP separated from extension)
+- ✅ File-based configuration (`.bctb-config.json`) implemented
+- ✅ Multi-profile support functional
+- ✅ MCP server can run standalone
+
+**What's In Progress (Test Failures):**
+- ❌ Multi-root workspace migration (8 failing MCP tests)
+- ❌ Command handler refactoring (13 failing extension tests)
+- ❌ Automatic migration UI not yet implemented
+- ❌ TelemetryService integration incomplete
+
+**Test Status:** 21 of 178 tests failing (see test output for details)
+
+### 🚨 BREAKING CHANGES (PLANNED)
+
+**Major Architecture Redesign: Standalone MCP Server**
+
+This release will transform BC Telemetry Buddy from a bundled architecture to a modular system where the MCP server is an optional, standalone component.
+
+**Planned Changes:**
+- **MCP Server Optional**: Extension will work standalone for direct commands (Run KQL Query, Save Query, etc.)
+- **MCP Only for Chat**: MCP server only needed for chat participant features (@bc-telemetry-buddy)
+- **Standalone NPM Package**: MCP server will be published as `bc-telemetry-buddy-mcp` on NPM
+- **File-Based Configuration**: New `.bctb-config.json` file as single source of truth
+- **Multi-Profile Support**: Manage multiple customer environments in single config file
+
+**Migration Path (When Released):**
+- ⚠️ **Automatic Migration**: Planned but not yet implemented
+- ✅ **Manual Migration Guide**: See [MIGRATION.md](../../MIGRATION.md) for manual migration steps
+- ❌ **Multi-Root Workspaces**: Not supported - use single-folder workspaces only
+- ℹ️ **Chat Features**: Will require separate MCP server installation
+
+### Added (Implemented)
+
+- **File-Based Configuration**: Support for `.bctb-config.json` with config discovery order (workspace → home directory → env vars)
+- **Multi-Profile Support**: Manage multiple customer endpoints in single config file with profile switching
+- **Config Discovery**: Automatic search for config files in multiple locations
+- **Environment Variable Substitution**: Use `${VAR_NAME}` for secrets in config files
+- **Profile Inheritance**: DRY configuration with base profiles using `extends` key
+- **MCP Server Definition Provider**: Registers MCP server with VS Code Language Model API
+- **Development Mode Detection**: Uses extension workspace for config in dev, user workspace in production
+- **Enhanced Logging**: Shows active config file path, profile name, and connection settings on startup
+
+### Added (In Progress - Not Working Yet)
+
+- **Dual-Path Architecture**: Extension to execute queries directly via `TelemetryService` (no MCP required) - ❌ Command handlers not yet refactored
+- **Automatic Migration**: Detection and migration of old settings - ❌ Migration UI not implemented, tests failing
+- **Multi-Root Workspace Support**: Configuration for multi-root workspaces - ❌ Currently blocked, tests failing
+
+### Changed
+
+- **Configuration Architecture**: Migrated from VSCode settings (`bcTelemetryBuddy.*`) to `.bctb-config.json` file
+- **MCP Integration**: MCP is now optional, only used for chat participant (@bc-telemetry-buddy)
+- **Direct Command Execution**: Commands (Run KQL, Save Query) now use built-in `TelemetryService` instead of MCP
+- **Package Structure**: MCP server separated into standalone package (monorepo: `packages/mcp/` and `packages/extension/`)
+- **Workspace Path Resolution**: Fixed dev mode to use extension repo path instead of user's open workspace
+
+### Fixed
+
+- **Config Discovery Fallback**: Changed from if-else-if to if-if-if chain to properly try all config locations
+- **Home Directory Config**: Support both `~/.bctb/config.json` (subfolder) and `~/.bctb-config.json` (file) formats
+- **MCP Startup Errors**: Eliminated VSCode-specific error messages from MCP server (now generic)
+- **Workspace Path in Dev**: Extension correctly uses its own workspace in development, user workspace in production
+
+### Deprecated
+
+- **VSCode Settings**: Settings namespace `bcTelemetryBuddy.*` deprecated in favor of `.bctb-config.json`
+  - Still functional for backward compatibility but will be removed in future versions
+  - Migrate to `.bctb-config.json` using migration guide in [MIGRATION.md](../../MIGRATION.md)
+
+### Documentation
+
+- **Updated README.md**: Complete rewrite with v0.3.0 architecture, migration guide, new configuration format
+- **Updated UserGuide.md**: Added "What's New in v0.3.0", architecture explanation, comprehensive migration section
+- **Created MIGRATION.md**: Detailed upgrade guide with automatic/manual migration paths, troubleshooting, rollback instructions
+- **Updated DesignWalkthrough.md**: Documented architecture evolution and refactoring decisions
+
+### Migration Notes
+
+**For Existing Users (v0.2.x → v0.3.0):**
+
+1. **Direct Commands Work Immediately**: All commands (Run KQL Query, Save Query, etc.) continue working without changes
+2. **Chat Features Require MCP**: If you use `@bc-telemetry-buddy` in chat, you'll need to install the standalone MCP server
+3. **Configuration Migration**: Old VSCode settings still work but are deprecated
+   - Recommended: Migrate to `.bctb-config.json` following [MIGRATION.md](../../MIGRATION.md)
+   - Extension will continue supporting old settings for backward compatibility
+
+**For New Users:**
+
+1. Install extension from Marketplace
+2. Run Setup Wizard (creates `.bctb-config.json`)
+3. Configure authentication and endpoints
+4. Start using direct commands immediately
+5. Optional: Install MCP server for chat features
+
+See [MIGRATION.md](../../MIGRATION.md) for complete migration instructions and troubleshooting.
+
+### Known Issues
+
+**Test Failures (21 of 178 tests failing):**
+
+1. **MCP Migration Tests (8 failures)**:
+   - Multi-root workspace config creation not working
+   - Migration validation failing
+   - Workspace setting removal tests failing
+
+2. **Extension Command Handler Tests (13 failures)**:
+   - `runKQLQueryCommand` not calling TelemetryService (expects 1 call, receives 0)
+   - `runKQLFromDocumentCommand` not executing queries
+   - `runKQLFromCodeLensCommand` not using TelemetryService
+   - `saveQueryCommand` not calling TelemetryService
+   - Error handling tests failing (no error messages shown)
+   - Retry logic not implemented (maxRetries config not used)
+
+3. **Architectural Issues**:
+   - Command handlers still scaffolded but not fully integrated with TelemetryService
+   - MCP client being called instead of direct TelemetryService execution
+   - Configuration loading incomplete for TelemetryService initialization
+
+**Current Limitations:**
+- ❌ **Multi-Root Workspaces**: Explicitly not supported (blocked in v0.2.22, migration tests failing)
+- ❌ **Automatic Migration UI**: Planned but not implemented (no notification shown to users)
+- ❌ **Direct Command Execution**: Command handlers exist but don't work without MCP server yet
+- ⚠️ **MCP Package Not Published**: Standalone MCP server not yet available on NPM
+
+**Workarounds:**
+- Use single-folder workspaces only (not multi-root)
+- Manual migration required (follow [MIGRATION.md](../../MIGRATION.md))
+- MCP server still required for all commands (direct execution not working)
+- Install MCP from local build: `cd packages/mcp && npm link`
+
+### Technical Details
+
+**Architecture Changes:**
+- Moved shared business logic to bundled code (shared at build time, not runtime)
+- MCP server now standalone with CLI commands (`bctb-mcp start`, `bctb-mcp init`, `bctb-mcp validate`)
+- Extension includes built-in `TelemetryService` for direct KQL execution
+- MCP integration via Language Model API server definition providers
+
+**Config Discovery Order:**
+1. `--config` CLI argument (MCP only)
+2. `.bctb-config.json` in current directory
+3. `.bctb-config.json` in workspace root (`BCTB_WORKSPACE_PATH` env var)
+4. `.bctb/config.json` OR `.bctb-config.json` in user home directory
+5. Environment variables (fallback)
+
+**Breaking Change Details:**
+- Old settings namespace: `bcTelemetryBuddy.appInsights.appId`, `bcTelemetryBuddy.kusto.clusterUrl`
+- New config format: `.bctb-config.json` with keys `applicationInsights.appId`, `kusto.clusterUrl`
+- MCP no longer bundled with extension (separate NPM package)
+- Chat features require separate MCP installation
+
 ## [0.2.24] - 2025-11-16
 
 ### Fixed

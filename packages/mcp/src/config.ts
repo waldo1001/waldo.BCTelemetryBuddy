@@ -41,6 +41,23 @@ export interface Reference {
     enabled: boolean;
 }
 
+export interface ProfiledConfig {
+    profiles?: Record<string, Partial<MCPConfig>>;
+    defaultProfile?: string;
+    cache?: {
+        enabled: boolean;
+        ttlSeconds: number;
+    };
+    sanitize?: {
+        removePII: boolean;
+    };
+    references?: Reference[];
+}
+
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
 /**
  * Load configuration from environment variables
  * Extension passes workspace settings via env vars when spawning MCP
@@ -50,7 +67,8 @@ export function loadConfig(): MCPConfig {
 
     if (!workspacePath) {
         console.error('\n❌ Configuration Error: BCTB_WORKSPACE_PATH environment variable is required');
-        console.error('Set it to your workspace path, e.g.: $env:BCTB_WORKSPACE_PATH="C:\\path\\to\\workspace"\n');
+        console.error('Set it to your workspace path, e.g.: $env:BCTB_WORKSPACE_PATH="C:\\path\\to\\workspace"');
+        console.error('Or create a .bctb-config.json file - run: bctb-mcp init\n');
         throw new Error('BCTB_WORKSPACE_PATH environment variable is required');
     }
 
@@ -124,8 +142,226 @@ export function validateConfig(config: MCPConfig): string[] {
         console.error('\n⚠️  Configuration Incomplete:');
         errors.forEach(err => console.error(`   - ${err}`));
         console.error('\nServer will start but queries will fail until configuration is complete.');
-        console.error('Run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.\n');
+        console.error('Run "bctb-mcp init" to create a config file, or "bctb-mcp validate" to check your existing config.\n');
     }
 
     return errors;
+}
+
+/**
+ * Load config from file with discovery and profile support
+ */
+export function loadConfigFromFile(configPath?: string, profileName?: string): MCPConfig {
+    let filePath: string | null = null;
+
+    // Discovery order (as per refactoring plan):
+    // 1. --config CLI argument
+    // 2. .bctb-config.json in current directory
+    // 3. .bctb-config.json in workspace root (BCTB_WORKSPACE_PATH env var)
+    // 4. ~/.bctb/config.json OR ~/.bctb-config.json in user home directory
+
+    // Try each location in order until we find a config file
+    if (configPath) {
+        filePath = path.resolve(configPath);
+    }
+
+    if (!filePath && fs.existsSync('.bctb-config.json')) {
+        filePath = path.resolve('.bctb-config.json');
+    }
+
+    if (!filePath && process.env.BCTB_WORKSPACE_PATH) {
+        const workspacePath = path.join(process.env.BCTB_WORKSPACE_PATH, '.bctb-config.json');
+        if (fs.existsSync(workspacePath)) {
+            filePath = workspacePath;
+        }
+    }
+
+    if (!filePath) {
+        // Check both home directory formats:
+        // 1. ~/.bctb/config.json (subfolder format, used by setup wizard)
+        // 2. ~/.bctb-config.json (single file format)
+        const homePathSubfolder = path.join(os.homedir(), '.bctb', 'config.json');
+        const homePathSingleFile = path.join(os.homedir(), '.bctb-config.json');
+
+        if (fs.existsSync(homePathSubfolder)) {
+            filePath = homePathSubfolder;
+        } else if (fs.existsSync(homePathSingleFile)) {
+            filePath = homePathSingleFile;
+        }
+    }
+
+    if (!filePath) {
+        throw new Error('No config file found. Run: bctb-mcp init');
+    }
+
+    console.log(`📄 Loading config from: ${filePath}`);
+
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const rawConfig = JSON.parse(fileContent) as ProfiledConfig & Partial<MCPConfig>;
+
+    // Handle multi-profile configs
+    if (rawConfig.profiles) {
+        const profile = profileName || process.env.BCTB_PROFILE || rawConfig.defaultProfile;
+
+        if (!profile) {
+            throw new Error('No profile specified. Use --profile <name> or set BCTB_PROFILE env var');
+        }
+
+        if (!rawConfig.profiles[profile]) {
+            throw new Error(`Profile '${profile}' not found in config`);
+        }
+
+        console.log(`📋 Using profile: "${profile}"`);
+
+        // Resolve profile inheritance
+        const resolvedProfile = resolveProfileInheritance(rawConfig.profiles, profile);
+
+        // Merge with top-level settings (cache, sanitize, references)
+        const merged: MCPConfig = {
+            ...resolvedProfile as MCPConfig,
+            cacheEnabled: resolvedProfile.cacheEnabled ?? rawConfig.cache?.enabled ?? true,
+            cacheTTLSeconds: resolvedProfile.cacheTTLSeconds ?? rawConfig.cache?.ttlSeconds ?? 3600,
+            removePII: resolvedProfile.removePII ?? rawConfig.sanitize?.removePII ?? false,
+            references: resolvedProfile.references ?? rawConfig.references ?? [],
+            port: resolvedProfile.port ?? 52345,
+            workspacePath: resolvedProfile.workspacePath ?? process.cwd(),
+            queriesFolder: resolvedProfile.queriesFolder ?? 'queries',
+            connectionName: resolvedProfile.connectionName ?? 'Default',
+            tenantId: resolvedProfile.tenantId ?? '',
+            authFlow: resolvedProfile.authFlow ?? 'azure_cli',
+            applicationInsightsAppId: resolvedProfile.applicationInsightsAppId ?? '',
+            kustoClusterUrl: resolvedProfile.kustoClusterUrl ?? ''
+        };
+
+        return expandEnvironmentVariables(merged);
+    }
+
+    // Single profile config (backward compatible)
+    const singleConfig: MCPConfig = {
+        connectionName: rawConfig.connectionName ?? 'Default',
+        tenantId: rawConfig.tenantId ?? '',
+        clientId: rawConfig.clientId,
+        clientSecret: rawConfig.clientSecret,
+        authFlow: rawConfig.authFlow ?? 'azure_cli',
+        applicationInsightsAppId: rawConfig.applicationInsightsAppId ?? '',
+        kustoClusterUrl: rawConfig.kustoClusterUrl ?? '',
+        cacheEnabled: rawConfig.cacheEnabled ?? true,
+        cacheTTLSeconds: rawConfig.cacheTTLSeconds ?? 3600,
+        removePII: rawConfig.removePII ?? false,
+        port: rawConfig.port ?? 52345,
+        workspacePath: rawConfig.workspacePath ?? process.cwd(),
+        queriesFolder: rawConfig.queriesFolder ?? 'queries',
+        references: rawConfig.references ?? []
+    };
+
+    return expandEnvironmentVariables(singleConfig);
+}
+
+/**
+ * Resolve profile inheritance (supports 'extends' key)
+ */
+function resolveProfileInheritance(profiles: Record<string, any>, profileName: string, visited: Set<string> = new Set()): Partial<MCPConfig> {
+    if (visited.has(profileName)) {
+        throw new Error(`Circular profile inheritance detected: ${profileName}`);
+    }
+    visited.add(profileName);
+
+    const profile = profiles[profileName];
+    if (!profile) {
+        throw new Error(`Profile '${profileName}' not found`);
+    }
+
+    // No inheritance
+    if (!profile.extends) {
+        return profile;
+    }
+
+    // Resolve parent profile
+    const parentProfile = resolveProfileInheritance(profiles, profile.extends, visited);
+
+    // Deep merge child over parent
+    const merged = deepMerge(parentProfile, profile);
+    delete merged.extends; // Remove extends key from final config
+
+    return merged;
+}
+
+/**
+ * Deep merge objects (child overrides parent)
+ */
+function deepMerge(parent: any, child: any): any {
+    const result = { ...parent };
+
+    for (const key in child) {
+        if (key === 'extends') continue; // Skip extends key
+
+        if (typeof child[key] === 'object' && !Array.isArray(child[key]) && child[key] !== null) {
+            result[key] = deepMerge(parent[key] || {}, child[key]);
+        } else {
+            result[key] = child[key];
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Expand environment variables in config (${VAR_NAME})
+ */
+function expandEnvironmentVariables(config: any): any {
+    if (typeof config === 'string') {
+        return config.replace(/\$\{([^}]+)\}/g, (_, varName) => {
+            return process.env[varName] || '';
+        });
+    }
+
+    if (Array.isArray(config)) {
+        return config.map(item => expandEnvironmentVariables(item));
+    }
+
+    if (typeof config === 'object' && config !== null) {
+        const result: any = {};
+        for (const key in config) {
+            result[key] = expandEnvironmentVariables(config[key]);
+        }
+        return result;
+    }
+
+    return config;
+}
+
+/**
+ * Initialize config file template
+ */
+export function initConfig(outputPath: string): void {
+    const template: ProfiledConfig = {
+        profiles: {
+            default: {
+                connectionName: 'My BC Production',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'your-app-insights-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: process.cwd(),
+                queriesFolder: 'queries'
+            }
+        },
+        defaultProfile: 'default',
+        cache: {
+            enabled: true,
+            ttlSeconds: 3600
+        },
+        sanitize: {
+            removePII: false
+        },
+        references: [
+            {
+                name: 'Microsoft BC Telemetry Samples',
+                type: 'github',
+                url: 'https://github.com/microsoft/BCTech',
+                enabled: true
+            }
+        ]
+    };
+
+    fs.writeFileSync(outputPath, JSON.stringify(template, null, 2));
 }

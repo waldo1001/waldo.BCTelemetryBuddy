@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { CHATMODE_DEFINITIONS } from '../chatmodeDefinitions';
 
 const execAsync = promisify(exec);
 
@@ -19,15 +18,11 @@ export class SetupWizardProvider {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, show it and refresh settings
         if (this._panel) {
             this._panel.reveal(column);
-            // Send current settings when revealing existing panel
-            await this._sendCurrentSettings();
             return;
         }
 
-        // Otherwise, create a new panel
         this._panel = vscode.window.createWebviewPanel(
             SetupWizardProvider.viewType,
             'BC Telemetry Buddy - Setup Wizard',
@@ -35,54 +30,48 @@ export class SetupWizardProvider {
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
-                localResourceRoots: [
-                    vscode.Uri.joinPath(this._extensionUri, 'dist'),
-                    vscode.Uri.joinPath(this._extensionUri, 'src', 'webviews')
-                ]
             }
         );
 
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+        this._panel.webview.html = this._getHtmlForWebview();
 
-        // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
-                await this._handleMessage(message);
+                switch (message.type) {
+                    case 'validateWorkspace':
+                        await this._validateWorkspace();
+                        break;
+                    case 'loadConfig':
+                        await this._loadConfig();
+                        break;
+                    case 'validateAuth':
+                        await this._validateAuth();
+                        break;
+                    case 'testConnection':
+                        await this._testConnection(message.config);
+                        break;
+                    case 'saveConfig':
+                        await this._saveConfig(message.config);
+                        break;
+                    case 'closeWizard':
+                        this._panel?.dispose();
+                        break;
+                }
             },
             null,
             this._disposables
         );
 
-        // Handle panel disposal
         this._panel.onDidDispose(() => this._onDispose(), null, this._disposables);
     }
 
-    private async _handleMessage(message: any) {
-        switch (message.type) {
-            case 'validateWorkspace':
-                await this._validateWorkspace();
-                break;
-            case 'validateAuth':
-                await this._validateAuth(message.authFlow);
-                break;
-            case 'testConnection':
-                await this._testConnection(message.settings);
-                break;
-            case 'saveSettings':
-                await this._saveSettings(message.settings);
-                break;
-            case 'installChatmodes':
-                await this._installChatmodes();
-                break;
-            case 'closeWizard':
-                this._panel?.dispose();
-                break;
-            case 'openExternal':
-                vscode.env.openExternal(vscode.Uri.parse(message.url));
-                break;
-            case 'requestCurrentSettings':
-                await this._sendCurrentSettings();
-                break;
+    private _onDispose() {
+        this._panel = undefined;
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
+            if (disposable) {
+                disposable.dispose();
+            }
         }
     }
 
@@ -99,326 +88,196 @@ export class SetupWizardProvider {
         });
     }
 
-    private async _validateAuth(authFlow: string): Promise<void> {
-        let isValid = false;
-        let message = '';
-
-        try {
-            if (authFlow === 'azure_cli') {
-                // Check if Azure CLI is installed
-                try {
-                    await execAsync('az --version');
-
-                    // Check if logged in and get account details
-                    const { stdout } = await execAsync('az account show');
-                    if (stdout.length > 0) {
-                        isValid = true;
-
-                        // Parse the JSON output to get account details
-                        try {
-                            const accountInfo = JSON.parse(stdout);
-                            const user = accountInfo.user?.name || 'Unknown';
-                            const subscription = accountInfo.name || 'Unknown';
-                            const tenantId = accountInfo.tenantId || 'Unknown';
-                            const tenantDisplayName = accountInfo.tenantDisplayName || accountInfo.tenantId || 'Unknown';
-
-                            // Format with newlines for multi-line display
-                            message = `Azure CLI authenticated\n\nUser: ${user}\nSubscription: ${subscription}\nTenant: ${tenantDisplayName}\nTenant ID: ${tenantId}`;
-                        } catch (parseError) {
-                            // If JSON parsing fails, just show basic message
-                            message = 'Azure CLI authenticated';
-                        }
-                    } else {
-                        message = 'Not logged in to Azure CLI';
-                    }
-                } catch (error: any) {
-                    message = error.message.includes('az')
-                        ? 'Azure CLI not installed'
-                        : 'Not logged in to Azure CLI (run: az login)';
-                }
-            } else if (authFlow === 'device_code' || authFlow === 'client_credentials') {
-                const config = vscode.workspace.getConfiguration('bctb.mcp');
-                const tenantId = config.get<string>('tenantId');
-                const clientId = config.get<string>('clientId');
-
-                if (authFlow === 'client_credentials') {
-                    const clientSecret = config.get<string>('auth.clientSecret');
-                    isValid = !!(tenantId && clientId && clientSecret);
-                    message = isValid
-                        ? 'Client credentials configured'
-                        : 'Missing tenant ID, client ID, or client secret';
-                } else {
-                    isValid = !!(tenantId && clientId);
-                    message = isValid
-                        ? 'Device code flow configured'
-                        : 'Missing tenant ID or client ID';
-                }
-            }
-        } catch (error: any) {
-            message = error.message;
+    private async _loadConfig(): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            console.log('No workspace folders found');
+            return;
         }
 
-        this._panel?.webview.postMessage({
-            type: 'authValidation',
-            isValid,
-            message,
-            authFlow
-        });
-    }
+        const folderUri = workspaceFolders[0].uri;
 
-    private async _testConnection(settings: any): Promise<void> {
-        // Use settings from the form, not from saved configuration
-        // This allows testing before saving
-        const appInsightsId = settings?.appInsightsId;
-        const kustoUrl = settings?.kustoUrl;
-        const authFlow = settings?.authFlow;
+        // First try to load from .bctb-config.json file
+        const configFilePath = vscode.Uri.joinPath(folderUri, '.bctb-config.json');
+        let currentConfig: any = null;
 
-        let success = false;
-        let message = '';
-        let details = '';
-
-        console.log('[SetupWizard] Testing connection with settings:', { appInsightsId, kustoUrl, authFlow });
-
-        if (!appInsightsId || !kustoUrl) {
-            message = '❌ Missing App Insights ID or Kusto URL';
-            details = 'Please fill in all required fields before testing connection.';
-        } else {
-            try {
-                // Validate authentication based on auth flow
-                if (authFlow === 'azure_cli') {
-                    const { exec } = await import('child_process');
-                    const { promisify } = await import('util');
-                    const execAsync = promisify(exec);
-
-                    try {
-                        const { stdout } = await execAsync('az account show');
-                        const accountInfo = JSON.parse(stdout);
-                        details = `✅ Authenticated as: ${accountInfo.user.name}\n`;
-                        details += `✅ Subscription: ${accountInfo.name}\n`;
-                        details += `✅ App Insights ID: ${appInsightsId}\n`;
-                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
-                        details += '\n⚠️ Note: Full query test requires MCP server to be running.';
-                        success = true;
-                        message = '✅ Connection configuration is valid';
-                    } catch (error: any) {
-                        message = '❌ Azure CLI authentication failed';
-                        details = 'Please run "az login" in your terminal first.';
-                    }
-                } else if (authFlow === 'device_code') {
-                    if (!settings.clientId) {
-                        message = '❌ Missing Client ID';
-                        details = 'Client ID is required for device code flow.';
-                    } else {
-                        details = `✅ Auth Flow: Device Code\n`;
-                        details += `✅ Client ID: ${settings.clientId}\n`;
-                        details += `✅ App Insights ID: ${appInsightsId}\n`;
-                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
-                        details += '\n⚠️ Note: Full authentication test requires MCP server to be running.';
-                        success = true;
-                        message = '✅ Configuration looks valid';
-                    }
-                } else if (authFlow === 'client_credentials') {
-                    if (!settings.clientId || !settings.clientSecret) {
-                        message = '❌ Missing Client ID or Client Secret';
-                        details = 'Both Client ID and Client Secret are required for service principal authentication.';
-                    } else {
-                        details = `✅ Auth Flow: Client Credentials\n`;
-                        details += `✅ Client ID: ${settings.clientId}\n`;
-                        details += `✅ App Insights ID: ${appInsightsId}\n`;
-                        details += `✅ Kusto Cluster: ${kustoUrl}\n`;
-                        details += '\n⚠️ Note: Full authentication test requires MCP server to be running.';
-                        success = true;
-                        message = '✅ Configuration looks valid';
-                    }
-                }
-            } catch (error: any) {
-                message = `❌ Connection test failed: ${error.message}`;
-                details = error.stack || '';
-            }
-        }
-
-        console.log('[SetupWizard] Connection test result:', { success, message });
-
-        this._panel?.webview.postMessage({
-            type: 'connectionTest',
-            success,
-            message,
-            details
-        });
-    }
-
-    private async _saveSettings(settings: any): Promise<void> {
         try {
-            // Block multiroot workspaces
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (!workspaceFolders || workspaceFolders.length === 0) {
-                throw new Error('No workspace folder open. Please open a folder first.');
-            }
-            if (workspaceFolders.length > 1) {
-                throw new Error('Multi-root workspaces are not supported. Please open a single folder workspace.');
-            }
-
-            // ALWAYS save to WorkspaceFolder (single folder's .vscode/settings.json), NEVER to Workspace file
-            // Get resource-scoped configuration for the workspace folder
-            const folderUri = workspaceFolders[0].uri;
+            const configFileContent = await vscode.workspace.fs.readFile(configFilePath);
+            const configJson = Buffer.from(configFileContent).toString('utf8');
+            currentConfig = JSON.parse(configJson);
+            console.log('Loaded config from .bctb-config.json:', currentConfig);
+        } catch (error) {
+            // File doesn't exist or is invalid, fall back to workspace settings
+            console.log('.bctb-config.json not found, loading from workspace settings');
             const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
-            const target = vscode.ConfigurationTarget.WorkspaceFolder;
 
-            // Save connection name and tenant settings
-            if (settings.tenantName) {
-                await config.update('connectionName', settings.tenantName, target);
-            }
-            if (settings.tenantId) {
-                await config.update('tenantId', settings.tenantId, target);
-            }
+            currentConfig = {
+                "$schema": "https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/mcp/config-schema.json",
+                "connectionName": config.get<string>('connectionName') || 'My BC Environment',
+                "authFlow": config.get<string>('authFlow') || 'azure_cli',
+                "tenantId": config.get<string>('tenantId') || '00000000-0000-0000-0000-000000000000',
+                "applicationInsightsAppId": config.get<string>('applicationInsightsAppId') || '00000000-0000-0000-0000-000000000000',
+                "kustoClusterUrl": config.get<string>('kustoClusterUrl') || 'https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID',
+                "cacheEnabled": config.get<boolean>('cacheEnabled') !== undefined ? config.get<boolean>('cacheEnabled') : true,
+                "cacheTTLSeconds": config.get<number>('cacheTTLSeconds') || 3600,
+                "removePII": config.get<boolean>('removePII') || false,
+                "workspacePath": config.get<string>('workspacePath') || '${workspaceFolder}',
+                "queriesFolder": config.get<string>('queriesFolder') || 'queries',
+                "references": config.get<any[]>('references') || []
+            };
+        }
 
-            // Save App Insights settings
-            if (settings.appInsightsId) {
-                await config.update('applicationInsights.appId', settings.appInsightsId, target);
-            }
+        console.log('Sending config to webview:', currentConfig);
 
-            // Save Kusto settings
-            if (settings.kustoUrl) {
-                await config.update('kusto.clusterUrl', settings.kustoUrl, target);
-            }
+        this._panel?.webview.postMessage({
+            type: 'currentConfig',
+            config: currentConfig
+        });
+    }
 
-            // Save auth settings
-            if (settings.authFlow) {
-                await config.update('authFlow', settings.authFlow, target);
-            }
-            if (settings.clientId) {
-                await config.update('clientId', settings.clientId, target);
-            }
-            // Note: clientSecret is not saved to settings for security reasons
-            // It would need to be stored in a secure credential store instead
+    private async _validateAuth(): Promise<void> {
+        const { promisify } = await import('util');
+        const { exec } = await import('child_process');
+        const execAsync = promisify(exec);
+
+        try {
+            // Check if Azure CLI is installed
+            await execAsync('az --version');
+
+            // Check if user is logged in
+            const result = await execAsync('az account show');
+            const account = JSON.parse(result.stdout);
 
             this._panel?.webview.postMessage({
-                type: 'settingsSaved',
+                type: 'authValidation',
                 success: true,
-                message: 'Settings saved to folder configuration (.vscode/settings.json)'
+                accountName: account.name,
+                userName: account.user?.name || 'Unknown',
+                tenantId: account.tenantId
             });
+        } catch (error: any) {
+            let errorMessage = 'Azure CLI validation failed';
 
-            // Prompt user to reload VS Code for settings to take effect
-            const reloadAction = 'Reload Window';
-            const result = await vscode.window.showInformationMessage(
-                'BC Telemetry Buddy settings saved successfully! Please reload VS Code for the changes to take effect.',
-                reloadAction
+            if (error.message?.includes('az: command not found') || error.message?.includes('is not recognized')) {
+                errorMessage = 'Azure CLI is not installed. Please install it from: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli';
+            } else if (error.message?.includes('az login')) {
+                errorMessage = 'Azure CLI is installed but you are not logged in. Please run: az login';
+            }
+
+            this._panel?.webview.postMessage({
+                type: 'authValidation',
+                success: false,
+                error: errorMessage
+            });
+        }
+    }
+
+    private async _testConnection(config: { tenantId: string; appInsightsId: string; clusterUrl: string }): Promise<void> {
+        const { promisify } = await import('util');
+        const { exec } = await import('child_process');
+        const execAsync = promisify(exec);
+
+        try {
+            // Get access token from Azure CLI
+            const tokenResult = await execAsync('az account get-access-token --resource https://api.applicationinsights.io');
+            const tokenData = JSON.parse(tokenResult.stdout);
+            const accessToken = tokenData.accessToken;
+
+            if (!accessToken) {
+                throw new Error('Failed to get access token from Azure CLI');
+            }
+
+            // Execute test KQL query
+            const axios = (await import('axios')).default;
+            const url = `https://api.applicationinsights.io/v1/apps/${config.appInsightsId}/query`;
+            const kql = 'traces | take 1';
+
+            const response = await axios.post(
+                url,
+                { query: kql },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                }
             );
 
-            if (result === reloadAction) {
-                await vscode.commands.executeCommand('workbench.action.reloadWindow');
-            }
-        } catch (error: any) {
             this._panel?.webview.postMessage({
-                type: 'settingsSaved',
-                success: false,
-                message: error.message
+                type: 'connectionTest',
+                success: true,
+                data: response.data
             });
+        } catch (error: any) {
+            let errorMessage = 'Connection test failed';
 
-            vscode.window.showErrorMessage(`Failed to save settings: ${error.message}`);
+            if (error.response) {
+                const status = error.response.status;
+                const message = error.response.data?.error?.message || error.message;
+
+                if (status === 401 || status === 403) {
+                    errorMessage = `Authentication failed: ${message}. Check your App ID and permissions.`;
+                } else if (status === 400) {
+                    errorMessage = `Invalid request: ${message}`;
+                } else if (status === 404) {
+                    errorMessage = `Application Insights App ID not found. Check your App ID.`;
+                } else {
+                    errorMessage = `HTTP ${status}: ${message}`;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            this._panel?.webview.postMessage({
+                type: 'connectionTest',
+                success: false,
+                error: errorMessage
+            });
         }
     }
 
-    /**
-     * Install multiple chatmodes to .github/chatmodes directory
-     */
-    private async _installChatmodes(): Promise<void> {
+    private async _saveConfig(config: any): Promise<void> {
         try {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             if (!workspaceFolders || workspaceFolders.length === 0) {
-                throw new Error('No workspace folder open');
+                throw new Error('No workspace folder found');
             }
 
-            const workspacePath = workspaceFolders[0].uri.fsPath;
-            const chatmodeDir = path.join(workspacePath, '.github', 'chatmodes');
+            const folderUri = workspaceFolders[0].uri;
+            const configFilePath = vscode.Uri.joinPath(folderUri, '.bctb-config.json');
 
-            // Create .github/chatmodes directory if it doesn't exist
-            if (!fs.existsSync(chatmodeDir)) {
-                fs.mkdirSync(chatmodeDir, { recursive: true });
-            }
+            // Format JSON with proper indentation
+            const configJson = JSON.stringify(config, null, 2);
+            const configBuffer = Buffer.from(configJson, 'utf8');
 
-            // Install all chatmodes
-            let installedCount = 0;
-            let existingCount = 0;
-            const installedFiles: string[] = [];
+            // Write to .bctb-config.json
+            await vscode.workspace.fs.writeFile(configFilePath, configBuffer);
 
-            for (const chatmode of CHATMODE_DEFINITIONS) {
-                const chatmodePath = path.join(chatmodeDir, chatmode.filename);
-                if (fs.existsSync(chatmodePath)) {
-                    existingCount++;
-                } else {
-                    fs.writeFileSync(chatmodePath, chatmode.content, 'utf-8');
-                    installedCount++;
-                    installedFiles.push(chatmode.title);
-                }
-            }
+            console.log('Saved config to .bctb-config.json:', config);
 
-            // Send success message to webview
             this._panel?.webview.postMessage({
-                type: 'chatmodeInstalled',
+                type: 'configSaved',
                 success: true,
-                alreadyExists: existingCount > 0,
-                installedCount: installedCount,
-                existingCount: existingCount,
-                installedFiles: installedFiles.join(', '),
-                message: installedCount > 0
-                    ? `${installedCount} chatmode(s) installed, ${existingCount} already existed`
-                    : 'All chatmodes already exist',
-                path: chatmodeDir
+                filePath: configFilePath.fsPath
             });
         } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            console.error('Failed to save config:', errorMessage);
             this._panel?.webview.postMessage({
-                type: 'chatmodeInstalled',
+                type: 'configSaved',
                 success: false,
-                message: error.message
+                error: errorMessage
             });
         }
     }
 
-    private async _sendCurrentSettings(): Promise<void> {
-        // Get resource-scoped configuration (same as _saveSettings)
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
-        const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
-
-        const settings = {
-            tenantName: config.get<string>('connectionName') || '',
-            tenantId: config.get<string>('tenantId') || '',
-            appInsightsId: config.get<string>('applicationInsights.appId') || '',
-            kustoUrl: config.get<string>('kusto.clusterUrl') || '',
-            authFlow: config.get<string>('authFlow') || 'azure_cli',
-            clientId: config.get<string>('clientId') || '',
-            clientSecret: '' // Not stored in settings for security
-        };
-
-        console.log('[SetupWizard] Sending current settings:', settings);
-
-        this._panel?.webview.postMessage({
-            type: 'currentSettings',
-            settings
-        });
-    }
-
-    private _getHtmlForWebview(webview: vscode.Webview): string {
-        // Get logo as base64 (with fallback for tests)
-        let logoDataUri = '';
-        try {
-            const logoPath = vscode.Uri.joinPath(this._extensionUri, 'images', 'waldo.png').fsPath;
-            if (logoPath && fs.existsSync(logoPath)) {
-                const logoBase64 = fs.readFileSync(logoPath).toString('base64');
-                logoDataUri = `data:image/png;base64,${logoBase64}`;
-            }
-        } catch (error) {
-            // Ignore errors (e.g., in test environment)
-        }
-
-        // For now, return inline HTML. In production, you might want to load from a file
+    private _getHtmlForWebview(): string {
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline';">
     <title>BC Telemetry Buddy Setup</title>
     <style>
         body {
@@ -426,61 +285,60 @@ export class SetupWizardProvider {
             color: var(--vscode-foreground);
             background-color: var(--vscode-editor-background);
             padding: 20px;
-            line-height: 1.6;
+            margin: 0;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
         }
-        .header-logo {
-            text-align: center;
+        .logo-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 20px;
+            gap: 20px;
         }
-        .header-logo img {
+        .logo-header img {
             width: 80px;
             height: 80px;
+            object-fit: contain;
         }
         h1 {
-            color: var(--vscode-foreground);
-            border-bottom: 2px solid var(--vscode-textLink-foreground);
-            padding-bottom: 10px;
-            text-align: center;
+            margin: 0;
+            font-size: 24px;
         }
         .wizard-steps {
             display: flex;
-            justify-content: space-between;
-            margin: 30px 0;
-            padding: 0;
             list-style: none;
+            padding: 0;
+            margin: 30px 0;
+            justify-content: space-between;
         }
         .wizard-step {
             flex: 1;
             text-align: center;
-            position: relative;
             padding: 10px;
+            position: relative;
+            opacity: 0.5;
         }
-        .wizard-step::after {
-            content: '';
-            position: absolute;
-            top: 20px;
-            right: -50%;
-            width: 100%;
-            height: 2px;
-            background: var(--vscode-input-border);
-            z-index: -1;
+        .wizard-step.active {
+            opacity: 1;
+            font-weight: bold;
         }
-        .wizard-step:last-child::after {
-            display: none;
+        .wizard-step.completed {
+            opacity: 1;
+            color: var(--vscode-charts-green);
         }
         .step-number {
-            display: inline-block;
             width: 40px;
             height: 40px;
-            line-height: 40px;
             border-radius: 50%;
             background: var(--vscode-input-background);
             border: 2px solid var(--vscode-input-border);
-            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
         }
         .wizard-step.active .step-number {
             background: var(--vscode-button-background);
@@ -488,58 +346,48 @@ export class SetupWizardProvider {
             border-color: var(--vscode-button-background);
         }
         .wizard-step.completed .step-number {
-            background: var(--vscode-terminal-ansiGreen);
-            border-color: var(--vscode-terminal-ansiGreen);
-        }
-        .wizard-step.completed .step-number::before {
-            content: '✓';
+            background: var(--vscode-charts-green);
+            color: white;
+            border-color: var(--vscode-charts-green);
         }
         .step-content {
             display: none;
             margin: 30px 0;
-            padding: 20px;
+            padding: 30px;
             background: var(--vscode-input-background);
             border-radius: 4px;
+            min-height: 300px;
         }
         .step-content.active {
             display: block;
         }
-        .form-group {
-            margin: 20px 0;
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 10px;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .help-text {
-            font-size: 0.9em;
-            color: var(--vscode-descriptionForeground);
-            margin-top: 5px;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            background: var(--vscode-input-background);
-            color: var(--vscode-input-foreground);
-            border: 1px solid var(--vscode-input-border);
-            border-radius: 2px;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus {
-            outline: 1px solid var(--vscode-focusBorder);
+        .button-group.top {
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--vscode-input-border);
         }
         button {
-            padding: 8px 16px;
+            padding: 10px 20px;
             background: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
             border: none;
-            border-radius: 2px;
+            border-radius: 4px;
             cursor: pointer;
-            margin-right: 10px;
+            font-size: 14px;
         }
         button:hover {
             background: var(--vscode-button-hoverBackground);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         button.secondary {
             background: var(--vscode-button-secondaryBackground);
@@ -548,97 +396,170 @@ export class SetupWizardProvider {
         button.secondary:hover {
             background: var(--vscode-button-secondaryHoverBackground);
         }
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 2px solid var(--vscode-input-border);
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .example-column {
+            background: var(--vscode-editor-background);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid var(--vscode-input-border);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .example-column pre {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            background: var(--vscode-textCodeBlock-background);
+            padding: 12px;
+            border-radius: 3px;
+            overflow-x: auto;
+            margin: 10px 0 0 0;
+            white-space: pre;
+            max-width: 500px;
+        }
+        .json-comment {
+            color: #6A9955;
+        }
+        .json-key {
+            color: #9CDCFE;
+        }
+        .json-string {
+            color: #CE9178;
+        }
+        .json-number {
+            color: #B5CEA8;
+        }
+        .json-boolean {
+            color: #569CD6;
+        }
         .validation-status {
             display: inline-block;
             margin-left: 10px;
-            padding: 8px 12px;
-            border-radius: 2px;
-            font-size: 0.9em;
-            max-width: 500px;
-            line-height: 1.5;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
         }
         .validation-status.success {
-            background: var(--vscode-terminal-ansiGreen);
-            color: var(--vscode-editor-background);
+            background: var(--vscode-testing-iconPassed);
+            color: white;
         }
         .validation-status.error {
-            background: var(--vscode-errorForeground);
-            color: var(--vscode-editor-background);
-        }
-        .validation-status.warning {
-            background: var(--vscode-editorWarning-foreground);
-            color: var(--vscode-editor-background);
-        }
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
+            background: var(--vscode-inputValidation-errorBackground);
+            color: var(--vscode-errorForeground);
         }
         .links {
             margin: 20px 0;
             padding: 15px;
             background: var(--vscode-textBlockQuote-background);
-            border-left: 3px solid var(--vscode-textLink-foreground);
+            border-left: 4px solid var(--vscode-textLink-foreground);
+            border-radius: 4px;
+        }
+        .links h4 {
+            margin-top: 0;
         }
         .links a {
+            display: block;
+            margin: 8px 0;
             color: var(--vscode-textLink-foreground);
             text-decoration: none;
-            display: block;
-            margin: 5px 0;
         }
         .links a:hover {
             text-decoration: underline;
         }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
+        .form-group {
+            margin: 20px 0;
         }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-family: var(--vscode-font-family);
+            font-size: 13px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+        .help-text {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        ${logoDataUri ? `<div class="header-logo">
-            <img src="${logoDataUri}" alt="">
-        </div>` : ''}
-        <h1>🚀 BC Telemetry Buddy Setup Wizard</h1>
-        <p>Welcome! This wizard will help you configure BC Telemetry Buddy to connect to your Azure Data Explorer and Application Insights.</p>
-
+        <div class="logo-header">
+            <img src="${this._panel!.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'images', 'waldo.png'))}" alt="BC Telemetry Buddy Logo" />
+            <h1>BC Telemetry Buddy Setup Wizard</h1>
+        </div>
+        
         <ul class="wizard-steps">
-            <li class="wizard-step active" data-step="1">
+            <li class="wizard-step active" id="step-1-nav">
                 <div class="step-number">1</div>
                 <div>Welcome</div>
             </li>
-            <li class="wizard-step" data-step="2">
+            <li class="wizard-step" id="step-2-nav">
                 <div class="step-number">2</div>
-                <div>Azure Config</div>
+                <div>Configuration</div>
             </li>
-            <li class="wizard-step" data-step="3">
+            <li class="wizard-step" id="step-3-nav">
                 <div class="step-number">3</div>
                 <div>Authentication</div>
             </li>
-            <li class="wizard-step" data-step="4">
+            <li class="wizard-step" id="step-4-nav">
                 <div class="step-number">4</div>
-                <div>Test Connection</div>
+                <div>Test</div>
             </li>
-            <li class="wizard-step" data-step="5">
+            <li class="wizard-step" id="step-5-nav">
                 <div class="step-number">5</div>
                 <div>Complete</div>
             </li>
         </ul>
 
         <!-- Step 1: Welcome -->
-        <div class="step-content active" data-step="1">
+        <div class="step-content active" id="step-1">
+            <div class="button-group top">
+                <div></div>
+                <button id="btn-next-1-top">Next →</button>
+            </div>
+
             <h2>Welcome to BC Telemetry Buddy! 👋</h2>
             <p>This setup wizard will guide you through configuring your connection to Azure Data Explorer (Kusto) and Application Insights for analyzing Business Central telemetry.</p>
             
-            <!-- Multi-root workspace error -->
-            <div id="multirootError" style="display: none; background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                <h3 style="margin-top: 0; color: #721c24;">⚠️ Multi-Root Workspaces Not Supported</h3>
+            <div id="multirootError" style="display: none; background-color: var(--vscode-inputValidation-errorBackground); border: 1px solid var(--vscode-inputValidation-errorBorder); color: var(--vscode-errorForeground); padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <h3 style="margin-top: 0;">⚠️ Multi-Root Workspaces Not Supported</h3>
                 <p><strong>BC Telemetry Buddy does not support multi-root workspaces.</strong></p>
                 <p>You currently have multiple folders open in this workspace. Settings must be saved to a single folder's <code>.vscode/settings.json</code> file, which is not possible with multi-root workspaces.</p>
                 <p><strong>To proceed:</strong></p>
@@ -653,76 +574,191 @@ export class SetupWizardProvider {
             <div id="welcomeContent">
                 <h3>What you'll need:</h3>
                 <ul>
+                    <li>✅ <strong>Node.js</strong> installed on your system (<a href="https://nodejs.org/" target="_blank">Download Node.js</a>)</li>
                     <li>✅ Azure subscription with access to Application Insights</li>
                     <li>✅ Application Insights resource with BC telemetry data</li>
                     <li>✅ Azure Data Explorer (Kusto) cluster URL and database</li>
                     <li>✅ Authentication credentials (Azure CLI recommended)</li>
                 </ul>
 
-                <div class="links">
-                    <h4>📚 Helpful Resources:</h4>
-                    <a href="#" data-url="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview">Business Central Telemetry Overview</a>
-                    <a href="#" data-url="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview">Application Insights Documentation</a>
-                    <a href="#" data-url="https://learn.microsoft.com/en-us/azure/data-explorer/">Azure Data Explorer Documentation</a>
+                <div style="margin: 30px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px;">
+                    <h4 style="margin-top: 0;">📚 Helpful Resources:</h4>
+                    <ul style="margin-bottom: 0;">
+                        <li><a href="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview" target="_blank">Business Central Telemetry Overview</a></li>
+                        <li><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview" target="_blank">Application Insights Documentation</a></li>
+                        <li><a href="https://learn.microsoft.com/en-us/azure/data-explorer/" target="_blank">Azure Data Explorer Documentation</a></li>
+                    </ul>
                 </div>
+            </div>
 
-                <div class="button-group">
-                    <div></div>
-                    <button id="nextButton" onclick="nextStep()">Next →</button>
-                </div>
+            <div class="button-group">
+                <div></div>
+                <button id="btn-next-1">Next →</button>
             </div>
         </div>
 
-        <!-- Step 2: Azure Configuration -->
-        <div class="step-content" data-step="2">
+        <!-- Step 2: Configuration -->
+        <div class="step-content" id="step-2">
+            <div class="button-group top">
+                <button class="secondary" id="btn-prev-2-top">← Back</button>
+                <button id="btn-next-2-top">Next →</button>
+            </div>
+
             <h2>Azure Configuration</h2>
-            <p>Configure your connection to Business Central telemetry.</p>
+            <p>Configure your connection to Business Central telemetry using JSON format.</p>
 
-            <div class="form-group">
-                <label for="tenantName">Connection Name *</label>
-                <input type="text" id="tenantName" placeholder="e.g., Contoso Production">
-                <div class="help-text">Friendly name identifying this complete connection (tenant + App Insights endpoint)</div>
+            <div style="margin: 20px 0;">
+                <h4>📖 Configuration Examples:</h4>
+                <div class="examples-grid">
+                    <div class="example-column">
+                        <p><strong>Single Profile</strong> <em>(simple setup for one environment)</em></p>
+                        <pre>{
+  <span class="json-comment">// JSON schema for IntelliSense support in VS Code</span>
+  <span class="json-key">"$schema"</span>: <span class="json-string">"https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/mcp/config-schema.json"</span>,
+  
+  <span class="json-comment">// Friendly name for this connection</span>
+  <span class="json-key">"connectionName"</span>: <span class="json-string">"My BC Environment"</span>,
+  
+  <span class="json-comment">// Authentication method: azure_cli (recommended), device_code, or client_credentials</span>
+  <span class="json-key">"authFlow"</span>: <span class="json-string">"azure_cli"</span>,
+  
+  <span class="json-comment">// Azure AD Tenant ID - Find in Azure Portal > Azure Active Directory > Overview > Tenant ID</span>
+  <span class="json-key">"tenantId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
+  
+  <span class="json-comment">// Application Insights App ID - Find in Azure Portal > Application Insights > API Access > Application ID</span>
+  <span class="json-key">"applicationInsightsAppId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
+  
+  <span class="json-comment">// Kusto cluster URL - Find in Azure Portal > Application Insights > API Access > API endpoint</span>
+  <span class="json-key">"kustoClusterUrl"</span>: <span class="json-string">"https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID"</span>,
+  
+  <span class="json-comment">// Enable local caching of query results</span>
+  <span class="json-key">"cacheEnabled"</span>: <span class="json-boolean">true</span>,
+  
+  <span class="json-comment">// Cache time-to-live in seconds (3600 = 1 hour)</span>
+  <span class="json-key">"cacheTTLSeconds"</span>: <span class="json-number">3600</span>,
+  
+  <span class="json-comment">// Remove personally identifiable information from results</span>
+  <span class="json-key">"removePII"</span>: <span class="json-boolean">false</span>,
+  
+  <span class="json-comment">// Workspace path (use \$\{workspaceFolder\} for current workspace)</span>
+  <span class="json-key">"workspacePath"</span>: <span class="json-string">"\${workspaceFolder}"</span>,
+  
+  <span class="json-comment">// Folder name for saved queries</span>
+  <span class="json-key">"queriesFolder"</span>: <span class="json-string">"queries"</span>,
+  
+  <span class="json-comment">// External query references (leave empty initially)</span>
+  <span class="json-key">"references"</span>: []
+}</pre>
+                    </div>
+                    <div class="example-column">
+                        <p><strong>Multiple Profiles</strong> <em>(for managing multiple customers/environments)</em></p>
+                        <pre>{
+  <span class="json-comment">// Which profile to use by default</span>
+  <span class="json-key">"defaultProfile"</span>: <span class="json-string">"customer-a-prod"</span>,
+  
+  <span class="json-comment">// Named profiles - switch between them in Step 4</span>
+  <span class="json-key">"profiles"</span>: {
+    <span class="json-key">"customer-a-prod"</span>: {
+      <span class="json-comment">// Friendly name for this profile</span>
+      <span class="json-key">"connectionName"</span>: <span class="json-string">"Customer A Production"</span>,
+      
+      <span class="json-comment">// Authentication method: azure_cli (recommended), device_code, or client_credentials</span>
+      <span class="json-key">"authFlow"</span>: <span class="json-string">"azure_cli"</span>,
+      
+      <span class="json-comment">// Azure AD Tenant ID - Azure Portal > Azure Active Directory > Overview > Tenant ID</span>
+      <span class="json-key">"tenantId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
+      
+      <span class="json-comment">// App Insights App ID - Azure Portal > Application Insights > API Access > Application ID</span>
+      <span class="json-key">"applicationInsightsAppId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
+      
+      <span class="json-comment">// Kusto URL - Azure Portal > Application Insights > API Access > API endpoint</span>
+      <span class="json-key">"kustoClusterUrl"</span>: <span class="json-string">"https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID"</span>,
+      
+      <span class="json-comment">// Enable local caching of query results</span>
+      <span class="json-key">"cacheEnabled"</span>: <span class="json-boolean">true</span>,
+      
+      <span class="json-comment">// Cache time-to-live in seconds (3600 = 1 hour)</span>
+      <span class="json-key">"cacheTTLSeconds"</span>: <span class="json-number">3600</span>,
+      
+      <span class="json-comment">// Remove personally identifiable information from results</span>
+      <span class="json-key">"removePII"</span>: <span class="json-boolean">false</span>,
+      
+      <span class="json-comment">// Workspace path (use \$\{workspaceFolder\} for current workspace)</span>
+      <span class="json-key">"workspacePath"</span>: <span class="json-string">"\${workspaceFolder}"</span>,
+      
+      <span class="json-comment">// Folder name for saved queries</span>
+      <span class="json-key">"queriesFolder"</span>: <span class="json-string">"queries"</span>,
+      
+      <span class="json-comment">// External query references (leave empty initially)</span>
+      <span class="json-key">"references"</span>: []
+    },
+    <span class="json-key">"customer-b-prod"</span>: {
+      <span class="json-key">"connectionName"</span>: <span class="json-string">"Customer B Production"</span>,
+      
+      <span class="json-comment">// device_code: Browser-based authentication (no Azure CLI required)</span>
+      <span class="json-key">"authFlow"</span>: <span class="json-string">"device_code"</span>,
+      
+      <span class="json-key">"tenantId"</span>: <span class="json-string">"11111111-1111-1111-1111-111111111111"</span>,
+      <span class="json-key">"applicationInsightsAppId"</span>: <span class="json-string">"11111111-1111-1111-1111-111111111111"</span>,
+      <span class="json-key">"kustoClusterUrl"</span>: <span class="json-string">"https://ade.applicationinsights.io/subscriptions/ANOTHER-SUBSCRIPTION-ID"</span>,
+      
+      <span class="json-comment">// For client_credentials auth: Azure Portal > App Registrations > Your App > Overview > Application ID</span>
+      <span class="json-key">"clientId"</span>: <span class="json-string">"22222222-2222-2222-2222-222222222222"</span>,
+      
+      <span class="json-key">"cacheEnabled"</span>: <span class="json-boolean">true</span>,
+      <span class="json-key">"cacheTTLSeconds"</span>: <span class="json-number">3600</span>,
+      <span class="json-key">"removePII"</span>: <span class="json-boolean">false</span>,
+      <span class="json-key">"workspacePath"</span>: <span class="json-string">"\${workspaceFolder}"</span>,
+      <span class="json-key">"queriesFolder"</span>: <span class="json-string">"queries"</span>,
+      <span class="json-key">"references"</span>: []
+    }
+  }
+}</pre>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="tenantId">Tenant ID *</label>
-                <input type="text" id="tenantId" placeholder="e.g., 12345678-1234-1234-1234-123456789abc">
-                <div class="help-text">Your Azure AD tenant ID. Find it in Azure Portal → Azure Active Directory → Overview</div>
-            </div>
-
-            <div class="form-group">
-                <label for="appInsightsId">Application Insights App ID *</label>
-                <input type="text" id="appInsightsId" placeholder="e.g., 12345678-1234-1234-1234-123456789abc">
-                <div class="help-text">Your App Insights Application ID (not resource ID). Find it in Azure Portal → Application Insights → API Access → Application ID</div>
-            </div>
-
-            <div class="form-group">
-                <label for="kustoUrl">Kusto Cluster URL *</label>
-                <input type="text" id="kustoUrl" placeholder="https://ade.applicationinsights.io/subscriptions/<subscription-id>">
-                <div class="help-text">For BC telemetry in App Insights, use: https://ade.applicationinsights.io/subscriptions/&lt;your-subscription-id&gt;</div>
+            <div style="margin: 20px 0;">
+                <label for="configEditor" style="display: block; margin-bottom: 10px; font-weight: bold;">Configuration JSON:</label>
+                <div style="margin-bottom: 8px; padding: 10px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px; font-size: 12px;">
+                    💡 <strong>Tip:</strong> For easier editing with IntelliSense and auto-formatting, copy/paste this to a <code>.json</code> file in your workspace, edit there, then copy back.
+                </div>
+                <textarea id="configEditor" spellcheck="false" placeholder="Loading default configuration..."></textarea>
+                <div style="margin-top: 10px;">
+                    <button class="secondary" id="btn-validate-json">✓ Validate JSON</button>
+                    <button class="secondary" id="btn-format-json">🎨 Format JSON</button>
+                    <span id="jsonValidation" class="validation-status"></span>
+                </div>
             </div>
 
             <div class="links">
                 <h4>📚 Need Help?</h4>
-                <a href="#" data-url="https://portal.azure.com">Open Azure Portal</a>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/azure/azure-monitor/app/create-workspace-resource">Create Application Insights</a>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview">BC Telemetry Setup Guide</a>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li><a href="https://portal.azure.com" target="_blank">Open Azure Portal</a></li>
+                    <li><a href="https://learn.microsoft.com/en-us/azure/azure-monitor/app/create-workspace-resource" target="_blank">Create Application Insights</a></li>
+                    <li><a href="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-overview" target="_blank">BC Telemetry Setup Guide</a></li>
+                </ul>
             </div>
 
             <div class="button-group">
-                <button class="secondary" onclick="prevStep()">← Back</button>
-                <button onclick="nextStep()">Next →</button>
+                <button class="secondary" id="btn-prev-2">← Back</button>
+                <button id="btn-next-2">Next →</button>
             </div>
         </div>
 
         <!-- Step 3: Authentication -->
-        <div class="step-content" data-step="3">
+        <div class="step-content" id="step-3">
+            <div class="button-group top">
+                <button class="secondary" id="btn-prev-3-top">← Back</button>
+                <button id="btn-next-3-top">Next →</button>
+            </div>
+
             <h2>Authentication Setup</h2>
             <p>Choose how you want to authenticate with Azure.</p>
 
             <div class="form-group">
                 <label for="authFlow">Authentication Method *</label>
-                <select id="authFlow" onchange="updateAuthFields()">
+                <select id="authFlow">
                     <option value="azure_cli">Azure CLI (Recommended)</option>
                     <option value="device_code">Device Code Flow</option>
                     <option value="client_credentials">Client Credentials (Service Principal)</option>
@@ -739,11 +775,19 @@ export class SetupWizardProvider {
                 </ul>
                 <p><strong>Prerequisites:</strong></p>
                 <ul>
-                    <li>Install Azure CLI: <a href="#" data-url="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli">Download here</a></li>
+                    <li>Install Azure CLI: <a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli" target="_blank">Download here</a></li>
                     <li>Run: <code>az login</code> in terminal</li>
                 </ul>
-                <button onclick="validateAuth()">Validate Azure CLI</button>
-                <span id="authValidation"></span>
+                <button id="btn-validate-auth">Validate Azure CLI</button>
+                <span id="authValidation" class="validation-status"></span>
+                <div id="accountDetails" style="display: none; margin-top: 15px; padding: 10px; background: var(--vscode-editor-inactiveSelectionBackground); border-radius: 4px;">
+                    <strong>Current Account:</strong><br>
+                    <span id="accountName" style="margin-left: 10px;"></span><br>
+                    <strong>Username:</strong><br>
+                    <span id="userName" style="margin-left: 10px;"></span><br>
+                    <strong>Tenant ID:</strong><br>
+                    <span id="tenantId" style="margin-left: 10px; font-family: monospace;"></span>
+                </div>
             </div>
 
             <div id="deviceCodeInfo" class="links" style="display: none;">
@@ -754,7 +798,7 @@ export class SetupWizardProvider {
                     <input type="text" id="deviceCodeClientId" placeholder="Application (client) ID">
                     <div class="help-text">Register an app in Azure AD to get this ID</div>
                 </div>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app">How to register an Azure AD app</a>
+                <a href="https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app" target="_blank">How to register an Azure AD app</a>
             </div>
 
             <div id="clientCredentialsInfo" class="links" style="display: none;">
@@ -769,354 +813,606 @@ export class SetupWizardProvider {
                     <input type="password" id="clientSecret" placeholder="Client secret value">
                     <div class="help-text">⚠️ Note: Stored in workspace settings (consider using environment variables for production)</div>
                 </div>
-                <a href="#" data-url="https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal">Create a Service Principal</a>
+                <a href="https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal" target="_blank">Create a Service Principal</a>
             </div>
 
             <div class="button-group">
-                <button class="secondary" onclick="prevStep()">← Back</button>
-                <button onclick="nextStep()">Next →</button>
+                <button class="secondary" id="btn-prev-3">← Back</button>
+                <button id="btn-next-3">Next →</button>
             </div>
         </div>
 
         <!-- Step 4: Test Connection -->
-        <div class="step-content" data-step="4">
-            <h2>Test Connection</h2>
-            <p>Let's verify your configuration works!</p>
-
-            <div class="links">
-                <h4>🔍 Connection Check</h4>
-                <p>We'll test:</p>
-                <ul>
-                    <li>Authentication with Azure</li>
-                    <li>Access to Application Insights</li>
-                    <li>Connection to Kusto cluster</li>
-                </ul>
+        <div class="step-content" id="step-4">
+            <div class="button-group top">
+                <button class="secondary" id="btn-prev-4-top">← Back</button>
+                <button id="btn-next-4-top">Next →</button>
             </div>
 
-            <button onclick="testConnection()">🧪 Test Connection</button>
-            <span id="connectionTest"></span>
+            <h2>Test Connection</h2>
+            <p>Review your configuration and test the connection with a simple query.</p>
 
-            <div id="connectionResults" style="margin-top: 20px; display: none;">
-                <h4>Test Results:</h4>
-                <p id="connectionMessage"></p>
+            <div id="profileSelectorContainer" style="display: none; margin: 20px 0;">
+                <label for="profileSelector" style="display: block; margin-bottom: 10px; font-weight: bold;">Select Profile to Test:</label>
+                <select id="profileSelector" style="width: 100%; padding: 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 4px;">
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+
+            <div style="margin: 20px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px;">
+                <h4 style="margin-top: 0;">📋 Configuration Summary</h4>
+                <div id="configSummary" style="font-family: monospace; font-size: 12px; line-height: 1.8;">
+                    <div><strong>Connection Name:</strong> <span id="sum-connectionName">-</span></div>
+                    <div><strong>Auth Flow:</strong> <span id="sum-authFlow">-</span></div>
+                    <div><strong>Tenant ID:</strong> <span id="sum-tenantId">-</span></div>
+                    <div><strong>App Insights App ID:</strong> <span id="sum-appInsightsId">-</span></div>
+                    <div><strong>Cluster URL:</strong> <span id="sum-clusterUrl" style="word-break: break-all;">-</span></div>
+                    <div><strong>Cache Enabled:</strong> <span id="sum-cacheEnabled">-</span></div>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0; padding: 15px; background: var(--vscode-editor-inactiveSelectionBackground); border-radius: 4px;">
+                <h4 style="margin-top: 0;">🔍 Test Query</h4>
+                <p>This will execute: <code style="background: var(--vscode-editor-background); padding: 2px 6px; border-radius: 3px;">traces | take 1</code></p>
+                <p style="font-size: 12px; color: var(--vscode-descriptionForeground); margin-top: 10px;">The test verifies authentication and confirms your Application Insights instance is accessible and contains data.</p>
+            </div>
+
+            <button id="btn-test-connection">🔍 Test Connection</button>
+            <span id="testStatus" class="validation-status"></span>
+
+            <div id="testResults" style="display: none; margin-top: 15px; padding: 10px; background: var(--vscode-editor-inactiveSelectionBackground); border-radius: 4px;">
+                <strong>Test Results:</strong><br>
+                <pre id="testResultsContent" style="margin-top: 10px; padding: 10px; background: var(--vscode-editor-background); border-radius: 4px; overflow-x: auto; max-height: 300px; overflow-y: auto;"></pre>
             </div>
 
             <div class="button-group">
-                <button class="secondary" onclick="prevStep()">← Back</button>
-                <button onclick="nextStep()">Next →</button>
+                <button class="secondary" id="btn-prev-4">← Back</button>
+                <button id="btn-next-4">Next →</button>
             </div>
         </div>
 
         <!-- Step 5: Complete -->
-        <div class="step-content" data-step="5">
-            <h2>🎉 Setup Complete!</h2>
-            <p>Your BC Telemetry Buddy is ready to use.</p>
-
-            <!-- Warning for multiroot with folder-level settings -->
-            <div id="multirootWarning" class="links" style="display: none; margin-bottom: 20px; padding: 15px; background: #3a2d00; border-radius: 4px; border-left: 4px solid var(--vscode-editorWarning-foreground);">
-                <h4>⚠️ Multiroot Workspace Detected</h4>
-                <p>Your workspace has multiple folders, and some have folder-level BC Telemetry Buddy settings that <strong>will be ignored</strong>.</p>
-                <p id="multirootWarningDetails"></p>
-                <p style="margin-top: 10px;"><strong>Solution:</strong> To use per-project settings, open each project as a separate single-root workspace. In multiroot workspaces, only workspace file settings are used.</p>
+        <div class="step-content" id="step-5">
+            <div class="button-group top">
+                <button class="secondary" id="btn-prev-5-top">← Back</button>
+                <div></div>
             </div>
 
-            <div class="links">
-                <h4>✅ Configuration Summary</h4>
-                <p id="settingsLocationMessage">Your settings will be saved to <code>.vscode/settings.json</code> in your workspace.</p>
-                <p><em>For optional features (queries folder, cache TTL, CodeLens), see the README.</em></p>
+            <h2>Save Configuration</h2>
+            <p>Review your configuration and save it to start using BC Telemetry Buddy.</p>
+
+            <div style="margin: 20px 0; padding: 15px; background: var(--vscode-editor-inactiveSelectionBackground); border-radius: 4px;">
+                <h4 style="margin-top: 0;">📋 Configuration Summary</h4>
+                <div style="line-height: 2;">
+                    <div><strong>Connection Name:</strong> <span id="final-connectionName">-</span></div>
+                    <div><strong>Auth Flow:</strong> <span id="final-authFlow">-</span></div>
+                    <div><strong>Tenant ID:</strong> <span id="final-tenantId" style="font-family: monospace; font-size: 12px;">-</span></div>
+                    <div><strong>Application Insights ID:</strong> <span id="final-appInsightsId" style="font-family: monospace; font-size: 12px;">-</span></div>
+                    <div><strong>Cluster URL:</strong> <span id="final-clusterUrl" style="word-break: break-all;">-</span></div>
+                    <div><strong>Cache Enabled:</strong> <span id="final-cacheEnabled">-</span></div>
+                </div>
             </div>
 
-            <div class="links" style="margin-top: 20px; padding: 15px; background: #2d2d30; border-radius: 8px; border-left: 4px solid #007acc;">
-                <h4>🤖 GitHub Copilot Chatmodes (Recommended)</h4>
-                <p>Install BC Telemetry Buddy chatmodes to get expert assistance in Copilot Chat.</p>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="installChatmode" checked style="width: 18px; height: 18px; cursor: pointer;">
-                    <span>Install chatmodes (2 specialized modes) to <code>.github/chatmodes/</code></span>
-                </label>
-                <p style="margin-top: 10px; font-size: 0.9em; color: #cccccc;">
-                    ℹ️ After installation, type <code>@workspace</code> in Copilot Chat, then select the chatmode from the dropdown to activate expert modes.
-                </p>
-                <span id="chatmodeStatus" style="margin-top: 10px; display: block;"></span>
-            </div>
-
-            <button onclick="saveSettings()">💾 Save Configuration</button>
-            <span id="saveStatus"></span>
-
-            <div class="links" style="margin-top: 30px;">
-                <h4>🚀 Next Steps:</h4>
-                <ul>
-                    <li>Chat with GitHub Copilot and ask about your BC telemetry</li>
-                    <li>Example: "@workspace Show me all errors from BC in the last 24 hours"</li>
-                    <li>Or use Command Palette: "BC Telemetry Buddy: Run KQL Query"</li>
-                    <li>Create and save your own KQL queries in <code>.kql</code> files</li>
-                </ul>
-                <p><strong>💡 Tip:</strong> The MCP server will automatically start when you chat with Copilot!</p>
-                <a href="#" data-url="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/README.md">📖 Read the README</a>
+            <div id="saveStatusContainer" style="display: none; margin: 20px 0; padding: 15px; border-radius: 4px;">
+                <div id="saveStatusContent"></div>
             </div>
 
             <div class="button-group">
-                <button class="secondary" onclick="prevStep()">← Back</button>
-                <button onclick="closeWizard()">Finish ✓</button>
+                <button class="secondary" id="btn-prev-5">← Back</button>
+                <button id="btn-save-config">💾 Save Configuration</button>
+            </div>
+
+            <div class="button-group" id="finishButtonGroup" style="display: none; justify-content: flex-end;">
+                <button id="btn-finish">Finish ✓</button>
             </div>
         </div>
     </div>
 
     <script>
-        const vscode = acquireVsCodeApi();
-        let currentStep = 1;
-        const totalSteps = 5;
+        (function() {
+            const vscode = acquireVsCodeApi();
+            let currentStep = 1;
+            const totalSteps = 5;
 
-        // State variables
-        let isMultiRoot = false;
-        let hasFolderLevelSettings = false;
-        let foldersWithSettings = [];
-
-        // Request current settings and validate workspace on load
-        window.addEventListener('load', () => {
-            vscode.postMessage({ type: 'validateWorkspace' });
-            vscode.postMessage({ type: 'requestCurrentSettings' });
-        });
-
-        // Handle messages from extension
-        window.addEventListener('message', event => {
-            const message = event.data;
-            switch (message.type) {
-                case 'currentSettings':
-                    populateSettings(message.settings);
-                    break;
-                case 'authValidation':
-                    showAuthValidation(message);
-                    break;
-                case 'connectionTest':
-                    showConnectionTest(message);
-                    break;
-                case 'settingsSaved':
-                    showSaveStatus(message);
-                    break;
-                case 'chatmodeInstalled':
-                    showChatmodeStatus(message);
-                    break;
-                case 'workspaceValidation':
-                    handleWorkspaceValidation(message);
-                    break;
-            }
-        });
-
-        function handleWorkspaceValidation(message) {
-            const isMultiRoot = message.isMultiRoot || false;
-            const errorDiv = document.getElementById('multirootError');
-            const welcomeContent = document.getElementById('welcomeContent');
-            const nextButton = document.getElementById('nextButton');
-
-            if (isMultiRoot) {
-                // Show error, hide welcome content, disable Next button
-                if (errorDiv) errorDiv.style.display = 'block';
-                if (welcomeContent) welcomeContent.style.display = 'none';
-                if (nextButton) nextButton.disabled = true;
-            } else {
-                // Hide error, show welcome content, enable Next button
-                if (errorDiv) errorDiv.style.display = 'none';
-                if (welcomeContent) welcomeContent.style.display = 'block';
-                if (nextButton) nextButton.disabled = false;
-            }
-        }
-
-        function populateSettings(settings) {
-            console.log('[SetupWizard] Populating settings:', settings);
-            
-            const tenantNameEl = document.getElementById('tenantName');
-            const tenantIdEl = document.getElementById('tenantId');
-            const appInsightsIdEl = document.getElementById('appInsightsId');
-            const kustoUrlEl = document.getElementById('kustoUrl');
-            const authFlowEl = document.getElementById('authFlow');
-            
-            if (tenantNameEl) tenantNameEl.value = settings.tenantName || '';
-            if (tenantIdEl) tenantIdEl.value = settings.tenantId || '';
-            if (appInsightsIdEl) appInsightsIdEl.value = settings.appInsightsId || '';
-            if (kustoUrlEl) kustoUrlEl.value = settings.kustoUrl || '';
-            if (authFlowEl) authFlowEl.value = settings.authFlow || 'azure_cli';
-            
-            const deviceCodeClientIdEl = document.getElementById('deviceCodeClientId');
-            const spClientIdEl = document.getElementById('spClientId');
-            const clientSecretEl = document.getElementById('clientSecret');
-            
-            if (deviceCodeClientIdEl) deviceCodeClientIdEl.value = settings.clientId || '';
-            if (spClientIdEl) spClientIdEl.value = settings.clientId || '';
-            if (clientSecretEl) clientSecretEl.value = settings.clientSecret || '';
-            
-            console.log('[SetupWizard] Settings populated successfully');
-            updateAuthFields();
-        }
-
-        function nextStep() {
-            if (currentStep < totalSteps) {
-                goToStep(currentStep + 1);
-            }
-        }
-
-        function prevStep() {
-            if (currentStep > 1) {
-                goToStep(currentStep - 1);
-            }
-        }
-
-        function goToStep(step) {
-            // Hide current step
-            document.querySelector(\`.step-content[data-step="\${currentStep}"]\`).classList.remove('active');
-            document.querySelector(\`.wizard-step[data-step="\${currentStep}"]\`).classList.remove('active');
-            document.querySelector(\`.wizard-step[data-step="\${currentStep}"]\`).classList.add('completed');
-
-            // Show new step
-            currentStep = step;
-            document.querySelector(\`.step-content[data-step="\${currentStep}"]\`).classList.add('active');
-            document.querySelector(\`.wizard-step[data-step="\${currentStep}"]\`).classList.add('active');
-
-            // Trigger workspace validation when entering Step 5 (Complete)
-            if (currentStep === 5) {
+            // Request workspace validation on load
+            window.addEventListener('load', function() {
                 vscode.postMessage({ type: 'validateWorkspace' });
-            }
-        }
+                vscode.postMessage({ type: 'loadConfig' });
+                updateAuthFields();
+            });
 
-        function updateAuthFields() {
-            const authFlow = document.getElementById('authFlow').value;
-            document.getElementById('azureCliInfo').style.display = authFlow === 'azure_cli' ? 'block' : 'none';
-            document.getElementById('deviceCodeInfo').style.display = authFlow === 'device_code' ? 'block' : 'none';
-            document.getElementById('clientCredentialsInfo').style.display = authFlow === 'client_credentials' ? 'block' : 'none';
-        }
-
-        function validateAuth() {
-            const authFlow = document.getElementById('authFlow').value;
-            vscode.postMessage({ type: 'validateAuth', authFlow });
-        }
-
-        function showAuthValidation(message) {
-            const span = document.getElementById('authValidation');
-            span.className = \`validation-status \${message.isValid ? 'success' : 'error'}\`;
-            span.innerHTML = message.message.replace(/\\n/g, '<br>');
-        }
-
-        function testConnection() {
-            // Collect current form values to test connection
-            const authFlow = document.getElementById('authFlow').value;
-            const settings = {
-                tenantName: document.getElementById('tenantName').value,
-                tenantId: document.getElementById('tenantId').value,
-                appInsightsId: document.getElementById('appInsightsId').value,
-                kustoUrl: document.getElementById('kustoUrl').value,
-                authFlow: authFlow,
-                clientId: authFlow === 'device_code' 
-                    ? document.getElementById('deviceCodeClientId').value 
-                    : document.getElementById('spClientId').value,
-                clientSecret: authFlow === 'client_credentials' 
-                    ? document.getElementById('clientSecret').value 
-                    : ''
-            };
-            
-            vscode.postMessage({ type: 'testConnection', settings });
-        }
-
-        function showConnectionTest(message) {
-            const span = document.getElementById('connectionTest');
-            span.className = \`validation-status \${message.success ? 'success' : 'error'}\`;
-            span.textContent = message.message;
-
-            const results = document.getElementById('connectionResults');
-            results.style.display = 'block';
-            const messageEl = document.getElementById('connectionMessage');
-            
-            // Display message with details if available
-            if (message.details) {
-                messageEl.innerHTML = '<strong>' + message.message + '</strong><br><br>' + 
-                                     message.details.replace(/\\n/g, '<br>');
-            } else {
-                messageEl.textContent = message.message;
-            }
-        }
-
-        function saveSettings() {
-            const authFlow = document.getElementById('authFlow').value;
-            const settings = {
-                tenantName: document.getElementById('tenantName').value,
-                tenantId: document.getElementById('tenantId').value,
-                appInsightsId: document.getElementById('appInsightsId').value,
-                kustoUrl: document.getElementById('kustoUrl').value,
-                authFlow: authFlow,
-                clientId: authFlow === 'device_code' 
-                    ? document.getElementById('deviceCodeClientId').value 
-                    : document.getElementById('spClientId').value,
-                clientSecret: authFlow === 'client_credentials' 
-                    ? document.getElementById('clientSecret').value 
-                    : ''
-            };
-
-            vscode.postMessage({ type: 'saveSettings', settings });
-
-            // Install chatmodes if checkbox is checked
-            const installChatmode = document.getElementById('installChatmode').checked;
-            if (installChatmode) {
-                const chatmodeStatus = document.getElementById('chatmodeStatus');
-                chatmodeStatus.className = 'validation-status';
-                chatmodeStatus.textContent = '⏳ Installing chatmodes...';
-                vscode.postMessage({ type: 'installChatmodes' });
-            }
-        }
-
-        function showSaveStatus(message) {
-            const span = document.getElementById('saveStatus');
-            span.className = \`validation-status \${message.success ? 'success' : 'error'}\`;
-            span.textContent = message.message;
-        }
-
-        function showChatmodeStatus(message) {
-            const span = document.getElementById('chatmodeStatus');
-            if (message.success) {
-                if (message.installedCount > 0) {
-                    span.className = 'validation-status success';
-                    span.textContent = \`✅ \${message.installedCount} chatmode(s) installed successfully! Reload VS Code to activate.\`;
-                } else if (message.alreadyExists) {
-                    span.className = 'validation-status success';
-                    span.textContent = '✅ All chatmodes already installed';
-                } else {
-                    span.className = 'validation-status success';
-                    span.textContent = '✅ Chatmodes installed successfully! Reload VS Code to activate.';
+            // Handle messages from extension
+            window.addEventListener('message', function(event) {
+                const message = event.data;
+                switch (message.type) {
+                    case 'workspaceValidation':
+                        handleWorkspaceValidation(message);
+                        break;
+                    case 'currentConfig':
+                        populateCurrentConfig(message.config);
+                        break;
+                    case 'authValidation':
+                        showAuthValidation(message);
+                        break;
+                    case 'connectionTest':
+                        showConnectionTest(message);
+                        break;
+                    case 'configSaved':
+                        handleConfigSaved(message);
+                        break;
                 }
-            } else {
-                span.className = 'validation-status error';
-                span.textContent = \`❌ Failed to install chatmodes: \${message.message}\`;
-            }
-        }
+            });
 
-        function closeWizard() {
-            // Close the wizard panel
-            vscode.postMessage({ type: 'closeWizard' });
-        }
+            function handleWorkspaceValidation(message) {
+                const isMultiRoot = message.isMultiRoot || false;
+                const errorDiv = document.getElementById('multirootError');
+                const welcomeContent = document.getElementById('welcomeContent');
+                const nextButton = document.getElementById('btn-next-1');
 
-        // Handle external link clicks
-        document.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target.tagName === 'A' && target.dataset.url) {
-                e.preventDefault();
-                vscode.postMessage({ type: 'openExternal', url: target.dataset.url });
+                if (isMultiRoot) {
+                    if (errorDiv) errorDiv.style.display = 'block';
+                    if (welcomeContent) welcomeContent.style.display = 'none';
+                    if (nextButton) nextButton.disabled = true;
+                } else {
+                    if (errorDiv) errorDiv.style.display = 'none';
+                    if (welcomeContent) welcomeContent.style.display = 'block';
+                    if (nextButton) nextButton.disabled = false;
+                }
             }
-        });
+
+            function showStep(stepNumber) {
+                console.log('showStep called:', stepNumber);
+                
+                // Hide all steps
+                for (let i = 1; i <= totalSteps; i++) {
+                    const content = document.getElementById('step-' + i);
+                    const nav = document.getElementById('step-' + i + '-nav');
+                    
+                    if (content) {
+                        content.classList.remove('active');
+                    }
+                    if (nav) {
+                        nav.classList.remove('active');
+                        if (i < stepNumber) {
+                            nav.classList.add('completed');
+                        } else {
+                            nav.classList.remove('completed');
+                        }
+                    }
+                }
+
+                // Show current step
+                const currentContent = document.getElementById('step-' + stepNumber);
+                const currentNav = document.getElementById('step-' + stepNumber + '-nav');
+                
+                if (currentContent) {
+                    currentContent.classList.add('active');
+                }
+                if (currentNav) {
+                    currentNav.classList.add('active');
+                }
+
+                // Populate config summary when showing step 4
+                if (stepNumber === 4) {
+                    populateProfileSelector();
+                    populateConfigSummary();
+                }
+
+                // Populate final summary when showing step 5
+                if (stepNumber === 5) {
+                    populateFinalSummary();
+                }
+
+                currentStep = stepNumber;
+            }
+
+            function goNext() {
+                console.log('goNext called, currentStep:', currentStep);
+                if (currentStep < totalSteps) {
+                    showStep(currentStep + 1);
+                }
+            }
+
+            function goPrev() {
+                console.log('goPrev called, currentStep:', currentStep);
+                if (currentStep > 1) {
+                    showStep(currentStep - 1);
+                }
+            }
+
+            function finish() {
+                vscode.postMessage({ type: 'closeWizard' });
+            }
+
+            function updateAuthFields() {
+                const authFlow = document.getElementById('authFlow').value;
+                const azureCliDiv = document.getElementById('azureCliInfo');
+                const deviceCodeDiv = document.getElementById('deviceCodeInfo');
+                const clientCredsDiv = document.getElementById('clientCredentialsInfo');
+
+                // Show only the selected auth method
+                azureCliDiv.style.display = authFlow === 'azure_cli' ? 'block' : 'none';
+                deviceCodeDiv.style.display = authFlow === 'device_code' ? 'block' : 'none';
+                clientCredsDiv.style.display = authFlow === 'client_credentials' ? 'block' : 'none';
+            }
+
+            function validateAuth() {
+                const authValidation = document.getElementById('authValidation');
+                authValidation.className = 'validation-status';
+                authValidation.textContent = '⏳ Validating Azure CLI...';
+                vscode.postMessage({ type: 'validateAuth' });
+            }
+
+            function showAuthValidation(message) {
+                const authValidation = document.getElementById('authValidation');
+                const accountDetails = document.getElementById('accountDetails');
+                const accountName = document.getElementById('accountName');
+                const userName = document.getElementById('userName');
+                const tenantId = document.getElementById('tenantId');
+                
+                if (message.success) {
+                    authValidation.className = 'validation-status success';
+                    authValidation.textContent = '\u2713 Azure CLI is configured correctly';
+                    
+                    // Show account details
+                    if (accountDetails && accountName && userName && tenantId) {
+                        accountName.textContent = message.accountName || 'Unknown';
+                        userName.textContent = message.userName || 'Unknown';
+                        tenantId.textContent = message.tenantId || 'Unknown';
+                        accountDetails.style.display = 'block';
+                    }
+                } else {
+                    authValidation.className = 'validation-status error';
+                    authValidation.textContent = '\u2717 ' + (message.error || 'Azure CLI validation failed');
+                    
+                    // Hide account details on error
+                    if (accountDetails) {
+                        accountDetails.style.display = 'none';
+                    }
+                }
+            }
+
+            function populateProfileSelector() {
+                const configEditor = document.getElementById('configEditor');
+                const profileSelectorContainer = document.getElementById('profileSelectorContainer');
+                const profileSelector = document.getElementById('profileSelector');
+                
+                let config;
+                try {
+                    config = JSON.parse(configEditor.value);
+                } catch (error) {
+                    // Invalid JSON - hide profile selector
+                    console.log('populateProfileSelector: Invalid JSON, hiding selector');
+                    profileSelectorContainer.style.display = 'none';
+                    return;
+                }
+                
+                console.log('populateProfileSelector: Config parsed', config);
+                
+                let profileNames = [];
+                
+                // Handle both array and object formats for profiles
+                if (config.profiles) {
+                    if (Array.isArray(config.profiles)) {
+                        // Array format: [{ name: "X", ... }, { name: "Y", ... }]
+                        profileNames = config.profiles.map(p => p.name);
+                    } else if (typeof config.profiles === 'object') {
+                        // Object format: { "X": { ... }, "Y": { ... } }
+                        profileNames = Object.keys(config.profiles);
+                    }
+                }
+                
+                console.log('populateProfileSelector: Found profile names:', profileNames);
+                
+                // Show selector if multiple profiles exist
+                if (profileNames.length >= 2) {
+                    console.log('populateProfileSelector: Found', profileNames.length, 'profiles, showing selector');
+                    profileSelectorContainer.style.display = 'block';
+                    
+                    // Populate dropdown
+                    profileSelector.innerHTML = '';
+                    profileNames.forEach(profileName => {
+                        const option = document.createElement('option');
+                        option.value = profileName;
+                        option.textContent = profileName;
+                        profileSelector.appendChild(option);
+                        console.log('populateProfileSelector: Added profile option:', profileName);
+                    });
+                    
+                    // Select default profile if specified
+                    if (config.defaultProfile && profileNames.includes(config.defaultProfile)) {
+                        profileSelector.value = config.defaultProfile;
+                        console.log('populateProfileSelector: Set default profile to:', config.defaultProfile);
+                    }
+                    
+                    // Add change event to update config summary
+                    profileSelector.onchange = () => populateConfigSummary();
+                } else {
+                    // Hide profile selector for single profile
+                    console.log('populateProfileSelector: Single profile or no profiles, hiding selector');
+                    profileSelectorContainer.style.display = 'none';
+                }
+            }
+            
+            function formatJSON() {
+                const configEditor = document.getElementById('configEditor');
+                const jsonValidation = document.getElementById('jsonValidation');
+                
+                try {
+                    const config = JSON.parse(configEditor.value);
+                    configEditor.value = JSON.stringify(config, null, 2);
+                    jsonValidation.className = 'validation-status success';
+                    jsonValidation.textContent = '\u2713 JSON formatted successfully';
+                } catch (error) {
+                    jsonValidation.className = 'validation-status error';
+                    jsonValidation.textContent = '\u2717 Invalid JSON: ' + error.message;
+                }
+            }
+
+            function populateConfigSummary() {
+                try {
+                    const configEditor = document.getElementById('configEditor');
+                    const fullConfig = JSON.parse(configEditor.value);
+                    
+                    // Handle multi-profile scenario
+                    let config;
+                    if (fullConfig.profiles) {
+                        if (Array.isArray(fullConfig.profiles)) {
+                            // Array format: [{ name: "X", ... }]
+                            const profileSelector = document.getElementById('profileSelector');
+                            const selectedProfileName = profileSelector ? profileSelector.value : fullConfig.profiles[0].name;
+                            config = fullConfig.profiles.find(p => p.name === selectedProfileName) || fullConfig.profiles[0];
+                        } else if (typeof fullConfig.profiles === 'object') {
+                            // Object format: { "X": { ... } }
+                            const profileSelector = document.getElementById('profileSelector');
+                            const selectedProfileName = profileSelector ? profileSelector.value : fullConfig.defaultProfile || Object.keys(fullConfig.profiles)[0];
+                            config = fullConfig.profiles[selectedProfileName] || fullConfig.profiles[Object.keys(fullConfig.profiles)[0]];
+                        } else {
+                            config = fullConfig;
+                        }
+                    } else {
+                        // Single profile (legacy format)
+                        config = fullConfig;
+                    }
+                    
+                    document.getElementById('sum-connectionName').textContent = config.connectionName || config.name || '-';
+                    document.getElementById('sum-authFlow').textContent = config.authFlow || '-';
+                    document.getElementById('sum-tenantId').textContent = config.tenantId || '-';
+                    document.getElementById('sum-appInsightsId').textContent = config.applicationInsightsAppId || '-';
+                    document.getElementById('sum-clusterUrl').textContent = config.kustoClusterUrl || '-';
+                    document.getElementById('sum-cacheEnabled').textContent = config.cacheEnabled ? 'Yes' : 'No';
+                } catch (error) {
+                    console.error('Failed to parse config:', error);
+                }
+            }
+
+            function testConnection() {
+                const testStatus = document.getElementById('testStatus');
+                const testResults = document.getElementById('testResults');
+                
+                // Read config from Step 2 editor
+                const configEditor = document.getElementById('configEditor');
+                let fullConfig;
+                
+                try {
+                    fullConfig = JSON.parse(configEditor.value);
+                } catch (error) {
+                    testStatus.className = 'validation-status error';
+                    testStatus.textContent = '\u2717 Invalid JSON configuration. Please fix Step 2.';
+                    testResults.style.display = 'none';
+                    return;
+                }
+                
+                // Handle multi-profile scenario
+                let profileToTest;
+                if (fullConfig.profiles) {
+                    if (Array.isArray(fullConfig.profiles)) {
+                        // Array format: [{ name: "X", ... }]
+                        const profileSelector = document.getElementById('profileSelector');
+                        const selectedProfileName = profileSelector.value;
+                        profileToTest = fullConfig.profiles.find(p => p.name === selectedProfileName);
+                        
+                        if (!profileToTest) {
+                            testStatus.className = 'validation-status error';
+                            testStatus.textContent = '\u2717 Selected profile not found';
+                            testResults.style.display = 'none';
+                            return;
+                        }
+                    } else if (typeof fullConfig.profiles === 'object') {
+                        // Object format: { "X": { ... } }
+                        const profileSelector = document.getElementById('profileSelector');
+                        const selectedProfileName = profileSelector ? profileSelector.value : fullConfig.defaultProfile || Object.keys(fullConfig.profiles)[0];
+                        profileToTest = fullConfig.profiles[selectedProfileName];
+                        
+                        if (!profileToTest) {
+                            testStatus.className = 'validation-status error';
+                            testStatus.textContent = '\u2717 Selected profile not found';
+                            testResults.style.display = 'none';
+                            return;
+                        }
+                    } else {
+                        profileToTest = fullConfig;
+                    }
+                } else {
+                    // Single profile (legacy format)
+                    profileToTest = fullConfig;
+                }
+                
+                if (!profileToTest.tenantId || !profileToTest.applicationInsightsAppId) {
+                    testStatus.className = 'validation-status error';
+                    testStatus.textContent = '\u2717 Missing required fields: tenantId and applicationInsightsAppId';
+                    testResults.style.display = 'none';
+                    return;
+                }
+                
+                testStatus.className = 'validation-status';
+                testStatus.textContent = '\u23f3 Testing connection...';
+                testResults.style.display = 'none';
+                
+                vscode.postMessage({ 
+                    type: 'testConnection', 
+                    config: {
+                        tenantId: profileToTest.tenantId,
+                        appInsightsId: profileToTest.applicationInsightsAppId,
+                        clusterUrl: profileToTest.kustoClusterUrl || ''
+                    }
+                });
+            }
+
+            function showConnectionTest(message) {
+                const testStatus = document.getElementById('testStatus');
+                const testResults = document.getElementById('testResults');
+                const testResultsContent = document.getElementById('testResultsContent');
+                
+                if (message.success) {
+                    testStatus.className = 'validation-status success';
+                    testStatus.textContent = '\u2713 Connection successful! Query returned results.';
+                    
+                    if (testResults && testResultsContent) {
+                        testResultsContent.textContent = JSON.stringify(message.data, null, 2);
+                        testResults.style.display = 'block';
+                    }
+                } else {
+                    testStatus.className = 'validation-status error';
+                    testStatus.textContent = '\u2717 Connection failed: ' + (message.error || 'Unknown error');
+                    testResults.style.display = 'none';
+                }
+            }
+
+            function populateCurrentConfig(config) {
+                const configEditor = document.getElementById('configEditor');
+                console.log('populateCurrentConfig called', { config, editorExists: !!configEditor });
+                if (configEditor && config) {
+                    configEditor.value = JSON.stringify(config, null, 2);
+                    console.log('Config populated in editor');
+                }
+            }
+
+            function validateConfigJson() {
+                const configEditor = document.getElementById('configEditor');
+                const validationSpan = document.getElementById('jsonValidation');
+                const configJson = configEditor.value.trim();
+
+                try {
+                    JSON.parse(configJson);
+                    validationSpan.className = 'validation-status success';
+                    validationSpan.textContent = '✓ JSON is valid';
+                } catch (error) {
+                    validationSpan.className = 'validation-status error';
+                    validationSpan.textContent = '✗ Invalid JSON: ' + error.message;
+                }
+            }
+
+            function populateFinalSummary() {
+                const editor = document.getElementById('configEditor');
+                if (!editor) return;
+
+                try {
+                    const config = JSON.parse(editor.value);
+                    document.getElementById('final-connectionName').textContent = config.connectionName || '-';
+                    document.getElementById('final-authFlow').textContent = config.authFlow || '-';
+                    document.getElementById('final-tenantId').textContent = config.tenantId || '-';
+                    document.getElementById('final-appInsightsId').textContent = config.applicationInsightsAppId || '-';
+                    document.getElementById('final-clusterUrl').textContent = config.kustoClusterUrl || '-';
+                    document.getElementById('final-cacheEnabled').textContent = config.cacheEnabled ? 'Yes' : 'No';
+
+                    // Reset save status when entering Step 5
+                    const saveStatusContainer = document.getElementById('saveStatusContainer');
+                    const finishButtonGroup = document.getElementById('finishButtonGroup');
+                    const saveButton = document.getElementById('btn-save-config');
+                    if (saveStatusContainer) saveStatusContainer.style.display = 'none';
+                    if (finishButtonGroup) finishButtonGroup.style.display = 'none';
+                    if (saveButton) saveButton.style.display = 'inline-block';
+                } catch (error) {
+                    console.error('Failed to parse config for final summary:', error);
+                }
+            }
+
+            function saveConfiguration() {
+                const editor = document.getElementById('configEditor');
+                if (!editor) return;
+
+                try {
+                    const config = JSON.parse(editor.value);
+                    vscode.postMessage({ type: 'saveConfig', config: config });
+                } catch (error) {
+                    const saveStatusContainer = document.getElementById('saveStatusContainer');
+                    const saveStatusContent = document.getElementById('saveStatusContent');
+                    if (saveStatusContainer && saveStatusContent) {
+                        saveStatusContainer.style.display = 'block';
+                        saveStatusContainer.style.background = 'var(--vscode-inputValidation-errorBackground)';
+                        saveStatusContainer.style.border = '1px solid var(--vscode-inputValidation-errorBorder)';
+                        saveStatusContent.innerHTML = '<strong>❌ Error:</strong> Invalid JSON configuration. Please go back and fix the configuration.';
+                    }
+                }
+            }
+
+            function handleConfigSaved(message) {
+                const saveStatusContainer = document.getElementById('saveStatusContainer');
+                const saveStatusContent = document.getElementById('saveStatusContent');
+                const saveButton = document.getElementById('btn-save-config');
+                const finishButtonGroup = document.getElementById('finishButtonGroup');
+
+                if (!saveStatusContainer || !saveStatusContent) return;
+
+                saveStatusContainer.style.display = 'block';
+
+                if (message.success) {
+                    saveStatusContainer.style.background = 'var(--vscode-inputValidation-infoBackground)';
+                    saveStatusContainer.style.border = '1px solid var(--vscode-inputValidation-infoBorder)';
+                    saveStatusContent.innerHTML = '<strong>✅ Configuration Saved!</strong><br>' +
+                        '<div style="margin-top: 10px; font-size: 12px;">File: <code>' + message.filePath + '</code></div>' +
+                        '<p style="margin-top: 15px;">Your BC Telemetry Buddy is now configured and ready to use!</p>';
+                    
+                    // Hide save button, show finish button
+                    if (saveButton) saveButton.style.display = 'none';
+                    if (finishButtonGroup) finishButtonGroup.style.display = 'flex';
+                } else {
+                    saveStatusContainer.style.background = 'var(--vscode-inputValidation-errorBackground)';
+                    saveStatusContainer.style.border = '1px solid var(--vscode-inputValidation-errorBorder)';
+                    saveStatusContent.innerHTML = '<strong>❌ Failed to Save Configuration</strong><br>' +
+                        '<div style="margin-top: 10px; color: var(--vscode-errorForeground);">' + message.error + '</div>';
+                }
+            }
+
+            // Set up event listeners
+            // Step 1 - bottom and top buttons
+            document.getElementById('btn-next-1').addEventListener('click', goNext);
+            document.getElementById('btn-next-1-top').addEventListener('click', goNext);
+            
+            // Step 2 - bottom and top buttons
+            document.getElementById('btn-prev-2').addEventListener('click', goPrev);
+            document.getElementById('btn-next-2').addEventListener('click', goNext);
+            document.getElementById('btn-prev-2-top').addEventListener('click', goPrev);
+            document.getElementById('btn-next-2-top').addEventListener('click', goNext);
+            document.getElementById('btn-validate-json').addEventListener('click', validateConfigJson);
+            document.getElementById('btn-format-json').addEventListener('click', formatJSON);
+            
+            // Step 3 - bottom and top buttons
+            document.getElementById('btn-prev-3').addEventListener('click', goPrev);
+            document.getElementById('btn-next-3').addEventListener('click', goNext);
+            document.getElementById('btn-prev-3-top').addEventListener('click', goPrev);
+            document.getElementById('btn-next-3-top').addEventListener('click', goNext);
+            document.getElementById('authFlow').addEventListener('change', updateAuthFields);
+            document.getElementById('btn-validate-auth').addEventListener('click', validateAuth);
+            
+            // Step 4 - bottom and top buttons
+            document.getElementById('btn-prev-4').addEventListener('click', goPrev);
+            document.getElementById('btn-next-4').addEventListener('click', goNext);
+            document.getElementById('btn-prev-4-top').addEventListener('click', goPrev);
+            document.getElementById('btn-next-4-top').addEventListener('click', goNext);
+            document.getElementById('btn-test-connection').addEventListener('click', testConnection);
+            
+            // Step 5 - bottom and top buttons
+            document.getElementById('btn-prev-5').addEventListener('click', goPrev);
+            document.getElementById('btn-prev-5-top').addEventListener('click', goPrev);
+            document.getElementById('btn-save-config').addEventListener('click', saveConfiguration);
+            document.getElementById('btn-finish').addEventListener('click', finish);
+
+            console.log('Wizard initialized, currentStep:', currentStep);
+        })();
     </script>
 </body>
 </html>`;
-    }
-
-    private _onDispose() {
-        this._panel = undefined;
-
-        // Clean up disposables
-        while (this._disposables.length) {
-            const disposable = this._disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
-    }
-
-    public dispose() {
-        this._onDispose();
     }
 }

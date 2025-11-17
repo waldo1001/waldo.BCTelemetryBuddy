@@ -1,0 +1,30 @@
+{
+    "name": "@bctb/shared",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Shared core library for BC Telemetry Buddy",
+    "type": "commonjs",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc --build",
+        "dev": "tsc --build --watch",
+        "clean": "rimraf dist",
+        "test": "jest",
+        "test:coverage": "jest --coverage",
+        "test:watch": "jest --watch"
+    },
+    "dependencies": {
+        "@azure/msal-node": "^3.8.0",
+        "axios": "^1.6.0",
+        "lru-cache": "^10.1.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^30.0.0",
+        "@types/node": "^22.18.11",
+        "jest": "^30.2.0",
+        "rimraf": "^6.0.1",
+        "ts-jest": "^29.4.5",
+        "typescript": "^5.3.0"
+    }
+}

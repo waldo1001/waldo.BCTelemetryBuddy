@@ -11,8 +11,16 @@
  */
 
 try {
-    require('./server.js');
+    const server = require('./server.js');
+
+    if (typeof server.startServer === 'function') {
+        server.startServer();
+    } else {
+        console.error('[MCP Launcher] ERROR: startServer function not exported');
+        process.exit(1);
+    }
 } catch (error) {
     console.error('[MCP Launcher] Failed to start MCP server:', error.message);
+    console.error(error.stack);
     process.exit(1);
 }

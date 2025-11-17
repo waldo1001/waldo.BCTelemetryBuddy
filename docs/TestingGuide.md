@@ -1,8 +1,96 @@
-# Testing Guide for BC Telemetry Buddy v1.0.0
+# Testing Guide for BC Telemetry Buddy
 
-This guide provides comprehensive testing instructions for all Phase 1-3 changes implemented for the v1.0.0 release.
+This guide provides comprehensive testing instructions for ensuring code quality and preventing regressions across all components of BC Telemetry Buddy.
 
-## Summary of Changes
+## 📋 Testing Philosophy
+
+**Lessons Learned from Refactoring**: During Phases 1-3 refactoring, several critical issues were discovered only during manual testing:
+- TypeScript module resolution issues (Phase 1)
+- Command handlers still using MCP client instead of TelemetryService (Phase 3)
+- Missing test coverage for integration points
+
+**New Standards**: To prevent similar issues in future releases, we now enforce:
+1. **Minimum Test Coverage**: 80% statement coverage for all new code
+2. **Integration Tests Required**: Test cross-package imports and runtime behavior
+3. **Phase Validation Tests**: Each refactoring phase must have dedicated tests
+4. **Pre-Release Validation**: Comprehensive manual test checklist before releases
+
+---
+
+## 🎯 Test Coverage Requirements
+
+### Package-Level Requirements
+
+| Package | Minimum Coverage | Test Types Required |
+|---------|-----------------|-------------------|
+| `@bctb/shared` | 85% | Unit tests for all services |
+| `bc-telemetry-buddy-mcp` | 80% | Unit + Integration + Standalone tests |
+| `bc-telemetry-buddy` (extension) | 80% | Unit + Integration + Command handler tests |
+
+### Critical Test Areas
+
+**Phase 1: Shared Package (`@bctb/shared`)**
+- ✅ Service exports accessible from both MCP and extension
+- ✅ TypeScript types compile correctly
+- ✅ Module resolution works with npm workspaces symlinks
+- ✅ Services instantiate correctly with mock configs
+
+**Phase 2: Standalone MCP Server**
+- ✅ MCP runs independently without extension
+- ✅ CLI commands work (query-telemetry, save-query, list-queries)
+- ✅ Uses @bctb/shared services (not local copies)
+- ✅ Environment variable configuration works
+- ✅ stdio and HTTP modes both functional
+
+**Phase 3: Extension Independence**
+- ✅ Extension commands use TelemetryService NOT MCP client
+- ✅ No bundled MCP files in extension/mcp/
+- ✅ @bctb/shared imports work at runtime
+- ✅ Commands execute queries without starting MCP server
+- ✅ Setup wizard configures TelemetryService correctly
+
+---
+
+## 🧪 Automated Test Suites
+
+### Running All Tests
+
+```powershell
+# From repository root
+npm test
+
+# Or run packages individually
+cd packages/shared && npm test
+cd packages/mcp && npm test
+cd packages/extension && npm test
+```
+
+### New Test Files (Added for Phase Validation)
+
+**Extension Package**:
+- `telemetryService.test.ts` - Tests TelemetryService initialization and methods
+- `command-handlers.test.ts` - Validates commands use TelemetryService not MCP
+- `shared-package-integration.test.ts` - Tests @bctb/shared imports work
+
+**MCP Package**:
+- `mcp-standalone.test.ts` - Validates MCP runs independently
+
+### Test Execution Targets
+
+```json
+{
+  "scripts": {
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:phase-validation": "jest --testNamePattern='Phase [1-3]'"
+  }
+}
+```
+
+---
+
+## Summary of v1.0.0 Changes
 
 1. **Phase 1**: Removed `nl` parameter from `query_telemetry` (breaking change)
 2. **Phase 2.1**: Added `get_event_field_samples` tool for field discovery
@@ -11,6 +99,127 @@ This guide provides comprehensive testing instructions for all Phase 1-3 changes
 5. **Phase 3**: Updated all documentation (Instructions.md, UserGuide.md, READMEs, CHANGELOGs)
 6. **Bug Fix**: Fixed JSON parsing for customDimensions in field samples
 7. **Bug Fix**: Fixed launcher.js copy issue in build process
+
+---
+
+## 🔍 Refactoring Phase Validation Tests
+
+### Phase 1 Validation: Shared Package
+
+**Test Goal**: Ensure @bctb/shared package works for both MCP and extension
+
+**Automated Tests** (`shared-package-integration.test.ts`):
+```typescript
+describe('Phase 1: Package Structure', () => {
+  it('should have correct package.json exports')
+  it('should export all required services')
+  it('should have compiled TypeScript output')
+});
+
+describe('Phase 1: Service Instantiation from Extension', () => {
+  it('should instantiate AuthService from @bctb/shared')
+  it('should instantiate KustoService from @bctb/shared')
+  it('should instantiate CacheService from @bctb/shared')
+});
+```
+
+**Manual Validation**:
+```powershell
+# Build shared package
+cd packages/shared
+npm run build
+
+# Verify dist/ exists with index.js and index.d.ts
+ls dist/
+
+# Test import from extension context
+node -e "const shared = require('./dist/index.js'); console.log(Object.keys(shared));"
+```
+
+**Success Criteria**:
+- ✅ All services export correctly
+- ✅ TypeScript types available
+- ✅ Both MCP and extension can import @bctb/shared
+- ✅ No "Cannot find module" errors
+
+### Phase 2 Validation: Standalone MCP
+
+**Test Goal**: Ensure MCP server runs independently without extension
+
+**Automated Tests** (`mcp-standalone.test.ts`):
+```typescript
+describe('Phase 2: Package Structure', () => {
+  it('should have standalone MCP package')
+  it('should NOT be bundled in extension package')
+  it('should have @bctb/shared as dependency')
+});
+
+describe('Phase 2: CLI Functionality', () => {
+  it('should support query-telemetry command')
+  it('should support save-query command')
+  it('should support list-queries command')
+});
+```
+
+**Manual Validation**:
+```powershell
+# Build MCP standalone
+cd packages/mcp
+npm run build
+
+# Test CLI works
+node dist/cli.js query-telemetry --help
+
+# Test server starts without extension
+BCTB_WORKSPACE_PATH=/test node dist/launcher.js
+```
+
+**Success Criteria**:
+- ✅ MCP builds independently
+- ✅ CLI commands respond
+- ✅ Server starts in stdio mode
+- ✅ No imports from extension package
+- ✅ Uses @bctb/shared services
+
+### Phase 3 Validation: Extension Independence
+
+**Test Goal**: Ensure extension works without bundled MCP
+
+**Automated Tests** (`command-handlers.test.ts`, `telemetryService.test.ts`):
+```typescript
+describe('Phase 3: Extension Independence', () => {
+  it('should NOT bundle MCP server files')
+  it('should use TelemetryService for commands')
+  it('should import services directly from @bctb/shared')
+});
+
+describe('Command Handlers', () => {
+  it('runKQLQueryCommand should use TelemetryService.executeKQL()')
+  it('saveQueryCommand should use TelemetryService.saveQuery()')
+});
+```
+
+**Manual Validation**:
+```powershell
+# Verify no bundled MCP
+ls packages/extension/mcp/  # Should NOT exist or be empty
+
+# Build extension
+cd packages/extension
+npm run build
+
+# Verify externalized @bctb/shared
+grep -n "external:@bctb/shared" package.json  # Should find in build script
+```
+
+**Success Criteria**:
+- ✅ No packages/extension/mcp/ directory
+- ✅ Commands use telemetryService not mcpClient
+- ✅ Extension builds successfully
+- ✅ F5 debug works without MCP bundling
+- ✅ All 4 command handlers updated
+
+---
 
 ---
 
