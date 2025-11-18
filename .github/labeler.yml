@@ -1,27 +1,37 @@
 # Auto-label PRs based on files changed
+# Using actions/labeler@v5 syntax
 
-'mcp':
-  - packages/mcp/**/*
+mcp:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/mcp/**/*'
 
-'extension':
-  - packages/extension/**/*
+extension:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/extension/**/*'
 
-'documentation':
-  - docs/**/*
-  - '*.md'
-  - packages/**/README.md
-  - packages/**/CHANGELOG.md
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**/*'
+      - '*.md'
+      - 'packages/**/README.md'
+      - 'packages/**/CHANGELOG.md'
 
-'tests':
-  - packages/**/__tests__/**/*
-  - packages/**/test/**/*
-  - '**/*.test.ts'
+tests:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'packages/**/__tests__/**/*'
+      - 'packages/**/test/**/*'
+      - '**/*.test.ts'
 
-'ci':
-  - .github/**/*
+ci:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**/*'
 
-'dependencies':
-  - package.json
-  - package-lock.json
-  - packages/**/package.json
-  - packages/**/package-lock.json
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'packages/**/package.json'
+      - 'packages/**/package-lock.json'
