@@ -1236,3 +1236,81 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Fixed all failing tests across packages [Entry: af8ebb78-d543-4cd6-b0a2-c603d55f3694]
   - **Why:** Achieve clean build with 100% pass rate on active tests
   - **How:** Fixed real bugs (missing dispose(), wrong paths, incomplete mocks), skipped tests checking implementation details (56 total)
+- **2025-11-18** — Fixed chat participant listening issues [Entry: 5933606f-1317-409b-939e-2b5acdb00756]
+  - **Why:** Chat participant ignored user's data extraction requests and continued previous analysis topic. System prompt lacked intent detection (DATA_EXTRACTION vs ANALYSIS) and response validation, causing analysis bias.
+  - **How:** Added intent detection system (classify DATA_EXTRACTION/ANALYSIS/TROUBLESHOOTING), response validation checklist (verify answer matches question, detect topic shifts), and simplified data extraction workflow (provide data first, offer analysis second). Updated chatParticipant.ts and both chatmode definitions.
+- **2025-11-18** — Added customer name mapping for 'customers' queries [Entry: 9fe494b4-9220-4992-9b9c-6feb1ea6de6a]
+  - **Why:** User wants proper customer names (not company names) when asking about 'customers'. Company names in BC are legal entities within tenants, but customer names map to actual customer organizations at tenant level.
+  - **How:** Added mandatory tenant mapping workflow - when user asks about 'customers', ALWAYS call mcp_bc_telemetry__get_tenant_mapping to get customerName field (not companyName). Updated Step 1 workflow in both chatParticipant.ts and chatmode definitions to distinguish customer vs company terminology and enforce proper mapping.
+- **2025-11-18** — Added response formatting guidelines to clean up output [Entry: 856f72a0-0f99-463b-808f-889af6fa6b53]
+  - **Why:** Assistant output showed technical details (aadTenantId GUIDs) in customer lists, making responses verbose and hard to read for business users.
+  - **How:** Added response formatting section with clear rules: use markdown tables for structured data, hide technical IDs unless requested, format numbers with commas, be concise. Added examples of good vs bad formatting. Updated chatParticipant.ts and both chatmode definitions.
+- **2025-11-18** — Added Display vs Query section to BCPerformanceAnalysisChatmode [Entry: fb284df9-ba66-4d92-b47b-b8d7c8192916]
+  - **Why:** Parallel to BCTelemetryBuddyChatmode - explain display company names but query by tenant ID
+  - **How:** Added detailed workflow showing tenant mapping purpose for complete tenant-level queries
+- **2025-11-18** — Added mandatory table format for customer queries [Entry: 870cd217-0b67-477d-bfa7-e2b7274f8792]
+  - **Why:** Assistant gave verbose list of hundreds of company names instead of clean table grouped by tenant
+  - **How:** Added explicit DO/DO NOT rules with example table format showing one row per tenant
+- **2025-11-18** — Added drill into and specific customer focus to intent detection [Entry: 73c823db-47f6-49c8-9018-feb24fa80583]
+  - **Why:** Assistant ignored specific customer request - showed all customers list when user said drill into Exterioo
+  - **How:** Added drill into, look for patterns, deep dive keywords to ANALYSIS intent with CRITICAL rule to focus on specified customer
+- **2025-11-18** — Restored chatmodeDefinitions and chatParticipant from main branch [Entry: 897fba00-5bae-4bb9-a24d-2e05e41b03b3]
+  - **Why:** Start fresh - chatmode from main was working well, use it as baseline for chatParticipant improvements
+  - **How:** Used git checkout origin/main to restore both files to their working state from main branch
+- **2025-11-18** — Complete chatParticipant.ts rewrite from scratch [Entry: b86c51aa-2b22-4e98-b7d9-00b1cccadb16]
+  - **Why:** User requested removal of all existing content and complete rebuild with clear workflow steps for multi-profile support, intent detection, proper customer/tenant/company handling, event discovery, and formatted results
+  - **How:** Created new SYSTEM_PROMPT with 7-step workflow: profile detection (list_mprofiles), intent classification (query vs analysis), customer/tenant mapping (use aadTenantId not companyName), event discovery (catalog→samples→schema→query), query execution, table formatting (readable names, truncated IDs), analysis docs (reference chatmode). Removed all old content (Core Expertise, KQL Mastery sections). Kept registration function intact. Build succeeds.
+- **2025-11-18** — Added analysis planning workflow to chatParticipant [Entry: 6c333414-5d2b-4ea4-b1aa-4119a7ab105e]
+  - **Why:** User requested that analysis requests should build a plan first by exploring events, samples, and schemas before executing queries
+  - **How:** Enhanced Step 2 (Intent Classification) for PERFORMANCE ANALYSIS: Added 6-step planning workflow: 1) Explore available events with get_event_catalog, 2) Review field samples with get_event_field_samples, 3) Study schemas with get_event_schema, 4) Create analysis plan showing which events, metrics, time ranges, and deliverables, 5) Get user approval before executing, 6) Execute queries in logical sequence. Included example plan format guidance.
+- **2025-11-18** — Added explicit DO/DO NOT rules to prevent assistant from talking instead of acting [Entry: 9348f97d-2ed1-4c9c-be2a-01af1ebaf933]
+  - **Why:** Assistant ignored 'look into Exterioo and find out why they have slowness' request and just repeated information from previous answer instead of executing investigation workflow. This is the same listening problem from earlier - assistant explains instead of executes.
+  - **How:** Enhanced Step 2B (PERFORMANCE ANALYSIS) with: 1) Added more trigger keywords ('look into', 'find out why', 'problems'), 2) Added 'look into Exterioo' as explicit example, 3) Changed workflow to MANDATORY with IMMEDIATELY emphasized, 4) Created new 'Critical DO vs DO NOT Rules' section with concrete examples showing correct (call tools immediately) vs incorrect (explain previous answer) behavior, 5) Added bold warning: 'Analysis requests demand immediate tool execution, not explanations.'
+- **2025-11-18** — Fixed conversation history ordering bug (THE ACTUAL ROOT CAUSE) [Entry: 618c4c6c-19bd-46d8-a038-db4379b6169d]
+  - **Why:** User correctly identified this is NOT a system prompt issue - assistant works on SECOND request but fails on FIRST. The bug: message array was built as [SYSTEM_PROMPT, NEW_REQUEST, ...HISTORY] instead of [SYSTEM_PROMPT, ...HISTORY, NEW_REQUEST]. This caused model to answer old questions from history instead of the current request.
+  - **How:** Reordered message construction in registerChatParticipant: 1) Create array with SYSTEM_PROMPT only, 2) Append conversation history (last 10 exchanges) to provide context, 3) Append current request.prompt LAST so it's the most recent message. Now conversation flows naturally: system prompt → past exchanges → current question. This explains why it worked on second try (no confusing history yet) but failed on first (model latched onto 'are these different tenants' instead of 'look into Exterioo').
+- **2025-11-18** — Changed analysis workflow to execute automatically, minimize approval requests [Entry: 8037448d-10ac-48f1-8aea-daee8c9bf689]
+  - **Why:** Assistant was asking for approval even when user clearly gave it by saying 'dive into', 'analyze', etc. This creates friction and makes the assistant feel unresponsive. User wants action, not permission requests.
+  - **How:** Rewrote Step 2B (PERFORMANCE ANALYSIS) workflow: 1) Added 'let's dive into' as trigger keyword, 2) Changed from 'BUILD A PLAN FIRST with approval' to 'Execute Automatically', 3) New workflow: discover events immediately → build internal plan (don't show) → execute analysis automatically → present findings directly, 4) Added clear rules: ONLY ask for approval if request is vague/ambiguous, DO NOT ask if user says 'analyze X', 'investigate Y', 'dive into Z', 'go', 'proceed', or mentions specific customer+problem, 5) Emphasized: 'Minimize approval requests - only ask when truly ambiguous'.
+- **2025-11-18** — Added RT0005 accuracy + auto conclusions [Entry: c03c5493-66b3-4b8a-b5d9-95fa03e2fbb5]
+  - **Why:** Prevent false 'no SQL statements' claims and ensure analysis outputs contain synthesized conclusions instead of raw lists.
+  - **How:** Updated SYSTEM_PROMPT: RT0005 always has SQL & callstack; mandatory sections Key Findings, Root Causes, Recommended Actions; fallback re-query rules. Added post-processing: accumulate response; if analysis keywords and missing sections, second model call generates structured conclusions. Escaped backticks, fixed toolMode. Build passes.
+- **2025-11-18** — Generic categories + double-check protocol added [Entry: 8795c397-2723-43de-ae46-c951f07b6f7d]
+  - **Why:** Remove brittle event ID specifics and enforce verification before 'nothing found' conclusions
+  - **How:** Replaced event ID examples with generic category guidance (latency, contention, failures). Added Double-Check Protocol (broaden range, relax filters, catalog, field samples, schema, alternate grouping) and Verification Steps mandatory when sparse data. Updated mandatory sections to include Verification Steps when needed.
+- **2025-11-18** — Chatmode tenant workflow + MCP tool expansion [Entry: 54581f60-9d2a-40f0-96bd-bb393d343983]
+  - **Why:** Align chatmode with tenant-centric logic of chatParticipant and include full MCP telemetry toolset; prevent companyName misuse in summaries.
+  - **How:** Extended MCP tools section (added list_mprofiles, event_schema, recommendations, categories, external_queries, saved_queries). Rewrote customer identification to: list_mprofiles → get_tenant_mapping → filter by aadTenantId → map company names only for display. Added tenant vs company clarification, double‑check protocol, and instructions to group summaries at tenant level. Updated query workflow to discourage companyName filtering and encourage enrichment via mapping.
+- **2025-11-18** — Added multi-step deliverable completion rules to chatParticipant.ts [Entry: fd3ed523-0563-4414-9a18-c67170ac910b]
+  - **Why:** Assistant was stopping mid-task with 'Next Steps: I will...' instead of executing file creation and script generation workflows to completion.
+  - **How:** Added explicit DO/DO NOT rules in system prompt: DO execute all steps immediately (create_file, run_in_terminal), DO NOT say 'I will...' or stop after data tables when deliverables requested.
+- **2025-11-18** — Fixed chat participant claiming 'can't save files' [Entry: 4c98043c-910d-4030-a19d-d1e77d0e2000]
+  - **Why:** Assistant incorrectly said 'I'm an assistant and can't directly save files' and gave manual instructions instead of using create_file tool.
+  - **How:** Strengthened system prompt with explicit 'YOU CAN create files' statements, added DO NOT rules forbidding 'I can't save files' language, emphasized using create_file tool immediately.
+- **2025-11-18** — Added complete file organization rules to chat participant [Entry: f4e3686d-f255-45b3-9de5-0ded5b7ad7b0]
+  - **Why:** Chat participant needed to follow same file structure as chatmode (Customers/[CustomerName]/[Topic]/ with proper naming conventions).
+  - **How:** Copied full file organization section from chatmodeDefinitions.ts including folder structure, naming patterns, and examples (Thornton, FDenL, Exterioo).
+- **2025-11-18** — Fixed chat participant blocking standard VS Code tools [Entry: 09c40f18-35f9-4de4-9b1e-eb2ea1a17587]
+  - **Why:** Chat participant was filtering tools to ONLY mcp_bc_telemetry__ tools, excluding create_file and run_in_terminal - this prevented file creation entirely.
+  - **How:** Changed tool registration to pass ALL tools (allTools) to the model instead of filtering to bctbTools only - now assistant has both MCP tools AND standard VS Code capabilities.
+- **2025-11-18** — Fixed Copilot routing error by limiting tool count [Entry: ee3f27ac-0aae-4332-8d80-32f22f697804]
+  - **Why:** Passing ALL VS Code tools (hundreds) to model caused 'GitHub Copilot routing error' even though MCP server was running correctly with 12 tools.
+  - **How:** Changed to pass only essential tools: all mcp_bc_telemetry__ tools + specific file/terminal tools (create_file, run_in_terminal, read_file, etc.) instead of all available tools - reduces tool count to ~18 instead of hundreds.
+- **2025-11-18** — Fixed chat participant claiming false file creation [Entry: a04a2f59-7eb1-4bdd-aa56-b0a204c108df]
+  - **Why:** Chat participant was pretending to use create_file tool, but VS Code's built-in tools are NOT available to custom chat participants - only to chatmodes. Files were never created.
+  - **How:** Updated system prompt to acknowledge limitation - provide file content in code blocks with copy instructions instead of claiming to save files. Direct users to chatmode for automatic file creation.
+- **2025-11-18** — Added enhanced logging to detect built-in tools [Entry: ab61e7ca-1f21-4125-8f23-95ab2b294829]
+  - **Why:** Need to verify if vscode.lm.tools actually includes built-in create_file/run_in_terminal tools or if they're only available to chatmodes.
+  - **How:** Added detailed logging to show found/missing essential tools, reverted system prompt to allow file creation if tools are available, added legacy bctb_ prefix to tool filter.
+- **2025-11-18** — Updated chat participant to redirect to chatmode for file creation [Entry: c3720d61-da35-483a-98b0-8381fbba84b6]
+  - **Why:** Built-in file creation tools don't work in chat participants - confirmed by user testing. Users need clear guidance instead of broken functionality.
+  - **How:** Changed system prompt to detect file creation requests, provide analysis results directly, then guide users to switch to 'BC Telemetry Buddy - General Analysis' chatmode which has working file creation capabilities. Removed false promises about using create_file tool.
+- **2025-11-18** — Added welcome message to chat participant first interaction [Entry: 55f8861d-1425-44dd-96d9-4ef21609b5f2]
+  - **Why:** Users need clear guidance on when to use chat participant vs chatmode - chat participant is for quick queries, chatmode is for deep analysis with file creation.
+  - **How:** Detect first interaction (no chat history), show friendly welcome message from 'waldo' explaining use cases: @bc-telemetry-buddy for quick/ad-hoc, BCTelemetryBuddy chatmode for deep analysis/saved queries/charts. Message only shows once per conversation.
+- **2025-11-18** — Removed file creation references from chat participant [Entry: 2a890d4b-f141-4538-b863-fb57c38acdac]
+  - **Why:** Chat participants cannot create files (platform limitation)
+  - **How:** Simplified system prompt and tool filtering to MCP tools only
+- **2025-11-18** — Updated references from chatmode to BCTelemetryBuddy agent [Entry: 6f053ba3-fa6d-4a8a-95ad-86dd6b9948cc]
+  - **Why:** Clarify that users should switch to the agent (not chatmode) for file operations
+  - **How:** Replaced all 'chatmode' references with 'agent' and simplified to 3-step instructions

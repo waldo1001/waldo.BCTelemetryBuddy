@@ -1893,3 +1893,111 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Can you put the comment in green so it's more clear it's comment. Could you also do some typical json color coding for the rest?"
 
 ---
+### Entry ID: fde774ba-a7be-4f72-9ad8-e1095dd60c0f — 2025-11-18 08:35
+> "Why not remove all skipping tests?"
+
+---
+### Entry ID: 5933606f-1317-409b-939e-2b5acdb00756 — 2025-11-18 08:38
+> "User reported issue: Chat participant (agent mode) not listening to user requests. When asked 'show me all companynames for tenant X', assistant ignored request and continued with previous RT0005 analysis topic instead of providing the requested data. Root cause: System prompt heavily biased toward analysis over data extraction, no intent detection, context carryover bias, missing response validation."
+
+---
+### Entry ID: 9fe494b4-9220-4992-9b9c-6feb1ea6de6a — 2025-11-18 08:44
+> "Whenever I ask about 'customers', I want customer names based on company names. Use the tenant mapping tool for this."
+
+---
+### Entry ID: 856f72a0-0f99-463b-808f-889af6fa6b53 — 2025-11-18 08:49
+> "The output format is horrendous - showing aadTenantId GUIDs in customer lists. Make output clean and readable."
+
+---
+### Entry ID: fb284df9-ba66-4d92-b47b-b8d7c8192916 — 2025-11-18 08:55
+> "Now update the same section in BCPerformanceAnalysisChatmode"
+
+---
+### Entry ID: 870cd217-0b67-477d-bfa7-e2b7274f8792 — 2025-11-18 08:59
+> "NOT impressed with this answer... far too long, no table: [verbose customer list response]"
+
+---
+### Entry ID: 73c823db-47f6-49c8-9018-feb24fa80583 — 2025-11-18 09:07
+> "The second response is correct?? I'm asking to drill into customer exterioo, and it gives me a list of other customers and questions to drill into all of them? How is this correct?"
+
+---
+### Entry ID: 897fba00-5bae-4bb9-a24d-2e05e41b03b3 — 2025-11-18 09:11
+> "I would like to start from a clean sheet for the chatparticipant. For the chatmode, please restore back to the chatmode that you can find in the main branch. That was working quite well, and we'll use that to work on the chatparticipant. Do a cleanup first."
+
+---
+### Entry ID: b86c51aa-2b22-4e98-b7d9-00b1cccadb16 — 2025-11-18 09:31
+> "Complete from-scratch rewrite of chatParticipant.ts with 7-step workflow: 1) Multi-profile detection using list_mprofiles, 2) Intent classification (simple query vs performance analysis), 3) Customer/tenant/company terminology understanding, 4) Event discovery workflow (catalog → samples → schema → query), 5) Query execution with proper filtering, 6) Result formatting (clean tables, readable names, truncated IDs), 7) Analysis document creation referencing chatmode for structure"
+
+---
+### Entry ID: 6c333414-5d2b-4ea4-b1aa-4119a7ab105e — 2025-11-18 09:33
+> "When going for analysis - build a plan. You can build a plan by looking into the available events, the samples, the schema - to see what you want to know to be able to perform the analysis."
+
+---
+### Entry ID: 9348f97d-2ed1-4c9c-be2a-01af1ebaf933 — 2025-11-18 09:37
+> "First answer was good - second .. not so much - why does this keep happening? User asked 'Let's look into Exterioo and try to find out more about why they are having slowness problems' but assistant just repeated information from previous answer instead of executing the investigation workflow."
+
+---
+### Entry ID: 618c4c6c-19bd-46d8-a038-db4379b6169d — 2025-11-18 09:40
+> "User pointed out the real bug: it's not the system prompt. The assistant works correctly on the SECOND try but fails on the FIRST try. This is a conversation history ordering bug - current request was added BEFORE history instead of AFTER, confusing the model about what to respond to."
+
+---
+### Entry ID: 8037448d-10ac-48f1-8aea-daee8c9bf689 — 2025-11-18 09:45
+> "It should ask less for approval. When the plan is approved, it should just go ahead and do the full analysis. User said 'Let's dive into Exterioo's problems and analyze' but assistant presented a plan and asked 'Ready to proceed?' - user already gave approval by saying 'dive into' and 'analyze'."
+
+---
+### Entry ID: c03c5493-66b3-4b8a-b5d9-95fa03e2fbb5 — 2025-11-18 09:54
+> "User concerned: analysis said no slow SQL statements (RT0005) when they should always include SQL statement; wants conclusions not just list. Request: explain why and improve behavior."
+
+---
+### Entry ID: 8795c397-2723-43de-ae46-c951f07b6f7d — 2025-11-18 09:58
+> "User request: remove specific event ID references (RT0005 etc.) and add rule to double-check before concluding nothing by inspecting alternate angles (catalog, field samples, schema, broader time range)."
+
+---
+### Entry ID: 54581f60-9d2a-40f0-96bd-bb393d343983 — 2025-11-18 10:01
+> "Change chatmode so it treats customers as tenants (aadTenantId) like chatParticipant; remove company-based 'Top affected' style; add MCP telemetry tools into chatmode."
+
+---
+### Entry ID: fd3ed523-0563-4414-9a18-c67170ac910b — 2025-11-18 10:29
+> "User requested 'Save complete analysis for Exterioo to md file with progress reports and graph per day' but assistant stopped after showing table, saying 'Next Steps: I will generate...' instead of actually creating files and completing the request."
+
+---
+### Entry ID: 4c98043c-910d-4030-a19d-d1e77d0e2000 — 2025-11-18 10:34
+> "User reported chat participant saying 'I'm an assistant and can't save files' and giving manual instructions instead of using create_file tool to actually create requested markdown/Python files."
+
+---
+### Entry ID: f4e3686d-f255-45b3-9de5-0ded5b7ad7b0 — 2025-11-18 10:35
+> "User requested chat participant follow same file organization rules as chatmode when saving files (Customers/[CustomerName]/[Topic]/ structure with proper naming conventions)."
+
+---
+### Entry ID: 09c40f18-35f9-4de4-9b1e-eb2ea1a17587 — 2025-11-18 10:45
+> "User reported chat participant still cannot save files - discovered it was only registering mcp_bc_telemetry__ tools, excluding standard VS Code tools like create_file and run_in_terminal."
+
+---
+### Entry ID: ee3f27ac-0aae-4332-8d80-32f22f697804 — 2025-11-18 10:48
+> "User got 'GitHub Copilot routing error' when MCP server was running with 12 tools - suspected passing ALL tools (hundreds) caused routing issues."
+
+---
+### Entry ID: a04a2f59-7eb1-4bdd-aa56-b0a204c108df — 2025-11-18 10:53
+> "User reported chat participant claiming to save files (✅ Saved to...) but files were not created - discovered VS Code's built-in tools (create_file, run_in_terminal) are NOT available to custom chat participants, only to chatmodes."
+
+---
+### Entry ID: ab61e7ca-1f21-4125-8f23-95ab2b294829 — 2025-11-18 10:55
+> "User asked why not use built-in VS Code tools instead of registering our own - checking if vscode.lm.tools includes built-in create_file and run_in_terminal tools."
+
+---
+### Entry ID: c3720d61-da35-483a-98b0-8381fbba84b6 — 2025-11-18 11:09
+> "User confirmed file creation doesn't work in chat participant - requested to redirect users to chatmode when they want to save analysis/files."
+
+---
+### Entry ID: 55f8861d-1425-44dd-96d9-4ef21609b5f2 — 2025-11-18 11:15
+> "User requested welcome message on first interaction with chat participant, explaining when to use @bc-telemetry-buddy vs BCTelemetryBuddy chatmode."
+
+---
+### Entry ID: 2a890d4b-f141-4538-b863-fb57c38acdac — 2025-11-18 11:26
+> "Remove all file creation references from chat participant and clearly state it cannot create files"
+
+---
+### Entry ID: 6f053ba3-fa6d-4a8a-95ad-86dd6b9948cc — 2025-11-18 11:27
+> "Update chat participant instructions to reference 'BCTelemetryBuddy agent' instead of 'chatmode' with simplified 3-step instructions"
+
+---
