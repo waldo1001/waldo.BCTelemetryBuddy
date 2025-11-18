@@ -1,10 +1,10 @@
-# Migration Guide: v0.2.x → v0.3.0
+# Migration Guide: v0.2.x → v1.0.0
 
 ## Overview
 
-v0.3.0 introduces a new architecture where the extension works independently without requiring the MCP server for direct commands. This guide helps you migrate from the old bundled architecture to the new independent setup.
+v1.0.0 introduces a new architecture where the extension works independently without requiring the MCP server for direct commands. This guide helps you migrate from the old bundled architecture to the new independent setup.
 
-## What's New in v0.3.0
+## What's New in v1.0.0
 
 **✅ Fully Implemented:**
 - ✅ File-based configuration (`.bctb-config.json`) via Setup Wizard
@@ -51,7 +51,7 @@ VSCode Extension
   └── Settings in .vscode/settings.json
 ```
 
-**After (v0.3.0 - Independent):**
+**After (v1.0.0 - Independent):**
 ```
 VSCode Extension (standalone)
   ├── TelemetryService (built-in for direct commands)
@@ -62,7 +62,7 @@ Configuration: .bctb-config.json (single file)
 
 ### Key Differences
 
-| Feature | v0.2.x | v0.3.0 |
+| Feature | v0.2.x | v1.0.0 |
 |---------|--------|--------|
 | **Installation** | Extension only | Extension + optional MCP package |
 | **Direct Commands** | Requires MCP running | Built-in (no MCP needed) |
@@ -83,7 +83,7 @@ Configuration: .bctb-config.json (single file)
 The extension automatically detects old settings and offers migration:
 
 **How It Works:**
-1. Update extension to v0.3.0+
+1. Update extension to v1.0.0+
 2. Extension scans for old `bcTelemetryBuddy.*` settings
 3. If found, shows notification: "BC Telemetry Buddy settings format changed. Migrate to new format?"
 4. Click "Migrate Settings" → creates `.bctb-config.json` from old settings
@@ -165,7 +165,7 @@ Check `.bctb-config.json` in workspace root:
 
 #### Step 4: Test Direct Commands
 
-⚠️ **KNOWN ISSUE:** Direct commands without MCP are not yet working in v0.3.0 development build.
+⚠️ **KNOWN ISSUE:** Direct commands without MCP are not yet working in v1.0.0 development build.
 
 **Current Reality:**
 1. Commands still require MCP server running
@@ -174,7 +174,7 @@ Check `.bctb-config.json` in workspace root:
 
 **Workaround:**
 - Keep using MCP server (HTTP mode) for now
-- Wait for v0.3.0 official release with working direct execution
+- Wait for v1.0.0 official release with working direct execution
 - Or install MCP locally: `cd packages/mcp && npm link`
 
 ---
@@ -249,7 +249,7 @@ bctb-mcp --version
 
 ### Old VSCode Settings → New Config File
 
-| Old Setting (v0.2.x) | New Config Key (v0.3.0) |
+| Old Setting (v0.2.x) | New Config Key (v1.0.0) |
 |----------------------|-------------------------|
 | `bcTelemetryBuddy.connectionName` | `connectionName` |
 | `bcTelemetryBuddy.tenantId` | `tenantId` |
@@ -293,9 +293,9 @@ bctb-mcp --version
 
 ### Development Version Issues
 
-**Q: Tests are failing - is v0.3.0 ready?**
+**Q: Tests are failing - is v1.0.0 ready?**
 
-**Status:** No, v0.3.0 is in active development with 21 failing tests:
+**Status:** No, v1.0.0 is in active development with 21 failing tests:
 - 8 MCP migration tests failing (multi-root workspace support)
 - 13 extension command handler tests failing (TelemetryService integration)
 
@@ -324,7 +324,7 @@ bctb-mcp --version
 
 **Q: Migration notification doesn't appear**
 
-**Current Status:** Migration notification is not yet implemented (known issue in v0.3.0).
+**Current Status:** Migration notification is not yet implemented (known issue in v1.0.0).
 
 **What's Happening:**
 - Automatic migration detection code not triggering
@@ -367,7 +367,7 @@ bctb-mcp --version
 
 **Solution:**
 1. Keep MCP server running (HTTP mode): extension still needs it
-2. Or wait for v0.3.0 official release with working direct execution
+2. Or wait for v1.0.0 official release with working direct execution
 3. Check Output panel for specific error messages
 
 ---
@@ -501,7 +501,7 @@ bctb-mcp --version
 
 If you need to rollback to v0.2.x:
 
-### Step 1: Uninstall v0.3.0
+### Step 1: Uninstall v1.0.0
 
 1. Open Extensions (Ctrl+Shift+X)
 2. Find "BC Telemetry Buddy"
@@ -536,27 +536,27 @@ If you need to rollback to v0.2.x:
 
 ### General
 
-**Q: Is v0.3.0 released?**
+**Q: Is v1.0.0 released?**
 
-A: No, v0.3.0 is in active development with 21 failing tests. Use v0.2.x for stable experience.
+A: No, v1.0.0 is in active development with 21 failing tests. Use v0.2.x for stable experience.
 
 **Q: Should I migrate now?**
 
-A: Not recommended unless you're testing the development build. Wait for official v0.3.0 release.
+A: Not recommended unless you're testing the development build. Wait for official v1.0.0 release.
 
 **Q: Do I need to migrate?**
 
-A: Eventually yes, when v0.3.0 is officially released. The old settings format will be deprecated. For now, v0.2.x settings still work.
+A: Eventually yes, when v1.0.0 is officially released. The old settings format will be deprecated. For now, v0.2.x settings still work.
 
 **Q: Will my saved queries be affected?**
 
 A: No! Saved queries remain in the same location. Only configuration format changes.
 
-**Q: Can I use v0.3.0 without MCP at all?**
+**Q: Can I use v1.0.0 without MCP at all?**
 
 A: Not yet. Direct command execution is planned but not working (13 failing tests). MCP still required for all commands.
 
-**Q: Does v0.3.0 support multi-root workspaces?**
+**Q: Does v1.0.0 support multi-root workspaces?**
 
 A: No, explicitly not supported. Extension blocks multi-root workspaces and migration tests fail. Use single-folder workspaces only.
 
@@ -591,7 +591,7 @@ A: Yes, currently MCP is still required for all commands (not just chat). Direct
 
 **Q: Can I use the old bundled MCP?**
 
-A: Only in v0.2.x. v0.3.0 development build requires standalone MCP (not yet on NPM, must build locally).
+A: Only in v0.2.x. v1.0.0 development build requires standalone MCP (not yet on NPM, must build locally).
 
 **Q: How do I update MCP?**
 
@@ -629,7 +629,7 @@ If you encounter issues during migration:
 
 ## Summary
 
-⚠️ **v0.3.0 Development Status**: In active development, not ready for release (21 failing tests)
+⚠️ **v1.0.0 Development Status**: In active development, not ready for release (21 failing tests)
 
 **Current Reality:**
 - ❌ Automatic migration doesn't work  
@@ -640,8 +640,8 @@ If you encounter issues during migration:
 - ✅ File-based configuration works  
 
 **Recommended Action:** 
-- **For Production:** Stay on v0.2.x until v0.3.0 is officially released
+- **For Production:** Stay on v0.2.x until v1.0.0 is officially released
 - **For Testing:** Use Setup Wizard to create `.bctb-config.json` manually
 - **For Development:** Fix failing tests before claiming features work
 
-When v0.3.0 is officially released, this guide will be updated with working migration instructions.
+When v1.0.0 is officially released, this guide will be updated with working migration instructions.

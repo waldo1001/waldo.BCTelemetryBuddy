@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.4] - 2025-11-19
+
+### Fixed
+
+- **CLI Version Display**: `bctb-mcp --version` now shows correct package version instead of hardcoded v1.0.0
+  - Added build script to auto-generate version.ts from package.json
+  - CLI now reads version from generated file that's bundled at build time
+
 ## [2.0.3] - 2025-11-18
 
 ### Changed
@@ -46,7 +54,7 @@ This is the first release of the MCP server as a standalone NPM package, separat
 ### Migration Notes
 
 - See [MIGRATION.md](../../MIGRATION.md) for upgrade guide from bundled v0.2.x
-- Extension v0.3.0+ offers automatic MCP installation and configuration
+- Extension v1.0.0+ offers automatic MCP installation and configuration
 - Old environment variable config still supported as fallback
 
 ## [0.2.22] - 2025-11-01

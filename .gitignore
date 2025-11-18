@@ -11,6 +11,9 @@ out/
 *.vsix
 *.tsbuildinfo
 
+# Auto-generated files
+packages/mcp/src/version.ts
+
 # Copied MCP bundle (created during extension packaging, not committed)
 packages/extension/mcp/
 

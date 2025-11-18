@@ -10,9 +10,9 @@ Query Business Central telemetry from VSCode using natural language with GitHub 
 ## ⚠️ Development Status
 
 **Current Stable Version:** v0.2.24 (recommended for production)  
-**Next Version:** v0.3.0 (in development - NOT released)
+**Next Version:** v1.0.0 (in development - NOT released)
 
-**v0.3.0 Development Status:**
+**v1.0.0 Development Status:**
 - 🚧 21 of 178 tests failing (multi-root migration, command handlers)
 - 🚧 Automatic migration UI not implemented
 - 🚧 Direct command execution without MCP not working

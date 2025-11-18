@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2025-11-19
+
+### Changed
+
+- No extension changes in this release (MCP-only fix for CLI version display)
+
 ## [1.0.3] - 2025-11-18
 
 ### Fixed
@@ -78,14 +84,14 @@ This release transforms BC Telemetry Buddy from a bundled architecture to a modu
 
 ### Documentation
 
-- **Updated README.md**: Complete rewrite with v0.3.0 architecture, migration guide, new configuration format
-- **Updated UserGuide.md**: Added "What's New in v0.3.0", architecture explanation, comprehensive migration section
+- **Updated README.md**: Complete rewrite with v1.0.0 architecture, migration guide, new configuration format
+- **Updated UserGuide.md**: Added "What's New in v1.0.0", architecture explanation, comprehensive migration section
 - **Created MIGRATION.md**: Detailed upgrade guide with automatic/manual migration paths, troubleshooting, rollback instructions
 - **Updated DesignWalkthrough.md**: Documented architecture evolution and refactoring decisions
 
 ### Migration Notes
 
-**For Existing Users (v0.2.x → v0.3.0):**
+**For Existing Users (v0.2.x → v1.0.0):**
 
 1. **Direct Commands Work Immediately**: All commands (Run KQL Query, Save Query, etc.) continue working without changes
 2. **Chat Features Require MCP**: If you use `@bc-telemetry-buddy` in chat, you'll need to install the standalone MCP server

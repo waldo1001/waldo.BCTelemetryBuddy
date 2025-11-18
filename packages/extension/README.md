@@ -2,7 +2,7 @@
 
 VSCode extension for querying Business Central telemetry with natural language support and GitHub Copilot integration.
 
-## ⚡ What's New in v0.3.0
+## ⚡ What's New in v1.0.0
 
 **Major Architecture Change:** The extension now works **independently** without requiring the MCP server for direct commands!
 
@@ -215,7 +215,7 @@ npm run package
 
 ## 🔧 How It Works
 
-### Architecture (v0.3.0+)
+### Architecture (v1.0.0+)
 
 The extension uses a **dual-path architecture** for maximum flexibility:
 
@@ -289,7 +289,7 @@ MCP server (if installed) uses the same config file, ensuring consistency.
 - Settings scattered across `bcTelemetryBuddy.*` namespace in VSCode settings
 - HTTP mode required for all commands
 
-**v0.3.0 (New - Independent Architecture):**
+**v1.0.0 (New - Independent Architecture):**
 - Extension works standalone (no MCP needed for direct commands)
 - MCP is a separate optional package (`bc-telemetry-buddy-mcp`)
 - Single `.bctb-config.json` file for configuration
@@ -376,9 +376,9 @@ The extension will automatically detect the globally-installed MCP and use it fo
 - Safe to delete old `bcTelemetryBuddy.*` settings
 
 **Q: Can I use both old and new versions?**
-- No - v0.3.0 only reads `.bctb-config.json`
+- No - v1.0.0 only reads `.bctb-config.json`
 - Downgrading requires restoring old VSCode settings
-- Recommend staying on v0.3.0 (more stable, faster)
+- Recommend staying on v1.0.0 (more stable, faster)
 
 ## License
 

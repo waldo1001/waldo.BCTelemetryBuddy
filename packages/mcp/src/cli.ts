@@ -3,13 +3,14 @@ import { loadConfig, validateConfig, initConfig, loadConfigFromFile } from './co
 import { AuthService } from '@bctb/shared';
 import * as fs from 'fs';
 import * as path from 'path';
+import { VERSION } from './version.js';
 
 const program = new Command();
 
 program
     .name('bctb-mcp')
     .description('BC Telemetry Buddy MCP Server')
-    .version('1.0.0');
+    .version(VERSION);
 
 program
     .command('start')

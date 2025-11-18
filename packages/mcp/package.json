@@ -1,6 +1,6 @@
 {
     "name": "bc-telemetry-buddy-mcp",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "description": "Model Context Protocol server for Business Central telemetry",
     "type": "commonjs",
     "main": "./dist/server.js",
@@ -12,7 +12,7 @@
         "build": "npm run build:shared && npm run build:server && npm run build:cli",
         "build:shared": "cd ../shared && npm run build",
         "build:server": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --minify",
-        "build:cli": "esbuild src/cli.ts --bundle --outfile=dist/cli.js --platform=node --format=cjs --sourcemap --minify --banner:js=\"#!/usr/bin/env node\"",
+        "build:cli": "node scripts/generate-version.js && esbuild src/cli.ts --bundle --outfile=dist/cli.js --platform=node --format=cjs --sourcemap --minify --banner:js=\"#!/usr/bin/env node\"",
         "dev": "tsc --build --watch",
         "compile": "tsc --noEmit",
         "start": "node dist/server.js",

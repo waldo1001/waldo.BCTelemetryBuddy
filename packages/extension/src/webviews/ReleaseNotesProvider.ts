@@ -207,7 +207,7 @@ export class ReleaseNotesProvider {
         <div class="header">
             <img src="${logoUri}" alt="waldo" class="logo">
             <h1>Note from waldo</h1>
-            <p class="version">BC Telemetry Buddy v1.0.3</p>
+            <p class="version">BC Telemetry Buddy v1.0.4</p>
         </div>
 
         <div class="section">
@@ -216,13 +216,13 @@ export class ReleaseNotesProvider {
         </div>
 
         <div class="section">
-            <h2><span class="emoji">🔄</span> What's New in v1.0.3</h2>
+            <h2><span class="emoji">🔄</span> What's New in v1.0.4</h2>
             
-            <h3 style="margin-top: 20px; margin-bottom: 10px;">🛠️ Bug Fixes</h3>
-            <p>This release fixes issues discovered in v1.0.2:</p>
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">🛠️ MCP Server Improvements</h3>
+            <p>This release fixes the MCP CLI version display:</p>
             <ul>
-                <li><strong>Reliable MCP Updates</strong>: Fixed update command - now uses <code>npm install -g bc-telemetry-buddy-mcp@latest</code> instead of unreliable <code>npm update</code></li>
-                <li><strong>Correct Version Display</strong>: Release notes now show the correct current version</li>
+                <li><strong>Correct CLI Version</strong>: <code>bctb-mcp --version</code> now shows the actual package version instead of always showing v1.0.0</li>
+                <li><strong>Auto-Generated Version</strong>: Version is now automatically read from package.json during build</li>
             </ul>
 
             <h3 style="margin-top: 20px; margin-bottom: 10px;">🏗️ Monorepo Architecture</h3>
