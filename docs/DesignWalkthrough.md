@@ -1365,3 +1365,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Removed Open Queries Folder command and updated documentation. [Entry: 0823e9fc-3739-411a-ab21-d46a9e35dae4]
   - **Why:** Command is useless - users can simply navigate to queries folder in VSCode Explorer. Also updated docs to reflect all removed commands (Save Query, Edit Profile, Delete Profile, Open Queries Folder).
   - **How:** Removed bctb.openQueriesFolder from package.json, removed command registration and openQueriesFolderCommand() function (~25 lines) from extension.ts, updated extension.test.ts (now expects 2 commands). Updated UserGuide.md: revised Available Commands table to show only existing commands, removed entire 'Saving Queries' section (Save Query command gone), updated profile commands list to remove Edit/Delete Profile (available in Manage Profiles UI). Updated Instructions.md to remove bctb.saveQuery and bctb.openQueriesFolder command definitions.
+- **2025-11-18** — Fixed Set Default Profile command error. [Entry: 57d65cd3-9b2b-45ec-ab72-f7627e0897fd]
+  - **Why:** setDefaultProfileCommand() was calling profileManager.getDefaultProfile() which didn't exist, causing runtime error.
+  - **How:** Added getDefaultProfile() method to ProfileManager class that reads defaultProfile from .bctb-config.json and returns it (or null if not set). Method loads config file and returns config.defaultProfile.
+- **2025-11-18** — Complete documentation audit for commands and settings [Entry: bee530cf-0ec2-4e4b-b66b-95cb84d59605]
+  - **Why:** Ensure UserGuide.md accurately reflects all 13 commands and 14+ settings after removing 4 commands
+  - **How:** Updated UserGuide.md with complete commands table (13 entries) and comprehensive settings reference section organized by category

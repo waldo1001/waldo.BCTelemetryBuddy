@@ -265,6 +265,14 @@ export class ProfileManager {
     }
 
     /**
+     * Get default profile name
+     */
+    getDefaultProfile(): string | null {
+        const config = this.loadConfigFile();
+        return config.defaultProfile || null;
+    }
+
+    /**
      * Duplicate a profile (useful for creating similar profiles)
      */
     async duplicateProfile(sourceName: string, targetName: string): Promise<void> {

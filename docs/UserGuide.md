@@ -366,12 +366,18 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 
 | Command | Description |
 |---------|-------------|
-| `BC Telemetry Buddy: Start MCP Server` | Start the MCP backend server |
-| `BC Telemetry Buddy: Run KQL Query` | Execute a KQL query directly |
+| `BC Telemetry Buddy: Setup Wizard` | Guided 5-step configuration wizard with validation |
+| `BC Telemetry Buddy: Migrate Settings` | Migrate from old settings format to `.bctb-config.json` |
+| `BC Telemetry Buddy: Start MCP Server` | Start the MCP backend server for chat features |
+| `BC Telemetry Buddy: Run KQL Query` | Execute a KQL query directly (prompts for input) |
+| `BC Telemetry Buddy: Run KQL From Document` | Execute query from current `.kql` file |
+| `BC Telemetry Buddy: Install Chatmodes` | Install chat mode definitions for GitHub Copilot |
 | `BC Telemetry Buddy: Clear Cache` | Clear cached query results |
 | `BC Telemetry Buddy: Show Cache Statistics` | View cache usage stats |
 | `BC Telemetry Buddy: Switch Profile` | Switch between configured profiles |
+| `BC Telemetry Buddy: Refresh Profile Status Bar` | Manually refresh profile status bar display |
 | `BC Telemetry Buddy: Create Profile` | Create a new profile |
+| `BC Telemetry Buddy: Set Default Profile` | Choose which profile loads on startup |
 | `BC Telemetry Buddy: Manage Profiles` | Visual interface for all profile operations |
 
 ---
@@ -863,6 +869,92 @@ If port 52345 is already in use:
 {
   "bctb.mcp.port": 52346,
   "bctb.mcp.url": "http://localhost:52346"
+}
+```
+
+### Settings Reference
+
+All extension settings with their types, defaults, and descriptions:
+
+#### Profile Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.currentProfile` | string | (none) | Name of the currently active profile (resource scope) |
+
+#### MCP Connection Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.mcp.connectionName` | string | "" | Display name for this connection |
+| `bctb.mcp.tenantId` | string | "" | Azure Active Directory tenant ID |
+| `bctb.mcp.clientId` | string | "" | Service principal client ID (for client_credentials flow) |
+| `bctb.mcp.authFlow` | enum | "device_code" | Authentication method: `azure_cli`, `device_code`, or `client_credentials` |
+| `bctb.mcp.applicationInsights.appId` | string | "" | Application Insights application ID |
+| `bctb.mcp.kusto.clusterUrl` | string | "" | Kusto cluster URL (e.g., https://ade.applicationinsights.io/...) |
+| `bctb.mcp.port` | number | 52345 | Port for MCP server HTTP endpoint |
+| `bctb.mcp.url` | string | "http://localhost:52345" | Full URL for MCP server |
+| `bctb.mcp.preferGlobal` | boolean | false | Prefer globally-installed MCP server over bundled version |
+
+#### Cache Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.mcp.cache.enabled` | boolean | true | Enable query result caching |
+| `bctb.mcp.cache.ttlSeconds` | number | 3600 | Cache time-to-live in seconds (default: 1 hour) |
+
+#### Security Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.mcp.sanitize.removePII` | boolean | false | Enable optional PII redaction (email, IP, GUID) |
+
+#### Query Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.queries.folder` | string | "queries" | Workspace folder path for saved queries |
+
+#### Agent Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.agent.maxRetries` | number | 3 | Maximum retry attempts for failed queries in Copilot chat |
+
+#### External References Settings
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `bctb.mcp.references` | array | [] | External GitHub repositories for query examples (array of reference objects) |
+
+**Reference Object Schema:**
+```json
+{
+  "name": "string",        // Display name for the reference
+  "type": "github",        // Only "github" supported currently
+  "url": "string",         // GitHub repo URL
+  "enabled": true/false    // Enable/disable this reference
+}
+```
+
+**Example Complete Configuration:**
+```json
+{
+  "bctb.currentProfile": "CustomerA",
+  "bctb.mcp.connectionName": "CustomerA Production",
+  "bctb.mcp.tenantId": "12345678-1234-1234-1234-123456789abc",
+  "bctb.mcp.authFlow": "azure_cli",
+  "bctb.mcp.applicationInsights.appId": "your-app-insights-id",
+  "bctb.mcp.kusto.clusterUrl": "https://ade.applicationinsights.io/subscriptions/...",
+  "bctb.mcp.port": 52345,
+  "bctb.mcp.url": "http://localhost:52345",
+  "bctb.mcp.preferGlobal": false,
+  "bctb.mcp.cache.enabled": true,
+  "bctb.mcp.cache.ttlSeconds": 3600,
+  "bctb.mcp.sanitize.removePII": false,
+  "bctb.queries.folder": "queries",
+  "bctb.agent.maxRetries": 3,
+  "bctb.mcp.references": [
+    {
+      "name": "BC Telemetry Samples",
+      "type": "github",
+      "url": "https://github.com/microsoft/BCTech/tree/master/samples/AppInsights",
+      "enabled": true
+    }
+  ]
 }
 ```
 

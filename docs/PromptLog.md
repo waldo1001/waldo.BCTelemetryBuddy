@@ -2065,3 +2065,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "remove command \"Open Queries Folder\" - totally useless. Change documentation accordingly - also for the previous removal"
 
 ---
+### Entry ID: 57d65cd3-9b2b-45ec-ab72-f7627e0897fd — 2025-11-18 14:48
+> "The command \"Set Default Profile\" fails with error: Failed to set default profile: Gt.getDefaultProfile is not a function"
+
+---
+### Entry ID: bee530cf-0ec2-4e4b-b66b-95cb84d59605 — 2025-11-18 14:55
+> "Doublecheck if all commands are documented. Also doublecheck if all settings are documented"
+
+---
