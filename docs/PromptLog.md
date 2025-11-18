@@ -2138,3 +2138,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Before I push a new update of the VSCode extension to the Marketplace, I'd like to show one page in VSCode that introduces the changes, and guides them on what changed, and the simple steps they need to take to make it work now. Use my logo on that page, and use the title 'note from waldo' ;-)"
 
 ---
+### Entry ID: 46375d54-7278-459b-ac80-dcf6cc3fe51f — 2025-11-18 23:00
+> "Prepare to release all - Bump a major release"
+
+---

@@ -1149,3 +1149,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Added release notes webview for version updates [Entry: 0fdaf40d-2ac6-4dff-ab24-9c95df2c0cdd]
   - **Why:** Show users what changed after extension updates with friendly guidance and setup steps
   - **How:** Created ReleaseNotesProvider with waldo logo, version detection in activate(), auto-shows on version change, added 'What's New' command
+- **2025-11-18** — Major release for both MCP (v2.0.0) and Extension (v1.0.0) [Entry: 46375d54-7278-459b-ac80-dcf6cc3fe51f]
+  - **Why:** User requested major version bump for all components
+  - **How:** Executed release script twice: first for MCP (mcp-v2.0.0), then for extension (v1.0.0). Both successfully committed, tagged, and pushed to GitHub.

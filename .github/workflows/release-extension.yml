@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+      
       - name: Run all tests
         run: |
           npm run test:coverage --workspace=packages/mcp
