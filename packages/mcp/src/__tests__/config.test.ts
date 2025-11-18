@@ -308,7 +308,7 @@ describe('Configuration Module', () => {
 
     describe('loadConfigFromFile', () => {
         let testConfigDir: string;
-        
+
         beforeEach(() => {
             // Create unique test directory per test to avoid conflicts
             testConfigDir = path.join(os.tmpdir(), `bctb-test-config-${Date.now()}-${Math.random().toString(36).substring(7)}`);
@@ -320,7 +320,7 @@ describe('Configuration Module', () => {
             if (fs.existsSync(testConfigDir)) {
                 fs.rmSync(testConfigDir, { recursive: true, force: true });
             }
-        });        it('should load single profile config from file', () => {
+        }); it('should load single profile config from file', () => {
             // Arrange
             const configPath = path.join(testConfigDir, '.bctb-config.json');
             const config = {
@@ -702,7 +702,7 @@ describe('Configuration Module', () => {
 
     describe('initConfig', () => {
         let testConfigDir: string;
-        
+
         beforeEach(() => {
             // Create unique test directory per test to avoid conflicts
             testConfigDir = path.join(os.tmpdir(), `bctb-test-init-${Date.now()}-${Math.random().toString(36).substring(7)}`);
