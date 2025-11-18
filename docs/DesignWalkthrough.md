@@ -1152,3 +1152,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Major release for both MCP (v2.0.0) and Extension (v1.0.0) [Entry: 46375d54-7278-459b-ac80-dcf6cc3fe51f]
   - **Why:** User requested major version bump for all components
   - **How:** Executed release script twice: first for MCP (mcp-v2.0.0), then for extension (v1.0.0). Both successfully committed, tagged, and pushed to GitHub.
+- **2025-11-18** — Patch release MCP v2.0.1 and Extension v1.0.1 with CI workflow fix [Entry: 0ad70e22-d5fa-450e-9299-610248e667ec]
+  - **Why:** Fixed GitHub Actions workflow to build shared package before tests, then released patch versions
+  - **How:** Added build shared package step to release-extension.yml workflow, then executed release script for MCP (v2.0.0 → v2.0.1) and extension (v1.0.0 → v1.0.1)

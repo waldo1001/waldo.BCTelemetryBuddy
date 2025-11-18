@@ -2142,3 +2142,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Prepare to release all - Bump a major release"
 
 ---
+### Entry ID: 0ad70e22-d5fa-450e-9299-610248e667ec — 2025-11-18 23:10
+> "Ok, bump a patch release (after fixing CI workflow to build shared package)"
+
+---
