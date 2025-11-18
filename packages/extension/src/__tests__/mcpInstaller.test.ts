@@ -295,7 +295,7 @@ describe('mcpInstaller', () => {
             mockExec.mockImplementation((cmd, options: any, callback: any) => {
                 const cb = typeof options === 'function' ? options : callback;
 
-                if (cmd.includes('npm update -g')) {
+                if (cmd.includes('npm install -g bc-telemetry-buddy-mcp@latest')) {
                     setTimeout(() => cb(null, { stdout: 'Updated bc-telemetry-buddy-mcp@1.1.0', stderr: '' }), 0);
                 } else if (cmd.includes('--version')) {
                     setTimeout(() => cb(null, { stdout: '1.1.0', stderr: '' }), 0);

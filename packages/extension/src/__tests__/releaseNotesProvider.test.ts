@@ -134,7 +134,7 @@ describe('ReleaseNotesProvider', () => {
             ReleaseNotesProvider.createOrShow(mockExtensionUri, true);
 
             const html = mockPanel.webview.html;
-            expect(html).toContain('v0.3.0');
+            expect(html).toContain('v1.0.4');
             expect(html).toContain('BC Telemetry Buddy');
         });
 
