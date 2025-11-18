@@ -1164,3 +1164,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Fixed release workflow: Run script first, verify after [Entry: 7751ebd1-c876-4521-bd91-ee185c9ef41c]
   - **Why:** User clarified workflow should run release script with -NoCommit FIRST (bumps version, updates CHANGELOG), THEN let user verify before pushing
   - **How:** Updated Copilot instructions: STEP 2 runs script with -NoCommit, STEP 3 reviews/enhances CHANGELOG, STEP 4 commits/pushes after confirmation. Updated example workflow to match.
+- **2025-11-19** — Released v1.0.5/v2.0.5 patch with CI test fixes [Entry: 20e35f92-a0b9-4f27-9ebf-db2ec7c2e24d]
+  - **Why:** Include all test fixes from v1.0.4/v2.0.4 in proper release build
+  - **How:** Bumped versions, updated CHANGELOGs and test expectations, committed and tagged
