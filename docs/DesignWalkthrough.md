@@ -1350,3 +1350,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** - Removed all skipped tests from test suites [Entry: 26afba38-e381-4f6f-bbd0-4b8c0eca9788]
   - **Why:** Clean up codebase by removing obsolete skipped tests that were never being executed
   - **How:** Deleted mcp-standalone.test.ts (entire file skipped), setup-wizard.test.ts (entire file skipped), command-handlers.test.ts (entire file skipped), verified all tests pass (extension: 196 tests, mcp: 116 tests)
+- **2025-11-18** — Completed E2E test script rewrite (Parts 6-8). [Entry: d90ae31a-2f51-4db7-bbf6-74d66dc0a561]
+  - **Why:** Finish comprehensive E2E testing guide for production deployment scenario (npm MCP + dev extension).
+  - **How:** Added error handling tests, extension command tests, final integration tests, success criteria, troubleshooting guide, and test results template.
+- **2025-11-18** — Removed Save Query command. [Entry: 015f78f8-c8d8-44fb-bec7-384b9d9590e6]
+  - **Why:** Simplify extension by removing unused/redundant Save Query command functionality.
+  - **How:** Removed bctb.saveQuery command from package.json commands array, removed command registration from extension.ts, deleted saveQueryCommand() function implementation (~120 lines), updated extension.test.ts to remove from command registration test.
+- **2025-11-18** — Ran all tests after removing Save Query command. [Entry: ce4b2a42-5116-4a27-933c-da7a5742cf26]
+  - **Why:** Verify all tests pass after command removal and ensure test suite is clean.
+  - **How:** Deleted empty command-handlers.test.ts file (had no tests), ran extension tests (196 pass), ran MCP tests (116 pass). Total: 312 tests passing, 0 skipped, 0 failed.

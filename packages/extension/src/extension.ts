@@ -370,7 +370,6 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
             runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
         ),
-        vscode.commands.registerCommand('bctb.saveQuery', () => saveQueryCommand()),
         vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand()),
         vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
         vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
@@ -1009,118 +1008,6 @@ async function runKQLFromCodeLensCommand(
         );
     } catch (err: any) {
         vscode.window.showErrorMessage(`Query failed: ${err.message}`);
-        outputChannel.show();
-    }
-}
-
-/**
- * Command: Save query
- */
-async function saveQueryCommand(): Promise<void> {
-    try {
-        if (!telemetryService) {
-            throw new Error('TelemetryService not initialized');
-        }
-
-        // Prompt for query details
-        const name = await vscode.window.showInputBox({
-            prompt: 'Query name',
-            placeHolder: 'e.g., Slow Database Dependencies',
-            ignoreFocusOut: true
-        });
-
-        if (!name) {
-            return;
-        }
-
-        const kql = await vscode.window.showInputBox({
-            prompt: 'KQL query',
-            placeHolder: 'e.g., dependencies | where duration > 2000',
-            ignoreFocusOut: true
-        });
-
-        if (!kql) {
-            return;
-        }
-
-        const purpose = await vscode.window.showInputBox({
-            prompt: 'Purpose (optional)',
-            placeHolder: 'e.g., Find slow database calls',
-            ignoreFocusOut: true
-        });
-
-        const useCase = await vscode.window.showInputBox({
-            prompt: 'Use case (optional)',
-            placeHolder: 'e.g., Performance troubleshooting',
-            ignoreFocusOut: true
-        });
-
-        const tagsInput = await vscode.window.showInputBox({
-            prompt: 'Tags (optional, comma-separated)',
-            placeHolder: 'e.g., performance, database',
-            ignoreFocusOut: true
-        });
-
-        const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
-
-        // Get existing categories for suggestions
-        let categories: string[] = [];
-        try {
-            const queriesData = await telemetryService.getSavedQueries();
-            if (queriesData && Array.isArray(queriesData)) {
-                // Extract unique categories from existing queries
-                categories = Array.from(new Set(
-                    queriesData
-                        .map((q: any) => q.category)
-                        .filter((c: any) => c)
-                ));
-            }
-        } catch (err) {
-            // Categories extraction may fail if no queries exist yet
-            console.warn('Failed to fetch categories:', err);
-        }
-
-        // Detect if query is customer-specific (filters on tenant or company)
-        const lowerKql = kql.toLowerCase();
-        const isCustomerQuery = lowerKql.includes('aadtenantid') ||
-            lowerKql.includes('companyname') ||
-            lowerKql.includes('company_name');
-
-        let companyName: string | undefined;
-        if (isCustomerQuery) {
-            // Prompt for company name
-            companyName = await vscode.window.showInputBox({
-                prompt: 'Company name (query filters on customer/tenant)',
-                placeHolder: 'e.g., Contoso Ltd, Fabrikam Inc',
-                ignoreFocusOut: true
-            });
-
-            if (!companyName) {
-                return; // Cancel if no company name provided for customer query
-            }
-        }
-
-        // Prompt for category with suggestions
-        const category = await vscode.window.showInputBox({
-            prompt: isCustomerQuery ? 'Category (optional, subfolder within company)' : 'Category (optional, subfolder name)',
-            placeHolder: categories.length > 0 ? `e.g., ${categories.join(', ')}` : 'e.g., Monitoring, Analysis, Performance',
-            ignoreFocusOut: true
-        });
-
-        // Save query via TelemetryService
-        await telemetryService.saveQuery(name, kql, purpose, useCase, tags, category);
-
-        // Build file path for display (mimic original behavior)
-        const workspacePath = getWorkspacePath();
-        const queriesFolder = vscode.workspace.getConfiguration('bctb').get<string>('queries.folder', 'queries');
-        const categoryPath = category ? category : '';
-        const fileName = `${name.replace(/[^a-zA-Z0-9]/g, '_')}.kql`;
-        const displayPath = path.join(workspacePath || '', queriesFolder, categoryPath, fileName);
-
-        vscode.window.showInformationMessage(`Query saved: ${displayPath}`);
-        outputChannel.appendLine(`✓ Query saved to ${displayPath}`);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to save query: ${err.message}`);
         outputChannel.show();
     }
 }

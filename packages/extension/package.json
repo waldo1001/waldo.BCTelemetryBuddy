@@ -81,10 +81,6 @@
                 "title": "BC Telemetry Buddy: Run KQL From Document"
             },
             {
-                "command": "bctb.saveQuery",
-                "title": "BC Telemetry Buddy: Save Query"
-            },
-            {
                 "command": "bctb.openQueriesFolder",
                 "title": "BC Telemetry Buddy: Open Queries Folder"
             },

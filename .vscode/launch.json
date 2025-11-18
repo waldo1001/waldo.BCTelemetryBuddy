@@ -48,6 +48,25 @@
             ]
         },
         {
+            "name": "E2E: Run Extension Only",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/extension",
+                "${workspaceFolder}/../bctb-e2e-test-workspace"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/extension/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build - packages/extension",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "BCTB_E2E_TEST_MODE": "true"
+            }
+        },
+        {
             "name": "Debug MCP Server",
             "type": "node",
             "request": "launch",
@@ -83,6 +102,18 @@
                 "hidden": false,
                 "group": "Debug",
                 "order": 1
+            }
+        },
+        {
+            "name": "E2E: Extension (Dev) + MCP (NPM)",
+            "configurations": [
+                "E2E: Run Extension Only"
+            ],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "group": "E2E Testing",
+                "order": 2
             }
         }
     ]

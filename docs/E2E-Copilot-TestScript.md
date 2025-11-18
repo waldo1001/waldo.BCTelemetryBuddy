@@ -1,683 +1,903 @@
 # End-to-End Test Script — GitHub Copilot Integration
 
-**Purpose:** Validate BC Telemetry Buddy MCP integration with GitHub Copilot Chat for natural language telemetry queries.
+**Purpose:** Validate BC Telemetry Buddy extension with **published MCP from npm** and **dev extension from source**.
 
-**⚠️ CRITICAL:** This is the **primary use case** for BC Telemetry Buddy. The entire project exists to enable GitHub Copilot to query Business Central telemetry via natural language. If these tests fail, the project has failed its core objective.
+**Test Scenario:** This simulates the real-world deployment where:
+- MCP server is installed globally from npm (`npm install -g bc-telemetry-buddy-mcp`)
+- Extension is loaded from VSCode Extension Development Host (your development build)
+- User interacts via GitHub Copilot Chat with multi-profile Business Central telemetry
 
-**Estimated Time:** 45-60 minutes
+**⚠️ CRITICAL:** This is the **primary use case** for BC Telemetry Buddy. The entire project exists to enable GitHub Copilot to query Business Central telemetry via natural language with multi-profile support.
+
+**Estimated Time:** 30-45 minutes
 
 ---
 
-## Prerequisites
+## Part 0: Pre-Requisites & Setup (10 min)
 
-### ✅ Environment Setup
+### Step 1: Publish MCP to NPM (First Time Only)
 
-**Azure/BC Environment:**
-- Business Central SaaS environment with telemetry enabled
-- Application Insights instance with telemetry data (ideally with errors, page views, dependencies)
-- Azure CLI installed and authenticated (`az login` completed)
+**⚠️ IMPORTANT:** You need a published MCP package for E2E testing. You have three options:
 
-**VSCode Environment:**
-- GitHub Copilot license active and working
-- VSCode Extension Development Host running
-- Test workspace open: `C:\temp\bctb-test-workspace`
+**Option A: Publish to NPM (Recommended for final testing)**
+```powershell
+# From repository root
+cd packages/mcp
 
-**Extension Configuration:**
-Create/verify `.vscode/settings.json`:
-```json
+# Ensure version is updated in package.json
+# Build the package
+npm run build
+
+# Publish to npm (requires npm account and authentication)
+npm publish
+
+# Verify publication
+npm view bc-telemetry-buddy-mcp version
+```
+
+**Option B: Use Local NPM Package (For pre-release testing)**
+```powershell
+# Build and pack locally
+cd packages/mcp
+npm run build
+npm pack
+# This creates bc-telemetry-buddy-mcp-1.0.0.tgz
+
+# Install globally from local package
+npm install -g bc-telemetry-buddy-mcp-1.0.0.tgz
+
+# Verify installation
+bctb-mcp --version
+which bctb-mcp  # On Windows: where.exe bctb-mcp
+```
+
+**Option C: Link Local Package (For rapid iteration)**
+```powershell
+# From packages/mcp directory
+cd packages/mcp
+npm run build
+npm link
+
+# Verify link
+bctb-mcp --version
+npm list -g bc-telemetry-buddy-mcp
+```
+
+**For this E2E test, we recommend Option B** (local pack/install) to avoid polluting npm with test versions.
+
+### Step 2: Install MCP Globally
+
+```powershell
+# If using Option A (published)
+npm install -g bc-telemetry-buddy-mcp
+
+# If using Option B (local pack)
+npm install -g ./packages/mcp/bc-telemetry-buddy-mcp-1.0.0.tgz
+
+# If using Option C (link)
+cd packages/mcp && npm link
+
+# Verify installation
+bctb-mcp --version
+# Should show: 1.0.0 (or your current version)
+
+# Verify global installation path
+npm root -g
+# Should show something like: C:\Users\<user>\AppData\Roaming\npm\node_modules
+```
+
+### Step 3: Prepare Test Workspace
+
+```powershell
+# Create fresh test workspace
+$testWorkspace = "C:\_Source\_E2E-Test\bctb-e2e-test-workspace"
+New-Item -ItemType Directory -Path $testWorkspace -Force
+
+# Navigate to test workspace
+cd $testWorkspace
+
+# Create .bctb-config.json for multi-profile setup
+@'
 {
-  "bctb.mcp.connectionName": "Test Environment",
-  "bctb.mcp.tenantId": "YOUR_TENANT_ID",
-  "bctb.mcp.applicationInsights.appId": "YOUR_APP_INSIGHTS_APP_ID",
-  "bctb.mcp.kusto.clusterUrl": "https://ade.applicationinsights.io/subscriptions/YOUR_SUBSCRIPTION_ID",
-  "bctb.mcp.authFlow": "azure_cli",
-  "bctb.mcp.cache.enabled": true,
-  "bctb.mcp.cache.ttlSeconds": 300,
-  "bctb.mcp.sanitize.removePII": false,
-  "bctb.queries.folder": "queries"
+  "defaultProfile": "CustomerA",
+  "profiles": {
+    "CustomerA": {
+      "workspacePath": "${workspaceFolder}",
+      "queriesFolder": "queries/CustomerA",
+      "connectionName": "Customer A - Production",
+      "authFlow": "azure_cli",
+      "tenantId": "YOUR_TENANT_ID_HERE",
+      "applicationInsightsAppId": "YOUR_APP_INSIGHTS_APP_ID_HERE",
+      "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/YOUR_SUBSCRIPTION_ID/resourcegroups/YOUR_RESOURCE_GROUP/providers/microsoft.insights/components/YOUR_APP_INSIGHTS_NAME",
+      "cacheEnabled": true,
+      "cacheTTLSeconds": 300,
+      "references": [
+        {
+          "name": "BC Telemetry Samples",
+          "type": "github",
+          "url": "https://github.com/microsoft/BCTech/tree/master/samples/AppInsights",
+          "enabled": true
+        }
+      ]
+    },
+    "CustomerB": {
+      "workspacePath": "${workspaceFolder}",
+      "queriesFolder": "queries/CustomerB",
+      "connectionName": "Customer B - Test",
+      "authFlow": "azure_cli",
+      "tenantId": "YOUR_SECOND_TENANT_ID_HERE",
+      "applicationInsightsAppId": "YOUR_SECOND_APP_INSIGHTS_APP_ID_HERE",
+      "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/YOUR_SUBSCRIPTION_ID/resourcegroups/YOUR_RESOURCE_GROUP/providers/microsoft.insights/components/YOUR_SECOND_APP_INSIGHTS_NAME",
+      "cacheEnabled": true,
+      "cacheTTLSeconds": 300
+    }
+  }
 }
+'@ | Out-File -FilePath ".bctb-config.json" -Encoding UTF8
+
+Write-Host "✓ Created .bctb-config.json"
+Write-Host "⚠️  EDIT .bctb-config.json and replace YOUR_* placeholders with actual values"
 ```
 
-**Pre-Test Setup:**
+**⚠️ STOP:** Edit `.bctb-config.json` and replace all `YOUR_*` placeholders with real values before continuing.
+
+### Step 4: Verify Azure Authentication
+
 ```powershell
-# 1. Build extension
-cd c:\_Source\Community\waldo.BCTelemetryBuddy
-cd packages/mcp && npm run build
-cd ../extension && npm run build
+# Login to Azure CLI (required for authFlow: "azure_cli")
+az login
 
-# 2. Launch Extension Development Host
-# Press F5 in VSCode or Run → Start Debugging
+# Verify login
+az account show
 
-# 3. Open test workspace in Extension Development Host
-# File → Open Folder → C:\temp\bctb-test-workspace
-
-# 4. Verify MCP server started
-# Check Output Channel "BC Telemetry Buddy" for "MCP server started on port 52345"
+# Ensure correct subscription is active
+az account list --output table
+az account set --subscription "YOUR_SUBSCRIPTION_NAME_OR_ID"
 ```
+
+### Step 5: Build Extension (Dev Version)
+
+```powershell
+# From repository root
+cd C:\_Source\Community\waldo.BCTelemetryBuddy
+
+# Build extension ONLY (not MCP - that's already installed globally)
+cd packages/extension
+npm run build
+
+# Verify build succeeded
+Test-Path dist/extension.js
+# Should return: True
+```
+
+### Step 6: Launch Extension Development Host
+
+**In VSCode (at repository root):**
+
+1. Open the repository: `File → Open Folder → C:\_Source\Community\waldo.BCTelemetryBuddy`
+2. Open Run and Debug panel (`Ctrl+Shift+D`)
+3. Select configuration: **"E2E: Extension (Dev) + MCP (NPM)"**
+4. Press `F5` or click green play button
+
+**Expected:**
+- Extension Development Host window opens
+- Extension builds successfully
+- New VSCode window appears
+
+**In Extension Development Host:**
+
+1. `File → Open Folder → C:\_Source\_E2E-Test\bctb-e2e-test-workspace`
+2. Wait for extension to activate (check status bar for "BC Telemetry Buddy" indicators)
+
+### Step 7: Verify MCP Installation Detection
+
+**In Extension Development Host, open Output panel:**
+
+`View → Output → Select "BC Telemetry Buddy" from dropdown`
+
+**Look for:**
+```
+[Extension] Checking for MCP installation...
+[Extension] ✓ Found globally-installed MCP: C:\Users\<user>\AppData\Roaming\npm\node_modules\bc-telemetry-buddy-mcp
+[Extension] MCP version: 1.0.0
+[Extension] MCP server starting...
+[Extension] MCP server ready on port 52345
+```
+
+**If you see:**
+```
+[Extension] ✗ MCP not found - install via: npm install -g bc-telemetry-buddy-mcp
+```
+
+Then go back to Step 2 and verify global installation.
 
 ---
 
-## Part 1: Initial Setup Verification (5 min)
+## Part 1: Profile Management Verification (5 min)
 
-### 1.1 Verify MCP Server Running
-- Open Output Channel: View → Output → "BC Telemetry Buddy"
-- Look for: `[Extension] MCP server started on port 52345`
-- Look for: `[Extension] MCP server health check passed`
+---
 
-**Expected:**
-- ✅ MCP process running (check Task Manager for node.exe)
-- ✅ No authentication errors (azure_cli should be seamless)
-- ✅ Health check passes every 30 seconds
+## Part 1: Profile Management Verification (5 min)
 
-**If Failed:**
-- Check `az login` completed successfully
-- Verify Application Insights App ID correct
-- Run Command Palette: `BC Telemetry Buddy: Start MCP Server` manually
+### 1.1 Check Status Bar
 
-### 1.2 Open GitHub Copilot Chat
-- Press `Ctrl+Alt+I` (or View → Chat → Focus on Chat View)
-- GitHub Copilot Chat panel opens on the right side
+**In Extension Development Host:**
+
+Look at the bottom-right status bar for profile indicator.
 
 **Expected:**
-- ✅ Chat panel visible
+- ✅ Status bar shows: `$(database) CustomerA` (or your defaultProfile name)
+- ✅ Clicking it shows dropdown with all profiles: CustomerA, CustomerB
+- ✅ Can switch between profiles
+
+### 1.2 Test Profile Switching
+
+**Click status bar profile indicator → Select "CustomerB"**
+
+**Expected:**
+- ✅ Status bar updates to: `$(database) CustomerB`
+- ✅ Output panel shows: `[Extension] Switched to profile: CustomerB`
+- ✅ Output panel shows: `[Extension] Reloading configuration...`
+
+**Switch back to CustomerA**
+
+### 1.3 Verify Profile Manager
+
+**Open Command Palette (`Ctrl+Shift+P`):**
+
+Type: `BC Telemetry Buddy: Manage Profiles`
+
+**Expected:**
+- ✅ Profile Manager webview opens in main editor area
+- ✅ Shows both profiles: CustomerA, CustomerB
+- ✅ CustomerA marked as default (star icon or badge)
+- ✅ Can view profile details (connection name, App Insights ID, etc.)
+
+**Close Profile Manager**
+
+---
+
+## Part 2: GitHub Copilot Chat Integration (5 min)
+
+### 2.1 Open GitHub Copilot Chat
+
+**In Extension Development Host:**
+
+- Press `Ctrl+Alt+I` (or `View → Open View... → GitHub Copilot Chat`)
+- GitHub Copilot Chat panel opens
+
+**Expected:**
+- ✅ Chat panel visible on right side
 - ✅ Can type messages
-- ✅ Copilot responds to basic queries (test: "what is typescript?")
+- ✅ No errors in Output panel
+
+### 2.2 Verify MCP Tools Available
+
+**In Copilot Chat, type:**
+```
+@workspace What BC telemetry tools do you have?
+```
+
+**Watch Output Panel (`BC Telemetry Buddy` channel) FIRST:**
+
+**Expected output panel logs:**
+```
+[MCP Client] Listing available MCP tools...
+[MCP Client] ✓ Found 5 tools: mcp_bc_telemetry__query, mcp_bc_telemetry__list_profiles, mcp_bc_telemetry__get_profile, mcp_bc_telemetry__save_query, mcp_bc_telemetry__list_queries
+```
+
+**Expected Copilot response:**
+- ✅ Lists MCP tools (query telemetry, list profiles, save queries, etc.)
+- ✅ Mentions multi-profile support
+- ✅ No errors or "I don't have access to BC telemetry tools"
+
+**🚨 CRITICAL CHECKPOINT:** If Copilot says it doesn't have BC telemetry tools or only mentions workspace files, MCP integration has failed. Debug before continuing:
+1. Check Output panel for MCP connection errors
+2. Verify `bctb-mcp --version` works in terminal
+3. Restart Extension Development Host
 
 ---
 
-## Part 2: Verify MCP Tools Registration (5 min)
+## Part 3: Multi-Profile Query Tests (10 min)
 
-### 2.1 Test MCP Server Tool List (Direct Method)
-The `@workspace /` dropdown is **unreliable** for showing MCP tools. Instead, test the MCP server directly:
+### 3.1 List Available Profiles
 
-**In PowerShell:**
-```powershell
-$body = @{
-    jsonrpc = "2.0"
-    method = "tools/list"
-    params = @{}
-    id = 1
-} | ConvertTo-Json
+**In Copilot Chat:**
+```
+@workspace What BC telemetry profiles do I have configured?
+```
 
-Invoke-RestMethod -Uri 'http://localhost:52345/rpc' -Method Post -ContentType 'application/json' -Body $body
+**Expected Output Panel:**
+```
+[MCP Client] mcp_bc_telemetry__list_profiles -> ...
+[MCP] Listing profiles from .bctb-config.json
+[MCP] Found 2 profiles: CustomerA (default), CustomerB
+```
+
+**Expected Copilot Response:**
+- ✅ Lists both profiles: CustomerA, CustomerB
+- ✅ Indicates CustomerA is default
+- ✅ Shows connection names or App Insights IDs
+
+### 3.2 Query Specific Profile (Explicit)
+
+**In Copilot Chat:**
+```
+@workspace Show me errors from CustomerA in the last 24 hours
+```
+
+**Expected Output Panel:**
+```
+[MCP Client] mcp_bc_telemetry__query -> profile: CustomerA, query: <generated KQL>
+[MCP] Using profile: CustomerA
+[MCP] Executing KQL against App Insights: <CustomerA App ID>
+[MCP] ✓ Query successful, returned X rows
+```
+
+**Expected Copilot Response:**
+- ✅ Shows errors from CustomerA's Application Insights
+- ✅ Displays formatted results (table or list)
+- ✅ Mentions how many errors found
+- ✅ Timestamps within last 24 hours
+
+### 3.3 Query Different Profile (Explicit)
+
+**In Copilot Chat:**
+```
+@workspace Now show me errors from CustomerB in the last 24 hours
+```
+
+**Expected Output Panel:**
+```
+[MCP Client] mcp_bc_telemetry__query -> profile: CustomerB, query: <generated KQL>
+[MCP] Using profile: CustomerB
+[MCP] Executing KQL against App Insights: <CustomerB App ID>
+```
+
+**Expected Copilot Response:**
+- ✅ Shows errors from CustomerB's Application Insights (different data than CustomerA)
+- ✅ Copilot understood profile context switch
+- ✅ Results clearly from different environment
+
+### 3.4 Query Without Profile (Uses Default)
+
+**Ensure default profile is CustomerA (check status bar)**
+
+**In Copilot Chat:**
+```
+@workspace Show me page views from yesterday
+```
+
+**Expected Output Panel:**
+```
+[MCP Client] mcp_bc_telemetry__query -> profile: CustomerA (default), query: <generated KQL>
+[MCP] No profile specified, using default: CustomerA
+```
+
+**Expected Copilot Response:**
+- ✅ Queries CustomerA (default profile)
+- ✅ Shows page view data
+- ✅ No errors
+
+### 3.5 Switch Default Profile via Extension
+
+**Click status bar → Select CustomerB**
+
+**In Copilot Chat:**
+```
+@workspace Show me page views from yesterday
+```
+
+**Expected Output Panel:**
+```
+[MCP] No profile specified, using current profile: CustomerB
 ```
 
 **Expected:**
-- ✅ Returns JSON with `tools` array
-- ✅ Shows 11 tools: query_telemetry, get_saved_queries, search_queries, save_query, get_categories, get_recommendations, get_external_queries, get_event_catalog, get_event_schema, get_tenant_mapping, and cache management tools
-- ✅ Each tool has name, description, inputSchema
+- ✅ Now queries CustomerB (because extension profile switched)
+- ✅ Chat respects extension's current profile when no profile specified
 
-**If Failed:**
-- Check MCP server is running (Output Channel should show "MCP server started")
-- Verify port 52345 is accessible
-- Restart Extension Development Host
-
-### 2.2 Test Tool Discovery via Copilot
-In Copilot Chat, type:
-```
-@workspace What telemetry tools or capabilities do you have for Business Central?
-```
-
-**Expected (CORRECTED):**
-- ✅ Copilot describes **MCP tools** (query_telemetry, get_saved_queries, save_query, etc.)
-- ✅ Explains tool capabilities (not just workspace settings)
-- ✅ No errors in Output Channel
-
-**If Copilot only describes workspace settings:**
-This means MCP tools are NOT registered. Copilot is reading settings.json but not seeing the MCP server's tools.
-
-**Debug Steps:**
-1. Verify `tools/list` works (see 2.1 above)
-2. Check Output Channel for MCP registration errors
-3. Restart Extension Development Host (Ctrl+Shift+F5)
-4. Verify `Instructions/Instructions.md` exists
-
-**⚠️ CRITICAL CHECKPOINT:** If Copilot can't see MCP tools after debugging, the integration has failed. Do NOT continue to Part 3 until this is resolved.
+**Switch back to CustomerA via status bar**
 
 ---
 
-## Part 3: Basic Telemetry Queries (10 min)
+## Part 4: Save Queries with Multi-Profile (10 min)
 
-### 3.1 Simple Error Query (PRIMARY TEST)
-**This is the core test that proves the entire project works.**
+### 4.1 Save Query for Specific Customer
 
-In Copilot Chat, type:
+**In Copilot Chat:**
 ```
-@workspace Show me all errors from my Business Central telemetry in the last 24 hours
-```
+@workspace Save this query for CustomerA:
 
-**WATCH OUTPUT CHANNEL FIRST** (View → Output → "BC Telemetry Buddy"):
-- ✅ **CRITICAL**: Look for `[MCP Client] query_telemetry -> ...` — this proves Copilot invoked your MCP tool
-- ✅ Look for `[MCP] Translating NL to KQL: "Show me all errors..."`
-- ✅ Look for `[MCP] ✓ Query executed successfully`
-
-**If you don't see `[MCP Client] query_telemetry` in the Output Channel:**
-- MCP integration has failed
-- Copilot is not calling your tools
-- STOP and debug Part 2 before continuing
-
-**Then check Copilot Chat Response:**
-- ✅ Natural language translated to KQL (e.g., `traces | where severityLevel >= 3 | where timestamp > ago(1d)`)
-- ✅ Query executes successfully
-- ✅ Results displayed in chat (formatted table or structured text)
-- ✅ Copilot provides natural language summary (e.g., "Found 42 errors in the last 24 hours")
-- ✅ Row count mentioned
-
-**Verify Data:**
-- Timestamps within 24 hours
-- Error messages from your BC environment visible
-- No authentication errors
-
-**If Failed (but MCP Client log appeared):**
-- MCP integration works! Issue is with query/auth/data
-- Check Output Channel for detailed error
-- Verify Application Insights has data
-- Try simpler query: "Show me any telemetry from the last hour"
-
-### 3.2 Follow-Up Filtering
-Continue the conversation:
-```
-Filter those errors to only show SQL-related errors
-```
-
-**Expected:**
-- ✅ Copilot refines the previous query
-- ✅ Uses context from previous result
-- ✅ Adds filter (e.g., `| where message contains "SQL"` or `| where customDimensions.category == "Database"`)
-- ✅ New results show only SQL errors
-- ✅ Copilot explains what was filtered
-
-**This tests conversational context and query refinement.**
-
-### 3.3 Different Telemetry Types
-```
-@workspace Show me page views from the last 7 days grouped by page name
-```
-
-**Expected:**
-- ✅ Copilot generates appropriate KQL (e.g., `pageViews | where timestamp > ago(7d) | summarize count() by name`)
-- ✅ Results grouped/aggregated
-- ✅ Copilot summarizes top pages
-
-### 3.4 Time-Based Analysis
-```
-@workspace Show me the trend of errors over the last week, grouped by day
-```
-
-**Expected:**
-- ✅ Uses `bin(timestamp, 1d)` for daily grouping
-- ✅ Results show time series data
-- ✅ Copilot identifies patterns (e.g., "Errors peaked on Monday")
-
----
-
-## Part 4: Saved Queries Management (10 min)
-
-### 4.1 List Existing Queries
-```
-@workspace What saved telemetry queries do I have?
-```
-
-**Expected:**
-- ✅ Copilot uses `get_saved_queries` tool
-- ✅ Lists queries (may be empty if first run)
-- ✅ Shows query names, purposes, categories
-- ✅ Output Channel shows tool invocation
-
-**If Empty:**
-This is expected for first run. Continue to 4.2.
-
-### 4.2 Save Query via Copilot
-```
-@workspace Save this telemetry query for me:
-
-Name: Recent Errors
-Category: Monitoring
-Purpose: Track errors in the last 24 hours for daily review
-Use Case: Morning health check
-Tags: errors, monitoring, daily
+Name: Customer A Errors
+Purpose: Monitor errors for Customer A production environment
 KQL: traces | where severityLevel >= 3 | where timestamp > ago(1d) | project timestamp, message, severityLevel
+Profile: CustomerA
+```
+
+**Expected Output Panel:**
+```
+[MCP Client] mcp_bc_telemetry__save_query -> profile: CustomerA, name: Customer A Errors
+[MCP] Saving query to: queries/CustomerA/Customer A Errors.kql
+[MCP] ✓ Query saved successfully
+```
+
+**Expected Copilot Response:**
+- ✅ Confirms query saved
+- ✅ Shows file path: `queries/CustomerA/Customer A Errors.kql`
+
+**Verify in Explorer:**
+- ✅ File exists: `queries/CustomerA/Customer A Errors.kql`
+- ✅ Contains proper KQL and metadata
+
+### 4.2 Save Query for Different Customer
+
+**In Copilot Chat:**
+```
+@workspace Save this query for CustomerB:
+
+Name: Customer B Performance
+Purpose: Track slow operations in test environment
+KQL: dependencies | where duration > 5000 | project timestamp, target, duration
+Profile: CustomerB
 ```
 
 **Expected:**
-- ✅ Copilot uses `save_query` tool
-- ✅ Output Channel shows: `[MCP Client] save_query -> ...`
-- ✅ File created: `queries/Monitoring/Recent Errors.kql`
-- ✅ Copilot confirms: "Query saved successfully to queries/Monitoring/Recent Errors.kql"
-- ✅ File visible in VSCode Explorer
+- ✅ Saved to: `queries/CustomerB/Customer B Performance.kql`
+- ✅ File created in separate customer folder
 
-**Verify File Content:**
-Open `queries/Monitoring/Recent Errors.kql`:
-```kql
-// Query: Recent Errors
-// Category: Monitoring
-// Purpose: Track errors in the last 24 hours for daily review
-// Use Case: Morning health check
-// Created: 2025-10-16
-// Tags: errors, monitoring, daily
+### 4.3 List Queries by Profile
 
-traces | where severityLevel >= 3 | where timestamp > ago(1d) | project timestamp, message, severityLevel
+**In Copilot Chat:**
+```
+@workspace List saved queries for CustomerA
 ```
 
-### 4.3 Save Another Query (Different Category)
+**Expected Output Panel:**
 ```
-@workspace Save this query as "Slow Page Views" in the Performance category:
+[MCP Client] mcp_bc_telemetry__list_queries -> profile: CustomerA
+[MCP] Found 1 query for CustomerA
+```
 
-pageViews | where duration > 2000 | project timestamp, name, duration, url
-Purpose: Identify pages loading slowly
-Tags: performance, pageviews
+**Expected Copilot Response:**
+- ✅ Shows only "Customer A Errors" query
+- ✅ Does NOT show CustomerB queries
+
+**Repeat for CustomerB:**
+```
+@workspace List saved queries for CustomerB
 ```
 
 **Expected:**
-- ✅ File created: `queries/Performance/Slow Page Views.kql`
-- ✅ Category folder created automatically
-- ✅ Copilot confirms save location
+- ✅ Shows only "Customer B Performance" query
 
-### 4.4 List Queries Again
-```
-@workspace List my saved telemetry queries
-```
+### 4.4 List All Queries
 
-**Expected:**
-- ✅ Shows both queries: "Recent Errors" and "Slow Page Views"
-- ✅ Categories displayed: Monitoring, Performance
-- ✅ Purposes shown
-
-### 4.5 Run Saved Query
+**In Copilot Chat:**
 ```
-@workspace Run my "Recent Errors" saved query
+@workspace List all my saved BC telemetry queries
 ```
 
 **Expected:**
-- ✅ Copilot retrieves KQL from saved query
-- ✅ Executes via `query_telemetry`
-- ✅ Shows results
-- ✅ Mentions query was from saved library
+- ✅ Shows both profiles' queries
+- ✅ Grouped by profile or clearly labeled
+- ✅ Total: 2 queries
 
 ---
 
-## Part 5: Query Search and Discovery (5 min)
+## Part 5: Complex Multi-Profile Workflows (10 min)
 
-### 5.1 Search by Keyword
+### 5.1 Cross-Profile Comparison
+
+**In Copilot Chat:**
 ```
-@workspace Search my saved queries for anything about performance
+@workspace Compare error counts between CustomerA and CustomerB for the last 7 days
+```
+
+**Expected Copilot Behavior:**
+- ✅ Queries CustomerA first (Output: `mcp_bc_telemetry__query -> profile: CustomerA`)
+- ✅ Queries CustomerB second (Output: `mcp_bc_telemetry__query -> profile: CustomerB`)
+- ✅ Compares results
+- ✅ Provides summary (e.g., "CustomerA has 42 errors, CustomerB has 18 errors")
+
+### 5.2 Profile-Specific Analysis
+
+**In Copilot Chat:**
+```
+@workspace Analyze CustomerA's performance:
+1. Show page views with duration > 5 seconds
+2. Find which pages are slowest
+3. Save the query as "CustomerA Slow Pages"
 ```
 
 **Expected:**
-- ✅ Copilot uses `search_queries` tool
-- ✅ Returns "Slow Page Views" (matches "performance" in category/purpose)
-- ✅ Shows full query details
+- ✅ Queries CustomerA only
+- ✅ Shows slow page views
+- ✅ Identifies slowest pages
+- ✅ Saves query to `queries/CustomerA/CustomerA Slow Pages.kql`
+- ✅ All operations scoped to CustomerA profile
 
-### 5.2 Search by Multiple Terms
+### 5.3 Conversational Profile Switching
+
+**In Copilot Chat:**
 ```
-@workspace Find queries related to errors or monitoring
+@workspace Show me errors from CustomerA yesterday
+```
+
+**Then:**
+```
+Now show me the same for CustomerB
 ```
 
 **Expected:**
-- ✅ Returns "Recent Errors" (matches both "errors" and "monitoring")
-- ✅ Ranked by relevance
-
-### 5.3 Search with No Results
-```
-@workspace Search for queries about invoices
-```
-
-**Expected:**
-- ✅ Copilot reports no matching queries found
-- ✅ Suggests creating a new query
-- ✅ No crash or error
+- ✅ First query targets CustomerA
+- ✅ Second query targets CustomerB (Copilot infers from "same for CustomerB")
+- ✅ Same query pattern, different profiles
+- ✅ Copilot maintains conversation context
 
 ---
 
-## Part 6: Query Recommendations (5 min)
+## Part 6: Error Handling & Edge Cases (10 min)
 
-### 6.1 Basic Recommendation
-```
-@workspace Suggest improvements for this query:
-traces | where timestamp > ago(1d)
-```
+### 6.1 Invalid Profile Name
 
-**Expected:**
-- ✅ Copilot uses `get_recommendations` tool
-- ✅ Suggestions provided (e.g., "Add severityLevel filter", "Use specific columns in project", "Add summarize for better performance")
-- ✅ Recommendations include examples
-- ✅ May reference external KQL examples if configured
-
-### 6.2 Recommendation with Context
+**In Copilot Chat:**
 ```
-@workspace How can I optimize this query?
-pageViews | where name contains "Customer" | where timestamp > ago(30d)
+@workspace Show me errors from NonExistentCustomer
 ```
 
 **Expected:**
-- ✅ Analyzes query structure
-- ✅ Suggests optimizations (index hints, query reordering, aggregation)
-- ✅ Provides optimized version
+- ✅ Copilot recognizes profile doesn't exist
+- ✅ Suggests available profiles: CustomerA, CustomerB
+- ✅ Asks for clarification or uses default profile
 
----
+### 6.2 Profile with No Data
 
-## Part 7: Complex Multi-Step Workflows (10 min)
+**If CustomerB has no telemetry data:**
 
-### 7.1 Analysis Workflow
 ```
-@workspace Help me analyze BC telemetry errors:
-1. Show me all errors from the last 7 days
-2. Group them by error type or message pattern
-3. Identify the top 5 most common errors
-4. Save the query as "Weekly Error Analysis" in Monitoring category
-5. Then show me the time distribution of the most common error
-```
-
-**Expected:**
-- ✅ Copilot breaks task into steps
-- ✅ Executes initial query (all errors, 7 days)
-- ✅ Refines with grouping/aggregation
-- ✅ Shows top 5 errors with counts
-- ✅ Saves query using `save_query` tool
-- ✅ Filters to most common error and shows time distribution
-- ✅ Provides natural language summary throughout
-
-**This tests:**
-- Multi-step reasoning
-- Query refinement
-- Tool chaining (query → analyze → save → re-query)
-- Context retention
-
-### 7.2 Comparison Workflow
-```
-@workspace Compare errors between last week and this week:
-- Show me error count by day for last 14 days
-- Highlight if this week has more errors than last week
-- If errors increased, show me what types of errors increased
-```
-
-**Expected:**
-- ✅ Generates time-series query with 14-day window
-- ✅ Uses `bin()` for daily grouping
-- ✅ Copilot analyzes trends (may need to calculate in chat)
-- ✅ If increase detected, drills down into error types
-- ✅ Natural language explanation of findings
-
-### 7.3 Investigation Workflow
-```
-@workspace I need to investigate slow performance:
-- Find all page views with duration > 5 seconds in last 24 hours
-- Show me which pages are slowest
-- For the slowest page, show me all related dependencies
-- Save both queries for future reference
-```
-
-**Expected:**
-- ✅ Query 1: Slow page views
-- ✅ Identifies slowest page(s)
-- ✅ Query 2: Dependencies for that page (uses `dependencies` table, filters by page context)
-- ✅ Saves both queries with appropriate names/categories
-- ✅ Provides investigation summary
-
----
-
-## Part 8: Error Handling and Edge Cases (10 min)
-
-### 8.1 Invalid Query Request
-```
-@workspace Query my telemetry for invalid_table_that_does_not_exist
-```
-
-**Expected:**
-- ✅ MCP attempts query
-- ✅ Application Insights returns error (e.g., "Semantic error: 'invalid_table_that_does_not_exist' not found")
-- ✅ Copilot explains error in natural language
-- ✅ Copilot suggests corrections: "Did you mean 'traces', 'pageViews', or 'dependencies'?"
-- ✅ Conversation continues (no crash)
-
-### 8.2 Query with No Results
-```
-@workspace Show me errors with message "NONEXISTENT_ERROR_XYZ_12345"
+@workspace Show me errors from CustomerB in the last 30 days
 ```
 
 **Expected:**
 - ✅ Query executes successfully
 - ✅ Returns 0 results
-- ✅ Copilot reports: "No errors found with that message"
-- ✅ May suggest broadening search
+- ✅ Copilot reports: "No errors found for CustomerB in the last 30 days"
+- ✅ No crash or authentication errors
 
-### 8.3 Ambiguous Request
-```
-@workspace Show me stuff from yesterday
-```
+### 6.3 Authentication Failure Test
 
-**Expected:**
-- ✅ Copilot asks for clarification OR makes reasonable assumption
-- ✅ If executes: uses `traces` table with yesterday's date filter
-- ✅ Mentions what was assumed
+**Manual steps:**
 
-### 8.4 Very Large Result Set
-```
-@workspace Show me all telemetry from the last 30 days
-```
+1. Logout from Azure CLI:
+   ```powershell
+   az logout
+   ```
 
-**Expected:**
-- ✅ Query executes
-- ✅ Results may be truncated (Application Insights limits)
-- ✅ Copilot mentions result limits
-- ✅ Suggests adding filters or summarization
-
-### 8.5 Authentication Failure Scenario
-**Manual Test:**
-- Stop MCP server: Command Palette → `BC Telemetry Buddy: Stop MCP Server`
-- In terminal: Logout from Azure CLI: `az logout`
-- Restart MCP: Command Palette → `BC Telemetry Buddy: Start MCP Server`
-- Try query in Copilot: `@workspace Show me errors from last hour`
+2. In Copilot Chat:
+   ```
+   @workspace Show me errors from CustomerA
+   ```
 
 **Expected:**
-- ✅ MCP fails to authenticate (azure_cli flow requires login)
-- ✅ Error message visible in Output Channel
-- ✅ Copilot reports authentication failure
-- ✅ Suggests re-running `az login`
+- ✅ MCP attempts authentication
+- ✅ Fails (no Azure CLI session)
+- ✅ Output panel shows: `[MCP] ✗ Authentication failed: azure_cli requires active 'az login' session`
+- ✅ Copilot explains error: "Authentication failed. Please run 'az login' and try again."
+- ✅ No crash
 
 **Restore:**
 ```powershell
 az login
 ```
-Restart MCP, verify queries work again.
 
----
+Retry query, should work now.
 
-## Part 9: Integration with Saved Queries (5 min)
+### 6.4 Invalid KQL Syntax
 
-### 9.1 Query with Context
+**In Copilot Chat:**
 ```
-@workspace Show me performance data similar to my saved queries
+@workspace Run this KQL for CustomerA: invalid_table | where fake_column == "test"
 ```
 
 **Expected:**
-- ✅ Copilot uses saved queries as context
-- ✅ Generates query inspired by "Slow Page Views"
-- ✅ May combine patterns from multiple saved queries
+- ✅ Query sent to Application Insights
+- ✅ Returns error: "Semantic error: 'invalid_table' is not a declared table"
+- ✅ Copilot explains error
+- ✅ May suggest correct table names (traces, pageViews, dependencies)
 
-### 9.2 Modify Saved Query
+### 6.5 MCP Server Disconnection Recovery
+
+**Manual steps:**
+
+1. In terminal, kill MCP server process:
+   ```powershell
+   # Find MCP process
+   Get-Process -Name node | Where-Object {$_.CommandLine -like "*bctb-mcp*"}
+   
+   # Kill it
+   Stop-Process -Name node -Force
+   ```
+
+2. In Copilot Chat:
+   ```
+   @workspace Show me errors from CustomerA
+   ```
+
+**Expected:**
+- ✅ Extension detects MCP server down
+- ✅ Attempts to restart MCP server
+- ✅ Output panel shows: `[Extension] MCP server disconnected, restarting...`
+- ✅ Query eventually succeeds after restart
+- ✅ Or: Copilot reports temporary connection issue and suggests retrying
+
+---
+
+## Part 7: Extension Commands with Profiles (5 min)
+
+### 7.1 Run KQL Query Command
+
+**In Extension Development Host:**
+
+1. Open Command Palette (`Ctrl+Shift+P`)
+2. Type: `BC Telemetry Buddy: Run KQL Query`
+3. Enter KQL: `traces | where severityLevel >= 3 | where timestamp > ago(1h) | take 10`
+
+**Expected:**
+- ✅ Query executes against **current profile** (check status bar - should be CustomerA)
+- ✅ Results webview opens
+- ✅ Shows data from CustomerA's Application Insights
+
+### 7.2 Switch Profile and Run Same Command
+
+1. Click status bar → Switch to **CustomerB**
+2. Run Command Palette: `BC Telemetry Buddy: Run KQL Query`
+3. Enter same KQL: `traces | where severityLevel >= 3 | where timestamp > ago(1h) | take 10`
+
+**Expected:**
+- ✅ Query executes against **CustomerB** (different profile)
+- ✅ Results may differ (different Application Insights data)
+- ✅ Confirms extension commands respect current profile
+
+### 7.3 Create New Profile via Profile Manager
+
+1. Open Command Palette: `BC Telemetry Buddy: Create Profile`
+2. Or: `BC Telemetry Buddy: Manage Profiles` → Click "Add New Profile"
+
+**Follow prompts:**
+- Profile Name: `CustomerC`
+- Connection Name: `Customer C - Staging`
+- Auth Flow: `azure_cli`
+- Tenant ID: (can reuse CustomerA's for test)
+- App Insights ID: (can reuse CustomerA's for test)
+- Kusto URL: (can reuse CustomerA's for test)
+
+**Expected:**
+- ✅ Profile created
+- ✅ `.bctb-config.json` updated with CustomerC
+- ✅ Profile appears in status bar dropdown
+- ✅ Profile appears in Profile Manager
+
+---
+
+## Part 8: Final Integration Tests (5 min)
+
+### 8.1 Full Workflow Test
+
+**In Copilot Chat:**
 ```
-@workspace Take my "Recent Errors" query and modify it to show last 48 hours instead of 24
+@workspace I need a weekly error report for CustomerA:
+1. Show me errors from the last 7 days
+2. Group by error type
+3. Show top 5 most common errors
+4. Save the query as "CustomerA Weekly Error Report" for future use
+```
+
+**Expected:**
+- ✅ Copilot breaks down task
+- ✅ Queries CustomerA profile
+- ✅ Groups errors appropriately
+- ✅ Shows top 5 with counts
+- ✅ Saves query to `queries/CustomerA/CustomerA Weekly Error Report.kql`
+- ✅ Confirms completion
+
+### 8.2 Run Saved Query
+
+**In Copilot Chat:**
+```
+@workspace Run my "CustomerA Weekly Error Report" query
+```
+
+**Expected:**
+- ✅ Retrieves saved query from `queries/CustomerA/`
+- ✅ Executes KQL
+- ✅ Shows current results
+- ✅ Mentions query source
+
+### 8.3 Modify and Re-save
+
+**In Copilot Chat:**
+```
+@workspace Update my "CustomerA Weekly Error Report" query to show last 14 days instead of 7
 ```
 
 **Expected:**
 - ✅ Retrieves saved query
-- ✅ Modifies time filter: `ago(1d)` → `ago(2d)`
+- ✅ Modifies time filter: `ago(7d)` → `ago(14d)`
 - ✅ Executes modified query
-- ✅ Optionally asks if you want to save the new version
-
-### 9.3 Combine Queries
-```
-@workspace Combine insights from my "Recent Errors" and "Slow Page Views" queries - show me if there's correlation between errors and slow pages
-```
-
-**Expected:**
-- ✅ Retrieves both saved queries
-- ✅ Generates combined query (joins or separate queries with analysis)
-- ✅ Analyzes correlation
-- ✅ Provides insights
+- ✅ Asks if you want to save the updated version
+- ✅ If yes: Overwrites existing `.kql` file
 
 ---
 
-## Part 10: Natural Language Flexibility (5 min)
+## Success Criteria Summary
 
-Test how Copilot handles different phrasings for the same intent:
+### 🎯 CRITICAL (Must Pass for E2E Success)
 
-### 10.1 Formal Request
-```
-@workspace Please execute a query to retrieve all error-level traces from Application Insights for the previous 24-hour period.
-```
-
-### 10.2 Casual Request
-```
-@workspace hey show me errors from yesterday
-```
-
-### 10.3 Technical Request
-```
-@workspace Run a KQL query on traces table filtering severityLevel >= 3 with timestamp > ago(1d)
-```
-
-### 10.4 Business-Focused Request
-```
-@workspace I need to check if there were any issues with the application yesterday
-```
-
-**All Should Result In:**
-- ✅ Similar or identical KQL queries generated
-- ✅ Successful execution
-- ✅ Appropriate natural language responses matching tone
-
----
-
-## Success Criteria Checklist
-
-### 🎯 Critical (Must Pass)
-- [ ] MCP tools visible in Copilot Chat (`@workspace /`)
-- [ ] Basic telemetry query works (Part 3.1)
-- [ ] Copilot translates natural language to KQL correctly
-- [ ] Query results displayed and summarized
-- [ ] Follow-up questions work (conversational context)
-- [ ] Save query creates file in correct location with category
-- [ ] List saved queries returns correct results
-- [ ] Search queries finds matches
-- [ ] Multi-step workflows complete successfully
-- [ ] Error handling graceful (no crashes)
+- [ ] **MCP from npm detected and loaded** by extension
+- [ ] **Extension builds and runs** from source code (not bundled with MCP)
+- [ ] **Multi-profile config** (.bctb-config.json) loaded correctly
+- [ ] **Profile switcher** in status bar works
+- [ ] **Copilot sees MCP tools** (output panel shows tool invocations)
+- [ ] **Query CustomerA** explicitly works
+- [ ] **Query CustomerB** explicitly works
+- [ ] **Query without profile** uses default/current profile
+- [ ] **Save query for specific profile** creates file in correct folder
+- [ ] **List queries by profile** shows only that profile's queries
+- [ ] **Cross-profile comparison** queries both profiles
+- [ ] **Extension commands** (Run KQL Query) respect current profile
+- [ ] **Error handling** graceful (auth failures, invalid queries, etc.)
 
 ### ✅ Important (Should Pass)
-- [ ] Query recommendations provided
-- [ ] Complex analysis workflows work
-- [ ] Saved queries used as context
-- [ ] Different phrasings understood
-- [ ] Time-based aggregations work
-- [ ] Multiple telemetry types accessible (traces, pageViews, dependencies)
 
-### 💡 Nice to Have (Optional)
-- [ ] External references used in recommendations (if configured)
+- [ ] Profile Manager UI opens and shows all profiles
+- [ ] Create new profile works
+- [ ] Switch profile updates MCP queries correctly
+- [ ] Saved queries can be executed via chat
+- [ ] Complex multi-step workflows complete
+- [ ] Conversational profile switching works
+
+### 💡 Nice to Have
+
+- [ ] MCP server auto-restart on disconnect
 - [ ] Query optimization suggestions
-- [ ] Correlation analysis between queries
+- [ ] External references (BCTech samples) used in recommendations
 
 ---
 
 ## Troubleshooting
 
-### Issue: MCP Tools Not Visible in Copilot
+### Issue: "MCP not found" in Output Panel
 
 **Check:**
-1. Output Channel for MCP registration errors
-2. `Instructions/Instructions.md` exists and has proper MCP tool definitions
-3. MCP server actually running (health check messages)
-4. Restart Extension Development Host
-
-**Debug Commands:**
 ```powershell
-# Check MCP server responding
-Invoke-RestMethod -Uri 'http://localhost:52345/health' -Method Get
+# Verify global installation
+npm list -g bc-telemetry-buddy-mcp
 
-# Check if tools endpoint works
-Invoke-RestMethod -Uri 'http://localhost:52345/rpc' -Method Post -ContentType 'application/json' -Body '{"jsonrpc":"2.0","method":"get_saved_queries","params":{},"id":1}'
+# Check executable
+where.exe bctb-mcp
+bctb-mcp --version
+
+# Reinstall if needed
+npm uninstall -g bc-telemetry-buddy-mcp
+npm install -g bc-telemetry-buddy-mcp
 ```
 
-### Issue: Queries Fail with Authentication Error
+### Issue: Copilot doesn't see MCP tools
 
 **Check:**
-1. `az login` completed: Run `az account show`
-2. Correct tenant/subscription active: `az account list`
-3. Application Insights App ID correct in settings.json
-4. Try different auth flow: Change `authFlow` to `device_code` and restart
+1. Output panel for MCP registration errors
+2. Restart Extension Development Host (`Ctrl+Shift+F5`)
+3. Verify `bctb-mcp` starts manually: `bctb-mcp --help`
 
-### Issue: No Telemetry Data Returned
-
-**Check:**
-1. Application Insights has data: Open Azure Portal → Application Insights → Logs
-2. Try direct KQL query: `traces | take 10`
-3. Check time range (use broader range: `ago(30d)`)
-4. Verify Application Insights App ID correct
-
-### Issue: Saved Queries Not Found
+### Issue: Profile not found errors
 
 **Check:**
-1. `queries/` folder exists in workspace root
-2. .kql files have proper format (comments at top)
-3. MCP server restarted after creating files manually
-4. Check Output Channel for file parsing errors
+1. `.bctb-config.json` in workspace root
+2. Profile names match exactly (case-sensitive)
+3. JSON is valid (no syntax errors)
+
+### Issue: Queries fail with auth errors
+
+**Check:**
+```powershell
+# Verify Azure CLI login
+az account show
+
+# Check correct subscription
+az account list
+az account set --subscription "<your-subscription>"
+
+# Verify Application Insights access
+az monitor app-insights component show --app <app-name> --resource-group <rg-name>
+```
 
 ---
 
-## Test Results Summary
+## Cleanup After Testing
 
-After completing all tests, fill out:
+```powershell
+# Remove test workspace
+Remove-Item -Recurse -Force "C:\_Source\_E2E-Test\bctb-e2e-test-workspace"
 
-**Date:** _______________  
-**Tester:** _______________  
-**Extension Version:** _______________
+# Optionally uninstall global MCP (if using local pack)
+npm uninstall -g bc-telemetry-buddy-mcp
 
-| Test Part | Status | Notes |
-|-----------|--------|-------|
-| Part 1: Setup Verification | ⬜ Pass ⬜ Fail | |
-| Part 2: MCP Tools Registration | ⬜ Pass ⬜ Fail | |
-| Part 3: Basic Queries | ⬜ Pass ⬜ Fail | |
-| Part 4: Saved Queries | ⬜ Pass ⬜ Fail | |
-| Part 5: Query Search | ⬜ Pass ⬜ Fail | |
-| Part 6: Recommendations | ⬜ Pass ⬜ Fail | |
-| Part 7: Complex Workflows | ⬜ Pass ⬜ Fail | |
-| Part 8: Error Handling | ⬜ Pass ⬜ Fail | |
-| Part 9: Integration | ⬜ Pass ⬜ Fail | |
-| Part 10: NL Flexibility | ⬜ Pass ⬜ Fail | |
-
-**Overall Result:** ⬜ PASS ⬜ FAIL
-
-**Critical Issues Found:**
-- [ ] None
-- [ ] List issues here
-
-**Recommended Actions:**
-- [ ] Ready for release
-- [ ] Needs bug fixes (list above)
-- [ ] Needs performance improvements
-- [ ] Needs additional testing
+# Or unlink (if using npm link)
+cd packages/mcp
+npm unlink -g
+```
 
 ---
 
-## Next Steps
+## Test Results Template
 
-**If All Tests Pass ✅:**
-1. Document any interesting edge cases discovered
-2. Create sample queries for documentation/demo
-3. Take screenshots for README.md
-4. Prepare for marketplace publishing
-5. Write user guide with real examples from testing
+**Date:** `_______________`  
+**Tester:** `_______________`  
+**Extension Version:** `_______________`  
+**MCP Version:** `_______________` (from `bctb-mcp --version`)  
+**Install Method:** ⬜ npm publish ⬜ local pack ⬜ npm link
 
-**If Tests Fail ❌:**
-1. Capture detailed logs from Output Channel
-2. Note exact Copilot queries that failed
-3. Check MCP server logs (stderr/stdout)
-4. Review `Instructions.md` tool definitions
-5. Test with simplified MCP setup
-6. File GitHub issues with reproduction steps
+### Results
+
+| Test Section | Pass | Fail | Notes |
+|-------------|------|------|-------|
+| Part 0: Setup | ⬜ | ⬜ | |
+| Part 1: Profile Management | ⬜ | ⬜ | |
+| Part 2: Copilot Integration | ⬜ | ⬜ | |
+| Part 3: Multi-Profile Queries | ⬜ | ⬜ | |
+| Part 4: Save Queries | ⬜ | ⬜ | |
+| Part 5: Complex Workflows | ⬜ | ⬜ | |
+| Part 6: Error Handling | ⬜ | ⬜ | |
+| Part 7: Extension Commands | ⬜ | ⬜ | |
+| Part 8: Final Integration | ⬜ | ⬜ | |
+
+**Overall:** ⬜ PASS ⬜ FAIL
+
+**Critical Issues:**
+```
+(List any blocking issues here)
+```
+
+**Recommendations:**
+```
+(Next steps or improvements)
+```
 
 ---
 
-**Remember:** The entire value of BC Telemetry Buddy is in the Copilot integration. If natural language telemetry queries don't work smoothly through Copilot Chat, the project hasn't achieved its goal. Command Palette functionality is just scaffolding for testing the underlying infrastructure.
+## Next Steps After Successful E2E
 
-🎯 **Goal:** "Show me errors from yesterday" should just work in Copilot Chat.
+✅ **If all tests pass:**
+
+1. **Publish MCP to npm** (if not already done):
+   ```powershell
+   cd packages/mcp
+   npm version patch  # or minor/major
+   npm run build
+   npm publish
+   ```
+
+2. **Package extension for marketplace**:
+   ```powershell
+   cd packages/extension
+   npm run build
+   vsce package
+   # Creates bc-telemetry-buddy-X.Y.Z.vsix
+   ```
+
+3. **Update documentation** with tested examples
+
+4. **Create demo video** showing multi-profile workflow
+
+5. **Publish to VS Code Marketplace**
+
+---
+
+**🎯 Remember:** This E2E test validates the **real-world deployment scenario**:
+- Users install MCP globally: `npm install -g bc-telemetry-buddy-mcp`
+- Users install extension from marketplace
+- Extension detects and uses globally-installed MCP
+- GitHub Copilot queries multi-profile Business Central telemetry seamlessly
+
+If this workflow works perfectly, you're ready to ship! 🚀
