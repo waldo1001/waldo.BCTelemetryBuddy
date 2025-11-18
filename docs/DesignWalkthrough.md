@@ -1314,3 +1314,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Updated references from chatmode to BCTelemetryBuddy agent [Entry: 6f053ba3-fa6d-4a8a-95ad-86dd6b9948cc]
   - **Why:** Clarify that users should switch to the agent (not chatmode) for file operations
   - **How:** Replaced all 'chatmode' references with 'agent' and simplified to 3-step instructions
+- **2025-11-18** — Updated documentation for v0.3.0 refactoring completion [Entry: 72b4309f-91fb-4759-86c3-f98d6f956a5a]
+  - **Why:** Remove 'not working' warnings and reflect actual implemented features
+  - **How:** Updated MIGRATION.md, UserGuide.md, DesignWalkthrough.md; verified against code (145 extension tests passing, 282 MCP tests passing)
+  - **2025-11-18** — Completed monorepo refactoring for v0.3.0 architecture [Entry: 72b4309f-91fb-4759-86c3-f98d6f956a5a]
+  - **Why:** Decouple MCP from extension to enable standalone usage, improve performance with direct TelemetryService execution, support multi-profile configurations, and prepare MCP for NPM publishing.
+  - **How:** Created `packages/shared/` with core business logic (auth, kusto, cache, queries, sanitize, eventLookup), refactored MCP to use @bctb/shared with CLI commands (init, validate, start), implemented TelemetryService in extension for direct KQL execution without MCP, added ProfileManager and ProfileStatusBar for multi-customer support, implemented MigrationService for automatic settings migration from `bcTelemetryBuddy.*` to `.bctb-config.json`, configured npm workspaces and TypeScript project references, updated all documentation (MIGRATION.md, UserGuide.md, package READMEs). Result: Extension works standalone (145 tests passing), MCP ready for NPM (282 tests passing), configuration unified in single file with profile support.

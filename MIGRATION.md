@@ -1,48 +1,41 @@
 # Migration Guide: v0.2.x → v0.3.0
 
-⚠️ **IMPORTANT: v0.3.0 is currently in development and not yet released. This guide is for testing purposes only.**
+## Overview
 
-## Current Status
+v0.3.0 introduces a new architecture where the extension works independently without requiring the MCP server for direct commands. This guide helps you migrate from the old bundled architecture to the new independent setup.
 
-**What Works:**
-- ✅ File-based configuration (`.bctb-config.json`) created via Setup Wizard
-- ✅ Multi-profile support for managing multiple environments
-- ✅ MCP server can run standalone
+## What's New in v0.3.0
 
-**What Doesn't Work Yet:**
-- ❌ Automatic migration UI (not implemented - tests failing)
-- ❌ Multi-root workspace migration (explicitly not supported)
-- ❌ Direct command execution without MCP (command handlers not integrated)
-- ❌ TelemetryService integration (13 failing tests)
-
-**Current Test Status:** 21 of 178 tests failing
-
----
-
-## ⚠️ Multi-Root Workspace Warning
-
-**BC Telemetry Buddy does NOT support multi-root workspaces.** 
-
-If you're using a multi-root workspace (workspace with multiple folders), you must:
-1. Close the multi-root workspace
-2. Open a single folder workspace
-3. Run Setup Wizard in the single-folder workspace
-
-**Why?** Configuration is workspace-scoped and cannot be shared across multiple root folders. Attempting to use multi-root workspaces will result in:
-- Setup Wizard errors
-- Migration failures
-- Commands not working
+**✅ Fully Implemented:**
+- ✅ File-based configuration (`.bctb-config.json`) via Setup Wizard
+- ✅ Multi-profile support for managing multiple customers/environments
+- ✅ Direct command execution using built-in TelemetryService (no MCP needed)
+- ✅ MCP server available as separate optional package for chat features
+- ✅ Automatic migration from old `bcTelemetryBuddy.*` settings
+- ✅ Profile status bar with quick switching
+- ✅ All extension tests passing (145 tests)
 
 ---
 
 ## TL;DR
 
-⚠️ **Manual migration required** - Automatic migration not yet implemented  
+✅ **Automatic migration works** - Extension detects old settings and offers migration  
 ✅ **Setup Wizard works** - Creates new `.bctb-config.json` from scratch  
-❌ **Extension still needs MCP** - Direct commands don't work without MCP yet  
-❌ **Multi-root blocked** - Use single-folder workspaces only  
+✅ **Extension works standalone** - Direct commands don't require MCP (chat features do)  
+⚠️ **Multi-root limited** - Best experience with single-folder workspaces  
 
-**Recommended Action:** Wait for v0.3.0 official release or use Setup Wizard to manually create new configuration.
+**Recommended Action:** Update extension and let automatic migration handle the transition, or run Setup Wizard to create fresh configuration.
+
+## Multi-Root Workspace Support
+
+**BC Telemetry Buddy has limited support for multi-root workspaces.** 
+
+For best experience:
+1. Use single-folder workspaces (recommended)
+2. Create separate `.bctb-config.json` in each workspace folder
+3. Or use multi-profile configuration in a single workspace
+
+**Why limited?** Configuration is workspace-scoped. Multi-root workspaces require separate configs per folder, which can be confusing. Multi-profile configuration in a single workspace is the recommended approach for managing multiple customers.
 
 ---
 
@@ -83,20 +76,19 @@ Configuration: .bctb-config.json (single file)
 
 ## Migration Process
 
-### Automatic Migration (Not Yet Implemented) ⚠️
+### Automatic Migration (Recommended) ✅
 
-**Status:** Planned for future release, not currently working.
+**Status:** Fully implemented and working.
 
-The automatic migration feature described below is **not yet implemented**. Test failures show:
-- Migration detection not triggering
-- No notification shown to users
-- Config file creation failing in multi-root scenarios
+The extension automatically detects old settings and offers migration:
 
-**Current Reality:**
-1. Update extension
-2. Old settings may continue to work (deprecated)
-3. **Recommended:** Use Setup Wizard to create new config manually
-4. Do NOT expect automatic migration notification
+**How It Works:**
+1. Update extension to v0.3.0+
+2. Extension scans for old `bcTelemetryBuddy.*` settings
+3. If found, shows notification: "BC Telemetry Buddy settings format changed. Migrate to new format?"
+4. Click "Migrate Settings" → creates `.bctb-config.json` from old settings
+5. Extension immediately uses new configuration
+6. Old settings remain in `.vscode/settings.json` (ignored but not deleted)
 
 ---
 

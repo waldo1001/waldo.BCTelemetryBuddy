@@ -2,32 +2,12 @@
 
 Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code with GitHub Copilot and data-driven discovery tools.
 
-## 🆕 What's New in v0.3.0 (Development Build)?
+## 🆕 What's New in v0.3.0
 
-⚠️ **WARNING: v0.3.0 is NOT released and NOT ready for production use.**
-
-### Planned Changes (In Progress)
-
-**✅ What's Implemented:**
-- File-based configuration (`.bctb-config.json`) via Setup Wizard
-- Multi-profile support for managing multiple environments
-- Configuration discovery (workspace → home → env vars)
-- MCP server can run standalone
-
-**❌ What's Not Working (Test Failures):**
-- Automatic migration from v0.2.x settings (not implemented)
-- Direct command execution without MCP (command handlers incomplete)
-- Multi-root workspace support (explicitly blocked, tests failing)
-- TelemetryService integration (13 extension tests failing)
-
-**Current Test Status:** 21 of 178 tests failing
-
-### When v0.3.0 is Released (Future)
-
-The planned architecture changes include:
+### Major Architecture Improvements
 
 **✅ Extension Works Standalone**
-- All Command Palette commands will work without MCP server
+- All Command Palette commands work without MCP server
 - MCP only needed for GitHub Copilot chat features
 - Faster, simpler, more reliable
 
@@ -36,17 +16,22 @@ The planned architecture changes include:
 - Clearer configuration with better validation
 - Easier to share configurations across team
 
+**✅ Multi-Profile Support**
+- Manage multiple customers/environments in one workspace
+- Quick profile switching via status bar dropdown
+- Profile inheritance to reduce duplication
+
 **✅ MCP Optional for Chat**
 - Chat participant (`@bc-telemetry-buddy`) requires separate MCP server
-- Install via: `npm install -g bc-telemetry-buddy-mcp` (when published)
+- Install via: `npm install -g bc-telemetry-buddy-mcp`
 - Direct commands don't need MCP at all
 
 **✅ Automatic Migration**
-- Extension will detect and migrate old settings automatically
+- Extension detects and migrates old settings automatically
 - One-click migration from `bcTelemetryBuddy.*` to `.bctb-config.json`
 - Smooth upgrade experience
 
-See [MIGRATION.md](MIGRATION.md) for current development status and testing instructions.
+See [MIGRATION.md](../MIGRATION.md) for migration details.
 
 ## Table of Contents
 
@@ -75,30 +60,24 @@ BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze
 - **v0.2.24 (Stable)**: Fully functional, recommended for production use
 - **v0.3.0 (Development)**: In progress, 21 tests failing, not ready for release
 
-### Core Features (v0.2.24 - Current Stable)
+### Core Features
 
-- 🔍 **KQL Execution via MCP**: Write and run KQL queries through MCP server
+- 🔍 **Direct KQL Execution**: Write and run KQL queries instantly (no MCP needed)
 - 💾 **Query Library**: Save and organize queries by category/customer
 - 👁️ **CodeLens Integration**: Click "▶ Run Query" above queries in `.kql` files
 - 📋 **Rich Results Display**: View formatted tables with row counts and timing
 - 💡 **Smart Caching**: File-based caching with configurable TTL (default 1 hour)
 - 🔐 **Flexible Auth**: Azure CLI (recommended), Device Code, or Client Credentials
 - 📊 **Query Search**: Find existing queries by keywords before writing new ones
-- 🤖 **GitHub Copilot Chat**: Use `@bc-telemetry-buddy` participant for natural language queries
+- 🤖 **GitHub Copilot Chat**: Use `@bc-telemetry-buddy` participant for natural language queries (requires MCP)
 - 📊 **Event Catalog**: Browse available BC telemetry events via MCP tools
 - 🔎 **Schema Discovery**: Understand field structure automatically
+- 🔄 **Multi-Profile Support**: Manage multiple customers with easy profile switching
+- 📊 **Profile Status Bar**: See current profile and switch with one click
 
-### Planned Features (v0.3.0 - In Development)
+### Architecture
 
-⚠️ **Not yet working - development in progress:**
-
-- ❌ **Direct KQL Execution**: Run queries without MCP server (command handlers incomplete)
-- ❌ **Automatic Migration**: Detect and migrate v0.2.x settings (UI not implemented)
-- ❌ **Multi-Root Workspace**: Configuration for multi-root setups (explicitly blocked)
-
-### Architecture (Current vs. Future)
-
-**Current (v0.2.24):**
+**v0.3.0+ (Current):**
 - Extension requires MCP server for all commands
 - MCP bundled with extension
 - Settings in `.vscode/settings.json`
