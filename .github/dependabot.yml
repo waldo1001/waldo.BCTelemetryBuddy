@@ -2,12 +2,13 @@ version: 2
 
 updates:
   # Root workspace dependencies
+  # Disabled - dependencies updated manually
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -24,12 +25,13 @@ updates:
         update-types: ["version-update:semver-major"]
 
   # MCP backend dependencies
+  # Disabled - dependencies updated manually
   - package-ecosystem: "npm"
     directory: "/packages/mcp"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(mcp/deps)"
       include: "scope"
@@ -41,12 +43,13 @@ updates:
       - "waldo1001"
 
   # VSCode extension dependencies
+  # Disabled - dependencies updated manually
   - package-ecosystem: "npm"
     directory: "/packages/extension"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(extension/deps)"
       include: "scope"
@@ -58,12 +61,13 @@ updates:
       - "waldo1001"
 
   # GitHub Actions dependencies
+  # Disabled - dependencies updated manually
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(ci)"
       include: "scope"

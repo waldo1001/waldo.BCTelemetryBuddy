@@ -832,3 +832,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-17** — Applied all feasibility review corrections to refactoring plan [Entry: bf60c1a7-927b-49b9-bd7d-21f296c9536a]
   - **Why:** Addressed 5 issues: config types export, MCP restart mechanism, config conflict detection, precedence rules, testing gaps
   - **How:** Added config types to shared, kill/spawn MCP restart, checkConfigConflicts() warning, precedence docs, 3 new tests. Plan ready for implementation.
+- **2025-11-18** — Disabled dependabot and updated dependencies manually [Entry: 1c9b1e10-7577-4c4c-9feb-b654b6adef84]
+  - **Why:** User wants manual control over dependency updates to avoid PR spam
+  - **How:** Set open-pull-requests-limit: 0 in dependabot.yml, ran npm update in both packages, fixed esbuild and jest vulnerabilities
