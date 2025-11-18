@@ -13,6 +13,15 @@ export class SetupWizardProvider {
 
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
+    public dispose() {
+        this._disposables.forEach(d => d.dispose());
+        this._disposables = [];
+        if (this._panel) {
+            this._panel.dispose();
+            this._panel = undefined;
+        }
+    }
+
     public async show() {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn

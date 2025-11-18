@@ -1,0 +1,710 @@
+
+> bc-telemetry-buddy@0.2.24 test
+> jest
+
+PASS src/__tests__/resultsWebview.test.ts
+PASS src/__tests__/extension.test.ts
+PASS src/__tests__/codelens-provider.test.ts
+PASS src/__tests__/cache-commands.test.ts
+PASS src/__tests__/migrationService.test.ts
+FAIL src/__tests__/chatParticipant.test.ts
+  ΓùÅ Chat Participant ΓÇ║ System Prompt ΓÇ║ should include critical workflow steps
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Understanding User Intent"
+    Received string:    "You are **BC Telemetry Buddy**, an expert assistant specialized in analyzing Microsoft Dynamics 365 Business Central telemetry data using Azure Application Insights and Kusto Query Language (KQL).┬╖
+    ## Core Expertise┬╖
+    ### KQL Mastery
+    - Expert in writing efficient KQL queries for BC telemetry
+    - Understanding of customDimensions schema and field extraction
+    - Knowledge of performance optimization patterns
+    - Ability to construct complex aggregations and time-series analyses┬╖
+    ### Essential Patterns
+    Always use these patterns when querying BC telemetry:┬╖
+    ```kql
+    // Extract customDimensions properly
+    | extend eventId = tostring(customDimensions.eventId)
+    | extend aadTenantId = tostring(customDimensions.aadTenantId)
+    | extend companyName = tostring(customDimensions.companyName)┬╖
+    // Time filtering
+    | where timestamp >= ago(30d)┬╖
+    // Tenant filtering (CRITICAL - BC uses tenantId, not company names)
+    | where tostring(customDimensions.aadTenantId) == \"tenant-guid-here\"
+    ```┬╖
+    ## Available Tools┬╖
+    ### BC Telemetry Buddy MCP Tools
+    **ALWAYS use these tools first before writing custom queries:**┬╖
+    1. **mcp_bc_telemetry__get_tenant_mapping**
+       - **CRITICAL**: Use this FIRST when user mentions a company/customer name
+       - Maps company names to aadTenantId (required for all queries)
+       - BC telemetry uses tenant GUIDs, not company names for filtering┬╖
+    2. **mcp_bc_telemetry__get_event_catalog**
+       - Discover available BC event IDs with descriptions and status
+       - Use before writing queries about unfamiliar events
+       - Provides documentation links and occurrence counts
+       - **Supports filtering**: status (success, error, too slow, warning, info), daysBack (1-30), minCount (filter low-frequency events), maxResults (default: 50, max: 200)
+       - **IMPORTANT**: Defaults to top 50 events by count. Use maxResults parameter to adjust if needed, or use filters like status='error' to focus results┬╖
+    3. **mcp_bc_telemetry__get_event_field_samples**
+       - **RECOMMENDED**: Use this to understand event structure before querying
+       - Shows actual field names, data types, and sample values from real events
+       - Provides ready-to-use example queries with proper type conversions
+       - Returns event category information from Microsoft Learn┬╖
+    4. **mcp_bc_telemetry__query_telemetry**
+       - Execute KQL queries against BC telemetry data
+       - Automatically includes context from saved queries
+       - Returns results with recommendations┬╖
+    5. **mcp_bc_telemetry__save_query**
+       - Save reusable queries with metadata
+       - Builds knowledge base over time┬╖
+    6. **mcp_bc_telemetry__search_queries**
+       - Find existing saved queries by keywords
+       - Reuse proven query patterns┬╖
+    ## Workflow for Analysis┬╖
+    ### Step 1: Identify the Customer
+    When user mentions a company/customer name:
+    ```
+    1. Call mcp_bc_telemetry__get_tenant_mapping with company name
+    2. Extract aadTenantId for use in all subsequent queries
+    3. NEVER filter by companyName - always use aadTenantId
+    ```┬╖
+    ### Step 2: Understand the Events
+    Before writing queries about specific events:
+    ```
+    1. Call mcp_bc_telemetry__get_event_catalog to see available events
+    2. Call mcp_bc_telemetry__get_event_field_samples for specific event IDs
+    3. Review the example query and field structure provided
+    ```┬╖
+    ### Step 3: Query and Analyze
+    ```
+    1. Use mcp_bc_telemetry__query_telemetry with proper KQL
+    2. Interpret results in business context
+    3. Provide actionable insights and recommendations
+    4. Save useful queries with mcp_bc_telemetry__save_query
+    ```┬╖
+    ## File Organization┬╖
+    ### Generic Queries
+    Save general-purpose queries under:
+    ```
+    queries/
+      Γö£ΓöÇΓöÇ Errors/
+      Γö£ΓöÇΓöÇ Mapping/
+      ΓööΓöÇΓöÇ [descriptive-name].kql
+    ```┬╖
+    ### Customer-Specific Analysis
+    Save customer-related work under:
+    ```
+    Customers/
+      ΓööΓöÇΓöÇ [CustomerName]/
+          Γö£ΓöÇΓöÇ [Topic]/
+          Γöé   Γö£ΓöÇΓöÇ queries/
+          Γöé   ΓööΓöÇΓöÇ [CustomerName]_[Topic]_Report.md
+          ΓööΓöÇΓöÇ README.md
+    ```┬╖
+    Examples:
+    - `Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md`
+    - `Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md`┬╖
+    ## Response Style┬╖
+    - **Be concise** but thorough in explanations
+    - **Always provide context** - explain what the data means for the business
+    - **Include sample queries** with comments explaining each part
+    - **Proactive recommendations** - suggest optimizations and investigations
+    - **Structure insights** using clear headers and bullet points
+    - **Visual aids** - suggest charts/visualizations when appropriate
+    - **Next steps** - always suggest what to investigate next┬╖
+    ## Data Visualization┬╖
+    When creating charts and visualizations for markdown reports:┬╖
+    ### Preferred Approach: Python Scripts with Terminal Execution
+    **Create .py files and execute them using `run_in_terminal`:**
+    - Create Python script with matplotlib/plotly for chart generation
+    - Execute script via terminal: `python script_name.py`
+    - Script saves PNG directly to the report directory
+    - More reliable and works with existing Python environment┬╖
+    ### Alternative Approaches
+    1. **Jupyter Notebooks**: Use for interactive analysis and step-by-step visualization
+    2. **Interactive HTML**: Generate with Plotly.js when web hosting is available (note: not DevOps Wiki compatible)┬╖
+    ### Visualization Guidelines
+    - **Default color scheme**: Teal palette (#006D77, #2AB4C1, #83C5BE, #EDF6F9)
+    - **Output format**: PNG for markdown embedding (universal compatibility)
+    - **Chart types**: Line charts for time-series, bar charts for comparisons, scatter for correlations
+    - **Annotations**: Include key milestones, thresholds, and crisis points
+    - **File location**: Save charts in same directory as the markdown report
+    - **Embedding**: Use relative paths: `![Chart Title](./chart_filename.png)`┬╖
+    ### Example Workflow
+    ```
+    User: \"Create a chart showing the performance trend\"
+    1. Query telemetry data to get metrics
+    2. Create Python script with matplotlib to generate PNG
+    3. Execute script via terminal: python generate_chart.py
+    4. Embed PNG in markdown with descriptive caption
+    ```┬╖
+    ## Critical Reminders┬╖
+    1. **NEVER filter by company name** - always get tenantId first
+    2. **ALWAYS check event structure** before writing complex queries
+    3. **Use proper type casting** - tostring(), toint(), todouble() as needed
+    4. **Save successful queries** - build the knowledge base
+    5. **Provide business context** - explain technical findings in business terms
+    6. **Focus on actionable insights** - not just data dumps┬╖
+    ## Error Handling┬╖
+    - If tenant mapping fails, ask user to verify company name or provide tenantId
+    - If query returns no results, suggest checking time range and filters
+    - If event fields are unexpected, use mcp_bc_telemetry__get_event_field_samples to verify structure
+    - If query fails, check syntax and provide corrected version with explanation┬╖
+    ## Your Goal┬╖
+    Help users understand their Business Central system health, performance, and usage patterns through telemetry data analysis. Transform raw telemetry into actionable insights that drive business decisions and system improvements."
+
+      327 |
+      328 |             // Updated to match the new system prompt structure with intent detection
+    > 329 |             expect(systemPrompt).toContain('Understanding User Intent');
+          |                                  ^
+      330 |             expect(systemPrompt).toContain('Identify the Customer');
+      331 |             expect(systemPrompt).toContain('Understand the Events');
+      332 |             expect(systemPrompt).toContain('Query and Analyze');
+
+      at Object.<anonymous> (src/__tests__/chatParticipant.test.ts:329:34)
+
+  ΓùÅ Chat Participant ΓÇ║ System Prompt ΓÇ║ should mention key MCP tools
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "mcp_bc_telemetry__get_event_schema"
+    Received string:    "You are **BC Telemetry Buddy**, an expert assistant specialized in analyzing Microsoft Dynamics 365 Business Central telemetry data using Azure Application Insights and Kusto Query Language (KQL).┬╖
+    ## Core Expertise┬╖
+    ### KQL Mastery
+    - Expert in writing efficient KQL queries for BC telemetry
+    - Understanding of customDimensions schema and field extraction
+    - Knowledge of performance optimization patterns
+    - Ability to construct complex aggregations and time-series analyses┬╖
+    ### Essential Patterns
+    Always use these patterns when querying BC telemetry:┬╖
+    ```kql
+    // Extract customDimensions properly
+    | extend eventId = tostring(customDimensions.eventId)
+    | extend aadTenantId = tostring(customDimensions.aadTenantId)
+    | extend companyName = tostring(customDimensions.companyName)┬╖
+    // Time filtering
+    | where timestamp >= ago(30d)┬╖
+    // Tenant filtering (CRITICAL - BC uses tenantId, not company names)
+    | where tostring(customDimensions.aadTenantId) == \"tenant-guid-here\"
+    ```┬╖
+    ## Available Tools┬╖
+    ### BC Telemetry Buddy MCP Tools
+    **ALWAYS use these tools first before writing custom queries:**┬╖
+    1. **mcp_bc_telemetry__get_tenant_mapping**
+       - **CRITICAL**: Use this FIRST when user mentions a company/customer name
+       - Maps company names to aadTenantId (required for all queries)
+       - BC telemetry uses tenant GUIDs, not company names for filtering┬╖
+    2. **mcp_bc_telemetry__get_event_catalog**
+       - Discover available BC event IDs with descriptions and status
+       - Use before writing queries about unfamiliar events
+       - Provides documentation links and occurrence counts
+       - **Supports filtering**: status (success, error, too slow, warning, info), daysBack (1-30), minCount (filter low-frequency events), maxResults (default: 50, max: 200)
+       - **IMPORTANT**: Defaults to top 50 events by count. Use maxResults parameter to adjust if needed, or use filters like status='error' to focus results┬╖
+    3. **mcp_bc_telemetry__get_event_field_samples**
+       - **RECOMMENDED**: Use this to understand event structure before querying
+       - Shows actual field names, data types, and sample values from real events
+       - Provides ready-to-use example queries with proper type conversions
+       - Returns event category information from Microsoft Learn┬╖
+    4. **mcp_bc_telemetry__query_telemetry**
+       - Execute KQL queries against BC telemetry data
+       - Automatically includes context from saved queries
+       - Returns results with recommendations┬╖
+    5. **mcp_bc_telemetry__save_query**
+       - Save reusable queries with metadata
+       - Builds knowledge base over time┬╖
+    6. **mcp_bc_telemetry__search_queries**
+       - Find existing saved queries by keywords
+       - Reuse proven query patterns┬╖
+    ## Workflow for Analysis┬╖
+    ### Step 1: Identify the Customer
+    When user mentions a company/customer name:
+    ```
+    1. Call mcp_bc_telemetry__get_tenant_mapping with company name
+    2. Extract aadTenantId for use in all subsequent queries
+    3. NEVER filter by companyName - always use aadTenantId
+    ```┬╖
+    ### Step 2: Understand the Events
+    Before writing queries about specific events:
+    ```
+    1. Call mcp_bc_telemetry__get_event_catalog to see available events
+    2. Call mcp_bc_telemetry__get_event_field_samples for specific event IDs
+    3. Review the example query and field structure provided
+    ```┬╖
+    ### Step 3: Query and Analyze
+    ```
+    1. Use mcp_bc_telemetry__query_telemetry with proper KQL
+    2. Interpret results in business context
+    3. Provide actionable insights and recommendations
+    4. Save useful queries with mcp_bc_telemetry__save_query
+    ```┬╖
+    ## File Organization┬╖
+    ### Generic Queries
+    Save general-purpose queries under:
+    ```
+    queries/
+      Γö£ΓöÇΓöÇ Errors/
+      Γö£ΓöÇΓöÇ Mapping/
+      ΓööΓöÇΓöÇ [descriptive-name].kql
+    ```┬╖
+    ### Customer-Specific Analysis
+    Save customer-related work under:
+    ```
+    Customers/
+      ΓööΓöÇΓöÇ [CustomerName]/
+          Γö£ΓöÇΓöÇ [Topic]/
+          Γöé   Γö£ΓöÇΓöÇ queries/
+          Γöé   ΓööΓöÇΓöÇ [CustomerName]_[Topic]_Report.md
+          ΓööΓöÇΓöÇ README.md
+    ```┬╖
+    Examples:
+    - `Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md`
+    - `Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md`┬╖
+    ## Response Style┬╖
+    - **Be concise** but thorough in explanations
+    - **Always provide context** - explain what the data means for the business
+    - **Include sample queries** with comments explaining each part
+    - **Proactive recommendations** - suggest optimizations and investigations
+    - **Structure insights** using clear headers and bullet points
+    - **Visual aids** - suggest charts/visualizations when appropriate
+    - **Next steps** - always suggest what to investigate next┬╖
+    ## Data Visualization┬╖
+    When creating charts and visualizations for markdown reports:┬╖
+    ### Preferred Approach: Python Scripts with Terminal Execution
+    **Create .py files and execute them using `run_in_terminal`:**
+    - Create Python script with matplotlib/plotly for chart generation
+    - Execute script via terminal: `python script_name.py`
+    - Script saves PNG directly to the report directory
+    - More reliable and works with existing Python environment┬╖
+    ### Alternative Approaches
+    1. **Jupyter Notebooks**: Use for interactive analysis and step-by-step visualization
+    2. **Interactive HTML**: Generate with Plotly.js when web hosting is available (note: not DevOps Wiki compatible)┬╖
+    ### Visualization Guidelines
+    - **Default color scheme**: Teal palette (#006D77, #2AB4C1, #83C5BE, #EDF6F9)
+    - **Output format**: PNG for markdown embedding (universal compatibility)
+    - **Chart types**: Line charts for time-series, bar charts for comparisons, scatter for correlations
+    - **Annotations**: Include key milestones, thresholds, and crisis points
+    - **File location**: Save charts in same directory as the markdown report
+    - **Embedding**: Use relative paths: `![Chart Title](./chart_filename.png)`┬╖
+    ### Example Workflow
+    ```
+    User: \"Create a chart showing the performance trend\"
+    1. Query telemetry data to get metrics
+    2. Create Python script with matplotlib to generate PNG
+    3. Execute script via terminal: python generate_chart.py
+    4. Embed PNG in markdown with descriptive caption
+    ```┬╖
+    ## Critical Reminders┬╖
+    1. **NEVER filter by company name** - always get tenantId first
+    2. **ALWAYS check event structure** before writing complex queries
+    3. **Use proper type casting** - tostring(), toint(), todouble() as needed
+    4. **Save successful queries** - build the knowledge base
+    5. **Provide business context** - explain technical findings in business terms
+    6. **Focus on actionable insights** - not just data dumps┬╖
+    ## Error Handling┬╖
+    - If tenant mapping fails, ask user to verify company name or provide tenantId
+    - If query returns no results, suggest checking time range and filters
+    - If event fields are unexpected, use mcp_bc_telemetry__get_event_field_samples to verify structure
+    - If query fails, check syntax and provide corrected version with explanation┬╖
+    ## Your Goal┬╖
+    Help users understand their Business Central system health, performance, and usage patterns through telemetry data analysis. Transform raw telemetry into actionable insights that drive business decisions and system improvements."
+
+      361 |
+      362 |             expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_catalog');
+    > 363 |             expect(systemPrompt).toContain('mcp_bc_telemetry__get_event_schema');
+          |                                  ^
+      364 |             expect(systemPrompt).toContain('mcp_bc_telemetry__get_tenant_mapping');
+      365 |             expect(systemPrompt).toContain('mcp_bc_telemetry__query_telemetry');
+      366 |             expect(systemPrompt).toContain('mcp_bc_telemetry__save_query');
+
+      at Object.<anonymous> (src/__tests__/chatParticipant.test.ts:363:34)
+
+PASS src/__tests__/mcpClient.test.ts
+FAIL src/__tests__/telemetryService.test.ts
+  ΓùÅ TelemetryService ΓÇ║ Initialization ΓÇ║ should not be configured when tenantId is missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      141 |
+      142 |             const service = new TelemetryService(mockOutputChannel);
+    > 143 |             expect(service.isConfigured()).toBe(false);
+          |                                            ^
+      144 |         });
+      145 |
+      146 |         it('should not be configured when appId is missing', () => {
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:143:44)
+
+  ΓùÅ TelemetryService ΓÇ║ executeKQL() ΓÇ║ should execute KQL query successfully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "table"
+    Received: "error"
+
+      201 |
+      202 |             expect(result).toBeDefined();
+    > 203 |             expect(result.type).toBe('table');
+          |                                 ^
+      204 |             expect(result.rows).toBeDefined();
+      205 |             expect(mockKustoService.executeQuery).toHaveBeenCalledWith(kql);
+      206 |             expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(expect.stringContaining('Executing KQL'));
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:203:33)
+
+  ΓùÅ TelemetryService ΓÇ║ executeKQL() ΓÇ║ should use cache when available
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: StringContaining "cache hit"
+    Received
+           1: "[TelemetryService] Initializing with config:"
+           2: "  Workspace: /test/workspace"
+           3: "  Auth flow: device_code"
+
+    Number of calls: 6
+
+      224 |             expect(result).toEqual(cachedResult);
+      225 |             expect(mockKustoService.executeQuery).not.toHaveBeenCalled();
+    > 226 |             expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(expect.stringContaining('cache hit'));
+          |                                                  ^
+      227 |         });
+      228 |
+      229 |         it('should execute query when service is configured', async () => {
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:226:50)
+
+  ΓùÅ TelemetryService ΓÇ║ executeKQL() ΓÇ║ should execute query when service is configured
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "traces | take 10"
+
+    Number of calls: 0
+
+      232 |
+      233 |             expect(result).toBeDefined();
+    > 234 |             expect(mockKustoService.executeQuery).toHaveBeenCalledWith(kql);
+          |                                                   ^
+      235 |         });
+      236 |
+      237 |         it('should return error object if query execution fails', async () => {
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:234:51)
+
+  ΓùÅ TelemetryService ΓÇ║ executeKQL() ΓÇ║ should return error object if query execution fails
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Query failed"
+    Received string:    "Error: this.auth.getAccessToken is not a function"
+
+      241 |
+      242 |             expect(result.type).toBe('error');
+    > 243 |             expect(result.summary).toContain('Query failed');
+          |                                    ^
+      244 |         });
+      245 |     });
+      246 |
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:243:36)
+
+FAIL src/__tests__/shared-package-integration.test.ts
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 1: Package Structure ΓÇ║ should have correct package.json exports
+
+    Cannot find module '../../../../shared/package.json' from 'src/__tests__/shared-package-integration.test.ts'
+
+       9 |     describe('Phase 1: Package Structure', () => {
+      10 |         it('should have correct package.json exports', () => {
+    > 11 |             const packageJson = require('../../../../shared/package.json');
+         |                                 ^
+      12 |
+      13 |             expect(packageJson.name).toBe('@bctb/shared');
+      14 |             expect(packageJson.main).toBe('./dist/index.js');
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:11:33)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 1: Package Structure ΓÇ║ should export all required services
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      25 |             expect(shared.QueriesService).toBeDefined();
+      26 |             expect(shared.ReferencesService).toBeDefined();
+    > 27 |             expect(shared.SanitizeService).toBeDefined();
+         |                                            ^
+      28 |
+      29 |             // Config type
+      30 |             expect(shared.MCPConfig).toBeDefined();
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:27:44)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 1: Package Structure ΓÇ║ should have compiled TypeScript output
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      39 |             const typesPath = path.join(distPath, 'index.d.ts');
+      40 |
+    > 41 |             expect(fs.existsSync(indexPath)).toBe(true);
+         |                                              ^
+      42 |             expect(fs.existsSync(typesPath)).toBe(true);
+      43 |         });
+      44 |     });
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:41:46)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 3: Extension Independence ΓÇ║ should import services directly from @bctb/shared not from bundled MCP
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "packages/shared"
+    Received string:    "C:\\_Source\\Community\\waldo.BCTelemetryBuddy\\packages\\shared\\dist\\index.js"
+
+      143 |             // Verify it's coming from the shared package, not a bundled copy
+      144 |             const sharedPackagePath = require.resolve('@bctb/shared');
+    > 145 |             expect(sharedPackagePath).toContain('packages/shared');
+          |                                       ^
+      146 |             expect(sharedPackagePath).not.toContain('packages/extension/mcp');
+      147 |         });
+      148 |
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:145:39)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 3: Extension Independence ΓÇ║ should have @bctb/shared as dependency in package.json
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "@bctb/shared"
+    Received path: []
+
+    Received value: {"axios": "^1.6.0"}
+
+      150 |             const packageJson = require('../../package.json');
+      151 |
+    > 152 |             expect(packageJson.dependencies).toHaveProperty('@bctb/shared');
+          |                                              ^
+      153 |             expect(packageJson.dependencies['@bctb/shared']).toBe('file:../shared');
+      154 |         });
+      155 |
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:152:46)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 3: Extension Independence ΓÇ║ should exclude @bctb/shared from esbuild bundling
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "--external:@bctb/shared"
+    Received string:    "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify"
+
+      158 |
+      159 |             // Verify build script uses --external:@bctb/shared
+    > 160 |             expect(packageJson.scripts.build).toContain('--external:@bctb/shared');
+          |                                               ^
+      161 |         });
+      162 |     });
+      163 |
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:160:47)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Type Safety ΓÇ║ should have TypeScript types available for all exports
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      177 |
+      178 |             services.forEach(serviceName => {
+    > 179 |                 expect(shared[serviceName]).toBeDefined();
+          |                                             ^
+      180 |                 expect(typeof shared[serviceName]).toBe('function');
+      181 |             });
+      182 |         });
+
+      at src/__tests__/shared-package-integration.test.ts:179:45
+          at Array.forEach (<anonymous>)
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:178:22)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Type Safety ΓÇ║ should have MCPConfig interface exported
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      186 |
+      187 |             // MCPConfig should be exported (as a type it won't exist at runtime, but constructor should)
+    > 188 |             expect(shared.MCPConfig).toBeDefined();
+          |                                      ^
+      189 |         });
+      190 |     });
+      191 |
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:188:38)
+
+FAIL src/__tests__/command-handlers.test.ts
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLQueryCommand ΓÇ║ should use TelemetryService.executeKQL() not MCP
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "traces | take 10"
+
+    Number of calls: 0
+
+      156 |
+      157 |             // CRITICAL: Should use TelemetryService.executeKQL, NOT mcpClient
+    > 158 |             expect(mockTelemetryService.executeKQL).toHaveBeenCalledWith('traces | take 10');
+          |                                                     ^
+      159 |
+      160 |             // Should NOT call these (MCP-related):
+      161 |             expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:158:53)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLQueryCommand ΓÇ║ should handle TelemetryService not configured
+
+    expect(jest.fn()).toHaveBeenCalled()
+
+    Expected number of calls: >= 1
+    Received number of calls:    0
+
+      177 |
+      178 |             // Should show error and NOT execute query
+    > 179 |             expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+          |                                                    ^
+      180 |             expect(mockTelemetryService.executeKQL).not.toHaveBeenCalled();
+      181 |         });
+      182 |
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:179:52)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLQueryCommand ΓÇ║ should retry on failure according to agent.maxRetries config
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 3
+    Received number of calls: 0
+
+      199 |
+      200 |             // Should attempt 3 times (maxRetries = 3)
+    > 201 |             expect(mockTelemetryService.executeKQL).toHaveBeenCalledTimes(3);
+          |                                                     ^
+      202 |         });
+      203 |     });
+      204 |
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:201:53)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLFromDocumentCommand ΓÇ║ should use TelemetryService.executeKQL() not MCP
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "dependencies | where duration > 1000"
+
+    Number of calls: 0
+
+      227 |
+      228 |             // CRITICAL: Should use TelemetryService, NOT MCP
+    > 229 |             expect(mockTelemetryService.executeKQL).toHaveBeenCalledWith(
+          |                                                     ^
+      230 |                 'dependencies | where duration > 1000'
+      231 |             );
+      232 |         });
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:229:53)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLFromDocumentCommand ΓÇ║ should execute selected text when selection is not empty
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "traces | take 5"
+
+    Number of calls: 0
+
+      255 |
+      256 |             // Should execute selected text, not entire document
+    > 257 |             expect(mockTelemetryService.executeKQL).toHaveBeenCalledWith('traces | take 5');
+          |                                                     ^
+      258 |         });
+      259 |
+      260 |         it('should show warning when no active editor', async () => {
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:257:53)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ runKQLFromCodeLensCommand ΓÇ║ should use TelemetryService.executeKQL() not MCP
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "exceptions | where timestamp > ago(1h)"
+
+    Number of calls: 0
+
+      292 |
+      293 |             // CRITICAL: Should use TelemetryService, NOT MCP
+    > 294 |             expect(mockTelemetryService.executeKQL).toHaveBeenCalledWith(queryText);
+          |                                                     ^
+      295 |         });
+      296 |
+      297 |         it('should handle query execution errors gracefully', async () => {
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:294:53)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ saveQueryCommand ΓÇ║ should use TelemetryService.saveQuery() not MCP
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Slow Database Calls", "dependencies | where duration > 2000", "Find slow DB operations", "Performance troubleshooting", ["performance", "database"], "Performance"
+
+    Number of calls: 0
+
+      334 |
+      335 |             // CRITICAL: Should use TelemetryService.saveQuery, NOT mcpClient.saveQuery
+    > 336 |             expect(mockTelemetryService.saveQuery).toHaveBeenCalledWith(
+          |                                                    ^
+      337 |                 'Slow Database Calls',
+      338 |                 'dependencies | where duration > 2000',
+      339 |                 'Find slow DB operations',
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:336:52)
+
+  ΓùÅ Command Handlers - Phase 3 Validation ΓÇ║ saveQueryCommand ΓÇ║ should handle save errors gracefully
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: StringContaining "Failed to save query"
+
+    Number of calls: 0
+
+      359 |             await handler!();
+      360 |
+    > 361 |             expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          |                                                    ^
+      362 |                 expect.stringContaining('Failed to save query')
+      363 |             );
+      364 |         });
+
+      at Object.<anonymous> (src/__tests__/command-handlers.test.ts:361:52)
+
+FAIL src/__tests__/setup-wizard.test.ts
+  ΓùÅ Test suite failed to run
+
+    src/__tests__/setup-wizard.test.ts:65:16 - error TS2339: Property 'dispose' does not exist on type 'SetupWizardProvider'.
+
+    65         wizard.dispose();
+                      ~~~~~~~
+    src/__tests__/setup-wizard.test.ts:95:28 - error TS2339: Property 'dispose' does not exist on type 'SetupWizardProvider'.
+
+    95                     wizard.dispose();
+                                  ~~~~~~~
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Test Suites: 5 failed, 6 passed, 11 total
+Tests:       23 failed, 145 passed, 168 total
+Snapshots:   0 total
+Time:        5.875 s, estimated 6 s
+Ran all test suites.

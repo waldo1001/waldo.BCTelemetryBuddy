@@ -1,0 +1,279 @@
+
+> bc-telemetry-buddy@0.2.24 test
+> jest "--verbose"
+
+PASS src/__tests__/chatParticipant.test.ts
+  Chat Participant
+    registerChatParticipant
+      ΓêÜ should register chat participant with correct ID (31 ms)
+      ΓêÜ should set icon path to waldo.png (1 ms)
+      ΓêÜ should add participant to context subscriptions (1 ms)
+      ΓêÜ should log successful registration (1 ms)
+    Chat Participant Handler
+      ΓêÜ should log user query (2 ms)
+      ΓêÜ should warn if no Copilot model available (1 ms)
+      ΓêÜ should call language model with system prompt and user query (2 ms)
+      ΓêÜ should stream response fragments (1 ms)
+      ΓêÜ should include chat history in messages (2 ms)
+      ΓêÜ should handle errors gracefully (2 ms)
+      ΓêÜ should log completion with iteration count (1 ms)
+    System Prompt
+      Γùï skipped should include critical workflow steps
+      Γùï skipped should mention key MCP tools
+
+PASS src/__tests__/codelens-provider.test.ts
+  KQL CodeLens Provider
+    Query Boundary Detection
+      ΓêÜ should detect single query in document (12 ms)
+      ΓêÜ should detect multiple queries separated by semicolons (1 ms)
+      ΓêÜ should skip comment lines (1 ms)
+      ΓêÜ should skip empty lines
+      ΓêÜ should handle multiline queries (1 ms)
+      ΓêÜ should handle queries without semicolons (1 ms)
+      ΓêÜ should detect query boundaries at EOF
+      ΓêÜ should handle mixed comments and queries (1 ms)
+    CodeLens Generation
+      ΓêÜ should create CodeLens at query start line
+      ΓêÜ should include query text in CodeLens command arguments
+      ΓêÜ should show "Γû╢ Run Query" title (1 ms)
+      ΓêÜ should include document URI in arguments
+      ΓêÜ should include start and end line numbers
+    Query Validation
+      ΓêÜ should validate basic KQL syntax (1 ms)
+      ΓêÜ should detect empty queries (1 ms)
+      ΓêÜ should handle queries with line continuations
+    Editor Integration
+      ΓêÜ should check editor.codeLens setting
+      ΓêÜ should register CodeLens for .kql language (1 ms)
+      ΓêÜ should register CodeLens for .kql file extension
+    Line Range Calculation
+      ΓêÜ should calculate correct line range for query (1 ms)
+      ΓêÜ should handle query at document start
+      ΓêÜ should handle query at document end (1 ms)
+
+PASS src/__tests__/cache-commands.test.ts
+  Cache Commands - File System Operations
+    clearCacheCommand
+      ΓêÜ should handle non-existent cache directory gracefully (10 ms)
+      ΓêÜ should delete all .json cache files (4 ms)
+      ΓêÜ should handle individual file deletion errors gracefully (17 ms)
+      ΓêÜ should report correct count of deleted files
+    showCacheStatsCommand
+      ΓêÜ should handle non-existent cache directory (1 ms)
+      ΓêÜ should calculate total size correctly (1 ms)
+      ΓêÜ should identify expired entries correctly (1 ms)
+      ΓêÜ should format size correctly in KB and MB (1 ms)
+      ΓêÜ should handle malformed cache entries gracefully (1 ms)
+      ΓêÜ should calculate expiration correctly with custom TTL (1 ms)
+
+PASS src/__tests__/resultsWebview.test.ts
+  ResultsWebview
+    constructor
+      ΓêÜ should create webview instance (10 ms)
+    show
+      ΓêÜ should create webview panel (3 ms)
+      ΓêÜ should reuse existing panel (1 ms)
+      ΓêÜ should render table with data (2 ms)
+      ΓêÜ should display cached badge (1 ms)
+      ΓêÜ should render recommendations (1 ms)
+      ΓêÜ should handle empty results
+      ΓêÜ should handle error results (1 ms)
+      ΓêÜ should use VSCode CSS variables (1 ms)
+      ΓêÜ should escape HTML special characters (2 ms)
+      ΓêÜ should handle large result sets (4 ms)
+      ΓêÜ should handle null and undefined cell values (1 ms)
+      ΓêÜ should handle object cell values
+      ΓêÜ should display row and column counts (1 ms)
+      ΓêÜ should log to output channel when showing results
+      ΓêÜ should cleanup panel on dispose (1 ms)
+      ΓêÜ should handle results without recommendations
+      ΓêÜ should handle results without rows but with columns (1 ms)
+
+PASS src/__tests__/mcpClient.test.ts
+  MCPClient
+    constructor
+      ΓêÜ should create client with base URL (12 ms)
+      ΓêÜ should set Content-Type header (1 ms)
+    healthCheck
+      ΓêÜ should return true on success (1 ms)
+      ΓêÜ should return false on failure
+    getAuthStatus
+      ΓêÜ should make correct RPC call (1 ms)
+      ΓêÜ should log request to output channel (1 ms)
+    queryTelemetry
+      ΓêÜ should format KQL request correctly (1 ms)
+      ΓêÜ should format NL request correctly (1 ms)
+      ΓêÜ should handle RPC error responses (11 ms)
+      ΓêÜ should handle network errors (10 ms)
+      ΓêÜ should handle axios errors with response data (1 ms)
+    getSavedQueries
+      ΓêÜ should make correct RPC call (1 ms)
+    searchQueries
+      ΓêÜ should pass search terms correctly (1 ms)
+    saveQuery
+      ΓêÜ should pass all query metadata (1 ms)
+    getRecommendations
+      ΓêÜ should pass KQL and results (1 ms)
+      ΓêÜ should handle missing recommendations array (1 ms)
+    getExternalQueries
+      ΓêÜ should make correct RPC call (1 ms)
+    request ID
+      ΓêÜ should increment request ID for each request
+      ΓêÜ should set correct JSON-RPC version (1 ms)
+
+PASS src/__tests__/extension.test.ts
+  Extension Module
+    Configuration validation
+      ΓêÜ should validate workspace settings structure (10 ms)
+      ΓêÜ should define correct default values (1 ms)
+    Environment variable mapping
+      ΓêÜ should map all required environment variables (9 ms)
+      ΓêÜ should build environment correctly (1 ms)
+    MCP server path construction
+      ΓêÜ should construct correct server path (1 ms)
+      ΓêÜ should handle path separators correctly (1 ms)
+    Command registration
+      ΓêÜ should register all required commands (1 ms)
+    Workspace detection
+      ΓêÜ should detect when required settings are present
+    Retry logic
+      ΓêÜ should calculate retry delay correctly
+      ΓêÜ should respect max retries setting
+    Queries folder path
+      ΓêÜ should construct correct queries folder path (1 ms)
+    Port validation
+      ΓêÜ should validate port numbers (1 ms)
+    Reference configuration
+      ΓêÜ should validate reference structure
+      ΓêÜ should handle JSON serialization of references (2 ms)
+    MCP process lifecycle
+      ΓêÜ should track MCP process state
+    Health check wait logic
+      ΓêÜ should calculate wait attempts correctly
+    Error message handling
+      ΓêÜ should extract error messages correctly (1 ms)
+    Boolean environment variable conversion
+      ΓêÜ should convert boolean to string correctly
+      ΓêÜ should handle number to string conversion (1 ms)
+
+PASS src/__tests__/migrationService.test.ts
+  MigrationService
+    hasOldSettings
+      ΓêÜ should return true when old settings exist (12 ms)
+      ΓêÜ should return false when no old settings exist (1 ms)
+    hasMigrated
+      ΓêÜ should return true when migration is completed (2 ms)
+      ΓêÜ should return false when migration is not completed
+    hasDismissedMigration
+      ΓêÜ should return true when user dismissed migration
+      ΓêÜ should return false when user has not dismissed migration
+    hasConfigFile
+      ΓêÜ should return true when .bctb-config.json exists (1 ms)
+      ΓêÜ should return false when .bctb-config.json does not exist
+      ΓêÜ should return false when no workspace folders open (1 ms)
+    convertSettings
+      ΓêÜ should convert old settings to new config format (1 ms)
+      ΓêÜ should handle client credentials auth flow (1 ms)
+    migrate
+      ΓêÜ should create .bctb-config.json file (1 ms)
+      ΓêÜ should handle migration errors
+    previewMigration
+      ΓêÜ should return JSON string of migrated config (1 ms)
+
+FAIL src/__tests__/telemetryService.test.ts
+  TelemetryService
+    Initialization
+      ΓêÜ should create TelemetryService instance (17 ms)
+      ΓêÜ should be configured when all required settings are present (1 ms)
+      ├ù should not be configured when tenantId is missing (5 ms)
+      ΓêÜ should not be configured when appId is missing (1 ms)
+      ΓêÜ should initialize auth, kusto, cache, and queries services (1 ms)
+    authenticate()
+      ΓêÜ should authenticate successfully (2 ms)
+      ΓêÜ should throw error if authentication fails (2 ms)
+    executeKQL()
+      ΓêÜ should execute KQL query successfully (2 ms)
+      ΓêÜ should use cache when available (1 ms)
+      ΓêÜ should execute query when service is configured
+      ΓêÜ should return error object if query execution fails (1 ms)
+    saveQuery()
+      ΓêÜ should save query successfully (1 ms)
+      ΓêÜ should save query with minimal parameters (1 ms)
+      ΓêÜ should throw error if save fails (1 ms)
+    getSavedQueries()
+      ΓêÜ should retrieve saved queries (1 ms)
+      ΓêÜ should filter queries by tags (1 ms)
+      ΓêÜ should return empty array when no queries exist
+    searchQueries()
+      ΓêÜ should search queries by keywords
+      ΓêÜ should return empty array when no matches found (1 ms)
+    Phase 3 Independence
+      ΓêÜ should NOT depend on MCP server (1 ms)
+      ΓêÜ should use @bctb/shared services directly
+
+  ΓùÅ TelemetryService ΓÇ║ Initialization ΓÇ║ should not be configured when tenantId is missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      146 |
+      147 |             const service = new TelemetryService(mockOutputChannel);
+    > 148 |             expect(service.isConfigured()).toBe(false);
+          |                                            ^
+      149 |         });
+      150 |
+      151 |         it('should not be configured when appId is missing', () => {
+
+      at Object.<anonymous> (src/__tests__/telemetryService.test.ts:148:44)
+
+FAIL src/__tests__/shared-package-integration.test.ts
+  Shared Package Integration
+    Phase 1: Package Structure
+      ├ù should export all required services (185 ms)
+      Γùï skipped should have correct package.json exports
+      Γùï skipped should have compiled TypeScript output
+    Phase 1: Service Instantiation from Extension
+      ΓêÜ should instantiate AuthService from @bctb/shared in extension context (1 ms)
+      ΓêÜ should instantiate KustoService from @bctb/shared in extension context
+      ΓêÜ should instantiate CacheService from @bctb/shared in extension context
+      ΓêÜ should instantiate QueriesService from @bctb/shared in extension context
+    Phase 1: Service Instantiation from MCP
+      ΓêÜ should verify MCP can import from @bctb/shared (1 ms)
+    Phase 3: Extension Independence
+      ΓêÜ should NOT depend on bundled MCP files
+      ΓêÜ should import services directly from @bctb/shared not from bundled MCP (1 ms)
+      Γùï skipped should have @bctb/shared as dependency in package.json
+      Γùï skipped should exclude @bctb/shared from esbuild bundling
+    Type Safety
+      Γùï skipped should have TypeScript types available for all exports
+      Γùï skipped should have MCPConfig interface exported
+    Module Resolution
+      ΓêÜ should resolve @bctb/shared from extension node_modules (1 ms)
+      ΓêÜ should have symlink from extension to shared package (1 ms)
+    Runtime Behavior
+      ΓêÜ should allow services to work with shared config types
+      ΓêÜ should allow extension and MCP to share the same service instances via config (1 ms)
+
+  ΓùÅ Shared Package Integration ΓÇ║ Phase 1: Package Structure ΓÇ║ should export all required services
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      29 |
+      30 |             // Config type
+    > 31 |             expect(shared.MCPConfig).toBeDefined();
+         |                                      ^
+      32 |         });
+      33 |
+      34 |         it.skip('should have compiled TypeScript output', () => {
+
+      at Object.<anonymous> (src/__tests__/shared-package-integration.test.ts:31:38)
+
+Test Suites: 2 failed, 2 skipped, 7 passed, 9 of 11 total
+Tests:       2 failed, 32 skipped, 144 passed, 178 total
+Snapshots:   0 total
+Time:        5.209 s
+Ran all test suites.

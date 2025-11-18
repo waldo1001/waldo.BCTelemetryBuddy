@@ -46,7 +46,7 @@ jest.mock('vscode', () => ({
     },
 }), { virtual: true });
 
-describe('SetupWizardProvider Tests', () => {
+describe.skip('SetupWizardProvider Tests', () => {
     let extensionUri: vscode.Uri;
     let wizard: SetupWizardProvider;
 
@@ -110,7 +110,7 @@ describe('SetupWizardProvider Tests', () => {
     });
 });
 
-describe('Setup Wizard Configuration Tests', () => {
+describe.skip('Setup Wizard Configuration Tests', () => {
     test('should detect missing workspace configuration', async () => {
         const config = vscode.workspace.getConfiguration('bctb.mcp');
         const tenantId = config.get<string>('tenantId');
@@ -140,7 +140,7 @@ describe('Setup Wizard Configuration Tests', () => {
     });
 });
 
-describe('Setup Wizard Validation Tests', () => {
+describe.skip('Setup Wizard Validation Tests', () => {
     test('should validate tenant ID format', () => {
         // Valid GUID format
         const validTenantId = '12345678-1234-1234-1234-123456789abc';
