@@ -1,4 +1,7 @@
-import { loadConfig, validateConfig, MCPConfig, Reference } from '../config.js';
+import { loadConfig, validateConfig, loadConfigFromFile, initConfig, MCPConfig, Reference } from '../config.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 describe('Configuration Module', () => {
     // Store original environment
@@ -300,6 +303,461 @@ describe('Configuration Module', () => {
             expect(errors).toContain('BCTB_KUSTO_URL is required');
             expect(errors).toContain('BCTB_CLIENT_ID is required for client_credentials auth flow');
             expect(errors).toContain('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
+        });
+    });
+
+    describe('loadConfigFromFile', () => {
+        const testConfigDir = path.join(os.tmpdir(), 'bctb-test-config');
+
+        beforeEach(() => {
+            // Clean up test directory
+            if (fs.existsSync(testConfigDir)) {
+                fs.rmSync(testConfigDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(testConfigDir, { recursive: true });
+        });
+
+        afterEach(() => {
+            // Clean up
+            if (fs.existsSync(testConfigDir)) {
+                fs.rmSync(testConfigDir, { recursive: true, force: true });
+            }
+        });
+
+        it('should load single profile config from file', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                connectionName: 'Test Connection',
+                tenantId: 'test-tenant',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: '/test/workspace',
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded.connectionName).toBe('Test Connection');
+            expect(loaded.tenantId).toBe('test-tenant');
+            expect(loaded.authFlow).toBe('azure_cli');
+            expect(loaded.applicationInsightsAppId).toBe('test-app-id');
+        });
+
+        it('should load multi-profile config with default profile', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'device_code',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    },
+                    staging: {
+                        connectionName: 'Staging',
+                        tenantId: 'staging-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'staging-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/staging/workspace',
+                        queriesFolder: 'queries'
+                    }
+                },
+                defaultProfile: 'production'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded.connectionName).toBe('Production');
+            expect(loaded.tenantId).toBe('prod-tenant');
+        });
+
+        it('should load specific profile when profileName is provided', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'device_code',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    },
+                    staging: {
+                        connectionName: 'Staging',
+                        tenantId: 'staging-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'staging-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/staging/workspace',
+                        queriesFolder: 'queries'
+                    }
+                },
+                defaultProfile: 'production'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath, 'staging');
+
+            // Assert
+            expect(loaded.connectionName).toBe('Staging');
+            expect(loaded.tenantId).toBe('staging-tenant');
+        });
+
+        it('should handle profile inheritance with extends', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    base: {
+                        authFlow: 'azure_cli',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/base/workspace',
+                        queriesFolder: 'queries',
+                        cacheEnabled: true,
+                        cacheTTLSeconds: 3600
+                    },
+                    production: {
+                        extends: 'base',
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        applicationInsightsAppId: 'prod-app-id'
+                    }
+                },
+                defaultProfile: 'production'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert - should have both base and child properties
+            expect(loaded.connectionName).toBe('Production');
+            expect(loaded.tenantId).toBe('prod-tenant');
+            expect(loaded.authFlow).toBe('azure_cli'); // Inherited from base
+            expect(loaded.kustoClusterUrl).toBe('https://ade.applicationinsights.io'); // Inherited
+            expect(loaded.cacheEnabled).toBe(true); // Inherited
+        });
+
+        it('should expand environment variables in config', () => {
+            // Arrange
+            process.env.TEST_TENANT_ID = 'env-tenant-id';
+            process.env.TEST_APP_ID = 'env-app-id';
+
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                connectionName: 'Test',
+                tenantId: '${TEST_TENANT_ID}',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: '${TEST_APP_ID}',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: '/test/workspace',
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded.tenantId).toBe('env-tenant-id');
+            expect(loaded.applicationInsightsAppId).toBe('env-app-id');
+
+            // Cleanup
+            delete process.env.TEST_TENANT_ID;
+            delete process.env.TEST_APP_ID;
+        });
+
+        it('should merge top-level cache settings with profile', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    }
+                },
+                defaultProfile: 'production',
+                cache: {
+                    enabled: false,
+                    ttlSeconds: 7200
+                },
+                sanitize: {
+                    removePII: true
+                }
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded.cacheEnabled).toBe(false);
+            expect(loaded.cacheTTLSeconds).toBe(7200);
+            expect(loaded.removePII).toBe(true);
+        });
+
+        it('should throw error when config file not found', () => {
+            // Arrange
+            const originalCwd = process.cwd();
+            const emptyDir = path.join(testConfigDir, 'empty-nowhere');
+            fs.mkdirSync(emptyDir, { recursive: true });
+            process.chdir(emptyDir); // Change to directory without any config
+            delete process.env.BCTB_WORKSPACE_PATH; // Ensure no workspace path
+
+            // Act & Assert
+            expect(() => loadConfigFromFile()).toThrow('No config file found');
+
+            // Cleanup
+            process.chdir(originalCwd);
+        });
+
+        it('should throw error when profile not found', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    }
+                },
+                defaultProfile: 'production'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act & Assert
+            expect(() => loadConfigFromFile(configPath, 'nonexistent')).toThrow("Profile 'nonexistent' not found");
+        });
+
+        it('should throw error when no profile specified and no default', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    }
+                }
+                // No defaultProfile
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act & Assert
+            expect(() => loadConfigFromFile(configPath)).toThrow('No profile specified');
+        });
+
+        it('should detect circular profile inheritance', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    profileA: {
+                        extends: 'profileB',
+                        connectionName: 'A'
+                    },
+                    profileB: {
+                        extends: 'profileA',
+                        connectionName: 'B'
+                    }
+                },
+                defaultProfile: 'profileA'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act & Assert
+            expect(() => loadConfigFromFile(configPath)).toThrow('Circular profile inheritance detected');
+        });
+
+        it('should use BCTB_PROFILE env var when no profile specified', () => {
+            // Arrange
+            process.env.BCTB_PROFILE = 'staging';
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    production: {
+                        connectionName: 'Production',
+                        tenantId: 'prod-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'prod-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/prod/workspace',
+                        queriesFolder: 'queries'
+                    },
+                    staging: {
+                        connectionName: 'Staging',
+                        tenantId: 'staging-tenant',
+                        authFlow: 'azure_cli',
+                        applicationInsightsAppId: 'staging-app-id',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/staging/workspace',
+                        queriesFolder: 'queries'
+                    }
+                },
+                defaultProfile: 'production'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded.connectionName).toBe('Staging');
+
+            // Cleanup
+            delete process.env.BCTB_PROFILE;
+        });
+
+        it('should discover config in current directory', () => {
+            // Arrange
+            const originalCwd = process.cwd();
+            process.chdir(testConfigDir);
+
+            const config = {
+                connectionName: 'Test',
+                tenantId: 'test-tenant',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: '/test/workspace',
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync('.bctb-config.json', JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile();
+
+            // Assert
+            expect(loaded.connectionName).toBe('Test');
+
+            // Cleanup
+            process.chdir(originalCwd);
+        });
+
+        it('should discover config in BCTB_WORKSPACE_PATH', () => {
+            // Arrange
+            const originalCwd = process.cwd();
+            const emptyDir = path.join(testConfigDir, 'empty');
+            fs.mkdirSync(emptyDir, { recursive: true });
+            process.chdir(emptyDir); // Change to directory without .bctb-config.json
+
+            const workspacePath = path.join(testConfigDir, 'workspace');
+            fs.mkdirSync(workspacePath, { recursive: true });
+            process.env.BCTB_WORKSPACE_PATH = workspacePath;
+
+            const config = {
+                connectionName: 'Workspace Config',
+                tenantId: 'workspace-tenant',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'workspace-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: workspacePath,
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync(path.join(workspacePath, '.bctb-config.json'), JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile();
+
+            // Assert
+            expect(loaded.connectionName).toBe('Workspace Config');
+
+            // Cleanup
+            process.chdir(originalCwd);
+            delete process.env.BCTB_WORKSPACE_PATH;
+        });
+
+        // Note: Cannot easily test home directory discovery without mocking os.homedir,
+        // which is not configurable. The functionality is covered by manual testing.
+    });
+
+    describe('initConfig', () => {
+        const testConfigDir = path.join(os.tmpdir(), 'bctb-test-init');
+
+        beforeEach(() => {
+            // Clean up test directory
+            if (fs.existsSync(testConfigDir)) {
+                fs.rmSync(testConfigDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(testConfigDir, { recursive: true });
+        });
+
+        afterEach(() => {
+            // Clean up
+            if (fs.existsSync(testConfigDir)) {
+                fs.rmSync(testConfigDir, { recursive: true, force: true });
+            }
+        });
+
+        it('should create config file with template', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+
+            // Act
+            initConfig(configPath);
+
+            // Assert
+            expect(fs.existsSync(configPath)).toBe(true);
+            const content = fs.readFileSync(configPath, 'utf-8');
+            const config = JSON.parse(content);
+
+            expect(config.profiles).toBeDefined();
+            expect(config.profiles.default).toBeDefined();
+            expect(config.defaultProfile).toBe('default');
+            expect(config.cache).toBeDefined();
+            expect(config.sanitize).toBeDefined();
+            expect(config.references).toBeDefined();
+        });
+
+        it('should create valid config structure', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+
+            // Act
+            initConfig(configPath);
+
+            // Assert
+            const content = fs.readFileSync(configPath, 'utf-8');
+            const config = JSON.parse(content);
+
+            expect(config.profiles.default.authFlow).toBe('azure_cli');
+            expect(config.cache.enabled).toBe(true);
+            expect(config.cache.ttlSeconds).toBe(3600);
+            expect(config.sanitize.removePII).toBe(false);
+            expect(Array.isArray(config.references)).toBe(true);
         });
     });
 });

@@ -2086,3 +2086,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Let's focus one by one. https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/19469949866/job/55714177661?pr=58"
 
 ---
+### Entry ID: 65f6df82-9459-4ff8-8113-0a1264302bb9 — 2025-11-18 16:25
+> "Still issues in the install dependencies step - npm ci failing due to esbuild version mismatch"
+
+---
+### Entry ID: 9963efe7-c03d-4736-929b-90510648523a — 2025-11-18 16:35
+> "Different errors I guess is progress - https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/12900024612/job/35973296857"
+
+---
