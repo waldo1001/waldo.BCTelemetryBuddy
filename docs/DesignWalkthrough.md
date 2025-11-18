@@ -1155,3 +1155,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Patch release MCP v2.0.1 and Extension v1.0.1 with CI workflow fix [Entry: 0ad70e22-d5fa-450e-9299-610248e667ec]
   - **Why:** Fixed GitHub Actions workflow to build shared package before tests, then released patch versions
   - **How:** Added build shared package step to release-extension.yml workflow, then executed release script for MCP (v2.0.0 → v2.0.1) and extension (v1.0.0 → v1.0.1)
+- **2025-11-18** — Updated Copilot instructions to require CHANGELOG updates before releases [Entry: f0b6f3fb-118c-424d-8216-6607a363c59a]
+  - **Why:** User noticed CHANGELOGs weren't updated during releases because [Unreleased] section was empty
+  - **How:** Added STEP 2 to release workflow requiring manual CHANGELOG updates before running release script, updated critical rules and example workflow
+- **2025-11-18** — Clarified release workflow in Copilot instructions [Entry: 43a1b467-630e-4e63-ae48-43ec53fdd74f]
+  - **Why:** User wants Copilot to update CHANGELOGs automatically and wait for confirmation before running release script
+  - **How:** Updated STEP 2 to emphasize Copilot updates CHANGELOGs automatically, shows changes, then waits for user confirmation. User commits changes before release script runs.
+- **2025-11-18** — Fixed release workflow: Run script first, verify after [Entry: 7751ebd1-c876-4521-bd91-ee185c9ef41c]
+  - **Why:** User clarified workflow should run release script with -NoCommit FIRST (bumps version, updates CHANGELOG), THEN let user verify before pushing
+  - **How:** Updated Copilot instructions: STEP 2 runs script with -NoCommit, STEP 3 reviews/enhances CHANGELOG, STEP 4 commits/pushes after confirmation. Updated example workflow to match.

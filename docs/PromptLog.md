@@ -2146,3 +2146,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Ok, bump a patch release (after fixing CI workflow to build shared package)"
 
 ---
+### Entry ID: 99491545-64b6-4a61-939e-48e01c6a2f8a — 2025-11-18 23:16
+> "I see the update didn't change the changelogs. Change the copilot instructions so that every time we do a release, the changelogs are changed to what is in the new release."
+
+---
+### Entry ID: f0b6f3fb-118c-424d-8216-6607a363c59a — 2025-11-18 23:16
+> "Change copilot instructions to require CHANGELOG updates before every release"
+
+---
+### Entry ID: 43a1b467-630e-4e63-ae48-43ec53fdd74f — 2025-11-18 23:20
+> "When I ask to prepare a release, you bump the release, change the changelogs and let me verify before running release script"
+
+---
+### Entry ID: 7751ebd1-c876-4521-bd91-ee185c9ef41c — 2025-11-18 23:27
+> "Corrected release workflow: Run release script with -NoCommit FIRST to bump version and CHANGELOG, then let user verify before pushing"
+
+---

@@ -308,41 +308,63 @@ When the user says phrases like:
 ### STEP 1: Determine Component and Bump Type
 
 Ask clarifying questions if not specified:
-1. **Which component?** extension or mcp
+1. **Which component?** extension or mcp (or both)
 2. **Bump type?** patch (bug fixes), minor (new features), or major (breaking changes)
 
-### STEP 2: Use the Release Script
+### STEP 2: Run Release Script with -NoCommit
 
-Run the release script with appropriate parameters:
+**CRITICAL**: Run the release script with `-NoCommit` flag first to bump version and update CHANGELOG without pushing:
 
 ```powershell
-# Extension release (patch)
-.\scripts\release.ps1 -BumpType patch -Component extension
-
-# MCP release (patch)  
-.\scripts\release.ps1 -BumpType patch -Component mcp
-
-# Minor/major bumps
-.\scripts\release.ps1 -BumpType minor -Component mcp
-.\scripts\release.ps1 -BumpType major -Component extension
-
-# Dry run to preview changes
-.\scripts\release.ps1 -BumpType patch -Component mcp -DryRun
+# Run release script but don't commit/push yet
+.\scripts\release.ps1 -BumpType patch -Component mcp -NoCommit
 ```
 
-### STEP 3: What the Script Does Automatically
+This will:
+- Bump version in package.json
+- Move [Unreleased] content to new version section in CHANGELOG.md
+- **NOT** commit or push anything yet
 
-The script handles everything:
+### STEP 3: Review and Enhance CHANGELOG
+
+After the script runs:
+1. **Check the CHANGELOG**: Read the new version section that was just created
+2. **Add missing details if needed**: If the [Unreleased] section was empty or incomplete, add release notes under the new version
+3. **Show user the changes**: Display what version was bumped to and what's in the CHANGELOG
+4. **Ask for confirmation**: "Ready to commit and push the release?"
+
+### STEP 4: Commit and Push (ONLY after user confirmation)
+
+Once user confirms, complete the release by committing and pushing:
+
+```powershell
+# Commit the version bump and CHANGELOG
+git add packages/[component]/package.json packages/[component]/CHANGELOG.md packages/[component]/package-lock.json
+git commit -m "chore: bump [component] version to X.Y.Z"
+
+# Create and push tag
+git tag [mcp-]vX.Y.Z
+git push origin main --tags
+```
+
+This triggers the GitHub Actions workflow for build, test, and publish.
+
+### STEP 5: What the Script Does Automatically
+
+When run with -NoCommit:
 1. ✅ Validates git status is clean
 2. ✅ Checks current branch (warns if not main)
 3. ✅ Bumps version in package.json
 4. ✅ Updates CHANGELOG.md ([Unreleased] → [1.0.1] - YYYY-MM-DD)
-5. ✅ Commits with message: "chore: bump [component] version to X.Y.Z"
-6. ✅ Creates git tag (mcp-vX.Y.Z or vX.Y.Z)
-7. ✅ Pushes commit and tag to GitHub
-8. ✅ Triggers GitHub Actions (builds, tests, publishes)
+5. ✅ Stops without committing (allows manual review/enhancement)
 
-### STEP 4: Monitor Release
+When completing the release (STEP 4):
+6. ✅ Commits with message: "chore: bump [component] version to X.Y.Z"
+7. ✅ Creates git tag (mcp-vX.Y.Z or vX.Y.Z)
+8. ✅ Pushes commit and tag to GitHub
+9. ✅ Triggers GitHub Actions (builds, tests, publishes)
+
+### STEP 6: Monitor Release
 
 After script completes, inform user:
 ```
@@ -357,14 +379,13 @@ For MCP: https://www.npmjs.com/package/bc-telemetry-buddy-mcp
 ```
 
 **CRITICAL RULES:**
-1. **ALWAYS use the release script** - Don't manually bump versions
-2. **Never commit/push manually** - Script handles all git operations
-3. **Extension tags**: `v0.3.0` (no prefix)
-4. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
-5. **Cannot release both simultaneously** - Different tag formats required
-6. **Script validates everything** - Clean git state, proper branch
-7. **Dry run available** - Use `-DryRun` to preview without changes
-8. **NoCommit option** - Use `-NoCommit` to review changes before pushing
+1. **ALWAYS use -NoCommit first** - Run release script with -NoCommit to bump version and CHANGELOG
+2. **Review CHANGELOG after bump** - Check what was moved from [Unreleased], add details if needed
+3. **Wait for user confirmation** - User reviews before you commit/push
+4. **Extension tags**: `v0.3.0` (no prefix)
+5. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
+6. **Cannot release both simultaneously** - Different tag formats required
+7. **Script validates everything** - Clean git state, proper branch
 
 **Script Parameters:**
 - `-BumpType`: patch, minor, or major (REQUIRED)
@@ -380,9 +401,13 @@ User: "Release the MCP"
 You:
 1. Ask: "What type of version bump? (patch/minor/major)"
 2. User responds: "patch"
-3. Run: `.\scripts\release.ps1 -BumpType patch -Component mcp`
-4. Script executes and provides output
-5. Inform user of monitoring links
+3. Run: `.\scripts\release.ps1 -BumpType patch -Component mcp -NoCommit`
+4. Script bumps version (2.0.1 → 2.0.2) and updates CHANGELOG
+5. Check CHANGELOG, add any missing details under [2.0.2] section if needed
+6. Show user: "Bumped to v2.0.2. CHANGELOG shows: [list changes]. Ready to commit and push?"
+7. Wait for user confirmation
+8. Run git commands to commit, tag, and push
+9. Inform user of monitoring links
 
 **Error Handling:**
 - Git not clean → Script stops, shows uncommitted files
