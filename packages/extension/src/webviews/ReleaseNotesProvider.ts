@@ -207,7 +207,7 @@ export class ReleaseNotesProvider {
         <div class="header">
             <img src="${logoUri}" alt="waldo" class="logo">
             <h1>Note from waldo</h1>
-            <p class="version">BC Telemetry Buddy v0.3.0</p>
+            <p class="version">BC Telemetry Buddy v1.0.2</p>
         </div>
 
         <div class="section">
@@ -216,8 +216,16 @@ export class ReleaseNotesProvider {
         </div>
 
         <div class="section">
-            <h2><span class="emoji">🔄</span> What's New in v0.3.0</h2>
+            <h2><span class="emoji">🔄</span> What's New in v1.0.2</h2>
             
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">🛠️ CI/CD Improvements</h3>
+            <p>This release focuses on ensuring reliable builds and releases:</p>
+            <ul>
+                <li><strong>Fixed CI Workflow</strong>: Shared package now builds before running tests</li>
+                <li><strong>Stable Release Process</strong>: Automated testing and publishing pipeline</li>
+                <li><strong>Version Management</strong>: Proper semantic versioning across all components</li>
+            </ul>
+
             <h3 style="margin-top: 20px; margin-bottom: 10px;">🏗️ Monorepo Architecture</h3>
             <p>The project has been completely restructured into a modern monorepo with clear separation of concerns:</p>
             <ul>

@@ -87,9 +87,9 @@ export async function installMCP(update: boolean = false): Promise<boolean> {
     const outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy - MCP Installation');
     outputChannel.show();
 
-    const command = update
-        ? 'npm update -g bc-telemetry-buddy-mcp'
-        : 'npm install -g bc-telemetry-buddy-mcp';
+    // Use 'npm install -g bc-telemetry-buddy-mcp@latest' for both install and update
+    // npm update doesn't always work reliably for global packages
+    const command = 'npm install -g bc-telemetry-buddy-mcp@latest';
 
     const operationType = update ? 'Updating' : 'Installing';
     outputChannel.appendLine(`${operationType} BC Telemetry Buddy MCP Server...`);
