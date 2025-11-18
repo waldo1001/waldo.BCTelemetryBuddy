@@ -1125,3 +1125,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Fix extension coverage failures by excluding UI components [Entry: 8e923b35-a56e-4dfe-850b-b0dbe25e6dbf]
   - **Why:** CI failing on macOS due to 0% coverage on UI components and static data files
   - **How:** Excluded chatmodeDefinitions.ts, profileManager.ts, profileStatusBar.ts, ProfileWizardProvider.ts from coverage. Lowered branch threshold to 60% (realistic for UI code). Achieved 73.4% statements, 61.04% branches, 80.95% functions, 73.24% lines.
+- **2025-11-18** — Fixed VSCode extension packaging issue by enhancing .vscodeignore exclusions [Entry: c1499fda-248d-40d5-bf3b-3d402415cad6]
+  - **Why:** vsce was including ../shared/tsconfig.tsbuildinfo despite exclusions, blocking PR #58 merge
+  - **How:** Added explicit paths for TypeScript build artifacts and comprehensive shared package exclusions

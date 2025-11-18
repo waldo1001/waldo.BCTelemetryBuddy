@@ -275,7 +275,7 @@
         "install-mcp-dev": "cd ../mcp && npm link"
     },
     "dependencies": {
-        "axios": "^1.6.0"
+        "axios": "^1.13.2"
     },
     "devDependencies": {
         "@bctb/shared": "file:../shared",
