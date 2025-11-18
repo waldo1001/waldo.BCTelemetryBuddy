@@ -1143,3 +1143,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Updated Copilot instructions with automated release workflow [Entry: 8bfd3c8e-3cba-4bc3-af96-22e2cdd5cf93]
   - **Why:** Enable conversational releases using release.ps1 script for both extension and MCP components
   - **How:** Added comprehensive release trigger detection, script usage, and monitoring instructions
+- **2025-11-18** — Added no-workspace validation to Setup Wizard [Entry: 4a994cef-9e33-4154-b721-027d2ac35863]
+  - **Why:** Prevent Setup Wizard from running when no workspace folder is open (settings require .vscode/settings.json)
+  - **How:** Added noWorkspaceError HTML template and extended handleWorkspaceValidation() to check hasWorkspace flag
+- **2025-11-18** — Added release notes webview for version updates [Entry: 0fdaf40d-2ac6-4dff-ab24-9c95df2c0cdd]
+  - **Why:** Show users what changed after extension updates with friendly guidance and setup steps
+  - **How:** Created ReleaseNotesProvider with waldo logo, version detection in activate(), auto-shows on version change, added 'What's New' command

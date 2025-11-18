@@ -114,6 +114,10 @@
                 "command": "bctb.manageProfiles",
                 "title": "BC Telemetry Buddy: Manage Profiles",
                 "icon": "$(settings-gear)"
+            },
+            {
+                "command": "bctb.showReleaseNotes",
+                "title": "BC Telemetry Buddy: What's New"
             }
         ],
         "configuration": {

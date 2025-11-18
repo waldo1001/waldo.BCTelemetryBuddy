@@ -614,6 +614,18 @@ export class SetupWizardProvider {
             <h2>Welcome to BC Telemetry Buddy! 👋</h2>
             <p>This setup wizard will guide you through configuring your connection to Azure Data Explorer (Kusto) and Application Insights for analyzing Business Central telemetry.</p>
             
+            <div id="noWorkspaceError" style="display: none; background-color: var(--vscode-inputValidation-errorBackground); border: 1px solid var(--vscode-inputValidation-errorBorder); color: var(--vscode-errorForeground); padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <h3 style="margin-top: 0;">⚠️ No Workspace Folder Open</h3>
+                <p><strong>BC Telemetry Buddy requires a workspace folder to be open.</strong></p>
+                <p>Settings are saved to the workspace's <code>.vscode/settings.json</code> file, which requires an open folder.</p>
+                <p><strong>To proceed:</strong></p>
+                <ol>
+                    <li>Close this Setup Wizard</li>
+                    <li>Open a folder (File → Open Folder)</li>
+                    <li>Run the Setup Wizard again</li>
+                </ol>
+            </div>
+
             <div id="multirootError" style="display: none; background-color: var(--vscode-inputValidation-errorBackground); border: 1px solid var(--vscode-inputValidation-errorBorder); color: var(--vscode-errorForeground); padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <h3 style="margin-top: 0;">⚠️ Multi-Root Workspaces Not Supported</h3>
                 <p><strong>BC Telemetry Buddy does not support multi-root workspaces.</strong></p>
@@ -1043,16 +1055,26 @@ export class SetupWizardProvider {
             });
 
             function handleWorkspaceValidation(message) {
+                const hasWorkspace = message.hasWorkspace || false;
                 const isMultiRoot = message.isMultiRoot || false;
+                const noWorkspaceError = document.getElementById('noWorkspaceError');
                 const errorDiv = document.getElementById('multirootError');
                 const welcomeContent = document.getElementById('welcomeContent');
                 const nextButton = document.getElementById('btn-next-1');
 
-                if (isMultiRoot) {
+                // Check no workspace first
+                if (!hasWorkspace) {
+                    if (noWorkspaceError) noWorkspaceError.style.display = 'block';
+                    if (errorDiv) errorDiv.style.display = 'none';
+                    if (welcomeContent) welcomeContent.style.display = 'none';
+                    if (nextButton) nextButton.disabled = true;
+                } else if (isMultiRoot) {
+                    if (noWorkspaceError) noWorkspaceError.style.display = 'none';
                     if (errorDiv) errorDiv.style.display = 'block';
                     if (welcomeContent) welcomeContent.style.display = 'none';
                     if (nextButton) nextButton.disabled = true;
                 } else {
+                    if (noWorkspaceError) noWorkspaceError.style.display = 'none';
                     if (errorDiv) errorDiv.style.display = 'none';
                     if (welcomeContent) welcomeContent.style.display = 'block';
                     if (nextButton) nextButton.disabled = false;

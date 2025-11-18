@@ -2130,3 +2130,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Ok, now create copilot instructions so that all this work from the copilot chat"
 
 ---
+### Entry ID: 4a994cef-9e33-4154-b721-027d2ac35863 — 2025-11-18 20:30
+> "In the Extension Setup Wizard. When there is no workspace open, simply refuse to go through the wizard - pretty much the same as it would be a multiroot workspace."
+
+---
+### Entry ID: 0fdaf40d-2ac6-4dff-ab24-9c95df2c0cdd — 2025-11-18 20:54
+> "Before I push a new update of the VSCode extension to the Marketplace, I'd like to show one page in VSCode that introduces the changes, and guides them on what changed, and the simple steps they need to take to make it work now. Use my logo on that page, and use the title 'note from waldo' ;-)"
+
+---

@@ -6,6 +6,7 @@ import { MCPClient } from './mcpClient';
 import { ResultsWebview } from './resultsWebview';
 import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
+import { ReleaseNotesProvider } from './webviews/ReleaseNotesProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { CHATMODE_DEFINITIONS } from './chatmodeDefinitions';
 import { TelemetryService } from './services/telemetryService';
@@ -285,6 +286,29 @@ function registerLanguageModelTools(context: vscode.ExtensionContext): void {
 }
 
 /**
+ * Check if extension was updated and show release notes
+ */
+async function checkAndShowReleaseNotes(context: vscode.ExtensionContext): Promise<void> {
+    try {
+        const currentVersion = context.extension.packageJSON.version;
+        const lastVersion = context.globalState.get<string>('bctb.lastVersion');
+
+        if (lastVersion && lastVersion !== currentVersion) {
+            // Version changed - show release notes
+            outputChannel.appendLine(`Version updated from ${lastVersion} to ${currentVersion}`);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+            ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
+        }
+
+        // Update stored version
+        await context.globalState.update('bctb.lastVersion', currentVersion);
+    } catch (error: any) {
+        outputChannel.appendLine(`Failed to check version: ${error.message}`);
+    }
+}
+
+/**
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
@@ -335,15 +359,20 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize migration service
     migrationService = new MigrationService(outputChannel);
 
+    // Check for version update and show release notes
+    setTimeout(async () => {
+        await checkAndShowReleaseNotes(context);
+    }, 1000);
+
     // Check for migration on first launch (after short delay to let activation complete)
     setTimeout(async () => {
         await migrationService?.showMigrationNotification(context);
-    }, 2000);
+    }, 3000);
 
     // Show MCP first-run notification if not installed (after migration check)
     setTimeout(async () => {
         await showFirstRunNotification(context);
-    }, 4000);
+    }, 5000);
 
     // Register commands
     context.subscriptions.push(
@@ -363,6 +392,11 @@ export function activate(context: vscode.ExtensionContext) {
             await context.globalState.update('bctb.migrationCompleted', undefined);
             await context.globalState.update('bctb.migrationDismissed', undefined);
             vscode.window.showInformationMessage('Migration state reset. Reload window to see notification again.');
+        }),
+        vscode.commands.registerCommand('bctb.showReleaseNotes', () => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+            ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
         }),
         vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
         vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
