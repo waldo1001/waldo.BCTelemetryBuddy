@@ -2094,3 +2094,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Different errors I guess is progress - https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/12900024612/job/35973296857"
 
 ---
+### Entry ID: 8e923b35-a56e-4dfe-850b-b0dbe25e6dbf — 2025-11-18 17:07
+> "here's the output: [CI logs showing extension coverage failures - chatmodeDefinitions.ts 0%, profileManager.ts 0%, profileStatusBar.ts 0%, ProfileWizardProvider.ts 0%]. User says: add tests to solve this"
+
+---
