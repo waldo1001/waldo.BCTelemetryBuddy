@@ -11,6 +11,7 @@ import { TelemetryService } from './services/telemetryService';
 import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
 import { ProfileManager } from './services/profileManager';
+import { showFirstRunNotification } from './services/mcpInstaller';
 
 /**
  * MCP process handle
@@ -332,6 +333,11 @@ export function activate(context: vscode.ExtensionContext) {
     setTimeout(async () => {
         await migrationService?.showMigrationNotification(context);
     }, 2000);
+
+    // Show MCP first-run notification if not installed (after migration check)
+    setTimeout(async () => {
+        await showFirstRunNotification(context);
+    }, 4000);
 
     // Register commands
     context.subscriptions.push(

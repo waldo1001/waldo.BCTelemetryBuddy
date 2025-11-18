@@ -180,8 +180,21 @@ if ($Component -eq 'mcp' -or $Component -eq 'both') {
     Update-Changelog -PackagePath "packages/mcp" -Version $mcpVersion
 }
 
-# Determine tag version (use extension version as primary)
-$tagVersion = if ($extensionVersion) { $extensionVersion } else { $mcpVersion }
+# Determine tag version and format
+if ($Component -eq 'both') {
+    Write-Warning "Cannot release both components simultaneously with new pipeline (different tag formats required)"
+    Write-Host "Please choose either 'extension' or 'mcp' to release one component at a time." -ForegroundColor Yellow
+    exit 1
+}
+
+$tagVersion = if ($Component -eq 'extension') { 
+    $extensionVersion 
+} else { 
+    $mcpVersion 
+}
+
+# Format tag based on component type
+$gitTag = if ($Component -eq 'mcp') { "mcp-v$tagVersion" } else { "v$tagVersion" }
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
@@ -189,9 +202,8 @@ Write-Host "  Release Summary" -ForegroundColor Magenta
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
 Write-Host "  Component: $Component" -ForegroundColor Cyan
 Write-Host "  Bump Type: $BumpType" -ForegroundColor Cyan
-Write-Host "  Git Tag: v$tagVersion" -ForegroundColor Cyan
-if ($extensionVersion) { Write-Host "  Extension: v$extensionVersion" -ForegroundColor Cyan }
-if ($mcpVersion) { Write-Host "  MCP: v$mcpVersion" -ForegroundColor Cyan }
+Write-Host "  Git Tag: $gitTag" -ForegroundColor Cyan
+Write-Host "  Version: v$tagVersion" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
 Write-Host ""
 
@@ -212,32 +224,40 @@ if ($NoCommit) {
     Write-Warning "Changes made but not committed (-NoCommit flag)"
     Write-Host ""
     Write-Host "Review the changes, then manually:" -ForegroundColor Cyan
-    Write-Host "  git add packages/*/package.json package-lock.json" -ForegroundColor White
-    Write-Host "  git commit -m 'chore: bump version to $tagVersion'" -ForegroundColor White
-    Write-Host "  git tag v$tagVersion" -ForegroundColor White
-    Write-Host "  git push origin main" -ForegroundColor White
-    Write-Host "  git push origin v$tagVersion" -ForegroundColor White
+    if ($Component -eq 'extension') {
+        Write-Host "  git add packages/extension/package.json packages/extension/CHANGELOG.md package-lock.json" -ForegroundColor White
+        Write-Host "  git commit -m 'chore: bump extension version to $tagVersion'" -ForegroundColor White
+        Write-Host "  git tag v$tagVersion" -ForegroundColor White
+        Write-Host "  git push origin main" -ForegroundColor White
+        Write-Host "  git push origin v$tagVersion" -ForegroundColor White
+    } else {
+        Write-Host "  git add packages/mcp/package.json packages/mcp/CHANGELOG.md package-lock.json" -ForegroundColor White
+        Write-Host "  git commit -m 'chore: bump mcp version to $tagVersion'" -ForegroundColor White
+        Write-Host "  git tag mcp-v$tagVersion" -ForegroundColor White
+        Write-Host "  git push origin main" -ForegroundColor White
+        Write-Host "  git push origin mcp-v$tagVersion" -ForegroundColor White
+    }
     Write-Host ""
     exit 0
 }
 
 # Check if tag already exists
-Write-Step "Checking if tag v$tagVersion already exists..."
-$tagExists = git tag -l "v$tagVersion"
+Write-Step "Checking if tag $gitTag already exists..."
+$tagExists = git tag -l "$gitTag"
 if ($tagExists) {
-    Write-Warning "Tag v$tagVersion already exists"
+    Write-Warning "Tag $gitTag already exists"
     $recreate = Read-Host "Delete and recreate the tag? This will update it to point to the new version bump commit. (y/N)"
     if ($recreate -ne "y" -and $recreate -ne "Y") {
         Write-Host "Release cancelled. Please delete the tag manually or use a different version."
         exit 1
     }
     
-    Write-Step "Deleting existing tag v$tagVersion..."
-    git tag -d "v$tagVersion" | Out-Null
+    Write-Step "Deleting existing tag $gitTag..."
+    git tag -d "$gitTag" | Out-Null
     Write-Host "  Deleted local tag" -ForegroundColor Gray
     
     # Try to delete remote tag (may not exist remotely)
-    git push origin ":refs/tags/v$tagVersion" 2>$null | Out-Null
+    git push origin ":refs/tags/$gitTag" 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Deleted remote tag" -ForegroundColor Gray
     }
@@ -246,10 +266,7 @@ if ($tagExists) {
 
 # Commit the version bump (including package-lock.json and CHANGELOG.md)
 Write-Step "Committing version bump..."
-if ($Component -eq 'both') {
-    git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/package.json packages/mcp/CHANGELOG.md package-lock.json
-    git commit -m "chore: bump version to $tagVersion (extension + mcp)"
-} elseif ($Component -eq 'extension') {
+if ($Component -eq 'extension') {
     git add packages/extension/package.json packages/extension/CHANGELOG.md package-lock.json
     git commit -m "chore: bump extension version to $tagVersion"
 } else {
@@ -264,8 +281,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Success "Version bump committed"
 
 # Create git tag
-Write-Step "Creating git tag v$tagVersion..."
-git tag "v$tagVersion"
+Write-Step "Creating git tag $gitTag..."
+git tag "$gitTag"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to create tag"
     exit 1
@@ -282,7 +299,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "  Pushing tag..." -ForegroundColor Gray
-git push origin "v$tagVersion"
+git push origin "$gitTag"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to push tag to GitHub"
     exit 1
@@ -296,6 +313,10 @@ Write-Host "══════════════════════�
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Monitor GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions" -ForegroundColor White
-Write-Host "  2. Review the release: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v$tagVersion" -ForegroundColor White
-Write-Host "  3. Check VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy" -ForegroundColor White
+Write-Host "  2. Review the release: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/$gitTag" -ForegroundColor White
+if ($Component -eq 'extension') {
+    Write-Host "  3. Check VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy" -ForegroundColor White
+} else {
+    Write-Host "  3. Check NPM: https://www.npmjs.com/package/bc-telemetry-buddy-mcp" -ForegroundColor White
+}
 Write-Host ""

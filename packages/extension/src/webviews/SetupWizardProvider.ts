@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+// MCP installer utilities
+import { getMCPStatus, installMCP, isMCPUpdateAvailable } from '../services/mcpInstaller';
 
 const execAsync = promisify(exec);
 
@@ -65,6 +67,12 @@ export class SetupWizardProvider {
                     case 'closeWizard':
                         this._panel?.dispose();
                         break;
+                    case 'checkMCP':
+                        await this._reportMCPStatus();
+                        break;
+                    case 'installMCP':
+                        await this._performMCPInstall(message.update === true);
+                        break;
                 }
             },
             null,
@@ -95,6 +103,42 @@ export class SetupWizardProvider {
             isMultiRoot,
             workspacePath: hasWorkspace ? workspaceFolders[0].uri.fsPath : null
         });
+    }
+
+    /**
+     * Report MCP installation status back to webview
+     */
+    private async _reportMCPStatus(): Promise<void> {
+        try {
+            const status = await getMCPStatus();
+            const updateAvailable = status.installed ? await isMCPUpdateAvailable() : false;
+            this._panel?.webview.postMessage({
+                type: 'mcpStatus',
+                installed: status.installed,
+                version: status.version,
+                inPath: status.inPath,
+                updateAvailable
+            });
+        } catch (error: any) {
+            this._panel?.webview.postMessage({
+                type: 'mcpStatus',
+                error: error.message || String(error),
+                installed: false
+            });
+        }
+    }
+
+    /**
+     * Perform MCP install or update and re-report status
+     */
+    private async _performMCPInstall(update: boolean): Promise<void> {
+        try {
+            await installMCP(update);
+        } catch (error) {
+            // Errors already surfaced via progress/output channel
+        } finally {
+            await this._reportMCPStatus();
+        }
     }
 
     private async _loadConfig(): Promise<void> {
@@ -590,6 +634,24 @@ export class SetupWizardProvider {
                     <li>✅ Authentication credentials (Azure CLI recommended)</li>
                 </ul>
 
+                <div id="mcpContainer" style="margin: 25px 0; padding: 15px; border-radius: 4px; background: var(--vscode-sideBar-background); border: 1px solid var(--vscode-panel-border);">
+                    <h4 style="margin-top:0; display:flex; align-items:center; gap:8px;">
+                        <span>🧩 MCP Server (Model Context Protocol)</span>
+                        <span id="mcpStatusBadge" style="padding:2px 6px; border-radius:3px; font-size:11px; background: var(--vscode-statusBar-background); color: var(--vscode-statusBar-foreground);">Checking...</span>
+                    </h4>
+                    <p style="margin:8px 0 14px 0;">
+                        The MCP server unlocks rich GitHub Copilot Chat integration: query telemetry, discover events, analyze schemas.
+                        You can still use command palette features without it.
+                    </p>
+                    <div id="mcpActions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <button id="btn-install-mcp" class="secondary" disabled>Install MCP</button>
+                        <button id="btn-update-mcp" class="secondary" style="display:none;" disabled>Update MCP</button>
+                        <button id="btn-refresh-mcp" class="secondary" disabled>Refresh</button>
+                        <span id="mcpExtraInfo" style="font-size:11px; opacity:0.8;"></span>
+                    </div>
+                    <div id="mcpError" style="display:none; margin-top:10px; font-size:11px; color: var(--vscode-errorForeground);"></div>
+                </div>
+
                 <div style="margin: 30px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px;">
                     <h4 style="margin-top: 0;">📚 Helpful Resources:</h4>
                     <ul style="margin-bottom: 0;">
@@ -927,6 +989,7 @@ export class SetupWizardProvider {
             window.addEventListener('load', function() {
                 vscode.postMessage({ type: 'validateWorkspace' });
                 vscode.postMessage({ type: 'loadConfig' });
+                vscode.postMessage({ type: 'checkMCP' });
                 updateAuthFields();
             });
 
@@ -948,6 +1011,9 @@ export class SetupWizardProvider {
                         break;
                     case 'configSaved':
                         handleConfigSaved(message);
+                        break;
+                    case 'mcpStatus':
+                        updateMCPUI(message);
                         break;
                 }
             });
@@ -1043,6 +1109,79 @@ export class SetupWizardProvider {
                 azureCliDiv.style.display = authFlow === 'azure_cli' ? 'block' : 'none';
                 deviceCodeDiv.style.display = authFlow === 'device_code' ? 'block' : 'none';
                 clientCredsDiv.style.display = authFlow === 'client_credentials' ? 'block' : 'none';
+            }
+
+            // MCP UI logic
+            const btnInstallMcp = document.getElementById('btn-install-mcp');
+            const btnUpdateMcp = document.getElementById('btn-update-mcp');
+            const btnRefreshMcp = document.getElementById('btn-refresh-mcp');
+            const mcpStatusBadge = document.getElementById('mcpStatusBadge');
+            const mcpExtraInfo = document.getElementById('mcpExtraInfo');
+            const mcpError = document.getElementById('mcpError');
+
+            if (btnInstallMcp) {
+                btnInstallMcp.addEventListener('click', () => {
+                    btnInstallMcp.disabled = true;
+                    vscode.postMessage({ type: 'installMCP', update: false });
+                });
+            }
+            if (btnUpdateMcp) {
+                btnUpdateMcp.addEventListener('click', () => {
+                    btnUpdateMcp.disabled = true;
+                    vscode.postMessage({ type: 'installMCP', update: true });
+                });
+            }
+            if (btnRefreshMcp) {
+                btnRefreshMcp.addEventListener('click', () => {
+                    btnRefreshMcp.disabled = true;
+                    vscode.postMessage({ type: 'checkMCP' });
+                });
+            }
+
+            function updateMCPUI(message) {
+                if (!mcpStatusBadge) return;
+                // Re-enable buttons
+                if (btnRefreshMcp) btnRefreshMcp.disabled = false;
+                if (btnInstallMcp) btnInstallMcp.disabled = false;
+                if (btnUpdateMcp) btnUpdateMcp.disabled = false;
+
+                if (message.error) {
+                    mcpStatusBadge.textContent = 'Error';
+                    mcpStatusBadge.style.background = 'var(--vscode-inputValidation-errorBackground)';
+                    mcpError.style.display = 'block';
+                    mcpError.textContent = message.error;
+                    return;
+                }
+                mcpError.style.display = 'none';
+
+                if (message.installed) {
+                    mcpStatusBadge.textContent = 'Installed';
+                    mcpStatusBadge.style.background = 'var(--vscode-testing-iconPassed)';
+                    mcpStatusBadge.style.color = 'var(--vscode-editor-foreground)';
+                    if (btnInstallMcp) btnInstallMcp.style.display = 'none';
+                    if (btnRefreshMcp) btnRefreshMcp.style.display = 'inline-block';
+                    if (message.updateAvailable) {
+                        if (btnUpdateMcp) {
+                            btnUpdateMcp.style.display = 'inline-block';
+                            btnUpdateMcp.disabled = false;
+                        }
+                        mcpExtraInfo.textContent = 'v' + (message.version || '?') + ' (update available)';
+                    } else {
+                        if (btnUpdateMcp) btnUpdateMcp.style.display = 'none';
+                        mcpExtraInfo.textContent = 'v' + (message.version || '?') + ' up to date';
+                    }
+                } else {
+                    mcpStatusBadge.textContent = 'Not Installed';
+                    mcpStatusBadge.style.background = 'var(--vscode-inputValidation-warningBackground)';
+                    mcpStatusBadge.style.color = 'var(--vscode-editor-foreground)';
+                    if (btnInstallMcp) {
+                        btnInstallMcp.style.display = 'inline-block';
+                        btnInstallMcp.disabled = false;
+                    }
+                    if (btnUpdateMcp) btnUpdateMcp.style.display = 'none';
+                    if (btnRefreshMcp) btnRefreshMcp.style.display = 'inline-block';
+                    mcpExtraInfo.textContent = 'MCP is optional but recommended';
+                }
             }
 
             function validateAuth() {

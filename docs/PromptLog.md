@@ -2005,3 +2005,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Updated documentation to reflect completed refactoring - removed development warnings, verified against code"
 
 ---
+### Entry ID: e99141b5-faf0-4d0c-a5e4-2c557275d82c — 2025-11-18 11:58
+> "Yes please, do all that to have a decent pipeline system."
+
+---
+### Entry ID: 6861e0b5-849a-4178-9a48-412d360fd3f2 — 2025-11-18 12:27
+> "Add MCP validation + install button to setup wizard (MCP prerequisite for advanced Copilot features)"
+
+---
+### Entry ID: f976a3b6-5977-403c-82e4-f163ea569b1c — 2025-11-18 12:30
+> "Yet again - check the refactoring plan and see where we are?"
+
+---

@@ -1,0 +1,234 @@
+name: Release MCP to NPM
+
+on:
+  push:
+    tags:
+      - 'mcp-v*.*.*'  # Trigger on MCP version tags (e.g., mcp-v1.0.0, mcp-v1.1.0)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'MCP version to release (e.g., 1.0.0)'
+        required: true
+      tag:
+        description: 'Tag name (e.g., mcp-v1.0.0)'
+        required: true
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: false
+      npm_tag:
+        description: 'NPM dist-tag (latest, beta, next)'
+        type: choice
+        default: 'latest'
+        options:
+          - latest
+          - beta
+          - next
+
+jobs:
+  build-and-test:
+    name: Build and Test MCP
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build shared package (dependency)
+        run: npm run build --workspace=packages/shared
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Run MCP tests
+        run: npm run test:coverage --workspace=packages/mcp
+      
+      - name: Verify CLI is executable
+        run: |
+          if [ ! -f "packages/mcp/dist/cli.js" ]; then
+            echo "Error: CLI file not found"
+            exit 1
+          fi
+          
+          # Check shebang
+          if ! head -n 1 packages/mcp/dist/cli.js | grep -q "#!/usr/bin/env node"; then
+            echo "Warning: CLI missing shebang"
+          fi
+          
+          echo "✓ CLI file verified"
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-release-artifacts
+          path: |
+            packages/mcp/dist/
+            packages/mcp/package.json
+            packages/mcp/config-schema.json
+            packages/mcp/README.md
+            packages/mcp/LICENSE
+          retention-days: 30
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-release-artifacts
+          path: ./artifacts
+      
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#mcp-v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -f "packages/mcp/CHANGELOG.md" ]; then
+            CHANGES=$(sed -n "/## \[${{ steps.version.outputs.version }}\]/,/## \[/p" packages/mcp/CHANGELOG.md | sed '$d')
+            if [ -z "$CHANGES" ]; then
+              CHANGES="See packages/mcp/CHANGELOG.md for details."
+            fi
+          else
+            CHANGES="MCP Release ${{ steps.version.outputs.version }}"
+          fi
+          
+          echo "$CHANGES" > changelog.txt
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: MCP ${{ steps.version.outputs.version }}
+          body_path: changelog.txt
+          files: |
+            ./artifacts/dist/**/*
+            ./artifacts/config-schema.json
+            ./artifacts/README.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: github.event.inputs.prerelease != 'true'  # Only publish stable releases to 'latest'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Verify package contents
+        run: |
+          cd packages/mcp
+          echo "Files to be published:"
+          npm pack --dry-run
+      
+      - name: Publish to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd packages/mcp
+          NPM_TAG="${{ github.event.inputs.npm_tag || 'latest' }}"
+          echo "Publishing to NPM with tag: $NPM_TAG"
+          npm publish --access public --tag $NPM_TAG
+      
+      - name: Verify NPM publication
+        run: |
+          # Wait a few seconds for NPM to update
+          sleep 10
+          
+          # Check if package is available
+          PACKAGE_NAME="bc-telemetry-buddy-mcp"
+          VERSION="${{ needs.create-github-release.outputs.version || github.ref_name }}"
+          VERSION="${VERSION#mcp-v}"
+          
+          echo "Verifying package: $PACKAGE_NAME@$VERSION"
+          if npm view "$PACKAGE_NAME@$VERSION" version; then
+            echo "✓ Package successfully published to NPM"
+          else
+            echo "⚠️  Package verification failed (may take a few minutes to propagate)"
+          fi
+
+  publish-npm-prerelease:
+    name: Publish Pre-release to NPM
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: github.event.inputs.prerelease == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+      
+      - name: Build MCP
+        run: npm run build --workspace=packages/mcp
+      
+      - name: Publish pre-release to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd packages/mcp
+          NPM_TAG="${{ github.event.inputs.npm_tag || 'beta' }}"
+          echo "Publishing pre-release to NPM with tag: $NPM_TAG"
+          npm publish --access public --tag $NPM_TAG
+

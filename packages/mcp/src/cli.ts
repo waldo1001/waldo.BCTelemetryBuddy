@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Command } from 'commander';
 import { loadConfig, validateConfig, initConfig, loadConfigFromFile } from './config.js';
 import { AuthService } from '@bctb/shared';

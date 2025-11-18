@@ -1320,3 +1320,12 @@ Keep entries short and focused. This doc is your presentation backbone.
   - **2025-11-18** — Completed monorepo refactoring for v0.3.0 architecture [Entry: 72b4309f-91fb-4759-86c3-f98d6f956a5a]
   - **Why:** Decouple MCP from extension to enable standalone usage, improve performance with direct TelemetryService execution, support multi-profile configurations, and prepare MCP for NPM publishing.
   - **How:** Created `packages/shared/` with core business logic (auth, kusto, cache, queries, sanitize, eventLookup), refactored MCP to use @bctb/shared with CLI commands (init, validate, start), implemented TelemetryService in extension for direct KQL execution without MCP, added ProfileManager and ProfileStatusBar for multi-customer support, implemented MigrationService for automatic settings migration from `bcTelemetryBuddy.*` to `.bctb-config.json`, configured npm workspaces and TypeScript project references, updated all documentation (MIGRATION.md, UserGuide.md, package READMEs). Result: Extension works standalone (145 tests passing), MCP ready for NPM (282 tests passing), configuration unified in single file with profile support.
+- **2025-11-18** — Implemented dual-pipeline release system [Entry: e99141b5-faf0-4d0c-a5e4-2c557275d82c]
+  - **Why:** Enable separate publishing workflows for extension (VS Code Marketplace) and MCP (NPM registry)
+  - **How:** Created release-mcp.yml workflow, renamed release.yml to release-extension.yml, updated release.ps1 to support mcp-v*.*.* tags, created comprehensive ReleaseGuide.md
+- **2025-11-18** — MCP install & status in Setup Wizard [Entry: 6861e0b5-849a-4178-9a48-412d360fd3f2]
+  - **Why:** MCP is a prerequisite for rich Copilot Chat; integrate onboarding path
+  - **How:** Added Step 1 UI (status, install/update buttons) + webview message handlers (checkMCP/installMCP) calling mcpInstaller
+- **2025-11-18** — Status audit vs refactoring plan [Entry: f976a3b6-5977-403c-82e4-f163ea569b1c]
+  - **Why:** Provide clear progress mapping to identify remaining work and prioritize next steps.
+  - **How:** Reviewed MCP refactoring phases, marked completed items, updated TODO list with remaining test, documentation, and UX enhancements.
