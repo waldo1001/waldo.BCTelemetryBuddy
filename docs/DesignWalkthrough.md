@@ -1140,3 +1140,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Updated all README files with actual NPM and marketplace URLs [Entry: 92af9217-2ff3-4f7a-81aa-6c1be42b3772]
   - **Why:** Replace placeholder links with real published package URLs after successful publication
   - **How:** Added Packages section to main README with marketplace and NPM links, fixed extension README and BADGES.md
+- **2025-11-18** — Updated Copilot instructions with automated release workflow [Entry: 8bfd3c8e-3cba-4bc3-af96-22e2cdd5cf93]
+  - **Why:** Enable conversational releases using release.ps1 script for both extension and MCP components
+  - **How:** Added comprehensive release trigger detection, script usage, and monitoring instructions

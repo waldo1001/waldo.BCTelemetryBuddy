@@ -2122,3 +2122,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Update the readme to existing document instead of dead links."
 
 ---
+### Entry ID: 9b222d1b-0414-4079-8537-b9c738a0b4e6 — 2025-11-18 19:53
+> "Ok, now create copilot instructions so that all this work from the copilot chat"
+
+---
+### Entry ID: 8bfd3c8e-3cba-4bc3-af96-22e2cdd5cf93 — 2025-11-18 19:53
+> "Ok, now create copilot instructions so that all this work from the copilot chat"
+
+---

@@ -293,216 +293,102 @@ Apply these software engineering principles to all code:
 
 ### 12. Release workflow automation
 
-**SIMPLIFIED MANUAL RELEASE PROCESS** - ALWAYS use two-step workflow:
+**AUTOMATED RELEASE PROCESS** - Use the release script for streamlined releases:
 
-## STEP 1: PREPARE RELEASE (when user says "prepare release", "release this", etc.)
+## Release Commands - User Triggers
 
-**Actions to perform:**
-
-1. **Read current version** from packages/extension/package.json
-
-2. **Update version in package.json**
-   - Edit packages/extension/package.json
-   - Bump version (e.g., 0.2.16 → 0.2.17 for patch)
-   - Save the file
-
-3. **Update CHANGELOGs**
-   - Edit packages/extension/CHANGELOG.md:
-     - Add new version section: ## [0.2.Y] - YYYY-MM-DD
-     - Add relevant changes under ### Fixed, ### Added, ### Changed, etc.
-     - Keep [Unreleased] section at top (empty)
-   - Edit packages/mcp/CHANGELOG.md:
-     - Same format as extension CHANGELOG
-
-4. **Update package-lock.json**
-   - Run: `cd packages/extension && npm install`
-
-5. **Commit changes**
-   ```powershell
-   git add packages/extension/package.json packages/extension/CHANGELOG.md packages/mcp/CHANGELOG.md packages/extension/package-lock.json
-   git commit -m "chore: release v0.2.Y"
-   ```
-
-6. **Verify git log** to confirm commit looks correct
-
-7. **STOP HERE and present summary:**
-   ```
-   ✅ Release v0.2.Y prepared and committed locally!
-   
-   📦 Changes ready:
-   • Version bumped: 0.2.X → 0.2.Y
-   • CHANGELOGs updated (extension + MCP)
-   • package-lock.json updated
-   • Committed as "chore: release v0.2.Y"
-   
-   ⚠️  NOT YET PUSHED TO GITHUB
-   
-   Ready to publish? Reply "yes" to push and create GitHub release, or "cancel" to abort.
-   ```
-
-## STEP 2: EXECUTE RELEASE (ONLY after user confirms "yes", "go ahead", "publish", etc.)
-
-**Actions to perform:**
-
-1. **Push to main**
-   ```powershell
-   git push origin main
-   ```
-
-2. **Create and push tag**
-   ```powershell
-   git tag v0.2.Y
-   git push origin v0.2.Y
-   ```
-
-3. **Confirm success:**
-   ```
-   🚀 Release v0.2.Y initiated successfully!
-   
-   ✅ Pushed to main
-   ✅ Tag v0.2.Y created and pushed
-   ✅ GitHub Actions triggered
-   
-   📊 Monitor progress:
-   • GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
-   • Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.Y
-   • Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
-   
-   The extension will be live on the marketplace in ~5-10 minutes after CI completes.
-   ```
-
-**CRITICAL RULES:**
-1. **NEVER skip Step 1** - Always prepare first, then ask for confirmation
-2. **NEVER auto-proceed to Step 2** - User must explicitly confirm with "yes", "go ahead", "publish", etc.
-3. **NEVER push or tag without user confirmation** - This is a safety measure
-4. If user says "cancel" after Step 1, you can undo with: `git reset --soft HEAD~1`
-5. Always update package-lock.json by running `npm install` after changing package.json version
-6. Always commit package.json + CHANGELOGs + package-lock.json together in one commit
-7. Tag must point to the commit containing the version bump
-
-**Old automated release script workflow** - DO NOT USE (deprecated):
-
-~~**Conversational Release Triggers**: When the user says phrases like:~~
-- "Release this version" / "Release this"
-- "Publish a new version" / "Publish this"
-- "Let's ship this" / "Ship it"
-- "I want to release" / "Time to release"
-- "Create a release" / "Make a release"
+When the user says phrases like:
+- "Prepare a release" / "Release this" / "Let's release"
+- "Publish a new version" / "Publish the MCP" / "Publish the extension"  
+- "Bump version" / "New version"
+- "Release extension" / "Release MCP"
 
 **Your Response Protocol:**
 
-**Step 1: Gather Context** - Check current state:
-```
-1. Read current version from packages/extension/package.json
-2. Run git status to check working directory is clean
-3. Check current branch (should be main)
-4. Optionally run git log to see recent changes
-```
+### STEP 1: Determine Component and Bump Type
 
-**Step 2: Present Pre-flight Check** with this format:
-```
-Ready to release BC Telemetry Buddy!
+Ask clarifying questions if not specified:
+1. **Which component?** extension or mcp
+2. **Bump type?** patch (bug fixes), minor (new features), or major (breaking changes)
 
-📋 Pre-flight check:
-✅ Current version: 0.2.3
-✅ Git working directory clean
-✅ On main branch
-✅ Last commit: [brief description]
+### STEP 2: Use the Release Script
 
-📦 What I'll do:
-1. Update component CHANGELOG(s) with version changes
-2. Run all tests (311 tests)
-3. Bump version: 0.2.3 → 0.2.4 (example)
-4. Commit: "chore: bump extension version to 0.2.4" (includes CHANGELOG updates)
-5. Create git tag: v0.2.4
-6. Push to GitHub (triggers CI/CD pipeline)
-7. Monitor deployment to VS Code Marketplace
+Run the release script with appropriate parameters:
 
-Which version bump would you like?
-• patch (0.2.3 → 0.2.4) - Bug fixes, small improvements
-• minor (0.2.3 → 0.3.0) - New features, backward compatible
-• major (0.2.3 → 1.0.0) - Breaking changes
+```powershell
+# Extension release (patch)
+.\scripts\release.ps1 -BumpType patch -Component extension
 
-Type: patch, minor, or major (or 'cancel' to abort)
+# MCP release (patch)  
+.\scripts\release.ps1 -BumpType patch -Component mcp
+
+# Minor/major bumps
+.\scripts\release.ps1 -BumpType minor -Component mcp
+.\scripts\release.ps1 -BumpType major -Component extension
+
+# Dry run to preview changes
+.\scripts\release.ps1 -BumpType patch -Component mcp -DryRun
 ```
 
-**Step 3: Update Component CHANGELOGs** - Before running release script:
-```
-1. Determine which component(s) are being released (extension, mcp, or both)
-2. For each component, update its CHANGELOG.md:
-   - packages/extension/CHANGELOG.md for extension releases
-   - packages/mcp/CHANGELOG.md for MCP releases
-3. Add new version section at the top with format:
-   ## [X.Y.Z] - YYYY-MM-DD
-   
-   ### Added
-   - [List new features]
-   
-   ### Changed
-   - [List changes to existing functionality]
-   
-   ### Fixed
-   - [List bug fixes]
-   
-   ### Removed
-   - [List removed features]
-4. Move relevant items from [Unreleased] section to new version section
-5. Keep [Unreleased] section at top for future changes
-6. Save the file(s) - they will be committed with version bump
-```
+### STEP 3: What the Script Does Automatically
 
-**Step 4: Execute Release** after CHANGELOGs updated and user confirms bump type:
-```
-1. Run: .\scripts\release.ps1 -BumpType [user's choice]
-2. Script will automatically include CHANGELOG.md in the commit (uses 'git add -A')
-3. Monitor terminal output for errors
-4. If successful, show success message with links
-5. If errors occur, diagnose and report
-```
+The script handles everything:
+1. ✅ Validates git status is clean
+2. ✅ Checks current branch (warns if not main)
+3. ✅ Bumps version in package.json
+4. ✅ Updates CHANGELOG.md ([Unreleased] → [1.0.1] - YYYY-MM-DD)
+5. ✅ Commits with message: "chore: bump [component] version to X.Y.Z"
+6. ✅ Creates git tag (mcp-vX.Y.Z or vX.Y.Z)
+7. ✅ Pushes commit and tag to GitHub
+8. ✅ Triggers GitHub Actions (builds, tests, publishes)
 
-**Step 5: Confirm Success** with this format:
-```
-🚀 Release v0.2.4 initiated successfully!
+### STEP 4: Monitor Release
 
-✅ Version bumped and committed
-✅ Tag v0.2.4 created and pushed
-✅ GitHub Actions triggered
+After script completes, inform user:
+```
+🚀 Release initiated successfully!
 
 📊 Monitor progress:
 • GitHub Actions: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions
-• Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/v0.2.4
-• Marketplace: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+• Release page: https://github.com/waldo1001/waldo.BCTelemetryBuddy/releases/tag/[TAG]
 
-The extension will be live on the marketplace in ~5-10 minutes after CI completes.
+For Extension: https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy
+For MCP: https://www.npmjs.com/package/bc-telemetry-buddy-mcp
 ```
 
-**Error Handling:**
-- **Tests fail** → Report which tests failed, show output, suggest fixes, DO NOT proceed
-- **Git not clean** → Show `git status` output, ask user to commit/stash, DO NOT proceed
-- **Not on main** → Warn user, ask if they want to continue anyway
-- **Tag already exists** → Script handles this (prompts to delete/recreate)
-- **Script fails** → Show error output, diagnose issue, suggest manual steps if needed
-
-**Special Cases:**
-- If user says "release both" or "release extension and mcp" → use `-Component both`
-- If user says "dry run first" → run with `-DryRun` flag first, then ask to proceed
-- If user wants to review before pushing → use `-NoCommit` flag
-
 **CRITICAL RULES:**
-1. **NEVER auto-release without user confirmation** - Always present pre-flight check and wait for bump type
-2. **NEVER skip tests** - Tests must pass before releasing (unless user explicitly overrides with -DryRun)
-3. **Follow Rule #11** - Use `.\scripts\release.ps1` script, don't run git commands directly
-4. **Log the interaction** - Log the "release this version" prompt to PromptLog.md as usual
+1. **ALWAYS use the release script** - Don't manually bump versions
+2. **Never commit/push manually** - Script handles all git operations
+3. **Extension tags**: `v0.3.0` (no prefix)
+4. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
+5. **Cannot release both simultaneously** - Different tag formats required
+6. **Script validates everything** - Clean git state, proper branch
+7. **Dry run available** - Use `-DryRun` to preview without changes
+8. **NoCommit option** - Use `-NoCommit` to review changes before pushing
 
-**Example Interaction:**
+**Script Parameters:**
+- `-BumpType`: patch, minor, or major (REQUIRED)
+- `-Component`: extension or mcp (default: extension)
+- `-DryRun`: Preview changes without making them
+- `-NoCommit`: Make changes but don't commit/push
+- `-RunTests`: Run all tests before releasing
 
-User: "Release this version"
+**Example Workflow:**
 
-You: [Present pre-flight check with current state and ask for bump type]
+User: "Release the MCP"
 
-User: "patch"
+You:
+1. Ask: "What type of version bump? (patch/minor/major)"
+2. User responds: "patch"
+3. Run: `.\scripts\release.ps1 -BumpType patch -Component mcp`
+4. Script executes and provides output
+5. Inform user of monitoring links
 
-You: [Run .\scripts\release.ps1 -BumpType patch, monitor output, show success message with links]
+**Error Handling:**
+- Git not clean → Script stops, shows uncommitted files
+- Tag exists → Script asks to delete/recreate
+- Tests fail (if -RunTests) → Script stops before release
+- Wrong branch → Script warns, asks to continue
 
 ---
 

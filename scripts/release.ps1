@@ -69,10 +69,12 @@ if ($gitStatus) {
 }
 Write-Success "Git working directory is clean"
 
-# Check if on main branch
+# Check current branch
 $currentBranch = git rev-parse --abbrev-ref HEAD
+Write-Host "  Current branch: $currentBranch" -ForegroundColor Gray
 if ($currentBranch -ne "main") {
     Write-Warning "You are not on the main branch (current: $currentBranch)"
+    Write-Host "  Releases should typically be done from 'main' branch" -ForegroundColor Yellow
     $continue = Read-Host "Continue anyway? (y/N)"
     if ($continue -ne "y" -and $continue -ne "Y") {
         Write-Host "Release cancelled."
@@ -292,7 +294,7 @@ Write-Success "Tag created"
 # Push to GitHub
 Write-Step "Pushing to GitHub..."
 Write-Host "  Pushing commits..." -ForegroundColor Gray
-git push origin main
+git push origin $currentBranch
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to push commits to GitHub"
     exit 1
