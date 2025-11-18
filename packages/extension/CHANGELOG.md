@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2025-11-19
+
+### Fixed
+
+- **CI Tests**: Updated tests to expect correct version (v1.0.4→v1.0.5) and npm install command
+- **Build Process**: Fixed test failures in CI pipeline
+
 ## [1.0.4] - 2025-11-19
 
 ### Changed
