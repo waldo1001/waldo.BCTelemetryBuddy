@@ -1109,3 +1109,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Disabled dependabot and updated dependencies manually [Entry: 1c9b1e10-7577-4c4c-9feb-b654b6adef84]
   - **Why:** User wants manual control over dependency updates to avoid PR spam
   - **How:** Set open-pull-requests-limit: 0 in dependabot.yml, ran npm update in both packages, fixed esbuild and jest vulnerabilities
+
+- **2025-11-18** — Fixed CodeQL warnings in PR #58 [Entry: 53079ba4-f13d-40fd-b3b9-60f73110d3d6]
+  - **Why:** GitHub Actions failing due to unused variables and TOCTOU race condition
+  - **How:** Removed unused variables (callCount, path import, success), fixed file system race condition in ProfileWizardProvider using try-catch instead of existsSync
