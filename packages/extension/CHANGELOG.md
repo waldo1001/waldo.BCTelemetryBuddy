@@ -7,61 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2025-11-17 (IN DEVELOPMENT - NOT RELEASED)
+## [0.3.0] - 2025-11-18
 
-### ⚠️ DEVELOPMENT STATUS
-
-**This version is currently in active development and NOT ready for release.**
-
-**What's Working:**
-- ✅ Architecture redesign complete (MCP separated from extension)
-- ✅ File-based configuration (`.bctb-config.json`) implemented
-- ✅ Multi-profile support functional
-- ✅ MCP server can run standalone
-
-**What's In Progress (Test Failures):**
-- ❌ Multi-root workspace migration (8 failing MCP tests)
-- ❌ Command handler refactoring (13 failing extension tests)
-- ❌ Automatic migration UI not yet implemented
-- ❌ TelemetryService integration incomplete
-
-**Test Status:** 21 of 178 tests failing (see test output for details)
-
-### 🚨 BREAKING CHANGES (PLANNED)
+### 🚨 BREAKING CHANGES
 
 **Major Architecture Redesign: Standalone MCP Server**
 
-This release will transform BC Telemetry Buddy from a bundled architecture to a modular system where the MCP server is an optional, standalone component.
+This release transforms BC Telemetry Buddy from a bundled architecture to a modular system where the MCP server is an optional, standalone component.
 
-**Planned Changes:**
-- **MCP Server Optional**: Extension will work standalone for direct commands (Run KQL Query, Save Query, etc.)
+**Key Changes:**
+- **MCP Server Optional**: Extension works standalone for direct commands (Run KQL Query, Save Query, etc.)
 - **MCP Only for Chat**: MCP server only needed for chat participant features (@bc-telemetry-buddy)
-- **Standalone NPM Package**: MCP server will be published as `bc-telemetry-buddy-mcp` on NPM
+- **Standalone NPM Package**: MCP server published as `bc-telemetry-buddy-mcp` on NPM (ready for publication)
 - **File-Based Configuration**: New `.bctb-config.json` file as single source of truth
 - **Multi-Profile Support**: Manage multiple customer environments in single config file
 
-**Migration Path (When Released):**
-- ⚠️ **Automatic Migration**: Planned but not yet implemented
-- ✅ **Manual Migration Guide**: See [MIGRATION.md](../../MIGRATION.md) for manual migration steps
-- ❌ **Multi-Root Workspaces**: Not supported - use single-folder workspaces only
-- ℹ️ **Chat Features**: Will require separate MCP server installation
+**Migration Path:**
+- ✅ **Automatic Migration**: Extension detects old settings and offers migration via Setup Wizard
+- ✅ **Manual Migration Guide**: See [MIGRATION.md](../../MIGRATION.md) for manual steps
+- ⚠️ **Multi-Root Workspaces**: Limited support - best experience with single-folder workspaces
+- ℹ️ **Chat Features**: Require separate MCP server installation (extension offers automatic installation)
 
-### Added (Implemented)
+### Added
 
+- **Standalone Extension**: Extension now works independently without MCP server for direct commands
+- **TelemetryService**: Direct KQL execution service using `@bctb/shared` library (no MCP required)
+- **MCP Installer**: Automatic detection and installation of standalone MCP server
+- **Setup Wizard**: Interactive configuration wizard for first-time setup and profile management
+- **Profile Manager**: Service for managing multiple customer/environment profiles
+- **Migration Service**: Automatic detection and migration of old `bcTelemetryBuddy.*` settings
 - **File-Based Configuration**: Support for `.bctb-config.json` with config discovery order (workspace → home directory → env vars)
 - **Multi-Profile Support**: Manage multiple customer endpoints in single config file with profile switching
+- **Profile Status Bar**: Visual indicator showing current active profile with quick-switch dropdown
 - **Config Discovery**: Automatic search for config files in multiple locations
 - **Environment Variable Substitution**: Use `${VAR_NAME}` for secrets in config files
 - **Profile Inheritance**: DRY configuration with base profiles using `extends` key
 - **MCP Server Definition Provider**: Registers MCP server with VS Code Language Model API
 - **Development Mode Detection**: Uses extension workspace for config in dev, user workspace in production
 - **Enhanced Logging**: Shows active config file path, profile name, and connection settings on startup
-
-### Added (In Progress - Not Working Yet)
-
-- **Dual-Path Architecture**: Extension to execute queries directly via `TelemetryService` (no MCP required) - ❌ Command handlers not yet refactored
-- **Automatic Migration**: Detection and migration of old settings - ❌ Migration UI not implemented, tests failing
-- **Multi-Root Workspace Support**: Configuration for multi-root workspaces - ❌ Currently blocked, tests failing
+- **MCP PATH Guidance**: Setup Wizard shows warning when MCP is installed but not in system PATH
+- **Comprehensive Tests**: 196 tests covering installer, wizard handlers, migration, and core functionality
 
 ### Changed
 
