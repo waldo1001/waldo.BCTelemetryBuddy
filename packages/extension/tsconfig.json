@@ -8,8 +8,16 @@
         "lib": [
             "ES2022"
         ],
-        "sourceMap": true
+        "sourceMap": true,
+        "declaration": false,
+        "declarationMap": false,
+        "composite": false
     },
+    "references": [
+        {
+            "path": "../shared"
+        }
+    ],
     "include": [
         "src/**/*"
     ],

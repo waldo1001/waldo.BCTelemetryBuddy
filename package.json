@@ -4,6 +4,7 @@
     "description": "Query Business Central telemetry from VSCode with natural language using MCP and GitHub Copilot",
     "private": true,
     "workspaces": [
+        "packages/shared",
         "packages/mcp",
         "packages/extension"
     ],

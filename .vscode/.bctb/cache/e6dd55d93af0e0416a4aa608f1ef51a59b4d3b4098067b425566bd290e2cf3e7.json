@@ -1,0 +1,2688 @@
+{
+  "data": {
+    "type": "table",
+    "kql": "traces\n| where timestamp >= ago(30d)\n| where isnotempty(customDimensions.companyName)\n| extend aadTenantId = tostring(customDimensions.aadTenantId)\n  , companyName = tostring(customDimensions.companyName)\n| summarize count() by aadTenantId, companyName\n| project companyName, aadTenantId, count_",
+    "summary": "Returned 534 row(s) with 3 column(s)",
+    "columns": [
+      null,
+      null,
+      null
+    ],
+    "rows": [
+      [
+        "Van der Gucht",
+        "b5de667c-7043-4fb1-a620-6e5bd35cfdb3",
+        396406
+      ],
+      [
+        "Coeck",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        429265
+      ],
+      [
+        "Prof Praxis",
+        "common",
+        438212
+      ],
+      [
+        "Aksent Collection BV",
+        "5b2b9ca4-150b-47cb-a678-c15fd57f9240",
+        608951
+      ],
+      [
+        "Arseus Single Logistics",
+        "arseusmedical.onmicrosoft.com",
+        203345
+      ],
+      [
+        "All-in-1 bvba",
+        "common",
+        1088718
+      ],
+      [
+        "Imvap NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        14343
+      ],
+      [
+        "IPT Recycling",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        9998
+      ],
+      [
+        "WindEurope ASBL",
+        "697a803c-adf7-481b-a943-7f04649c24a9",
+        693816
+      ],
+      [
+        "Metalen Galler N.V.",
+        "common",
+        397354
+      ],
+      [
+        "JASACO",
+        "c22da045-71b9-4bfd-ab05-7801e52c9d0c",
+        283102
+      ],
+      [
+        "MOLCON INTERWHEELS NV",
+        "common",
+        766366
+      ],
+      [
+        "MOLCON BV",
+        "common",
+        373461
+      ],
+      [
+        "SLOG",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        278883
+      ],
+      [
+        "Furniture Offices",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        84274
+      ],
+      [
+        "IPT",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        30880
+      ],
+      [
+        "Van Akelyen",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        425421
+      ],
+      [
+        "All-in-1 bvba",
+        "allin1logistics.onmicrosoft.com",
+        2010832
+      ],
+      [
+        "FD and L",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        971749
+      ],
+      [
+        "Intrafin",
+        "6eaa8950-ea40-41f6-82e5-5b7edf4cfbd4",
+        603105
+      ],
+      [
+        "DMB",
+        "common",
+        1770412
+      ],
+      [
+        "VHO",
+        "common",
+        457079
+      ],
+      [
+        "Hospital",
+        "common",
+        587436
+      ],
+      [
+        "Pro-Motion Medical NL",
+        "common",
+        1051958
+      ],
+      [
+        "LivWise NV",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        171399
+      ],
+      [
+        "Coeck",
+        "common",
+        1292503
+      ],
+      [
+        "Arseus Single Logistics",
+        "common",
+        2167791
+      ],
+      [
+        "MedCare",
+        "common",
+        268896
+      ],
+      [
+        "HOSPIDEX SLOG",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        1677368
+      ],
+      [
+        "Juntoo",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        543506
+      ],
+      [
+        "ENGELS GROUP BV",
+        "engels.be",
+        1296229
+      ],
+      [
+        "Gehco Fixing BV",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        23819
+      ],
+      [
+        "Covari NV",
+        "common",
+        205589
+      ],
+      [
+        "DANCKAERT",
+        "b4dfcaba-a5b6-49bb-80dc-603bd8dfcf73",
+        88467
+      ],
+      [
+        "BUT NV (UAE)",
+        "c6a0b9e7-e42c-416a-885f-137b72121593",
+        51135
+      ],
+      [
+        "Eucore",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        107524
+      ],
+      [
+        "Metalen Galler nv",
+        "common",
+        297611
+      ],
+      [
+        "ShowTex Polska Zoo",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        3673
+      ],
+      [
+        "Coeck NV",
+        "common",
+        667513
+      ],
+      [
+        "Metalen Galler nv",
+        "2fcd1081-cb99-49db-a023-14c51143d139",
+        138985
+      ],
+      [
+        "Toolsen",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        196979
+      ],
+      [
+        "Exterioo",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        283611
+      ],
+      [
+        "Exterioo WVL en Wallonië",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        58326
+      ],
+      [
+        "Timstor NV",
+        "ade5cbd5-d30f-43ae-9d8f-2dfd1a27f858",
+        15161
+      ],
+      [
+        "ShowTex PL Simplified",
+        "common",
+        226068
+      ],
+      [
+        "Showtex BE NV",
+        "common",
+        1952562
+      ],
+      [
+        "VERBO BV",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        44233
+      ],
+      [
+        "Cookstore BV",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        5196
+      ],
+      [
+        "Verolub",
+        "verolub.be",
+        106218
+      ],
+      [
+        "I.C.T.C.",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        1110574
+      ],
+      [
+        "VDT",
+        "fe201484-0d8e-4a67-b2e3-347b992beaec",
+        199337
+      ],
+      [
+        "Juntoo Oost-Vl en Brabant NV",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        60542
+      ],
+      [
+        "Holding Van Pelt NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        16818
+      ],
+      [
+        "SLOG",
+        "1d29b73c-4f68-4670-8ee1-bc027cd20120",
+        300582
+      ],
+      [
+        "Medical",
+        "common",
+        549875
+      ],
+      [
+        "Aesthetics",
+        "common",
+        14231
+      ],
+      [
+        "DM Depot NV",
+        "dmdepot.be",
+        126489
+      ],
+      [
+        "Beliving NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        35659
+      ],
+      [
+        "LivWise NV",
+        "common",
+        346465
+      ],
+      [
+        "Showtex BE NV",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        181359
+      ],
+      [
+        "Exterioo Brabant",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        44012
+      ],
+      [
+        "Verolub",
+        "common",
+        241616
+      ],
+      [
+        "Vaptrans NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        16151
+      ],
+      [
+        "DK Tools",
+        "f8aa23ad-818c-439a-b51d-bbc54b2555a6",
+        127104
+      ],
+      [
+        "VCL VZW",
+        "27035ccc-33d8-468d-8811-800a47b8d932",
+        554143
+      ],
+      [
+        "Exterioo Oost-Vlaanderen NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        43260
+      ],
+      [
+        "320",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        18395
+      ],
+      [
+        "RITEC",
+        "common",
+        154936
+      ],
+      [
+        "OVS Garden BV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        46990
+      ],
+      [
+        "Legio Purchasing Garden NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        46344
+      ],
+      [
+        "Exterioo Antwerpen en Limburg",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        67651
+      ],
+      [
+        "ENGELS GROUP BV",
+        "common",
+        466543
+      ],
+      [
+        "Exterioo Call Center",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        38458
+      ],
+      [
+        "VDT Fin BE",
+        "fe201484-0d8e-4a67-b2e3-347b992beaec",
+        66546
+      ],
+      [
+        "Predalco BV",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        36460
+      ],
+      [
+        "Bufinco",
+        "common",
+        116178
+      ],
+      [
+        "ShowTex France SARL",
+        "common",
+        187155
+      ],
+      [
+        "Grizabel NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        18819
+      ],
+      [
+        "BEGETUBE",
+        "1d29b73c-4f68-4670-8ee1-bc027cd20120",
+        300595
+      ],
+      [
+        "Juntoo Antwerpen en Limburg NV",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        83936
+      ],
+      [
+        "eXmedical",
+        "common",
+        237721
+      ],
+      [
+        "van Wageningen BV",
+        "common",
+        59476
+      ],
+      [
+        "ShowTex Nederland BV",
+        "common",
+        342664
+      ],
+      [
+        "002",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        39544
+      ],
+      [
+        "Metalen Galler N.V.",
+        "2fcd1081-cb99-49db-a023-14c51143d139",
+        157825
+      ],
+      [
+        "ShowTex Polska Zoo",
+        "common",
+        582441
+      ],
+      [
+        "Medical NL",
+        "common",
+        39146
+      ],
+      [
+        "ICO",
+        "common",
+        14003
+      ],
+      [
+        "Juntoo West-Vl en Wallonië NV",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        97894
+      ],
+      [
+        "002",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        9930
+      ],
+      [
+        "IVAR GROUP",
+        "1d29b73c-4f68-4670-8ee1-bc027cd20120",
+        297655
+      ],
+      [
+        "420",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        46494
+      ],
+      [
+        "DIALEX BIOMEDICA NV",
+        "common",
+        121094
+      ],
+      [
+        "TEMPLATE FR",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        69694
+      ],
+      [
+        "Polet",
+        "3be7000b-772c-4345-99ce-7705f4a0c67e",
+        472041
+      ],
+      [
+        "Distritoit",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        260305
+      ],
+      [
+        "PW MANAGEMENT BV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        50038
+      ],
+      [
+        "TEMPLATE NL",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        79635
+      ],
+      [
+        "TEMPLATE BE",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        69795
+      ],
+      [
+        "HOSPIDEX NV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        130258
+      ],
+      [
+        "HOSPIDEX BV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        121075
+      ],
+      [
+        "DF BELGIE",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        962861
+      ],
+      [
+        "HOSPIDEX GROUP BV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        73965
+      ],
+      [
+        "SLOG",
+        "common",
+        440578
+      ],
+      [
+        "HOSPIDEX FRANCE SAS",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        119696
+      ],
+      [
+        "Keiser DE",
+        "common",
+        45851
+      ],
+      [
+        "SISSEL BENELUX BV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        84404
+      ],
+      [
+        "Consolidatie Arseus",
+        "common",
+        20208
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "common",
+        28903
+      ],
+      [
+        "VDA",
+        "common",
+        72502
+      ],
+      [
+        "Amophar",
+        "common",
+        83889
+      ],
+      [
+        "001",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        9515
+      ],
+      [
+        "Consolidatie Aesthetics",
+        "common",
+        19997
+      ],
+      [
+        "FORCEVILLE",
+        "21a58649-4f00-4293-82b1-1d8b7a233a94",
+        175109
+      ],
+      [
+        "Consolidatie Bloomedical",
+        "common",
+        20040
+      ],
+      [
+        "DF Nederland",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        192967
+      ],
+      [
+        "Amophar OTC",
+        "common",
+        36247
+      ],
+      [
+        "BUT.CH SA",
+        "c6a0b9e7-e42c-416a-885f-137b72121593",
+        56447
+      ],
+      [
+        "Heart BV",
+        "common",
+        37967
+      ],
+      [
+        "Arseus PMM BV",
+        "common",
+        19140
+      ],
+      [
+        "BUT PTE LTD",
+        "c6a0b9e7-e42c-416a-885f-137b72121593",
+        71717
+      ],
+      [
+        "IFACTO BOUW",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        27304
+      ],
+      [
+        "CRONUS BE",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        20088
+      ],
+      [
+        "Inphagro",
+        "common",
+        10602
+      ],
+      [
+        "KDT",
+        "common",
+        17923
+      ],
+      [
+        "VTE",
+        "common",
+        69538
+      ],
+      [
+        "SICK Metering Systems -",
+        "91936a0b-a650-4efe-bd50-5629285c06d5",
+        2728
+      ],
+      [
+        "DRAFT BE",
+        "common",
+        17834
+      ],
+      [
+        "BUT NV (BELGIUM)",
+        "c6a0b9e7-e42c-416a-885f-137b72121593",
+        69964
+      ],
+      [
+        "My Company",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        12120
+      ],
+      [
+        "HOSPIDEX HOLDING NV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        21256
+      ],
+      [
+        "R&R Property B.V.",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        18927
+      ],
+      [
+        "IFACTO NV",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        29330
+      ],
+      [
+        "Bloomedical NL",
+        "common",
+        17706
+      ],
+      [
+        "Keiser NL",
+        "common",
+        17941
+      ],
+      [
+        "Stagobel",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        10420
+      ],
+      [
+        "Keiser Medifit",
+        "common",
+        4042
+      ],
+      [
+        "Pro-Motion Distribution NL",
+        "common",
+        19305
+      ],
+      [
+        "Keiser BV",
+        "common",
+        5817
+      ],
+      [
+        "Keiser Deutschland GmbH",
+        "common",
+        2859
+      ],
+      [
+        "TD Medical",
+        "common",
+        21955
+      ],
+      [
+        "Banda",
+        "common",
+        2608
+      ],
+      [
+        "Arseus Medifit",
+        "common",
+        2847
+      ],
+      [
+        "DC Aggregates Ltd",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        5155
+      ],
+      [
+        "Van Pelt - Paesen SLOG",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        5464
+      ],
+      [
+        "CRONUS BE",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        4396
+      ],
+      [
+        "Belgian Bottling Company bv",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        5852
+      ],
+      [
+        "Group De Cloedt NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        3369
+      ],
+      [
+        "Bloomedical BE",
+        "common",
+        18066
+      ],
+      [
+        "Bevatrans NV",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4555
+      ],
+      [
+        "CRONUS BE",
+        "fc331b18-eed2-407f-bbd8-9dce67b7a02a",
+        7147
+      ],
+      [
+        "My Company",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        4935
+      ],
+      [
+        "Egeda",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        9314
+      ],
+      [
+        "Pakida",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        6311
+      ],
+      [
+        "Thornton",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        15837
+      ],
+      [
+        "CRONUS BE",
+        "ade5cbd5-d30f-43ae-9d8f-2dfd1a27f858",
+        6279
+      ],
+      [
+        "DRAFT NL",
+        "common",
+        4623
+      ],
+      [
+        "DRAFT DE",
+        "common",
+        3494
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "common",
+        11337
+      ],
+      [
+        "L. De Vos NV",
+        "common",
+        8138
+      ],
+      [
+        "CRONUS BE",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        343
+      ],
+      [
+        "ZZZ Group De Cloedt Test",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        2234
+      ],
+      [
+        "Q-IMMO",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        4673
+      ],
+      [
+        "Productie",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        6597
+      ],
+      [
+        "260",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        25202
+      ],
+      [
+        "GROUP DEFRANCQ NV",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        4009
+      ],
+      [
+        "VEDEFAR NV",
+        "fc331b18-eed2-407f-bbd8-9dce67b7a02a",
+        8782
+      ],
+      [
+        "DS",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        4640
+      ],
+      [
+        "HOSPIDEX GROEP BTW",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        6584
+      ],
+      [
+        "DM Depot NV",
+        "common",
+        11269
+      ],
+      [
+        "Container Technics nv",
+        "5c58cf5e-4765-4169-a2a3-a3d233dcceea",
+        5145
+      ],
+      [
+        "999",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        862
+      ],
+      [
+        "TEST_20250917_1115",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        376
+      ],
+      [
+        "Kumiclan BV",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        4490
+      ],
+      [
+        "Coeck NV",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        97626
+      ],
+      [
+        "Unidevelop BV",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4828
+      ],
+      [
+        "P&B Group",
+        "e0155cad-456c-41a0-bc8c-92fe967eb65d",
+        4881
+      ],
+      [
+        "My Company",
+        "ade5cbd5-d30f-43ae-9d8f-2dfd1a27f858",
+        4322
+      ],
+      [
+        "Billiet-Vanlaere",
+        "4685517d-47e7-43de-bc86-855d650cdd4b",
+        3769
+      ],
+      [
+        "Terra Develop",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4409
+      ],
+      [
+        "DF BTW EENHEID",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        3786
+      ],
+      [
+        "Default bedrijf",
+        "6eaa8950-ea40-41f6-82e5-5b7edf4cfbd4",
+        67
+      ],
+      [
+        "Legio Purchasing Home NV",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        47517
+      ],
+      [
+        "ZZZ Template bedrijf",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        207
+      ],
+      [
+        "251",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        9086
+      ],
+      [
+        "X2OSLMF",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        36070
+      ],
+      [
+        "MedCare",
+        "arseusmedical.onmicrosoft.com",
+        1730
+      ],
+      [
+        "VDA",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        177779
+      ],
+      [
+        "271",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        3761
+      ],
+      [
+        "210",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        10837
+      ],
+      [
+        "250",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        9101
+      ],
+      [
+        "AVOID",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        21228
+      ],
+      [
+        "200",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        19342
+      ],
+      [
+        "253",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        6280
+      ],
+      [
+        "SBM Plus BV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        17078
+      ],
+      [
+        "Coeck",
+        "null",
+        1513
+      ],
+      [
+        "Pro-Motion Medical NL",
+        "arseusmedical.onmicrosoft.com",
+        131579
+      ],
+      [
+        "FD AND L GROUP",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        4314
+      ],
+      [
+        "DMB",
+        "arseusmedical.onmicrosoft.com",
+        209625
+      ],
+      [
+        "L. De Vos NV",
+        "83213ebb-aab5-4f63-81e7-6e1181b28d2e",
+        11332
+      ],
+      [
+        "Keiser NL",
+        "arseusmedical.onmicrosoft.com",
+        31
+      ],
+      [
+        "ENGELS GROUP BV",
+        "null",
+        162
+      ],
+      [
+        "KDT",
+        "allin1logistics.onmicrosoft.com",
+        173
+      ],
+      [
+        "PPI",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        6926
+      ],
+      [
+        "252",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        6576
+      ],
+      [
+        "280",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        4494
+      ],
+      [
+        "Grigorieff NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        15384
+      ],
+      [
+        "DC Real Estate NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        420
+      ],
+      [
+        "Les Sablieres Wauthier Braine",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        311
+      ],
+      [
+        "VABELE",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        100
+      ],
+      [
+        "DC Resources GmbH",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        1975
+      ],
+      [
+        "LivWise NV",
+        "null",
+        69
+      ],
+      [
+        "ICO",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        316
+      ],
+      [
+        "Covari NV",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        1539
+      ],
+      [
+        "BTW-eenheid",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        39
+      ],
+      [
+        "Metalen Galler nv",
+        "null",
+        579
+      ],
+      [
+        "Showtex BE NV",
+        "null",
+        560
+      ],
+      [
+        "Keiser DE",
+        "arseusmedical.onmicrosoft.com",
+        780
+      ],
+      [
+        "FD AND L MANAGEMENT",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        4045
+      ],
+      [
+        "van Wageningen BV",
+        "arseusmedical.onmicrosoft.com",
+        747
+      ],
+      [
+        "SLOG",
+        "null",
+        111
+      ],
+      [
+        "CRONUS BE",
+        "3be7000b-772c-4345-99ce-7705f4a0c67e",
+        10645
+      ],
+      [
+        "Ghecom",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        54
+      ],
+      [
+        "Flexfurn",
+        "aedaba3f-bba6-4063-9a9e-9eaa6b178960",
+        5067
+      ],
+      [
+        "003",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        6150
+      ],
+      [
+        "Flexfurn UK",
+        "aedaba3f-bba6-4063-9a9e-9eaa6b178960",
+        69
+      ],
+      [
+        "004",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        4730
+      ],
+      [
+        "Arseus Single Logistics",
+        "null",
+        165
+      ],
+      [
+        "Cookstore BV",
+        "common",
+        115
+      ],
+      [
+        "900",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        531
+      ],
+      [
+        "YVMA",
+        "2fcd1081-cb99-49db-a023-14c51143d139",
+        144
+      ],
+      [
+        "Verolub",
+        "null",
+        27
+      ],
+      [
+        "Domoco BVBA",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        111
+      ],
+      [
+        "CRONUS BE",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        91
+      ],
+      [
+        "Egeda kopie na kl en lev",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        82
+      ],
+      [
+        "Egeda Kopie voor kl en lev",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        82
+      ],
+      [
+        "Egeda voor kl en lev 2",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        82
+      ],
+      [
+        "Double D",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        14202
+      ],
+      [
+        "PXS Leasing",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        453
+      ],
+      [
+        "Dialex Sales",
+        "common",
+        4437
+      ],
+      [
+        "INNOMEDIQ NV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        5632
+      ],
+      [
+        "X2OSLMF",
+        "null",
+        46
+      ],
+      [
+        "ShowTex Nederland BV",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        463
+      ],
+      [
+        "Serengeti NV",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        19
+      ],
+      [
+        "BP-VA Management",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4418
+      ],
+      [
+        "DF Nederland Finance",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        4072
+      ],
+      [
+        "Paesen Transport NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        5759
+      ],
+      [
+        "VTE",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        1174
+      ],
+      [
+        "R&R Vastgoed",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        15009
+      ],
+      [
+        "CRONUS BE",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        5633
+      ],
+      [
+        "Pro-Motion Medical NL",
+        "null",
+        13
+      ],
+      [
+        "CRONUS BE",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        1593
+      ],
+      [
+        "Coeck NV",
+        "null",
+        243
+      ],
+      [
+        "NB Invest BV",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4544
+      ],
+      [
+        "BVK Projects",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4573
+      ],
+      [
+        "CRONUS BE",
+        "c22da045-71b9-4bfd-ab05-7801e52c9d0c",
+        5224
+      ],
+      [
+        "Aggeris",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4648
+      ],
+      [
+        "MOLCON INTERWHEELS NV",
+        "null",
+        137
+      ],
+      [
+        "005",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        5112
+      ],
+      [
+        "Chopin BV",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4498
+      ],
+      [
+        "Cronus Beverage Demo W1",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1738
+      ],
+      [
+        "My Company",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        416
+      ],
+      [
+        "TEST_20251008_1535",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        300
+      ],
+      [
+        "TEST_20251015_1900",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        337
+      ],
+      [
+        "TEST_20251023_2030_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        184
+      ],
+      [
+        "All-in-1 bvba",
+        "null",
+        104
+      ],
+      [
+        "R&R Holding",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        14767
+      ],
+      [
+        "Bufinco",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        379
+      ],
+      [
+        "Bocheldreef",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4477
+      ],
+      [
+        "YVMA",
+        "common",
+        10684
+      ],
+      [
+        "Paesen Betonfabriek NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        4593
+      ],
+      [
+        "Paesen Bouwexpo NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        4765
+      ],
+      [
+        "BEVA Holding",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        5117
+      ],
+      [
+        "DEFAULT VERBO BV",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        5468
+      ],
+      [
+        "Van Pelt Bouwmaterialen NV",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        4788
+      ],
+      [
+        "BATO",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        3298
+      ],
+      [
+        "VTE",
+        "null",
+        8
+      ],
+      [
+        "BEVA Invest",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4922
+      ],
+      [
+        "001",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        17561
+      ],
+      [
+        "TEST_20251105_2245_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        161
+      ],
+      [
+        "BEPO Invest",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4517
+      ],
+      [
+        "VDA",
+        "null",
+        23
+      ],
+      [
+        "Verbo Technology BV",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        5509
+      ],
+      [
+        "FD&L HOLDING",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        6032
+      ],
+      [
+        "FD and L REAL ESTATE",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        6089
+      ],
+      [
+        "DC Resources GmbH - TEST",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        351
+      ],
+      [
+        "PXS Leasing",
+        "common",
+        150
+      ],
+      [
+        "VABELE",
+        "common",
+        67
+      ],
+      [
+        "TEMPLATE BEDRIJF",
+        "1d29b73c-4f68-4670-8ee1-bc027cd20120",
+        4998
+      ],
+      [
+        "CRONUS UK Ltd.",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        189
+      ],
+      [
+        "My Company",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        187
+      ],
+      [
+        "999",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        5022
+      ],
+      [
+        "CRONUS BE",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        4943
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        49
+      ],
+      [
+        "CRONUS BELGIQUE SA",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        49
+      ],
+      [
+        "DEFAULT TEST BEDRIJF",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        49
+      ],
+      [
+        "My Company",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        873
+      ],
+      [
+        "ZZZ CRONUS BE",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        5026
+      ],
+      [
+        "Arseus Medifit",
+        "arseusmedical.onmicrosoft.com",
+        78
+      ],
+      [
+        "My Company",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        4236
+      ],
+      [
+        "Egeda kopie",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        3935
+      ],
+      [
+        "My Company",
+        "345a1c3e-d525-4720-9983-b0fccbf06c6c",
+        3938
+      ],
+      [
+        "CRONUS BE",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        5578
+      ],
+      [
+        "Test Fin",
+        "7601cddf-0697-47bd-9226-4c6f31ebb35e",
+        21
+      ],
+      [
+        "ZZZ_CRONUS BE",
+        "27035ccc-33d8-468d-8811-800a47b8d932",
+        3836
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "c22da045-71b9-4bfd-ab05-7801e52c9d0c",
+        1180
+      ],
+      [
+        "JASINVEST",
+        "c22da045-71b9-4bfd-ab05-7801e52c9d0c",
+        1172
+      ],
+      [
+        "zzz_DEFAULT BEDRIJF",
+        "common",
+        9833
+      ],
+      [
+        "zzz_DEFAULT TEST BEDRIJF",
+        "common",
+        9833
+      ],
+      [
+        "zzz_TEMPLATE SHOWTEX",
+        "common",
+        9928
+      ],
+      [
+        "PEW HOLDING BV",
+        "common",
+        9872
+      ],
+      [
+        "MOLCON INTERWHEELS NEDERLANDBV",
+        "common",
+        10503
+      ],
+      [
+        "CRONUS BE",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        6267
+      ],
+      [
+        "CRONUS BE",
+        "c3126b7d-3ea6-4f4d-894c-1f0ffdcd135e",
+        4770
+      ],
+      [
+        "FACE",
+        "c3126b7d-3ea6-4f4d-894c-1f0ffdcd135e",
+        4661
+      ],
+      [
+        "CRONUS USA, Inc.",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        5283
+      ],
+      [
+        "CRONUS BE",
+        "e0155cad-456c-41a0-bc8c-92fe967eb65d",
+        4465
+      ],
+      [
+        "CRONUS BE",
+        "4685517d-47e7-43de-bc86-855d650cdd4b",
+        3868
+      ],
+      [
+        "BBW BVBA",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4686
+      ],
+      [
+        "CAPCOPLAST BV",
+        "c0082338-5632-4116-83d7-5528a522964c",
+        1049
+      ],
+      [
+        "CRONUS NL",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        5476
+      ],
+      [
+        "Metalen Galler N.V.",
+        "null",
+        29
+      ],
+      [
+        "ZZZ_Cronus BE",
+        "697a803c-adf7-481b-a943-7f04649c24a9",
+        4167
+      ],
+      [
+        "template",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4505
+      ],
+      [
+        "FIN SETUP",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        4505
+      ],
+      [
+        "Pretrans",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        4739
+      ],
+      [
+        "TEST_20251018_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        992
+      ],
+      [
+        "TESTBEDRIJFDEGAANDERIJ",
+        "ea3aee5b-dce4-456c-8449-c513ca453f34",
+        162
+      ],
+      [
+        "Pulse & Uptime",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        4368
+      ],
+      [
+        "DEFAULT Vastgoed",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        5283
+      ],
+      [
+        "Energy 4 Circle SA",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        296
+      ],
+      [
+        "DC Resources GmbH - Copy 04/01",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        122
+      ],
+      [
+        "Immo DC Boondael NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        241
+      ],
+      [
+        "Immo DC Genk NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        325
+      ],
+      [
+        "e84aa6d8-59e4-ef11-9345-000d3ab5c11f",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        5
+      ],
+      [
+        "PDV NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        247
+      ],
+      [
+        "Immo DC Wijnegem NV",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        315
+      ],
+      [
+        "ZZZ Cronus BE",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        146
+      ],
+      [
+        "My Company",
+        "ea3aee5b-dce4-456c-8449-c513ca453f34",
+        188
+      ],
+      [
+        "GROUP DEFRANCQ SA",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        2700
+      ],
+      [
+        "Backup 24Juni",
+        "21a58649-4f00-4293-82b1-1d8b7a233a94",
+        79
+      ],
+      [
+        "CRONUS BE",
+        "21a58649-4f00-4293-82b1-1d8b7a233a94",
+        75
+      ],
+      [
+        "My Company",
+        "21a58649-4f00-4293-82b1-1d8b7a233a94",
+        75
+      ],
+      [
+        "Template financieel bedrijf",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        74
+      ],
+      [
+        "CRONUS BE",
+        "ea3aee5b-dce4-456c-8449-c513ca453f34",
+        175
+      ],
+      [
+        "My Company",
+        "c22da045-71b9-4bfd-ab05-7801e52c9d0c",
+        20
+      ],
+      [
+        "Van Pelt - Paesen Template",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        39
+      ],
+      [
+        "My Company",
+        "128ddb05-de7b-4593-a2bc-b02677c669cc",
+        79
+      ],
+      [
+        "template bedrijf (eucore)",
+        "f5d11e05-eba9-4b34-bb8a-12b84ea3c877",
+        21
+      ],
+      [
+        "CRONUS BE",
+        "6eaa8950-ea40-41f6-82e5-5b7edf4cfbd4",
+        71
+      ],
+      [
+        "CRONUS BE",
+        "b5de667c-7043-4fb1-a620-6e5bd35cfdb3",
+        44
+      ],
+      [
+        "CRONUS BE",
+        "5b2b9ca4-150b-47cb-a678-c15fd57f9240",
+        25
+      ],
+      [
+        "Default Company",
+        "5b2b9ca4-150b-47cb-a678-c15fd57f9240",
+        21
+      ],
+      [
+        "My Company",
+        "5b2b9ca4-150b-47cb-a678-c15fd57f9240",
+        26
+      ],
+      [
+        "Template slave bedrijf",
+        "6572c8f1-dacc-428a-86ca-2abf781427b2",
+        33
+      ],
+      [
+        "CRONUS BE",
+        "aedaba3f-bba6-4063-9a9e-9eaa6b178960",
+        58
+      ],
+      [
+        "My Company",
+        "aedaba3f-bba6-4063-9a9e-9eaa6b178960",
+        46
+      ],
+      [
+        "My Company",
+        "6eaa8950-ea40-41f6-82e5-5b7edf4cfbd4",
+        33
+      ],
+      [
+        "CRONUS BE",
+        "5c58cf5e-4765-4169-a2a3-a3d233dcceea",
+        35
+      ],
+      [
+        "My Company",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        33
+      ],
+      [
+        "Van Houcke",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        354
+      ],
+      [
+        "DUMMY VDT Fin FR",
+        "fe201484-0d8e-4a67-b2e3-347b992beaec",
+        4949
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "01a5e16c-fb5c-41cf-beb3-0a3a350d20bc",
+        1282
+      ],
+      [
+        "My Company",
+        "b5de667c-7043-4fb1-a620-6e5bd35cfdb3",
+        30
+      ],
+      [
+        "Billiet Sales Company NV",
+        "4685517d-47e7-43de-bc86-855d650cdd4b",
+        41
+      ],
+      [
+        "My Company",
+        "4685517d-47e7-43de-bc86-855d650cdd4b",
+        22
+      ],
+      [
+        "Template FIN",
+        "4685517d-47e7-43de-bc86-855d650cdd4b",
+        22
+      ],
+      [
+        "520",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        20014
+      ],
+      [
+        "Medical",
+        "arseusmedical.onmicrosoft.com",
+        148
+      ],
+      [
+        "ShowTex France SARL",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        171
+      ],
+      [
+        "Amophar",
+        "allin1logistics.onmicrosoft.com",
+        493
+      ],
+      [
+        "Inphagro",
+        "allin1logistics.onmicrosoft.com",
+        269
+      ],
+      [
+        "L. De Vos NV",
+        "null",
+        2
+      ],
+      [
+        "Bloomedical BE",
+        "arseusmedical.onmicrosoft.com",
+        71
+      ],
+      [
+        "Domoco BVBA",
+        "common",
+        13
+      ],
+      [
+        "Artdeco",
+        "dmdepot.be",
+        83
+      ],
+      [
+        "Test_20251910_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        202
+      ],
+      [
+        "Artdeco",
+        "common",
+        17
+      ],
+      [
+        "211",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        598
+      ],
+      [
+        "Artdeco",
+        "null",
+        3
+      ],
+      [
+        "Patat BV",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        149
+      ],
+      [
+        "Patat BV",
+        "common",
+        24
+      ],
+      [
+        "CRONUS BE",
+        "f8aa23ad-818c-439a-b51d-bbc54b2555a6",
+        42
+      ],
+      [
+        "Prof Praxis",
+        "null",
+        32
+      ],
+      [
+        "My Company",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        50
+      ],
+      [
+        "CRONUS BE",
+        "91936a0b-a650-4efe-bd50-5629285c06d5",
+        91
+      ],
+      [
+        "SICK Metering Systems TEST",
+        "91936a0b-a650-4efe-bd50-5629285c06d5",
+        89
+      ],
+      [
+        "MOLCON BV",
+        "null",
+        16
+      ],
+      [
+        "My Company",
+        "e0155cad-456c-41a0-bc8c-92fe967eb65d",
+        54
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        119
+      ],
+      [
+        "CRONUS BELGIQUE SA",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        25
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        24
+      ],
+      [
+        "DEFAULT TEST BEDRIJF",
+        "35cca09d-896a-4186-afc6-8aefa7cef75f",
+        24
+      ],
+      [
+        "Maesbos Invest",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        4135
+      ],
+      [
+        "Polet_TESTE2E",
+        "3be7000b-772c-4345-99ce-7705f4a0c67e",
+        648
+      ],
+      [
+        "TEST_20251111_2245_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        98
+      ],
+      [
+        "TEST_20251112_2015_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        99
+      ],
+      [
+        "TEST_220251114_1810_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        98
+      ],
+      [
+        "Tensio",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        102
+      ],
+      [
+        "Van Oirschot",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        101
+      ],
+      [
+        "SEGERIS TEST",
+        "50864a7a-bda7-4070-ba3b-93d01c55faa2",
+        106
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        49
+      ],
+      [
+        "CRONUS BE",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        1609
+      ],
+      [
+        "My Company",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        128
+      ],
+      [
+        "RITEC",
+        "null",
+        31
+      ],
+      [
+        "My Company",
+        "f8aa23ad-818c-439a-b51d-bbc54b2555a6",
+        30
+      ],
+      [
+        "DM Depot NV",
+        "null",
+        46
+      ],
+      [
+        "Amophar OTC",
+        "allin1logistics.onmicrosoft.com",
+        131
+      ],
+      [
+        "Hospital",
+        "arseusmedical.onmicrosoft.com",
+        32
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "engels.be",
+        24
+      ],
+      [
+        "Covari NV",
+        "null",
+        4
+      ],
+      [
+        "000",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        689
+      ],
+      [
+        "Juntoo West-Vl en Wallonië NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        2
+      ],
+      [
+        "FACE",
+        "5b2b9ca4-150b-47cb-a678-c15fd57f9240",
+        2
+      ],
+      [
+        "DMB",
+        "null",
+        6
+      ],
+      [
+        "Billiet-Vanlaere",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        1
+      ],
+      [
+        "_DEFAULT BEDRIJF",
+        "common",
+        663
+      ],
+      [
+        "TEST_20251009_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        2
+      ],
+      [
+        "CRONUS BE",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        199
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        26
+      ],
+      [
+        "My Company",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        119
+      ],
+      [
+        "Test aanmaning",
+        "f8aa23ad-818c-439a-b51d-bbc54b2555a6",
+        21
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "fc331b18-eed2-407f-bbd8-9dce67b7a02a",
+        42
+      ],
+      [
+        "My Company",
+        "fc331b18-eed2-407f-bbd8-9dce67b7a02a",
+        42
+      ],
+      [
+        "CRONUS BE",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        27
+      ],
+      [
+        "FIN bedrijf",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        23
+      ],
+      [
+        "template",
+        "11426e8f-c49d-487c-8332-f7d7e91546dc",
+        23
+      ],
+      [
+        "Copy DC DE 111021",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        86
+      ],
+      [
+        "CRONUS DE",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        94
+      ],
+      [
+        "DC Resources GmbH - Copy 04/03",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        86
+      ],
+      [
+        "DC Resources GmbH - Copy 12/01",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        86
+      ],
+      [
+        "CRONUS BE",
+        "48c630e7-f8a0-467b-b84c-fd66419684d1",
+        31
+      ],
+      [
+        "My Company",
+        "48c630e7-f8a0-467b-b84c-fd66419684d1",
+        29
+      ],
+      [
+        "ZZZ_CRONUS BE",
+        "c0082338-5632-4116-83d7-5528a522964c",
+        57
+      ],
+      [
+        "VERBO BV",
+        "d10c2e80-a0bb-4316-ac94-2f08380ebd7b",
+        2
+      ],
+      [
+        "EXPLORENTIS",
+        "c3126b7d-3ea6-4f4d-894c-1f0ffdcd135e",
+        125
+      ],
+      [
+        "TEST_20251028_1945_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        136
+      ],
+      [
+        "TEST_20251107_1845_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        38
+      ],
+      [
+        "DEFAULT TEST BEDRIJF",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        76
+      ],
+      [
+        "TEST_20251022_1946_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        63
+      ],
+      [
+        "Showtex BE NVvage",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        1
+      ],
+      [
+        "260",
+        "null",
+        2
+      ],
+      [
+        "TD Medical",
+        "arseusmedical.onmicrosoft.com",
+        16
+      ],
+      [
+        "299",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        460
+      ],
+      [
+        "003",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        369
+      ],
+      [
+        "270",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        371
+      ],
+      [
+        "910",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        394
+      ],
+      [
+        "920",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        367
+      ],
+      [
+        "002",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        374
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "7b6f1e48-b951-49c7-b280-6a840be13986",
+        383
+      ],
+      [
+        "CRONUS UK Ltd.",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        129
+      ],
+      [
+        "DC Aggregates Ltd CLEAN 04/03",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        123
+      ],
+      [
+        "DC Aggregates Ltd\tTEST 25/02",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        122
+      ],
+      [
+        "DC UK Copy 061021",
+        "fbdc03c5-134a-4132-9987-42fb1919959d",
+        102
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        113
+      ],
+      [
+        "DIALEX BIOMEDICA NV",
+        "null",
+        12
+      ],
+      [
+        "Bijwerken FIFO",
+        "2fcd1081-cb99-49db-a023-14c51143d139",
+        25
+      ],
+      [
+        "CRONUS BE",
+        "b4dfcaba-a5b6-49bb-80dc-603bd8dfcf73",
+        26
+      ],
+      [
+        "My Company",
+        "b4dfcaba-a5b6-49bb-80dc-603bd8dfcf73",
+        25
+      ],
+      [
+        "_DEFAULT BEDRIJF",
+        "83213ebb-aab5-4f63-81e7-6e1181b28d2e",
+        146
+      ],
+      [
+        "_DEFAULT TEST BEDRIJF",
+        "83213ebb-aab5-4f63-81e7-6e1181b28d2e",
+        37
+      ],
+      [
+        "TEST_20251022_1900 Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1
+      ],
+      [
+        "520",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        2
+      ],
+      [
+        "251",
+        "null",
+        2
+      ],
+      [
+        "210",
+        "null",
+        3
+      ],
+      [
+        "ShowTex Polska Zoo",
+        "null",
+        4
+      ],
+      [
+        "Bloomedical NL",
+        "arseusmedical.onmicrosoft.com",
+        17
+      ],
+      [
+        "be6896cd-910a-ee11-8f6e-6045bd96c033",
+        "db46edf4-164e-4df9-a45c-dcdc04c74d2d",
+        2
+      ],
+      [
+        "null",
+        "c6a0b9e7-e42c-416a-885f-137b72121593",
+        1
+      ],
+      [
+        "TEST_20251025_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        19
+      ],
+      [
+        "Juntoo",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        7
+      ],
+      [
+        "Medical NL",
+        "arseusmedical.onmicrosoft.com",
+        15
+      ],
+      [
+        "Consolidatie",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        4
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        5
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        6
+      ],
+      [
+        "DEFAULT TEST BEDRIJF",
+        "07c1e50b-85a1-4f8d-a63e-4ffaa3201e38",
+        4
+      ],
+      [
+        "TEST_20251105_2100_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        90
+      ],
+      [
+        "Aesthetics",
+        "arseusmedical.onmicrosoft.com",
+        115
+      ],
+      [
+        "TEST_20251105_1700_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        80
+      ],
+      [
+        "Arseus PMM BV",
+        "arseusmedical.onmicrosoft.com",
+        13
+      ],
+      [
+        "Banda",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Consolidatie Aesthetics",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Consolidatie Arseus",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Consolidatie Bloomedical",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "DRAFT BE",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "DRAFT DE",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "DRAFT NL",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "ShowTex PL Simplified",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        2
+      ],
+      [
+        "zzz_DEFAULT BEDRIJF",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        16
+      ],
+      [
+        "zzz_DEFAULT TEST BEDRIJF",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        16
+      ],
+      [
+        "zzz_TEMPLATE SHOWTEX",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        2
+      ],
+      [
+        "TEST_25251105_1930_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1
+      ],
+      [
+        "eXmedical",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Heart BV",
+        "arseusmedical.onmicrosoft.com",
+        15
+      ],
+      [
+        "Keiser BV",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Keiser Deutschland GmbH",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Keiser Medifit",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "Pro-Motion Distribution NL",
+        "arseusmedical.onmicrosoft.com",
+        21
+      ],
+      [
+        "VHO",
+        "arseusmedical.onmicrosoft.com",
+        14
+      ],
+      [
+        "TEST_20251007_Francky na alco",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1
+      ],
+      [
+        "Amophar",
+        "null",
+        2
+      ],
+      [
+        "exterioo",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        2
+      ],
+      [
+        "juntoo",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        1
+      ],
+      [
+        "001",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        1
+      ],
+      [
+        "200",
+        "null",
+        2
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        75
+      ],
+      [
+        "CRONUS BELGIQUE SA",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        75
+      ],
+      [
+        "FD AND L Germany",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        75
+      ],
+      [
+        "My Company",
+        "55b565a1-669a-4532-9ce3-c166a369e032",
+        1085
+      ],
+      [
+        "Showtex",
+        "ec76bd27-1707-4aab-9746-403eed91e523",
+        1
+      ],
+      [
+        "Exterioo",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        1
+      ],
+      [
+        "Juntoo Oost-Vl en Brabant NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        6
+      ],
+      [
+        "TEST_20251111_1745_Francky",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1
+      ],
+      [
+        "TEST_20251015_FRANCKY",
+        "236bb333-71cf-4a56-88a7-f39ea3a86f2e",
+        1
+      ],
+      [
+        "_CRONUS BELGIË NV",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        272
+      ],
+      [
+        "Felico BVBA",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        45
+      ],
+      [
+        "_DEFAULT BEDRIJF",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        159
+      ],
+      [
+        "_DEFAULT TEST BEDRIJF",
+        "4becd8f3-7564-43bc-945a-14c3d5330ef4",
+        58
+      ],
+      [
+        "Exterioo WVL en Wallonië",
+        "afedde16-3e8e-43e4-a203-cf099bad0c54",
+        3
+      ],
+      [
+        "PXS Leasing",
+        "null",
+        2
+      ],
+      [
+        "undefined",
+        "null",
+        3
+      ],
+      [
+        "CRONUS BELGIË NV",
+        "2fcd1081-cb99-49db-a023-14c51143d139",
+        3
+      ],
+      [
+        "MedCare",
+        "null",
+        3
+      ],
+      [
+        "Juntoo Antwerpen en Limburg NV",
+        "095ab58b-c9a7-4f6a-9776-29f913653952",
+        2
+      ],
+      [
+        "VCL VZW",
+        "0d93b41a-c779-4add-be90-9375dd234c63",
+        1
+      ],
+      [
+        "I.C.T.C.",
+        "991270a6-f7a2-44de-b880-37b97e1c70c4",
+        1
+      ],
+      [
+        "DM Depot CI",
+        "dmdepot.be",
+        2
+      ],
+      [
+        "DM Depot Consolidatie",
+        "dmdepot.be",
+        2
+      ],
+      [
+        "DM Depot HK",
+        "dmdepot.be",
+        2
+      ],
+      [
+        "DEFAULT BEDRIJF",
+        "dmdepot.be",
+        1
+      ],
+      [
+        "DM Depot QA",
+        "dmdepot.be",
+        1
+      ],
+      [
+        "DM Parklink",
+        "dmdepot.be",
+        1
+      ]
+    ],
+    "cached": false,
+    "recommendations": []
+  },
+  "timestamp": 1763377906120,
+  "ttl": 3600
+}

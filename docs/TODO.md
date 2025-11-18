@@ -1,5 +1,7 @@
 # TODOs
 
+
+
 new feature.  
   Working with configurable instruction sets to do an analysis.
   eg: a performance analysis, which has instructions on how to use the telemetry, which events, and so on.  
@@ -20,17 +22,9 @@ SHuld basically be some kind of file that the LLM can interpret to take into the
 
 
 
-Max token limit bij geteventcatalog sometimes exceeded.  
-  Need to chunk the data when sending to LLM.
-
-
-
-
 
 Improve workings by adding "suggestions" to the output of the tasks.
 For example:
 - when using step "get_event_catalog", add suggestion to look into the fields.
 - when using the query tool, and there is no filter on "tenantid", suggest to add such a filter for better performance.
 - When using get_event_datalog for a limited amount of events, suggest to read into the URLs that are given in the output for further analysis.
-
-Simply: make sure the tools that are now not being used to their full potential, get used to their full potential by adding suggestions in the output of the tasks.

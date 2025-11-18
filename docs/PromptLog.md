@@ -1591,7 +1591,550 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Extension Restarting MCP: what is the cleanest option? Dual Config Sources: can it show a warning when a conflict scenario exists? Fill in the testing gaps! Option A: Move config types to shared"
 
 ---
+### Entry ID: 8ed619ee-f3c5-4c1e-b061-f618b9e04d05 — 2025-11-17 08:38
+> "Read carefully this file, and start implementing phase 1. Make sure to not publish any breaking changes to the online repo .. I want to test the entire process on this PC."
+
+---
+### Entry ID: 1f8e4f0c-a4f3-4bec-8994-6fe43cd47620 — 2025-11-17 08:56
+> "Ok .. up to phase 2."
+
+---
+### Entry ID: 318dd477-021c-4a40-8a49-ce97fde284ef — 2025-11-17 10:52
+> "User tested Phase 3 and found commands trying to use MCP server instead of TelemetryService - error: Cannot find module launcher.js"
+
+---
+### Entry ID: 6dc61d4a-2b11-43b4-9bd3-b85c9862eb08 — 2025-11-17 11:19
+> "User reported inadequate test coverage - too many issues detected only during manual testing in Phases 1-3"
+
+---
+### Entry ID: 03fdc487-6b1b-41a4-927e-0f819d5959fc — 2025-11-17 12:08
+> "Run all tests - discovered and fixed 5 TelemetryService bugs, reduced test failures from 38 to 19"
+
+---
+### Entry ID: cb00f971-151d-4e54-9eb0-609db9902e45 — 2025-11-17 09:15
+> "Start implementing phase 3."
+
+---
+### Entry ID: 0a580528-1468-45a4-ad82-11d594538e24 — 2025-11-17 09:45
+> "User pressed F5 to test - MCP server not appearing in development host"
+
+---
+### Entry ID: 698628ad-b99c-4dd5-8623-e2a020e459dc — 2025-11-17 10:05
+> "Add mcpServerDefinitionProviders to package.json for MCP server registration"
+
+---
+### Entry ID: 0d86263f-8c29-472d-bd3b-b31241885b30 — 2025-11-17 10:20
+> "Fix MCP server startup - missing start command argument and config issues"
+
+---
+### Entry ID: b5abb464-9713-4ea3-bc24-fecd08e4bb59 — 2025-11-17 10:35
+> "Create config file in user home directory (~/.bctb/config.json) for MCP"
+
+---
+### Entry ID: 28c0c116-9417-4771-8a0f-2fb953ef9768 — 2025-11-17 10:45
+> "Fix MCPServer constructor to accept optional config parameter"
+
+---
+### Entry ID: 05584096-aedd-4340-a7b0-cf14517e7c3b — 2025-11-17 11:00
+> "MCP server successfully started in development host"
+
+---
+### Entry ID: 3f50f1ab-2198-4fd0-b1e7-0f00a2d75ad1 — 2025-11-17 11:25
+> "Create comprehensive test suites for Phase 3 validation"
+
+---
+### Entry ID: 8ddea45a-153e-421e-8280-2316fa0b193a — 2025-11-17 11:50
+> "User asked to run all tests"
+
+---
+### Entry ID: 7bb8bff0-8401-4554-8d48-164323541899 — 2025-11-17 12:00
+> "Why wouldn't you fix it? (referring to test failures)"
+
+---
+### Entry ID: ac4a7eba-7fce-4d00-bafc-4af07da66e36 — 2025-11-17 12:05
+> "If the tests indicate there are bugs, solve the bugs. If not, fix the tests"
+
+---
+### Entry ID: fb4676e3-f5f8-4f5a-bdb0-3a1b79113704 — 2025-11-17 12:20
+> "Continue: Continue to iterate?"
+
+---
+### Entry ID: fb3a43c5-4595-45b4-9985-29eef17bebed — 2025-11-17 12:25
+> "All seems good. next phase please!"
+
+---
+### Entry ID: 2ac2a0f2-5093-43e0-a66f-eac085ff0e10 — 2025-11-17 12:30
+> "I see you missed pretty much all prompts?"
+
+---
+### Entry ID: cb00f971-151d-4e54-9eb0-609db9902e45 — 2025-11-17 09:15
+> "Start implementing phase 3."
+
+---
+### Entry ID: 0a580528-1468-45a4-ad82-11d594538e24 — 2025-11-17 09:45
+> "User pressed F5 to test - MCP server not appearing in development host"
+
+---
+### Entry ID: 698628ad-b99c-4dd5-8623-e2a020e459dc — 2025-11-17 10:05
+> "Add mcpServerDefinitionProviders to package.json for MCP server registration"
+
+---
+### Entry ID: 0d86263f-8c29-472d-bd3b-b31241885b30 — 2025-11-17 10:20
+> "Fix MCP server startup - missing start command argument and config issues"
+
+---
+### Entry ID: b5abb464-9713-4ea3-bc24-fecd08e4bb59 — 2025-11-17 10:35
+> "Create config file in user home directory (~/.bctb/config.json) for MCP"
+
+---
+### Entry ID: 28c0c116-9417-4771-8a0f-2fb953ef9768 — 2025-11-17 10:45
+> "Fix MCPServer constructor to accept optional config parameter"
+
+---
+### Entry ID: 05584096-aedd-4340-a7b0-cf14517e7c3b — 2025-11-17 11:00
+> "MCP server successfully started in development host"
+
+---
+### Entry ID: 3f50f1ab-2198-4fd0-b1e7-0f00a2d75ad1 — 2025-11-17 11:25
+> "Create comprehensive test suites for Phase 3 validation"
+
+---
+### Entry ID: 8ddea45a-153e-421e-8280-2316fa0b193a — 2025-11-17 11:50
+> "User asked to run all tests"
+
+---
+### Entry ID: 7bb8bff0-8401-4554-8d48-164323541899 — 2025-11-17 12:00
+> "Why wouldn't you fix it? (referring to test failures)"
+
+---
+### Entry ID: ac4a7eba-7fce-4d00-bafc-4af07da66e36 — 2025-11-17 12:05
+> "If the tests indicate there are bugs, solve the bugs. If not, fix the tests"
+
+---
+### Entry ID: fb4676e3-f5f8-4f5a-bdb0-3a1b79113704 — 2025-11-17 12:20
+> "Continue: Continue to iterate?"
+
+---
+### Entry ID: fb3a43c5-4595-45b4-9985-29eef17bebed — 2025-11-17 12:25
+> "All seems good. next phase please!"
+
+---
+### Entry ID: 2ac2a0f2-5093-43e0-a66f-eac085ff0e10 — 2025-11-17 12:30
+> "I see you missed pretty much all prompts?"
+
+---
+### Entry ID: fc0f957a-19fd-437b-af52-531b916e2564 — 2025-11-17 12:18
+> "yes (start Phase 4: Update Build System)"
+
+---
+### Entry ID: b133ced6-fd0a-44fd-86d9-0afc47ad705e — 2025-11-17 12:18
+> "yes (start Phase 4: Update Build System)"
+
+---### Entry ID: 9a1207f7-4938-4872-803e-bcc6117108e2 — 2025-11-17 13:15
+> "Really?  Can you globally instlal the mcp while debugging?"
+
+---
+### Entry ID: 21ed4eac-e735-4a8a-a2e8-58be6c5550ef — 2025-11-17 13:19
+> "Conversation summary + env info; confirm dev MCP launcher fix, ensure MCP remains optional, and outline next steps."
+
+---
+### Entry ID: 027c6c92-9b68-4067-9f96-bfb881b161c0 — 2025-11-17 13:32
+> "MCP works! Add logging to show config file path, profile name, and connection settings in output window."
+
+---
+### Entry ID: 30d34f6d-f7ad-4bec-b87c-79ca62496754 — 2025-11-17 13:44
+> "Fixed MCP config discovery to fall back to user profile when workspace config not found. Also corrected dev mode to use extension workspace instead of user's open workspace."
+
+---
+### Entry ID: e965ba88-0c28-479a-ae57-3f064aa5f9fb — 2025-11-17 13:52
+> "Phase 5: Created comprehensive user-facing documentation for v0.3.0 architecture changes - migration guides, updated README, UserGuide, and MIGRATION.md with focus on bundled-to-standalone transition."
+
+---
+### Entry ID: 0b84ea59-eca2-43f2-b95c-8153a9f1a98c — 2025-11-17 13:59
+> "Ok, Finish phase 5"
+
+---
+### Entry ID: 2bbf1651-2d87-480c-a6a3-49e00078a752 — 2025-11-17 14:05
+> "Let's start phase 6"
+
+---
+### Entry ID: c0b8ce6f-e2e4-4821-82ec-01f446c99245 — 2025-11-17 14:25
+> "Uhm - I'm testing int he dev host - it doesnt make sense to search for settings here."
+
+---
+### Entry ID: 025f41b5-73d3-4a2f-851d-303f9b3d8985 — 2025-11-17 14:29
+> "the Dev Host DOES represent a real workspace with old settings in the settings.json. These are its settings: C:\_Source\iFacto\iFacto.TelemetryResearch\Customers\.vscode\settings.json"
+
+---
+### Entry ID: ed139517-b98c-4651-a298-c4e4dda330cb — 2025-11-17 14:33
+> "Migration detection not finding bctb.mcp.* settings - all showing as undefined"
+
+---### Entry ID: 274a7236-f821-4540-86cc-7ea46b8d643f — 2025-11-17 15:19
+> "Fix MCP config loading — migration created nested properties but MCP expects flat keys; fixed convertSettings() to emit flat keys (applicationInsightsAppId, kustoClusterUrl, cacheEnabled, cacheTTLSeconds, workspacePath, queriesFolder) and added migrationService tests and compatibility kustoDatabase field. Ran extension + MCP unit tests."
+
+---
+### Entry ID: c5530104-50ac-471d-8607-8fb2efc1d0e6 — 2025-11-17 15:25
+> "Add multiroot workspace support to migration service — detect and migrate settings in all workspace folders independently, creating .bctb-config.json in each folder with old settings. Updated hasOldSettings, migrate, and cleanupOldSettings to process all folders."
+
+---
+### Entry ID: e2699058-438b-495d-bbde-9e2bff48e4f2 — 2025-11-17 15:42
+> "Migration successful."
+
+---
+### Entry ID: bcb997f7-d173-46d1-9c55-6525607a5875 — 2025-11-17 15:54
+> "Check Documentation again from start to finish if all is still in order after all the changes we are doing."
+
+---
+### Entry ID: c934def4-d8cf-4dbb-9fd6-96471fe877f8 — 2025-11-17 16:05
+> "Complete Phase 7 multi-profile support - finish TelemetryService methods and create ProfileStatusBar UI"
+
+---
+### Entry ID: 2a4202be-89e5-4cbf-a103-45ed47e77fa9 — 2025-11-17 16:18
+> "Wire up Phase 7 multi-profile infrastructure to extension.ts and make chat participant profile-aware"
+
+---
+### Entry ID: f38df0eb-8cee-4e44-8558-0d00de154d2d — 2025-11-17 16:29
+> "Add list_profiles MCP tool to show available profiles and current active profile"
+
+---
+### Entry ID: 9522765f-da65-4dd6-9adf-b424879a14f7 — 2025-11-17 16:45
+> "Yes please - update Setup Wizard to support multi-profile configuration"
+
+---
+### Entry ID: c172bdd1-8a72-47d5-a633-a23268c36787 — 2025-11-17 16:45
+> "Yes please - update Setup Wizard to support multi-profile configuration"
+
+---
+### Entry ID: ce04d55e-ea80-49a8-8320-4c81635980d0 — 2025-11-17 16:48
+> "I don't want the wizard to care about multi-root. When ran in a multiroot, select the workspace it runs against"
+
+---
+### Entry ID: bb5a1284-8413-4ef6-b56d-db6318722062 — 2025-11-17 17:08
+> "I'm testing the setup wizard in a dev host. It loads my settings - but not all of them. I don't see the Application Insights App id, nor the Kusto Customer, but I do see the Tenant and connectionname. I also don't see how I would add an array of connection. Let's simplify a lot: just one textbox with all settings for one connection in it - would that work?"
+
+---
+### Entry ID: d19083b7-6dca-4474-92c7-c04b723040cd — 2025-11-17 17:25
+> "I want the setup wizard to reflect the new JSON editor. Remove the new command, and replace the setup wizard."
+
+---
+### Entry ID: 3f60c398-b973-4fcf-bcde-9c41fee865de — 2025-11-17 17:25
+> "Replaced Setup Wizard with JSON editor instead of creating separate view"
+
+---
+### Entry ID: cc6273e9-f010-4f29-bd57-a1cf107b5316 — 2025-11-17 19:32
+> "Only implement AzureCLI for now."
+
+---
+### Entry ID: e8d34e21-7c60-4c09-a3c0-78323958ef11 — 2025-11-17 19:45
+> "When validating CLI, also display which account is currently loaded."
+
+---
+### Entry ID: e8c6aa87-447c-4bac-a2ba-574b055b224f — 2025-11-17 19:47
+> "Also display username"
+
+---
+### Entry ID: ed1903cb-d2ad-4f2f-83e5-07e8c0b17b34 — 2025-11-17 19:53
+> "Works - next page! make sure to do an actial kql call to test if the authentication and all the other settings are ok. The kql: traces | take 1"
+
+---
+### Entry ID: 67497ae8-b873-4331-8c79-db4e3e646cb8 — 2025-11-17 20:01
+> "page 4 is completely wrong. It should only display the settings that it's about to test. The testbutton should test the settings we have been setting up the previous pages."
+
+---
+### Entry ID: 50feb454-9fae-416a-b5fa-8656df3ffa1b — 2025-11-17 20:04
+> "wait - in step 2, it didn't load my current config .. ???"
+
+---
+### Entry ID: 5fe3739b-1b63-4743-815f-dda4a31d8851 — 2025-11-17 20:07
+> "Still doesn't load it in step 2"
+
+---
+### Entry ID: 42a17175-4682-4118-b6ac-971acd265fbd — 2025-11-17 20:14
+> "User showed config file vs wizard display - wizard was loading workspace settings instead of .bctb-config.json file"
+
+---
+### Entry ID: 0e5c2fea-c09f-41a1-a1dd-42dd178037b8 — 2025-11-17 20:21
+> "Works! Last step!"
+
+---
+### Entry ID: f1534fe1-3c3d-430a-aa2e-9fd10b325523 — 2025-11-17 23:14
+> "Now add my logo on top of the wizard - in place of the rocket if possible. Also add the 'back' and 'next' buttons on top of each page."
+
+---
+### Entry ID: 39b0609a-1104-4661-84bd-03defd2250c5 — 2025-11-17 23:44
+> "Could you compare the chatparticipant with the chatmode that I add.. . The chatmode works pretty good - could you align the chatparticipant with the chatmode?"
+
+---
+### Entry ID: 61aebd07-4d4a-4e7d-bbd3-c94b5799a2ae — 2025-11-18 00:06
+> "With a multiple profile, it doesn't do step 4 (test) correctly. Make it possible to select the profile, and test that profile. Also, on step 2, simply add a tip to copy/paste the example to an actual json-file, which is easier since you have intellisense and auto formatting. Or .. add formatting to the editor ;-)"
+
+---
+### Entry ID: fd49b231-ae39-4408-87ff-cd7b08c1d60a — 2025-11-18 00:06
+> "$userPrompt"
+
+---
+### Entry ID: ea0a3be9-cf2a-42f0-b4a2-b964db441f16 — 2025-11-18 00:06
+> "With a multiple profile, it doesn't do step 4 (test) correctly. Make it possible to select the profile, and test that profile. Also, on step 2, simply add a tip to copy/paste the example to an actual json-file, which is easier since you have intellisense and auto formatting. Or .. add formatting to the editor ;-)"
+
+---
+### Entry ID: 1e393f14-0788-4609-bc67-01705d45edbf — 2025-11-18 00:20
+> "When I ask: '@bc-telemetry-buddy how many events do I have in the customer profile the past day?' It says 'Error: Message exceeds token limit.' How can I manage these token limits?"
+
+---
+### Entry ID: 32948eee-580e-443f-b39e-646bd40ce31b — 2025-11-18 00:24
+> "Now it says: 'ℹ️ Note: Result was truncated due to size. Use filters to reduce the amount of data.' followed by '⚠️ Error: Message exceeds token limit.' Do know there is no way for me to add filters, since the 'get_event_catalog' is a predefined kql. May be add a 'take'-limit in that kql?"
+
+---
+### Entry ID: 6b96f02a-97cd-4448-b866-7b1843d149af — 2025-11-18 00:39
+> "in the setup wizard, I'd like to describe in a comment after each field in the examples (step 2) what it is, and how to get to the value of that field"
+
+---
+### Entry ID: 9867d682-3347-4de4-bb87-a971de8c5f1a — 2025-11-18 00:46
+> "Can you put the comment in green so it's more clear it's comment. Could you also do some typical json color coding for the rest?"
+
+---
+### Entry ID: fde774ba-a7be-4f72-9ad8-e1095dd60c0f — 2025-11-18 08:35
+> "Why not remove all skipping tests?"
+
+---
+### Entry ID: 5933606f-1317-409b-939e-2b5acdb00756 — 2025-11-18 08:38
+> "User reported issue: Chat participant (agent mode) not listening to user requests. When asked 'show me all companynames for tenant X', assistant ignored request and continued with previous RT0005 analysis topic instead of providing the requested data. Root cause: System prompt heavily biased toward analysis over data extraction, no intent detection, context carryover bias, missing response validation."
+
+---
+### Entry ID: 9fe494b4-9220-4992-9b9c-6feb1ea6de6a — 2025-11-18 08:44
+> "Whenever I ask about 'customers', I want customer names based on company names. Use the tenant mapping tool for this."
+
+---
+### Entry ID: 856f72a0-0f99-463b-808f-889af6fa6b53 — 2025-11-18 08:49
+> "The output format is horrendous - showing aadTenantId GUIDs in customer lists. Make output clean and readable."
+
+---
+### Entry ID: fb284df9-ba66-4d92-b47b-b8d7c8192916 — 2025-11-18 08:55
+> "Now update the same section in BCPerformanceAnalysisChatmode"
+
+---
+### Entry ID: 870cd217-0b67-477d-bfa7-e2b7274f8792 — 2025-11-18 08:59
+> "NOT impressed with this answer... far too long, no table: [verbose customer list response]"
+
+---
+### Entry ID: 73c823db-47f6-49c8-9018-feb24fa80583 — 2025-11-18 09:07
+> "The second response is correct?? I'm asking to drill into customer exterioo, and it gives me a list of other customers and questions to drill into all of them? How is this correct?"
+
+---
+### Entry ID: 897fba00-5bae-4bb9-a24d-2e05e41b03b3 — 2025-11-18 09:11
+> "I would like to start from a clean sheet for the chatparticipant. For the chatmode, please restore back to the chatmode that you can find in the main branch. That was working quite well, and we'll use that to work on the chatparticipant. Do a cleanup first."
+
+---
+### Entry ID: b86c51aa-2b22-4e98-b7d9-00b1cccadb16 — 2025-11-18 09:31
+> "Complete from-scratch rewrite of chatParticipant.ts with 7-step workflow: 1) Multi-profile detection using list_mprofiles, 2) Intent classification (simple query vs performance analysis), 3) Customer/tenant/company terminology understanding, 4) Event discovery workflow (catalog → samples → schema → query), 5) Query execution with proper filtering, 6) Result formatting (clean tables, readable names, truncated IDs), 7) Analysis document creation referencing chatmode for structure"
+
+---
+### Entry ID: 6c333414-5d2b-4ea4-b1aa-4119a7ab105e — 2025-11-18 09:33
+> "When going for analysis - build a plan. You can build a plan by looking into the available events, the samples, the schema - to see what you want to know to be able to perform the analysis."
+
+---
+### Entry ID: 9348f97d-2ed1-4c9c-be2a-01af1ebaf933 — 2025-11-18 09:37
+> "First answer was good - second .. not so much - why does this keep happening? User asked 'Let's look into Exterioo and try to find out more about why they are having slowness problems' but assistant just repeated information from previous answer instead of executing the investigation workflow."
+
+---
+### Entry ID: 618c4c6c-19bd-46d8-a038-db4379b6169d — 2025-11-18 09:40
+> "User pointed out the real bug: it's not the system prompt. The assistant works correctly on the SECOND try but fails on the FIRST try. This is a conversation history ordering bug - current request was added BEFORE history instead of AFTER, confusing the model about what to respond to."
+
+---
+### Entry ID: 8037448d-10ac-48f1-8aea-daee8c9bf689 — 2025-11-18 09:45
+> "It should ask less for approval. When the plan is approved, it should just go ahead and do the full analysis. User said 'Let's dive into Exterioo's problems and analyze' but assistant presented a plan and asked 'Ready to proceed?' - user already gave approval by saying 'dive into' and 'analyze'."
+
+---
+### Entry ID: c03c5493-66b3-4b8a-b5d9-95fa03e2fbb5 — 2025-11-18 09:54
+> "User concerned: analysis said no slow SQL statements (RT0005) when they should always include SQL statement; wants conclusions not just list. Request: explain why and improve behavior."
+
+---
+### Entry ID: 8795c397-2723-43de-ae46-c951f07b6f7d — 2025-11-18 09:58
+> "User request: remove specific event ID references (RT0005 etc.) and add rule to double-check before concluding nothing by inspecting alternate angles (catalog, field samples, schema, broader time range)."
+
+---
+### Entry ID: 54581f60-9d2a-40f0-96bd-bb393d343983 — 2025-11-18 10:01
+> "Change chatmode so it treats customers as tenants (aadTenantId) like chatParticipant; remove company-based 'Top affected' style; add MCP telemetry tools into chatmode."
+
+---
+### Entry ID: fd3ed523-0563-4414-9a18-c67170ac910b — 2025-11-18 10:29
+> "User requested 'Save complete analysis for Exterioo to md file with progress reports and graph per day' but assistant stopped after showing table, saying 'Next Steps: I will generate...' instead of actually creating files and completing the request."
+
+---
+### Entry ID: 4c98043c-910d-4030-a19d-d1e77d0e2000 — 2025-11-18 10:34
+> "User reported chat participant saying 'I'm an assistant and can't save files' and giving manual instructions instead of using create_file tool to actually create requested markdown/Python files."
+
+---
+### Entry ID: f4e3686d-f255-45b3-9de5-0ded5b7ad7b0 — 2025-11-18 10:35
+> "User requested chat participant follow same file organization rules as chatmode when saving files (Customers/[CustomerName]/[Topic]/ structure with proper naming conventions)."
+
+---
+### Entry ID: 09c40f18-35f9-4de4-9b1e-eb2ea1a17587 — 2025-11-18 10:45
+> "User reported chat participant still cannot save files - discovered it was only registering mcp_bc_telemetry__ tools, excluding standard VS Code tools like create_file and run_in_terminal."
+
+---
+### Entry ID: ee3f27ac-0aae-4332-8d80-32f22f697804 — 2025-11-18 10:48
+> "User got 'GitHub Copilot routing error' when MCP server was running with 12 tools - suspected passing ALL tools (hundreds) caused routing issues."
+
+---
+### Entry ID: a04a2f59-7eb1-4bdd-aa56-b0a204c108df — 2025-11-18 10:53
+> "User reported chat participant claiming to save files (✅ Saved to...) but files were not created - discovered VS Code's built-in tools (create_file, run_in_terminal) are NOT available to custom chat participants, only to chatmodes."
+
+---
+### Entry ID: ab61e7ca-1f21-4125-8f23-95ab2b294829 — 2025-11-18 10:55
+> "User asked why not use built-in VS Code tools instead of registering our own - checking if vscode.lm.tools includes built-in create_file and run_in_terminal tools."
+
+---
+### Entry ID: c3720d61-da35-483a-98b0-8381fbba84b6 — 2025-11-18 11:09
+> "User confirmed file creation doesn't work in chat participant - requested to redirect users to chatmode when they want to save analysis/files."
+
+---
+### Entry ID: 55f8861d-1425-44dd-96d9-4ef21609b5f2 — 2025-11-18 11:15
+> "User requested welcome message on first interaction with chat participant, explaining when to use @bc-telemetry-buddy vs BCTelemetryBuddy chatmode."
+
+---
+### Entry ID: 2a890d4b-f141-4538-b863-fb57c38acdac — 2025-11-18 11:26
+> "Remove all file creation references from chat participant and clearly state it cannot create files"
+
+---
+### Entry ID: 6f053ba3-fa6d-4a8a-95ad-86dd6b9948cc — 2025-11-18 11:27
+> "Update chat participant instructions to reference 'BCTelemetryBuddy agent' instead of 'chatmode' with simplified 3-step instructions"
+
+---
+### Entry ID: 72b4309f-91fb-4759-86c3-f98d6f956a5a — 2025-11-18 11:39
+> "Updated documentation to reflect completed refactoring - removed development warnings, verified against code"
+
+---
+### Entry ID: e99141b5-faf0-4d0c-a5e4-2c557275d82c — 2025-11-18 11:58
+> "Yes please, do all that to have a decent pipeline system."
+
+---
+### Entry ID: 6861e0b5-849a-4178-9a48-412d360fd3f2 — 2025-11-18 12:27
+> "Add MCP validation + install button to setup wizard (MCP prerequisite for advanced Copilot features)"
+
+---
+### Entry ID: f976a3b6-5977-403c-82e4-f163ea569b1c — 2025-11-18 12:30
+> "Yet again - check the refactoring plan and see where we are?"
+
+---
+### Entry ID: d2c6cece-2df2-4306-ba97-f3f8c62cc48e — 2025-11-18 13:42
+> "Continue implementing profile management commands - add command handlers and registrations to extension.ts"
+
+---
+### Entry ID: c9a2397c-de38-4de3-abbd-fe1017ee94d5 — 2025-11-18 13:45
+> "Fix 'command bctb.profileWizard.focus not found' error"
+
+---
+### Entry ID: 16f406d7-92df-4bbb-82d7-cbb4dcdcb0aa — 2025-11-18 13:58
+> "Change ProfileWizardProvider from webview view (sidebar) to webview panel (main area) like SetupWizard"
+
+---
+### Entry ID: 3442ef74-4c35-484f-89a1-bbfe6e11fe7b — 2025-11-18 14:00
+> "Fix ProfileWizard to save flat structure (workspacePath, queriesFolder) instead of nested workspace object"
+
+---
+### Entry ID: bfa9a52e-bb4b-4926-9cde-64dbc448b43f — 2025-11-18 14:06
+> "Add profile management link to Setup Wizard final step"
+
+---
+### Entry ID: 31cb4a74-01db-43c1-aaf1-e66dd87950a8 - 2025-11-18 14:20
+> "is that well documented?"
+
+---
+### Entry ID: d90ae31a-2f51-4db7-bbf6-74d66dc0a561 — 2025-11-18 14:35
+> "continue"
+
+---
+### Entry ID: d90ae31a-2f51-4db7-bbf6-74d66dc0a561 — 2025-11-18 14:35
+> "continue"
+
+---
+### Entry ID: 015f78f8-c8d8-44fb-bec7-384b9d9590e6 — 2025-11-18 14:39
+> "remove the command \"Save Query\""
+
+---
+### Entry ID: ce4b2a42-5116-4a27-933c-da7a5742cf26 — 2025-11-18 14:42
+> "Run all tests"
+
+---
+### Entry ID: 1d14de8f-10b7-4ac3-9214-28b4b021c763 — 2025-11-18 14:44
+> "Remove Edit Profile and Delete Profile, since they are already available in the Manage Profiles command."
+
+---
+### Entry ID: 0823e9fc-3739-411a-ab21-d46a9e35dae4 — 2025-11-18 14:46
+> "remove command \"Open Queries Folder\" - totally useless. Change documentation accordingly - also for the previous removal"
+
+---
+### Entry ID: 57d65cd3-9b2b-45ec-ab72-f7627e0897fd — 2025-11-18 14:48
+> "The command \"Set Default Profile\" fails with error: Failed to set default profile: Gt.getDefaultProfile is not a function"
+
+---
+### Entry ID: bee530cf-0ec2-4e4b-b66b-95cb84d59605 — 2025-11-18 14:55
+> "Doublecheck if all commands are documented. Also doublecheck if all settings are documented"
+
+---
 ### Entry ID: 1c9b1e10-7577-4c4c-9feb-b654b6adef84 — 2025-11-18 15:20
 > "Option 4: Bulk Close and Update Manually - disable dependabot and update dependencies manually"
+
+---
+
+### Entry ID: 53079ba4-f13d-40fd-b3b9-60f73110d3d6 — 2025-11-18 15:36
+> "Quite some checks fail for this PR: https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/58 - how to resolve?"
+
+---
+### Entry ID: 095b38d4-0887-45c4-b7b5-76a495375417 — 2025-11-18 15:40
+> "Let's focus one by one. https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/19469949866/job/55714177661?pr=58"
+
+---
+### Entry ID: 65f6df82-9459-4ff8-8113-0a1264302bb9 — 2025-11-18 16:25
+> "Still issues in the install dependencies step - npm ci failing due to esbuild version mismatch"
+
+---
+### Entry ID: 9963efe7-c03d-4736-929b-90510648523a — 2025-11-18 16:35
+> "Different errors I guess is progress - https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/12900024612/job/35973296857"
+
+---
+### Entry ID: 8e923b35-a56e-4dfe-850b-b0dbe25e6dbf — 2025-11-18 17:07
+> "here's the output: [CI logs showing extension coverage failures - chatmodeDefinitions.ts 0%, profileManager.ts 0%, profileStatusBar.ts 0%, ProfileWizardProvider.ts 0%]. User says: add tests to solve this"
+
+---
+### Entry ID: c1499fda-248d-40d5-bf3b-3d402415cad6 — 2025-11-18 17:22
+> "Almost there: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/19472783364/job/55724650372?pr=58"
+
+---
+### Entry ID: 0655fd5e-fc02-41c4-886d-5c2e1c8dc171 — 2025-11-18 17:30
+> "All tests passed, I have a working PR!"
+
+---
+### Entry ID: cde11a4b-97d5-4d7c-9827-2d803cedf98f — 2025-11-18 17:30
+> "All tests passed, I have a working PR!"
+
+---
+### Entry ID: 22ac8888-5268-4148-b541-cd1ef35b1008 — 2025-11-18 17:32
+> "I don't have an account just yet"
+
+---
+### Entry ID: 32b53f78-680f-4e29-a472-a1ce73d79922 — 2025-11-18 17:42
+> "Ok, that's for later, I did npm login, and am logged in - let's publish!"
+
+---
+### Entry ID: 92af9217-2ff3-4f7a-81aa-6c1be42b3772 — 2025-11-18 18:13
+> "Update the readme to existing document instead of dead links."
+
+---
+### Entry ID: 9b222d1b-0414-4079-8537-b9c738a0b4e6 — 2025-11-18 19:53
+> "Ok, now create copilot instructions so that all this work from the copilot chat"
+
+---
+### Entry ID: 8bfd3c8e-3cba-4bc3-af96-22e2cdd5cf93 — 2025-11-18 19:53
+> "Ok, now create copilot instructions so that all this work from the copilot chat"
+
+---
+### Entry ID: 4a994cef-9e33-4154-b721-027d2ac35863 — 2025-11-18 20:30
+> "In the Extension Setup Wizard. When there is no workspace open, simply refuse to go through the wizard - pretty much the same as it would be a multiroot workspace."
+
+---
+### Entry ID: 0fdaf40d-2ac6-4dff-ab24-9c95df2c0cdd — 2025-11-18 20:54
+> "Before I push a new update of the VSCode extension to the Marketplace, I'd like to show one page in VSCode that introduces the changes, and guides them on what changed, and the simple steps they need to take to make it work now. Use my logo on that page, and use the title 'note from waldo' ;-)"
 
 ---

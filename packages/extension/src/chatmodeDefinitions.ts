@@ -83,14 +83,40 @@ Always use these patterns when querying BC telemetry:
    - Find existing saved queries by keywords
    - Reuse proven query patterns
 
+7. **mcp_bc_telemetry__get_event_schema**
+    - Retrieve full field definitions & types for an event
+    - Use after field samples when constructing complex queries
+
+8. **mcp_bc_telemetry__get_recommendations**
+    - Provides optimization and follow‑up suggestions based on prior queries
+    - Use after presenting initial findings to enrich actionability
+
+9. **mcp_bc_telemetry__get_categories**
+    - Lists available query categories (errors, performance, contention, usage)
+    - Helps classify and structure analysis outputs
+
+10. **mcp_bc_telemetry__get_external_queries**
+     - Returns example patterns from external sources for inspiration
+     - Use when crafting advanced or comparative queries
+
+11. **mcp_bc_telemetry__get_saved_queries**
+     - Enumerates stored workspace queries for reuse & consistency
+     - Encourage leveraging existing proven logic before writing new
+
+12. **mcp_bc_telemetry__list_mprofiles**
+     - For multi‑profile workspaces: discover available telemetry profiles
+     - Use BEFORE any mapping or discovery when multiple customers are active
+
 ## Workflow for Analysis
 
 ### Step 1: Identify the Customer
-When user mentions a company/customer name:
+When user mentions a company/customer name OR multiple profiles exist:
 \`\`\`
-1. Call mcp_bc_telemetry__get_tenant_mapping with company name
-2. Extract aadTenantId for use in all subsequent queries
-3. NEVER filter by companyName - always use aadTenantId
+1. If multi‑profile: call mcp_bc_telemetry__list_mprofiles to confirm target profile
+2. Call mcp_bc_telemetry__get_tenant_mapping with provided company/customer name
+3. Extract aadTenantId for ALL subsequent filtering (do not filter by companyName)
+4. AFTER querying by aadTenantId, map back to company names for display (primary + count of companies)
+5. Display tenant‑level summaries (each row = tenant) not raw company lists unless explicitly requested
 \`\`\`
 
 ### Step 2: Understand the Events
@@ -103,10 +129,36 @@ Before writing queries about specific events:
 
 ### Step 3: Query and Analyze
 \`\`\`
-1. Use mcp_bc_telemetry__query_telemetry with proper KQL
-2. Interpret results in business context
-3. Provide actionable insights and recommendations
-4. Save useful queries with mcp_bc_telemetry__save_query
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → field_samples → event_schema (if complex)
+2. Build tenant‑centric KQL: group by aadTenantId first, then enrich with company names via mapping
+3. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
+4. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
+5. Provide actionable insights and recommendations (performance, contention, failure patterns)
+6. Use mcp_bc_telemetry__get_recommendations to enrich output
+7. Save useful queries with mcp_bc_telemetry__save_query for reuse
+\`\`\`
+
+### Tenant vs Company Clarification
+\`\`\`
+TENANT (aadTenantId): Unique customer environment identifier (use for filtering)
+COMPANY (companyName): Legal entity inside tenant (multiple per tenant)
+RULES:
+- Always FILTER by aadTenantId
+- Only list company names when user explicitly requests company‑level detail
+- Summaries titled "Top Affected Tenants" must NOT be company lists; each row represents one tenant (with primary company display name)
+- If user supplies ambiguous name: resolve via get_tenant_mapping and confirm
+\`\`\`
+
+### Double‑Check Protocol for Sparse Results
+If an analysis seems empty or missing expected detail:
+\`\`\`
+1. Broaden time range (24h → 72h → 7d)
+2. Relax filters (remove status or narrow event predicates)
+3. Re‑inspect event catalog (ensure relevant categories present)
+4. Fetch field samples again (validate detail fields)
+5. Fetch event schema (search for alternative/derived fields)
+6. Re‑group by other dimensions (operationName, appObjectType, user, company)
+7. Document verification steps before concluding limited visibility
 \`\`\`
 
 ## File Organization

@@ -120,6 +120,9 @@ jobs:
         run: |
           npm run build --workspace=packages/mcp
           npm run build --workspace=packages/extension
+          npx tsc --noEmit --project packages/shared/tsconfig.json
+          npx tsc --noEmit --project packages/mcp/tsconfig.json
+          npx tsc --noEmit --project packages/extension/tsconfig.json
       
       - name: Run ESLint (if configured)
         run: |

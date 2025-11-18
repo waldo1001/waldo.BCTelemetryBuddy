@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-11-18
+
+### 🚨 BREAKING CHANGES
+
+**First standalone release of BC Telemetry Buddy MCP Server**
+
+This is the first release of the MCP server as a standalone NPM package, separated from the VSCode extension.
+
+**Major Changes:**
+- **Standalone Package**: Published as `bc-telemetry-buddy-mcp` on NPM
+- **CLI Interface**: New `bctb-mcp` CLI with commands: `start`, `init`, `validate`, `test-auth`
+- **File-Based Configuration**: Uses `.bctb-config.json` instead of environment variables
+- **Multi-Profile Support**: Manage multiple customer environments in single config file
+- **Shared Core**: Uses `@bctb/shared` library for business logic (bundled at build time)
+
+### Added
+
+- **CLI Commands**: `bctb-mcp start`, `bctb-mcp init`, `bctb-mcp validate`, `bctb-mcp test-auth`
+- **File-Based Configuration**: Support for `.bctb-config.json` with config discovery
+- **Multi-Profile Support**: Named profiles with inheritance and environment variable substitution
+- **Profile Switching**: Support for `--profile` flag and `BCTB_PROFILE` environment variable
+- **Config Schema**: JSON schema for `.bctb-config.json` validation
+- **Standalone Mode**: Can run independently without VSCode extension
+
+### Changed
+
+- **Architecture**: Refactored to use `@bctb/shared` library for core functionality
+- **Configuration**: Migrated from environment variables to file-based config
+- **Distribution**: Published to NPM for global installation (`npm install -g bc-telemetry-buddy-mcp`)
+
+### Migration Notes
+
+- See [MIGRATION.md](../../MIGRATION.md) for upgrade guide from bundled v0.2.x
+- Extension v0.3.0+ offers automatic MCP installation and configuration
+- Old environment variable config still supported as fallback
+
 ## [0.2.22] - 2025-11-01
 
 ### Changed

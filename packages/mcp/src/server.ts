@@ -1,12 +1,18 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
-import { loadConfig, validateConfig, MCPConfig } from './config.js';
-import { AuthService, AuthResult } from './auth.js';
-import { KustoService } from './kusto.js';
-import { CacheService } from './cache.js';
-import { QueriesService, SavedQuery } from './queries.js';
-import { ReferencesService, ExternalQuery } from './references.js';
-import { sanitizeObject } from './sanitize.js';
-import { lookupEventCategory, EventCategoryInfo } from './eventLookup.js';
+import { loadConfig, loadConfigFromFile, validateConfig, MCPConfig } from './config.js';
+import {
+    AuthService,
+    KustoService,
+    CacheService,
+    QueriesService,
+    ReferencesService,
+    sanitizeObject,
+    lookupEventCategory
+} from '@bctb/shared';
+import type { AuthResult } from '@bctb/shared';
+import type { SavedQuery } from '@bctb/shared';
+import type { ExternalQuery } from '@bctb/shared';
+import type { EventCategoryInfo } from '@bctb/shared';
 
 /**
  * JSON-RPC 2.0 request structure
@@ -50,26 +56,41 @@ interface QueryResult {
  * MCP Server with JSON-RPC protocol support
  */
 export class MCPServer {
-    private app: Express;
-    private config: MCPConfig;
-    private auth: AuthService;
-    private kusto: KustoService;
-    private cache: CacheService;
-    private queries: QueriesService;
-    private references: ReferencesService;
-    private configErrors: string[];
+    protected app: Express;
+    protected config: MCPConfig;
+    protected auth: AuthService;
+    protected kusto: KustoService;
+    protected cache: CacheService;
+    protected queries: QueriesService;
+    protected references: ReferencesService;
+    protected configErrors: string[];
 
-    constructor() {
+    constructor(config?: MCPConfig) {
         this.app = express();
 
         // Load and validate configuration
-        this.config = loadConfig();
+        // Try file-based config first (standalone mode), fall back to env vars (VSCode extension mode)
+        if (config) {
+            this.config = config;
+        } else {
+            try {
+                // Prefer file-based config (.bctb-config.json)
+                this.config = loadConfigFromFile();
+            } catch (error) {
+                // Fall back to env vars (for VSCode extension or legacy setups)
+                console.warn('[MCP] No config file found, using environment variables');
+                this.config = loadConfig();
+            }
+        }
         this.configErrors = validateConfig(this.config);
 
         console.log('=== BC Telemetry Buddy MCP Server ===');
+        console.log(`Connection: ${this.config.connectionName}`);
         console.log(`Workspace: ${this.config.workspacePath}`);
+        console.log(`App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
+        console.log(`Kusto URL: ${this.config.kustoClusterUrl || '(not set)'}`);
         console.log(`Auth flow: ${this.config.authFlow}`);
-        console.log(`Cache enabled: ${this.config.cacheEnabled}`);
+        console.log(`Cache: ${this.config.cacheEnabled ? `enabled (TTL: ${this.config.cacheTTLSeconds}s)` : 'disabled'}`);
         console.log(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
         console.log(`External references: ${this.config.references.length}`);
 
@@ -330,13 +351,14 @@ export class MCPServer {
                             },
                             {
                                 name: 'get_event_catalog',
-                                description: 'Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Optionally includes analysis of common fields that appear across multiple events.',
+                                description: 'Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Optionally includes analysis of common fields that appear across multiple events. Results are limited to top events by count to prevent overwhelming responses.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
                                         daysBack: { type: 'number', description: 'Number of days to analyze (default: 10)', default: 10 },
                                         status: { type: 'string', enum: ['all', 'success', 'error', 'too slow', 'unknown'], description: 'Filter by event status', default: 'all' },
                                         minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 },
+                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
                                         includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
                                     }
                                 }
@@ -429,7 +451,8 @@ export class MCPServer {
                         rpcRequest.params?.daysBack || 10,
                         rpcRequest.params?.status || 'all',
                         rpcRequest.params?.minCount || 1,
-                        rpcRequest.params?.includeCommonFields || false
+                        rpcRequest.params?.includeCommonFields || false,
+                        rpcRequest.params?.maxResults || 50
                     );
                     break;
 
@@ -583,7 +606,10 @@ export class MCPServer {
     /**
      * Get event catalog - recent BC telemetry event IDs with descriptions, frequencies, and Learn URLs
      */
-    private async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1, includeCommonFields: boolean = false): Promise<any> {
+    private async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1, includeCommonFields: boolean = false, maxResults: number = 50): Promise<any> {
+        // Cap maxResults at 200 to prevent overwhelming responses
+        const limitedMaxResults = Math.min(maxResults, 200);
+
         const kql = `
         traces
         | where timestamp >= ago(${daysBack}d)
@@ -634,9 +660,10 @@ export class MCPServer {
         ${status !== 'all' ? `| where status == "${status}"` : ''}
         | where count >= ${minCount}
         | order by count desc
+        | take ${limitedMaxResults}
         `.trim();
 
-        console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, includeCommonFields: ${includeCommonFields})...`);
+        console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, maxResults: ${limitedMaxResults}, includeCommonFields: ${includeCommonFields})...`);
 
         // Execute the query
         const result = await this.executeQuery(kql, false, false);
@@ -654,10 +681,12 @@ export class MCPServer {
         })) || [];
 
         const response: any = {
-            summary: `Found ${events.length} event IDs in the last ${daysBack} days`,
+            summary: `Found ${events.length} event IDs in the last ${daysBack} days${events.length >= limitedMaxResults ? ` (limited to top ${limitedMaxResults} by count)` : ''}`,
             daysBack,
             statusFilter: status,
             minCount,
+            maxResults: limitedMaxResults,
+            totalReturned: events.length,
             events
         };
 
@@ -1095,6 +1124,95 @@ ${extendStatements}
     }
 
     /**
+     * List all available profiles in the configuration
+     * Shows current active profile and all other available profiles
+     */
+    private listProfiles(): any {
+        const fs = require('fs');
+        const path = require('path');
+
+        try {
+            // Check if workspace has a config file
+            const configPath = path.join(this.config.workspacePath, '.bctb-config.json');
+
+            if (!fs.existsSync(configPath)) {
+                return {
+                    profileMode: 'single',
+                    currentProfile: {
+                        name: 'default',
+                        connectionName: this.config.connectionName,
+                        isActive: true
+                    },
+                    availableProfiles: [],
+                    message: 'Single profile mode - using workspace settings or environment variables'
+                };
+            }
+
+            // Read config file
+            const configData = fs.readFileSync(configPath, 'utf8');
+            const config = JSON.parse(configData);
+
+            // Check if multi-profile format
+            if (!config.profiles || Object.keys(config.profiles).length === 0) {
+                return {
+                    profileMode: 'single',
+                    currentProfile: {
+                        name: 'default',
+                        connectionName: config.connectionName || this.config.connectionName,
+                        isActive: true
+                    },
+                    availableProfiles: [],
+                    message: 'Single profile mode - config file has no profiles object'
+                };
+            }
+
+            // Multi-profile mode - list all profiles
+            const currentProfileName = process.env.BCTB_CURRENT_PROFILE || config.defaultProfile || 'default';
+
+            const profiles = Object.entries(config.profiles)
+                .filter(([name]) => !name.startsWith('_')) // Filter out base profiles
+                .map(([name, profileConfig]: [string, any]) => ({
+                    name,
+                    connectionName: profileConfig.connectionName || name,
+                    isActive: name === currentProfileName,
+                    applicationInsightsAppId: profileConfig.applicationInsightsAppId,
+                    authFlow: profileConfig.authFlow,
+                    extends: profileConfig.extends
+                }));
+
+            const currentProfile = profiles.find(p => p.isActive);
+
+            return {
+                profileMode: 'multi',
+                currentProfile: currentProfile || {
+                    name: currentProfileName,
+                    connectionName: this.config.connectionName,
+                    isActive: true
+                },
+                availableProfiles: profiles.filter(p => !p.isActive),
+                totalProfiles: profiles.length,
+                message: `Multi-profile configuration with ${profiles.length} profile(s). Currently using: ${currentProfileName}`,
+                usage: {
+                    summary: 'This workspace has multiple telemetry profiles configured for different customers/environments',
+                    switchingInstructions: 'To switch profiles, use the status bar in VS Code or the command palette. The MCP server will automatically use the active profile.',
+                    noteForQueries: 'All queries execute against the currently active profile. Use list_profiles to confirm which profile is active before running queries.'
+                }
+            };
+        } catch (error: any) {
+            return {
+                profileMode: 'error',
+                error: error.message,
+                currentProfile: {
+                    name: 'unknown',
+                    connectionName: this.config.connectionName,
+                    isActive: true
+                },
+                availableProfiles: []
+            };
+        }
+    }
+
+    /**
      * Generate recommendations based on query and results
      */
     private async generateRecommendations(kql: string, results: any): Promise<string[]> {
@@ -1330,13 +1448,14 @@ ${extendStatements}
                             },
                             {
                                 name: 'get_event_catalog',
-                                description: 'Discover available Business Central telemetry event IDs with descriptions, status, and documentation URLs. Optionally includes analysis of common fields that appear across multiple events.',
+                                description: 'Discover available Business Central telemetry event IDs with descriptions, status, and documentation URLs. Optionally includes analysis of common fields that appear across multiple events. Results are limited to top events by count to prevent overwhelming responses.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
                                         daysBack: { type: 'number', description: 'Number of days to look back (default: 10)', default: 10 },
                                         status: { type: 'string', description: 'Filter by status: all, success, error, too slow, unknown (default: all)', default: 'all' },
                                         minCount: { type: 'number', description: 'Minimum occurrence count to include (default: 1)', default: 1 },
+                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
                                         includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
                                     }
                                 }
@@ -1375,6 +1494,14 @@ ${extendStatements}
                                         daysBack: { type: 'number', description: 'Number of days to look back for mappings (default: 10)', default: 10 },
                                         companyNameFilter: { type: 'string', description: 'Optional: Filter for specific company name (partial match)' }
                                     }
+                                }
+                            },
+                            {
+                                name: 'list_profiles',
+                                description: 'List all available telemetry profiles in the workspace configuration. Shows the currently active profile and all other available profiles. Each profile represents a different customer/environment with separate credentials and App Insights configuration. Use this to understand which profiles are available before querying data.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {}
                                 }
                             }
                         ]
@@ -1449,7 +1576,8 @@ ${extendStatements}
                         params?.daysBack || 10,
                         params?.status || 'all',
                         params?.minCount || 1,
-                        params?.includeCommonFields || false
+                        params?.includeCommonFields || false,
+                        params?.maxResults || 50
                     );
                     break;
 
@@ -1605,6 +1733,9 @@ ${extendStatements}
                 this.cache.clear();
                 return { success: true, message: 'Cache cleared successfully' };
 
+            case 'list_profiles':
+                return this.listProfiles();
+
             case 'cleanup_cache':
                 this.cache.cleanupExpired();
                 const stats = this.cache.getStats();
@@ -1616,48 +1747,49 @@ ${extendStatements}
     }
 }
 
-// Detect mode: stdio (VSCode MCP) vs HTTP (legacy MCPClient)
-// Can be explicitly set via BCTB_MODE env var (http or stdio)
-// Otherwise, if stdin is a TTY, it's interactive/HTTP mode
-// If stdin is a pipe, it's stdio mode
-const forcedMode = process.env.BCTB_MODE?.toLowerCase();
-const isStdioMode = forcedMode === 'stdio' ? true
-    : forcedMode === 'http' ? false
-        : !process.stdin.isTTY;
+/**
+ * Start the MCP server
+ * @param config Configuration object (if not provided, loads from env vars)
+ * @param mode 'stdio' or 'http'
+ */
+export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): Promise<void> {
+    // Detect mode if not specified
+    const forcedMode = mode || process.env.BCTB_MODE?.toLowerCase() as 'stdio' | 'http' | undefined;
+    const isStdioMode = forcedMode === 'stdio' ? true
+        : forcedMode === 'http' ? false
+            : !process.stdin.isTTY;
 
-// If stdio mode, redirect console output BEFORE creating server instance
-// to prevent constructor logs from breaking JSON-RPC on stdout
-if (isStdioMode) {
-    const originalLog = console.log;
-    const originalError = console.error;
+    // If stdio mode, redirect console output BEFORE creating server instance
+    if (isStdioMode) {
+        const originalLog = console.log;
+        const originalError = console.error;
 
-    console.log = (...args: any[]) => {
-        process.stderr.write('[MCP] ' + args.join(' ') + '\n');
-    };
+        console.log = (...args: any[]) => {
+            process.stderr.write('[MCP] ' + args.join(' ') + '\n');
+        };
 
-    console.error = (...args: any[]) => {
-        process.stderr.write('[MCP] ERROR: ' + args.join(' ') + '\n');
-    };
-}
+        console.error = (...args: any[]) => {
+            process.stderr.write('[MCP] ERROR: ' + args.join(' ') + '\n');
+        };
+    }
 
-(async () => {
     try {
-        const server = new MCPServer();
+        const server = new MCPServer(config);
 
         if (isStdioMode) {
-            // VSCode MCP infrastructure uses stdio
             await server.startStdio();
         } else {
-            // Legacy HTTP mode for Command Palette
             await server.startHTTP();
         }
     } catch (error: any) {
         console.error('\n⚠️  MCP Server encountered an error during startup:');
         console.error(error.message);
         console.error('\nThe server will continue running but queries may fail.');
-        console.error('Please run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.\n');
-
-        // Don't exit - let the server run in degraded mode
-        // This allows VSCode extension to show setup wizard
+        console.error('Run "bctb-mcp init" to create a config file, or check your .bctb-config.json settings.\n');
     }
-})();
+}
+
+// If running directly (not imported), start the server
+if (require.main === module) {
+    startServer();
+}

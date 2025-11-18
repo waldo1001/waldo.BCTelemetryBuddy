@@ -1,0 +1,68 @@
+{
+    "$schema": "https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/shared/schema/bctb-config.schema.json",
+    "defaultProfile": "customer-a-prod",
+    "profiles": {
+        "_base_azure_cli": {
+            "connectionName": "Azure CLI Base",
+            "authFlow": "azure_cli",
+            "cacheTTLSeconds": 3600,
+            "cacheEnabled": true,
+            "sanitize": {
+                "removePII": false
+            }
+        },
+        "_base_device_code": {
+            "connectionName": "Device Code Base",
+            "authFlow": "device_code",
+            "tenantId": "${AZURE_TENANT_ID}",
+            "cacheTTLSeconds": 3600,
+            "cacheEnabled": true,
+            "sanitize": {
+                "removePII": false
+            }
+        },
+        "customer-a-prod": {
+            "extends": "_base_azure_cli",
+            "connectionName": "Customer A - Production",
+            "applicationInsightsAppId": "${CUSTOMER_A_APP_INSIGHTS_ID}",
+            "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/xxx/resourcegroups/xxx/providers/microsoft.insights/components/customer-a-prod"
+        },
+        "customer-a-staging": {
+            "extends": "_base_azure_cli",
+            "connectionName": "Customer A - Staging",
+            "applicationInsightsAppId": "${CUSTOMER_A_STAGING_APP_INSIGHTS_ID}",
+            "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/xxx/resourcegroups/xxx/providers/microsoft.insights/components/customer-a-staging"
+        },
+        "customer-b-prod": {
+            "extends": "_base_device_code",
+            "connectionName": "Customer B - Production",
+            "applicationInsightsAppId": "${CUSTOMER_B_APP_INSIGHTS_ID}",
+            "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/yyy/resourcegroups/yyy/providers/microsoft.insights/components/customer-b-prod"
+        },
+        "customer-c-prod": {
+            "extends": "_base_azure_cli",
+            "connectionName": "Customer C - Production",
+            "applicationInsightsAppId": "12345678-1234-1234-1234-123456789012",
+            "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/zzz/resourcegroups/zzz/providers/microsoft.insights/components/customer-c-prod",
+            "cacheTTLSeconds": 7200,
+            "sanitize": {
+                "removePII": true
+            }
+        }
+    },
+    "cache": {
+        "enabled": true,
+        "ttlSeconds": 3600
+    },
+    "sanitize": {
+        "removePII": false
+    },
+    "references": [
+        {
+            "name": "Microsoft BC Telemetry Samples",
+            "type": "github",
+            "url": "https://github.com/microsoft/BCTech/tree/master/samples/AppInsights",
+            "enabled": true
+        }
+    ]
+}

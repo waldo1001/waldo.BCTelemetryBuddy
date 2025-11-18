@@ -5,8 +5,15 @@ import * as child_process from 'child_process';
 import { MCPClient } from './mcpClient';
 import { ResultsWebview } from './resultsWebview';
 import { SetupWizardProvider } from './webviews/SetupWizardProvider';
+import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
+import { ReleaseNotesProvider } from './webviews/ReleaseNotesProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { CHATMODE_DEFINITIONS } from './chatmodeDefinitions';
+import { TelemetryService } from './services/telemetryService';
+import { MigrationService } from './services/migrationService';
+import { ProfileStatusBar } from './ui/profileStatusBar';
+import { ProfileManager } from './services/profileManager';
+import { showFirstRunNotification } from './services/mcpInstaller';
 
 /**
  * MCP process handle
@@ -19,69 +26,14 @@ interface MCPProcess {
 
 let mcpProcess: MCPProcess | null = null;
 let mcpClient: MCPClient | null = null;
+let telemetryService: TelemetryService | null = null;
+let migrationService: MigrationService | null = null;
+let profileStatusBar: ProfileStatusBar | null = null;
+let profileManager: ProfileManager | null = null;
+let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let extensionContext: vscode.ExtensionContext;
-
-/**
- * Register MCP server definition provider with VSCode
- * This makes the MCP server discoverable globally in VSCode's MCP settings
- */
-function registerMCPServerDefinitionProvider(context: vscode.ExtensionContext): void {
-    outputChannel.appendLine('Registering MCP server definition provider...');
-
-    const provider: vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> = {
-        provideMcpServerDefinitions(token: vscode.CancellationToken): vscode.ProviderResult<vscode.McpStdioServerDefinition[]> {
-            const workspacePath = getWorkspacePath();
-            if (!workspacePath) {
-                outputChannel.appendLine('⚠ No workspace folder - MCP server not available');
-                return [];
-            }
-
-            // Get resource-scoped configuration for the workspace folder
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
-            const config = vscode.workspace.getConfiguration('bctb', folderUri);
-
-            outputChannel.appendLine(`Reading configuration from workspace folder: ${folderUri?.fsPath || 'none'}`);
-
-            // Fixed for marketplace: MCP server bundled at mcp/dist/server.js within extension directory
-            // Use launcher.js to force CommonJS interpretation (avoids VSIX .cjs installation issues)
-            const mcpScriptPath = path.join(context.extensionPath, 'mcp', 'dist', 'launcher.js');
-
-            // Build environment variables from workspace settings
-            const env = buildMCPEnvironment(config, workspacePath);
-
-            const serverDefinition = new vscode.McpStdioServerDefinition(
-                'BC Telemetry Buddy',
-                'node',
-                [mcpScriptPath],
-                env,
-                '0.1.0'
-            );
-
-            outputChannel.appendLine(`✓ Providing MCP server definition: node ${mcpScriptPath}`);
-            return [serverDefinition];
-        },
-
-        resolveMcpServerDefinition(
-            server: vscode.McpStdioServerDefinition,
-            token: vscode.CancellationToken
-        ): vscode.ProviderResult<vscode.McpStdioServerDefinition> {
-            outputChannel.appendLine(`Resolving MCP server definition: ${server.label}`);
-            // Can add authentication or validation here if needed
-            return server;
-        }
-    };
-
-    const disposable = vscode.lm.registerMcpServerDefinitionProvider(
-        'bc-telemetry-buddy.mcp-server',
-        provider
-    );
-
-    context.subscriptions.push(disposable);
-    outputChannel.appendLine('✓ MCP server definition provider registered');
-}
 
 /**
  * Register MCP tools with VSCode's language model API
@@ -334,6 +286,29 @@ function registerLanguageModelTools(context: vscode.ExtensionContext): void {
 }
 
 /**
+ * Check if extension was updated and show release notes
+ */
+async function checkAndShowReleaseNotes(context: vscode.ExtensionContext): Promise<void> {
+    try {
+        const currentVersion = context.extension.packageJSON.version;
+        const lastVersion = context.globalState.get<string>('bctb.lastVersion');
+
+        if (lastVersion && lastVersion !== currentVersion) {
+            // Version changed - show release notes
+            outputChannel.appendLine(`Version updated from ${lastVersion} to ${currentVersion}`);
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+            ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
+        }
+
+        // Update stored version
+        await context.globalState.update('bctb.lastVersion', currentVersion);
+    } catch (error: any) {
+        outputChannel.appendLine(`Failed to check version: ${error.message}`);
+    }
+}
+
+/**
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
@@ -341,7 +316,33 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy');
     outputChannel.appendLine('BC Telemetry Buddy extension activated');
 
-    // Initialize MCP client with resource-scoped configuration
+    // Initialize ProfileManager (handles multi-profile configurations)
+    try {
+        profileManager = new ProfileManager(outputChannel);
+        outputChannel.appendLine('✓ ProfileManager initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  ProfileManager initialization failed: ${error.message}`);
+    }
+
+    // Initialize ProfileStatusBar (shows current profile in status bar)
+    try {
+        profileStatusBar = new ProfileStatusBar(outputChannel);
+        context.subscriptions.push(profileStatusBar);
+        outputChannel.appendLine('✓ ProfileStatusBar initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  ProfileStatusBar initialization failed: ${error.message}`);
+    }
+
+    // Initialize TelemetryService for direct commands (no MCP required)
+    try {
+        telemetryService = new TelemetryService(outputChannel);
+        outputChannel.appendLine('✓ TelemetryService initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  TelemetryService initialization failed: ${error.message}`);
+        outputChannel.appendLine('   Extension commands will not work until workspace is configured');
+    }
+
+    // Initialize MCP client for HTTP mode (legacy)
     const workspaceFolders = vscode.workspace.workspaceFolders;
     const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
     const config = vscode.workspace.getConfiguration('bctb', folderUri);
@@ -351,10 +352,51 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize setup wizard
     setupWizard = new SetupWizardProvider(context.extensionUri);
 
+    // Initialize profile wizard
+    profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel);
+    outputChannel.appendLine('✓ ProfileWizardProvider initialized');
+
+    // Initialize migration service
+    migrationService = new MigrationService(outputChannel);
+
+    // Check for version update and show release notes
+    setTimeout(async () => {
+        await checkAndShowReleaseNotes(context);
+    }, 1000);
+
+    // Check for migration on first launch (after short delay to let activation complete)
+    setTimeout(async () => {
+        await migrationService?.showMigrationNotification(context);
+    }, 3000);
+
+    // Show MCP first-run notification if not installed (after migration check)
+    setTimeout(async () => {
+        await showFirstRunNotification(context);
+    }, 5000);
+
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('bctb.setupWizard', async () => {
             await setupWizard?.show();
+        }),
+        vscode.commands.registerCommand('bctb.migrateSettings', async () => {
+            if (!migrationService) {
+                vscode.window.showErrorMessage('Migration service not initialized');
+                return;
+            }
+
+            // Just migrate directly
+            await migrationService.migrate(context);
+        }),
+        vscode.commands.registerCommand('bctb.resetMigrationState', async () => {
+            await context.globalState.update('bctb.migrationCompleted', undefined);
+            await context.globalState.update('bctb.migrationDismissed', undefined);
+            vscode.window.showInformationMessage('Migration state reset. Reload window to see notification again.');
+        }),
+        vscode.commands.registerCommand('bctb.showReleaseNotes', () => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+            ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
         }),
         vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
         vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
@@ -362,11 +404,14 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
             runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
         ),
-        vscode.commands.registerCommand('bctb.saveQuery', () => saveQueryCommand()),
-        vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand()),
         vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
         vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
-        vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand())
+        vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand()),
+        vscode.commands.registerCommand('bctb.switchProfile', () => switchProfileCommand()),
+        vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand()),
+        vscode.commands.registerCommand('bctb.createProfile', () => createProfileCommand()),
+        vscode.commands.registerCommand('bctb.setDefaultProfile', () => setDefaultProfileCommand()),
+        vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand())
     );
 
     // Register CodeLens provider for .kql files
@@ -388,26 +433,73 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine('✓ CodeLens is enabled in settings');
     }
 
-    // Register MCP server definition provider (makes server globally available in VSCode)
-    registerMCPServerDefinitionProvider(context);
+    // Register MCP Server Definition Provider for development
+    const mcpProvider: vscode.McpServerDefinitionProvider<vscode.McpServerDefinition> = {
+        provideMcpServerDefinitions() {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+            const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
+            const preferGlobal = mcpConfig.get<boolean>('preferGlobal', false);
+            // Development: Use local monorepo MCP server (packages/mcp/dist/launcher.js)
+            // Production: Users install MCP globally with npm (bctb-mcp command)
+            //
+            // Check if we're in development (monorepo structure with ../mcp/ sibling package)
+            // In monorepo, MCP lives at packages/mcp relative to packages/extension
+            const mcpDevPath = path.join(context.extensionPath, '..', 'mcp', 'dist', 'launcher.js');
+            const isDevelopment = fs.existsSync(mcpDevPath) && !preferGlobal;
 
-    // DISABLED: Manual tool registration conflicts with MCP stdio server tools
-    // The MCP server (via stdio) provides tools automatically - don't register them manually
-    // registerLanguageModelTools(context);
+            // Prepare environment variables for MCP server
+            // Pass workspace path so MCP can find .bctb-config.json
+            // Always use the active workspace (where user is working)
+            const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+
+            const mcpEnv: Record<string, string> = {};
+            if (workspacePath) {
+                mcpEnv.BCTB_WORKSPACE_PATH = workspacePath;
+            }
+
+            if (isDevelopment) {
+                // Development: Use local MCP server from monorepo
+                outputChannel.appendLine(`🔧 Development mode: Using local MCP server at ${mcpDevPath}`);
+                return [{
+                    id: 'bctb',
+                    label: 'BC Telemetry Buddy (Dev)',
+                    description: 'Query Business Central telemetry data using KQL',
+                    command: 'node',
+                    args: [mcpDevPath],
+                    env: mcpEnv
+                }];
+            } else {
+                // Production: Use globally installed bctb-mcp command
+                outputChannel.appendLine(preferGlobal
+                    ? '📦 PreferGlobal enabled: Using globally installed bctb-mcp'
+                    : '📦 Production mode: Using globally installed bctb-mcp');
+                return [{
+                    id: 'bctb',
+                    label: 'BC Telemetry Buddy',
+                    description: 'Query Business Central telemetry data using KQL',
+                    command: 'bctb-mcp',
+                    args: ['start', '--stdio'],
+                    env: mcpEnv
+                }];
+            }
+        }
+    };
+    context.subscriptions.push(
+        vscode.lm.registerMcpServerDefinitionProvider('bctb', mcpProvider)
+    );
+    outputChannel.appendLine('✓ Registered MCP Server Definition Provider');
 
     // Register chat participant for @bc-telemetry-buddy
     registerChatParticipant(context, outputChannel);
-
-    // Don't auto-start HTTP server - VSCode MCP infrastructure (stdio mode) handles Copilot integration
-    // Command palette commands will show error if HTTP server not manually started via "Start MCP Server" command
 
     // Auto-show setup wizard on first activation if not configured
     checkAndShowSetupWizard(context);
 
     outputChannel.appendLine('Extension ready');
     outputChannel.appendLine('');
-    outputChannel.appendLine('ℹ️  For Copilot integration: MCP server automatically managed by VSCode');
-    outputChannel.appendLine('ℹ️  For Command Palette commands: Run "BC Telemetry Buddy: Start MCP Server" if needed');
+    outputChannel.appendLine('ℹ️  Direct commands: Use TelemetryService (no MCP required)');
+    outputChannel.appendLine('ℹ️  Chat participant: Install MCP globally with "npm install -g bc-telemetry-buddy-mcp"');
     outputChannel.appendLine('ℹ️  Chat participant: Use @bc-telemetry-buddy in GitHub Copilot Chat');
 }
 
@@ -713,33 +805,22 @@ async function startMCPCommand(): Promise<void> {
 }
 
 /**
- * Command: Run natural language query
+ * Command: Run KQL query
  */
 async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<void> {
     try {
-        // Check if workspace has settings first
-        if (!hasWorkspaceSettings()) {
+        // Check if TelemetryService is initialized
+        if (!telemetryService || !telemetryService.isConfigured()) {
             const action = await vscode.window.showErrorMessage(
-                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
-                'Open Copilot Chat',
-                'Run Setup Wizard'
+                'BC Telemetry Buddy is not configured for this workspace.',
+                'Run Setup Wizard',
+                'Cancel'
             );
 
-            if (action === 'Open Copilot Chat') {
-                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
-            } else if (action === 'Run Setup Wizard') {
+            if (action === 'Run Setup Wizard') {
                 await vscode.commands.executeCommand('bctb.setupWizard');
             }
             return;
-        }
-
-        // Ensure MCP is running
-        if (!mcpProcess) {
-            await startMCP();
-        }
-
-        if (!mcpClient) {
-            throw new Error('MCP client not initialized');
         }
 
         // Prompt for KQL query
@@ -764,7 +845,6 @@ async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<voi
                 cancellable: false
             },
             async () => {
-                // Use resource-scoped configuration
                 const workspaceFolders = vscode.workspace.workspaceFolders;
                 const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
                 const config = vscode.workspace.getConfiguration('bctb', folderUri);
@@ -776,12 +856,7 @@ async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<voi
                     try {
                         outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
 
-                        const result = await mcpClient!.queryTelemetry({
-                            query: kqlQuery,
-                            queryType: 'kql',
-                            useContext: false,
-                            includeExternal: false
-                        });
+                        const result = await telemetryService!.executeKQL(kqlQuery);
 
                         // Show results in webview
                         const webview = new ResultsWebview(context, outputChannel);
@@ -813,29 +888,17 @@ async function runKQLQueryCommand(context: vscode.ExtensionContext): Promise<voi
  */
 async function runKQLFromDocumentCommand(context: vscode.ExtensionContext): Promise<void> {
     try {
-        // Check if workspace has settings first
-        if (!hasWorkspaceSettings()) {
+        // Check if TelemetryService is configured
+        if (!telemetryService || !telemetryService.isConfigured()) {
             const action = await vscode.window.showErrorMessage(
-                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
-                'Open Copilot Chat',
+                'BC Telemetry Buddy is not configured for this workspace. Please run setup wizard.',
                 'Run Setup Wizard'
             );
 
-            if (action === 'Open Copilot Chat') {
-                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
-            } else if (action === 'Run Setup Wizard') {
+            if (action === 'Run Setup Wizard') {
                 await vscode.commands.executeCommand('bctb.setupWizard');
             }
             return;
-        }
-
-        // Ensure MCP is running
-        if (!mcpProcess) {
-            await startMCP();
-        }
-
-        if (!mcpClient) {
-            throw new Error('MCP client not initialized');
         }
 
         // Get active editor
@@ -879,12 +942,7 @@ async function runKQLFromDocumentCommand(context: vscode.ExtensionContext): Prom
                     try {
                         outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
 
-                        const result = await mcpClient!.queryTelemetry({
-                            query: kqlQuery,
-                            queryType: 'kql',
-                            useContext: false,
-                            includeExternal: false
-                        });
+                        const result = await telemetryService!.executeKQL(kqlQuery);
 
                         // Show results in webview
                         const webview = new ResultsWebview(context, outputChannel);
@@ -922,29 +980,17 @@ async function runKQLFromCodeLensCommand(
     queryText: string
 ): Promise<void> {
     try {
-        // Check if workspace has settings first
-        if (!hasWorkspaceSettings()) {
+        // Check if TelemetryService is configured
+        if (!telemetryService || !telemetryService.isConfigured()) {
             const action = await vscode.window.showErrorMessage(
-                'BC Telemetry Buddy is not configured for this workspace. You can use GitHub Copilot Chat instead.',
-                'Open Copilot Chat',
+                'BC Telemetry Buddy is not configured for this workspace. Please run setup wizard.',
                 'Run Setup Wizard'
             );
 
-            if (action === 'Open Copilot Chat') {
-                await vscode.commands.executeCommand('workbench.action.chat.open', '@bc-telemetry-buddy');
-            } else if (action === 'Run Setup Wizard') {
+            if (action === 'Run Setup Wizard') {
                 await vscode.commands.executeCommand('bctb.setupWizard');
             }
             return;
-        }
-
-        // Ensure MCP is running
-        if (!mcpProcess) {
-            await startMCP();
-        }
-
-        if (!mcpClient) {
-            throw new Error('MCP client not initialized');
         }
 
         outputChannel.appendLine(`Executing KQL query from line ${startLine + 1}-${endLine + 1}`);
@@ -970,12 +1016,7 @@ async function runKQLFromCodeLensCommand(
                     try {
                         outputChannel.appendLine(`Attempt ${attempt}/${maxRetries}...`);
 
-                        const result = await mcpClient!.queryTelemetry({
-                            query: queryText,
-                            queryType: 'kql',
-                            useContext: false,
-                            includeExternal: false
-                        });
+                        const result = await telemetryService!.executeKQL(queryText);
 
                         // Show results in webview
                         const webview = new ResultsWebview(context, outputChannel);
@@ -1003,130 +1044,8 @@ async function runKQLFromCodeLensCommand(
 }
 
 /**
- * Command: Save query
- */
-async function saveQueryCommand(): Promise<void> {
-    try {
-        if (!mcpClient) {
-            throw new Error('MCP client not initialized');
-        }
-
-        // Prompt for query details
-        const name = await vscode.window.showInputBox({
-            prompt: 'Query name',
-            placeHolder: 'e.g., Slow Database Dependencies',
-            ignoreFocusOut: true
-        });
-
-        if (!name) {
-            return;
-        }
-
-        const kql = await vscode.window.showInputBox({
-            prompt: 'KQL query',
-            placeHolder: 'e.g., dependencies | where duration > 2000',
-            ignoreFocusOut: true
-        });
-
-        if (!kql) {
-            return;
-        }
-
-        const purpose = await vscode.window.showInputBox({
-            prompt: 'Purpose (optional)',
-            placeHolder: 'e.g., Find slow database calls',
-            ignoreFocusOut: true
-        });
-
-        const useCase = await vscode.window.showInputBox({
-            prompt: 'Use case (optional)',
-            placeHolder: 'e.g., Performance troubleshooting',
-            ignoreFocusOut: true
-        });
-
-        const tagsInput = await vscode.window.showInputBox({
-            prompt: 'Tags (optional, comma-separated)',
-            placeHolder: 'e.g., performance, database',
-            ignoreFocusOut: true
-        });
-
-        const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
-
-        // Get existing categories for suggestions
-        let categories: string[] = [];
-        try {
-            const response = await mcpClient.request('get_categories', {});
-            categories = response?.result || [];
-        } catch (err) {
-            // Categories endpoint may not be available in older versions
-            console.warn('Failed to fetch categories:', err);
-        }
-
-        // Detect if query is customer-specific (filters on tenant or company)
-        const lowerKql = kql.toLowerCase();
-        const isCustomerQuery = lowerKql.includes('aadtenantid') ||
-            lowerKql.includes('companyname') ||
-            lowerKql.includes('company_name');
-
-        let companyName: string | undefined;
-        if (isCustomerQuery) {
-            // Prompt for company name
-            companyName = await vscode.window.showInputBox({
-                prompt: 'Company name (query filters on customer/tenant)',
-                placeHolder: 'e.g., Contoso Ltd, Fabrikam Inc',
-                ignoreFocusOut: true
-            });
-
-            if (!companyName) {
-                return; // Cancel if no company name provided for customer query
-            }
-        }
-
-        // Prompt for category with suggestions
-        const category = await vscode.window.showInputBox({
-            prompt: isCustomerQuery ? 'Category (optional, subfolder within company)' : 'Category (optional, subfolder name)',
-            placeHolder: categories.length > 0 ? `e.g., ${categories.join(', ')}` : 'e.g., Monitoring, Analysis, Performance',
-            ignoreFocusOut: true
-        });
-
-        // Save query via MCP
-        const result = await mcpClient.saveQuery({ name, kql, purpose, useCase, tags, category, companyName });
-
-        vscode.window.showInformationMessage(`Query saved: ${result.filePath}`);
-        outputChannel.appendLine(`✓ Query saved to ${result.filePath}`);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to save query: ${err.message}`);
-        outputChannel.show();
-    }
-}
-
-/**
  * Command: Open queries folder
  */
-async function openQueriesFolderCommand(): Promise<void> {
-    try {
-        const workspacePath = getWorkspacePath();
-        if (!workspacePath) {
-            throw new Error('No workspace folder open');
-        }
-
-        // Use resource-scoped configuration
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
-        const config = vscode.workspace.getConfiguration('bctb', folderUri);
-        const queriesFolder = config.get<string>('queries.folder', 'queries');
-        const queriesPath = path.join(workspacePath, queriesFolder);
-
-        // Open folder in explorer
-        const uri = vscode.Uri.file(queriesPath);
-        await vscode.commands.executeCommand('revealFileInOS', uri);
-
-        outputChannel.appendLine(`Opened queries folder: ${queriesPath}`);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to open queries folder: ${err.message}`);
-        outputChannel.show();
-    }
-}
 
 /**
  * Command: Clear cache
@@ -1343,6 +1262,133 @@ async function installChatmodesCommand(): Promise<void> {
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to install chatmodes: ${err.message}`);
         outputChannel.appendLine(`✗ Install chatmodes error: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Switch profile
+ */
+async function switchProfileCommand(): Promise<void> {
+    try {
+        if (!profileStatusBar) {
+            vscode.window.showErrorMessage('Profile manager not initialized');
+            return;
+        }
+
+        const switched = await profileStatusBar.switchProfile();
+        if (switched && telemetryService) {
+            // Reload TelemetryService with new profile
+            const currentProfile = profileStatusBar.getCurrentProfile();
+            if (currentProfile) {
+                telemetryService.switchProfile(currentProfile);
+                outputChannel.appendLine(`✓ Switched to profile: ${currentProfile}`);
+            }
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to switch profile: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Refresh profile status bar
+ */
+async function refreshProfileStatusBarCommand(): Promise<void> {
+    try {
+        if (!profileStatusBar) {
+            vscode.window.showErrorMessage('Profile status bar not initialized');
+            return;
+        }
+
+        await profileStatusBar.refresh();
+        outputChannel.appendLine('✓ Profile status bar refreshed');
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to refresh profile status bar: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Create new profile
+ */
+async function createProfileCommand(): Promise<void> {
+    try {
+        if (!profileWizard) {
+            vscode.window.showErrorMessage('Profile wizard not initialized');
+            return;
+        }
+
+        // Show the wizard panel
+        await profileWizard.show();
+
+        outputChannel.appendLine('✓ Profile wizard opened for creating new profile');
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to open profile wizard: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Set default profile
+ */
+async function setDefaultProfileCommand(): Promise<void> {
+    try {
+        if (!profileManager || !profileManager.hasConfigFile()) {
+            vscode.window.showErrorMessage('No profiles found.');
+            return;
+        }
+
+        const profiles = profileManager.listProfiles();
+        const profileNames = profiles.map(p => p.name);
+        const currentDefault = profileManager.getDefaultProfile();
+
+        const items = profileNames.map(name => ({
+            label: name,
+            description: name === currentDefault ? '(current default)' : undefined
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select default profile'
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        await profileManager.setDefaultProfile(selected.label);
+
+        vscode.window.showInformationMessage(`Default profile set to "${selected.label}"`);
+        outputChannel.appendLine(`✓ Default profile set to: ${selected.label}`);
+
+        // Refresh status bar
+        await refreshProfileStatusBarCommand();
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to set default profile: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Manage profiles (show quick pick with all profile operations)
+ */
+async function manageProfilesCommand(): Promise<void> {
+    try {
+        const actions = [
+            { label: '$(add) Create New Profile', command: 'bctb.createProfile' },
+            { label: '$(arrow-swap) Switch Profile', command: 'bctb.switchProfile' },
+            { label: '$(star) Set Default Profile', command: 'bctb.setDefaultProfile' }
+        ];
+
+        const selected = await vscode.window.showQuickPick(actions, {
+            placeHolder: 'Select profile management action'
+        });
+
+        if (selected) {
+            await vscode.commands.executeCommand(selected.command);
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Profile management failed: ${err.message}`);
         outputChannel.show();
     }
 }

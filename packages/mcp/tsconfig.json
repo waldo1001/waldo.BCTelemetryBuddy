@@ -1,11 +1,19 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "module": "ES2022",
-        "moduleResolution": "bundler",
+        "composite": false,
+        "declaration": false,
+        "declarationMap": false,
+        "module": "CommonJS",
+        "moduleResolution": "node",
         "outDir": "./dist",
         "rootDir": "./src"
     },
+    "references": [
+        {
+            "path": "../shared"
+        }
+    ],
     "include": [
         "src/**/*"
     ],

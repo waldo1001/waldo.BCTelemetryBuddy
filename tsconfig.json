@@ -15,7 +15,7 @@
         "sourceMap": true,
         "outDir": "./dist",
         "rootDir": "./packages",
-        "composite": true,
+        "composite": false,
         "incremental": true
     },
     "exclude": [
