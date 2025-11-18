@@ -18,7 +18,7 @@ VSCode extension for querying Business Central telemetry with natural language s
 
 ### For New Users
 
-1. **Install** from [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bctb) (search for "BC Telemetry Buddy")
+1. **Install** from [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy) (search for "BC Telemetry Buddy")
 2. **Run Setup Wizard**: Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) → `BC Telemetry Buddy: Setup Wizard`
 3. **Configure** your Azure resources through the guided wizard:
    - Azure tenant and Application Insights connection

@@ -125,12 +125,19 @@ Queries are automatically organized:
 
 See [docs/UserGuide.md](docs/UserGuide.md) for detailed configuration and advanced features.
 
+## 📦 Packages
+
+- **[VSCode Extension](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy)** - BC Telemetry Buddy extension for Visual Studio Code ([source](./packages/extension/))
+- **[MCP Server](https://www.npmjs.com/package/bc-telemetry-buddy-mcp)** - Model Context Protocol server for AI assistants ([source](./packages/mcp/))
+- **Shared Library** - Core business logic (private package, bundled into extension and MCP) ([source](./packages/shared/))
+
 ## Development
 
 This is a monorepo containing:
 
 - `packages/mcp/` - MCP backend server (TypeScript + Express)
 - `packages/extension/` - VSCode extension (TypeScript)
+- `packages/shared/` - Shared core library (TypeScript)
 
 ### Prerequisites
 

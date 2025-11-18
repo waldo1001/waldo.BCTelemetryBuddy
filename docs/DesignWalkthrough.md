@@ -1128,3 +1128,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Fixed VSCode extension packaging issue by enhancing .vscodeignore exclusions [Entry: c1499fda-248d-40d5-bf3b-3d402415cad6]
   - **Why:** vsce was including ../shared/tsconfig.tsbuildinfo despite exclusions, blocking PR #58 merge
   - **How:** Added explicit paths for TypeScript build artifacts and comprehensive shared package exclusions
+- **2025-11-18** — PR #58 monorepo refactor completed successfully with all CI checks passing [Entry: cde11a4b-97d5-4d7c-9827-2d803cedf98f]
+  - **Why:** Major architectural improvement with shared packages, comprehensive testing, and proper CI/CD
+  - **How:** Systematic resolution of all CI failures from CodeQL to extension packaging
+- **2025-11-18** — Verified MCP package publication readiness with comprehensive testing [Entry: 22ac8888-5268-4148-b541-cd1ef35b1008]
+  - **Why:** MCP registry is back up, preparing for publication with proper account setup
+  - **How:** Validated build (1.8MB bundles), all 131 tests passing, standalone NPM package ready
+- **2025-11-18** — Published BC Telemetry Buddy MCP v1.0.0 to NPM registry [Entry: 32b53f78-680f-4e29-a472-a1ce73d79922]
+  - **Why:** Make MCP server globally installable for AI assistants (Copilot, Claude, etc.)
+  - **How:** npm publish --access public from packages/mcp (3.6MB package, 44 files)
+- **2025-11-18** — Updated all README files with actual NPM and marketplace URLs [Entry: 92af9217-2ff3-4f7a-81aa-6c1be42b3772]
+  - **Why:** Replace placeholder links with real published package URLs after successful publication
+  - **How:** Added Packages section to main README with marketplace and NPM links, fixed extension README and BADGES.md

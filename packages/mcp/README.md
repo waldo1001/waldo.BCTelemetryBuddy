@@ -529,15 +529,14 @@ npm run test:watch       # Watch mode for development
 
 ## Related Projects
 
-- **[VSCode Extension](../extension/README.md)** - BC Telemetry Buddy VSCode extension (works standalone, MCP optional)
-- **[Shared Library](../shared/README.md)** - Core business logic (private package, bundled into MCP)
-- **[MCP Specification](https://modelcontextprotocol.io/)** - Model Context Protocol documentation
+- **[VSCode Extension](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy)** - BC Telemetry Buddy VSCode extension (works standalone, MCP optional) ([source](../extension/))
+- **[Shared Library](../shared/)** - Core business logic (private package, bundled into MCP)
+- **[Model Context Protocol](https://modelcontextprotocol.io/)** - MCP specification and documentation
 
 ## Support & Contributing
 
 - **Issues**: [GitHub Issues](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/waldo1001/waldo.BCTelemetryBuddy/discussions)
-- **Contributing**: See [CONTRIBUTING.md](../../CONTRIBUTING.md) (if available)
 
 ## Changelog
 
@@ -545,4 +544,4 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
 
 ## License
 
-MIT - See [LICENSE](./LICENSE) for details.
+MIT - See [LICENSE](../../LICENSE) for details.

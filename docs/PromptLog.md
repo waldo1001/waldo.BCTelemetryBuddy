@@ -2102,3 +2102,23 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Almost there: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/19472783364/job/55724650372?pr=58"
 
 ---
+### Entry ID: 0655fd5e-fc02-41c4-886d-5c2e1c8dc171 — 2025-11-18 17:30
+> "All tests passed, I have a working PR!"
+
+---
+### Entry ID: cde11a4b-97d5-4d7c-9827-2d803cedf98f — 2025-11-18 17:30
+> "All tests passed, I have a working PR!"
+
+---
+### Entry ID: 22ac8888-5268-4148-b541-cd1ef35b1008 — 2025-11-18 17:32
+> "I don't have an account just yet"
+
+---
+### Entry ID: 32b53f78-680f-4e29-a472-a1ce73d79922 — 2025-11-18 17:42
+> "Ok, that's for later, I did npm login, and am logged in - let's publish!"
+
+---
+### Entry ID: 92af9217-2ff3-4f7a-81aa-6c1be42b3772 — 2025-11-18 18:13
+> "Update the readme to existing document instead of dead links."
+
+---

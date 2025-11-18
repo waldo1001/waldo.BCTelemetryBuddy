@@ -19,7 +19,7 @@ Add these to your README files for visual status indicators.
 ```markdown
 [![MCP Tests](https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy/branch/main/graph/badge.svg?flag=mcp)](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy)
-[![npm version](https://img.shields.io/npm/v/@waldo/bc-telemetry-buddy-mcp.svg)](https://www.npmjs.com/package/@waldo/bc-telemetry-buddy-mcp)
+[![npm version](https://img.shields.io/npm/v/bc-telemetry-buddy-mcp.svg)](https://www.npmjs.com/package/bc-telemetry-buddy-mcp)
 ```
 
 ### VSCode Extension (packages/extension/README.md)
@@ -27,9 +27,9 @@ Add these to your README files for visual status indicators.
 ```markdown
 [![Extension Tests](https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy/branch/main/graph/badge.svg?flag=extension)](https://codecov.io/gh/waldo1001/waldo.BCTelemetryBuddy)
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/waldo.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldo.bc-telemetry-buddy)
-[![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/waldo.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldo.bc-telemetry-buddy)
-[![VS Code Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/waldo.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldo.bc-telemetry-buddy)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/waldoBC.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy)
+[![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/waldoBC.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy)
+[![VS Code Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/waldoBC.bc-telemetry-buddy.svg)](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy)
 ```
 
 ## Additional Badges
