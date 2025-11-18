@@ -151,11 +151,10 @@ describe('Extension Module', () => {
         it('should register all required commands', () => {
             const commands = [
                 'bctb.startMCP',
-                'bctb.runNLQuery',
-                'bctb.openQueriesFolder'
+                'bctb.runNLQuery'
             ];
 
-            expect(commands.length).toBe(3);
+            expect(commands.length).toBe(2);
             expect(commands).toContain('bctb.startMCP');
             expect(commands).toContain('bctb.runNLQuery');
         });

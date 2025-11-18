@@ -370,15 +370,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
             runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
         ),
-        vscode.commands.registerCommand('bctb.openQueriesFolder', () => openQueriesFolderCommand()),
         vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
         vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
         vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand()),
         vscode.commands.registerCommand('bctb.switchProfile', () => switchProfileCommand()),
         vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand()),
         vscode.commands.registerCommand('bctb.createProfile', () => createProfileCommand()),
-        vscode.commands.registerCommand('bctb.editProfile', () => editProfileCommand()),
-        vscode.commands.registerCommand('bctb.deleteProfile', () => deleteProfileCommand()),
         vscode.commands.registerCommand('bctb.setDefaultProfile', () => setDefaultProfileCommand()),
         vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand())
     );
@@ -1015,30 +1012,6 @@ async function runKQLFromCodeLensCommand(
 /**
  * Command: Open queries folder
  */
-async function openQueriesFolderCommand(): Promise<void> {
-    try {
-        const workspacePath = getWorkspacePath();
-        if (!workspacePath) {
-            throw new Error('No workspace folder open');
-        }
-
-        // Use resource-scoped configuration
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
-        const config = vscode.workspace.getConfiguration('bctb', folderUri);
-        const queriesFolder = config.get<string>('queries.folder', 'queries');
-        const queriesPath = path.join(workspacePath, queriesFolder);
-
-        // Open folder in explorer
-        const uri = vscode.Uri.file(queriesPath);
-        await vscode.commands.executeCommand('revealFileInOS', uri);
-
-        outputChannel.appendLine(`Opened queries folder: ${queriesPath}`);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to open queries folder: ${err.message}`);
-        outputChannel.show();
-    }
-}
 
 /**
  * Command: Clear cache
@@ -1320,84 +1293,6 @@ async function createProfileCommand(): Promise<void> {
         vscode.window.showErrorMessage(`Failed to open profile wizard: ${err.message}`);
         outputChannel.show();
     }
-}/**
- * Command: Edit existing profile
- */
-async function editProfileCommand(): Promise<void> {
-    try {
-        if (!profileManager || !profileManager.hasConfigFile()) {
-            vscode.window.showErrorMessage('No profiles found. Create one first.');
-            return;
-        }
-
-        const profiles = profileManager.listProfiles();
-        const profileNames = profiles.map(p => p.name);
-
-        const selected = await vscode.window.showQuickPick(profileNames, {
-            placeHolder: 'Select profile to edit'
-        });
-
-        if (!selected) {
-            return;
-        }
-
-        if (!profileWizard) {
-            vscode.window.showErrorMessage('Profile wizard not initialized');
-            return;
-        }
-
-        // Show wizard with existing profile data
-        await profileWizard.show(selected);
-
-        outputChannel.appendLine(`✓ Profile wizard opened for editing profile: ${selected}`);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to edit profile: ${err.message}`);
-        outputChannel.show();
-    }
-}
-
-/**
- * Command: Delete profile
- */
-async function deleteProfileCommand(): Promise<void> {
-    try {
-        if (!profileManager || !profileManager.hasConfigFile()) {
-            vscode.window.showErrorMessage('No profiles found.');
-            return;
-        }
-
-        const profiles = profileManager.listProfiles();
-        const profileNames = profiles.map(p => p.name);
-
-        const selected = await vscode.window.showQuickPick(profileNames, {
-            placeHolder: 'Select profile to delete'
-        });
-
-        if (!selected) {
-            return;
-        }
-
-        const confirm = await vscode.window.showWarningMessage(
-            `Delete profile "${selected}"? This cannot be undone.`,
-            { modal: true },
-            'Delete'
-        );
-
-        if (confirm !== 'Delete') {
-            return;
-        }
-
-        await profileManager.deleteProfile(selected);
-
-        vscode.window.showInformationMessage(`Profile "${selected}" deleted successfully`);
-        outputChannel.appendLine(`✓ Profile deleted: ${selected}`);
-
-        // Refresh status bar
-        await refreshProfileStatusBarCommand();
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to delete profile: ${err.message}`);
-        outputChannel.show();
-    }
 }
 
 /**
@@ -1447,10 +1342,8 @@ async function manageProfilesCommand(): Promise<void> {
     try {
         const actions = [
             { label: '$(add) Create New Profile', command: 'bctb.createProfile' },
-            { label: '$(edit) Edit Profile', command: 'bctb.editProfile' },
             { label: '$(arrow-swap) Switch Profile', command: 'bctb.switchProfile' },
-            { label: '$(star) Set Default Profile', command: 'bctb.setDefaultProfile' },
-            { label: '$(trash) Delete Profile', command: 'bctb.deleteProfile' }
+            { label: '$(star) Set Default Profile', command: 'bctb.setDefaultProfile' }
         ];
 
         const selected = await vscode.window.showQuickPick(actions, {

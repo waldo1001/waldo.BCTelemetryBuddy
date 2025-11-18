@@ -2057,3 +2057,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Run all tests"
 
 ---
+### Entry ID: 1d14de8f-10b7-4ac3-9214-28b4b021c763 — 2025-11-18 14:44
+> "Remove Edit Profile and Delete Profile, since they are already available in the Manage Profiles command."
+
+---
+### Entry ID: 0823e9fc-3739-411a-ab21-d46a9e35dae4 — 2025-11-18 14:46
+> "remove command \"Open Queries Folder\" - totally useless. Change documentation accordingly - also for the previous removal"
+
+---

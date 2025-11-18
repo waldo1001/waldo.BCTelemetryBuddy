@@ -368,8 +368,11 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 |---------|-------------|
 | `BC Telemetry Buddy: Start MCP Server` | Start the MCP backend server |
 | `BC Telemetry Buddy: Run KQL Query` | Execute a KQL query directly |
-| `BC Telemetry Buddy: Save Query` | Save a query as a `.kql` file |
-| `BC Telemetry Buddy: Open Queries Folder` | Open saved queries folder in explorer |
+| `BC Telemetry Buddy: Clear Cache` | Clear cached query results |
+| `BC Telemetry Buddy: Show Cache Statistics` | View cache usage stats |
+| `BC Telemetry Buddy: Switch Profile` | Switch between configured profiles |
+| `BC Telemetry Buddy: Create Profile` | Create a new profile |
+| `BC Telemetry Buddy: Manage Profiles` | Visual interface for all profile operations |
 
 ---
 
@@ -487,56 +490,6 @@ When you save a query that filters by tenant/company, it's automatically organiz
 **Customer queries** → `queries/Companies/[CompanyName]/[Category]/[QueryName].kql`
 
 This keeps customer-specific queries isolated and easy to find.
-
----
-
-## Saving Queries
-
-When you find a useful query, save it for future reference and context building:
-
-### Via Command
-
-1. Run `BC Telemetry Buddy: Save Query`
-2. Enter a **query name** (e.g., "Slow Dependencies")
-3. Enter the **KQL query**
-4. Optionally add a **description**
-5. Optionally add **tags** (comma-separated)
-6. Optionally specify a **company name** (for customer-specific queries)
-
-The query is saved to `.vscode/bctb/queries/` (or `queries/Companies/{CompanyName}/` for customer queries) as a `.kql` file.
-
-### Via GitHub Copilot
-
-After executing a query via Copilot Chat:
-
-```
-@workspace Save this query as "Slow Dependencies" with tags: performance, database
-```
-
-### Query File Format
-
-Saved queries follow this format:
-
-```kql
-// Query: Slow Database Dependencies
-// Purpose: Find all database calls taking longer than 2 seconds
-// Use case: Performance troubleshooting for slow pages
-// Created: 2025-10-15 by @waldo
-// Tags: performance, database, dependencies
-
-dependencies
-| where type == "SQL"
-| where duration > 2000
-| summarize count(), avg(duration), max(duration) by target, operation
-| order by avg_duration desc
-```
-
-### Managing Saved Queries
-
-- **Browse queries:** Run `BC Telemetry Buddy: Open Queries Folder`
-- **Edit queries:** Open `.kql` files in VSCode and edit them directly
-- **Delete queries:** Delete the `.kql` file
-- **Share queries:** Commit `.kql` files to your team repository (ensure no PII!)
 
 ---
 
@@ -765,10 +718,9 @@ BC Telemetry Buddy supports managing multiple customers/environments in a single
 
 **Available commands:**
 - `BC Telemetry Buddy: Create Profile` - Create a new profile from scratch
-- `BC Telemetry Buddy: Edit Profile` - Edit an existing profile's settings
-- `BC Telemetry Buddy: Delete Profile` - Remove a profile
+- `BC Telemetry Buddy: Switch Profile` - Switch between configured profiles
 - `BC Telemetry Buddy: Set Default Profile` - Choose which profile loads on startup
-- `BC Telemetry Buddy: Manage Profiles` - Visual interface for all profile operations
+- `BC Telemetry Buddy: Manage Profiles` - Visual interface for all profile operations (create, edit, delete)
 
 Profiles are stored in `.bctb-config.json` in your workspace root.
 

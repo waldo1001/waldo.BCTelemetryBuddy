@@ -81,10 +81,6 @@
                 "title": "BC Telemetry Buddy: Run KQL From Document"
             },
             {
-                "command": "bctb.openQueriesFolder",
-                "title": "BC Telemetry Buddy: Open Queries Folder"
-            },
-            {
                 "command": "bctb.clearCache",
                 "title": "BC Telemetry Buddy: Clear Cache"
             },
@@ -108,16 +104,6 @@
                 "command": "bctb.createProfile",
                 "title": "BC Telemetry Buddy: Create Profile",
                 "icon": "$(add)"
-            },
-            {
-                "command": "bctb.editProfile",
-                "title": "BC Telemetry Buddy: Edit Profile",
-                "icon": "$(edit)"
-            },
-            {
-                "command": "bctb.deleteProfile",
-                "title": "BC Telemetry Buddy: Delete Profile",
-                "icon": "$(trash)"
             },
             {
                 "command": "bctb.setDefaultProfile",

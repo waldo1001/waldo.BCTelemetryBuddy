@@ -1359,3 +1359,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Ran all tests after removing Save Query command. [Entry: ce4b2a42-5116-4a27-933c-da7a5742cf26]
   - **Why:** Verify all tests pass after command removal and ensure test suite is clean.
   - **How:** Deleted empty command-handlers.test.ts file (had no tests), ran extension tests (196 pass), ran MCP tests (116 pass). Total: 312 tests passing, 0 skipped, 0 failed.
+- **2025-11-18** — Removed Edit Profile and Delete Profile commands. [Entry: 1d14de8f-10b7-4ac3-9214-28b4b021c763]
+  - **Why:** Eliminate redundancy - these features are fully available in the Profile Manager UI webview.
+  - **How:** Removed bctb.editProfile and bctb.deleteProfile from package.json commands, removed command registrations from extension.ts, deleted editProfileCommand() and deleteProfileCommand() functions (~80 lines), removed them from manageProfilesCommand() quick pick menu.
+- **2025-11-18** — Removed Open Queries Folder command and updated documentation. [Entry: 0823e9fc-3739-411a-ab21-d46a9e35dae4]
+  - **Why:** Command is useless - users can simply navigate to queries folder in VSCode Explorer. Also updated docs to reflect all removed commands (Save Query, Edit Profile, Delete Profile, Open Queries Folder).
+  - **How:** Removed bctb.openQueriesFolder from package.json, removed command registration and openQueriesFolderCommand() function (~25 lines) from extension.ts, updated extension.test.ts (now expects 2 commands). Updated UserGuide.md: revised Available Commands table to show only existing commands, removed entire 'Saving Queries' section (Save Query command gone), updated profile commands list to remove Edit/Delete Profile (available in Manage Profiles UI). Updated Instructions.md to remove bctb.saveQuery and bctb.openQueriesFolder command definitions.

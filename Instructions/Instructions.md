@@ -184,8 +184,6 @@ Scaffold
 Key commands to implement in `extension.ts`:
 - `bctb.startMCP` — spawn local MCP (use `child_process.spawn`) or verify `bctb.mcp.url`.
 - `bctb.runNLQuery` — prompt user for NL query, POST to MCP `/query` with `useContext: true`, render result in a webview or output channel.
-- `bctb.saveQuery` — prompt user for query name, description, and tags; POST to MCP `/saved` which creates a `.kql` file in `.vscode/bctb/queries/` with formatted comments and the KQL query.
-- `bctb.openQueriesFolder` — open `.vscode/bctb/queries/` folder in VSCode explorer so users can browse/edit saved queries.
 
 Copilot Agent integration
 -------------------------
