@@ -73,6 +73,9 @@ export class SetupWizardProvider {
                     case 'installMCP':
                         await this._performMCPInstall(message.update === true);
                         break;
+                    case 'manageProfiles':
+                        await vscode.commands.executeCommand('bctb.manageProfiles');
+                        break;
                 }
             },
             null,
@@ -793,6 +796,10 @@ export class SetupWizardProvider {
                 </div>
             </div>
 
+            <div style="margin: 20px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-activeForeground); border-radius: 4px; font-size: 12px;">
+                <strong>💡 Tip:</strong> Already have a configuration? Use the <strong>Profile Manager</strong> (Command Palette: <code>BC Telemetry Buddy: Manage Profiles</code>) to create, edit, or switch between multiple customer profiles with a visual wizard instead of editing JSON manually.
+            </div>
+
             <div style="margin: 20px 0;">
                 <label for="configEditor" style="display: block; margin-bottom: 10px; font-weight: bold;">Configuration JSON:</label>
                 <div style="margin-bottom: 8px; padding: 10px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px; font-size: 12px;">
@@ -975,6 +982,19 @@ export class SetupWizardProvider {
             <div class="button-group">
                 <button class="secondary" id="btn-prev-5">← Back</button>
                 <button id="btn-save-config">💾 Save Configuration</button>
+            </div>
+
+            <div id="nextStepsContainer" style="display: none; margin: 20px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-activeForeground); border-radius: 4px;">
+                <h4 style="margin-top: 0;">📌 Next Steps</h4>
+                <p>Your configuration is saved! Here's what you can do next:</p>
+                <ul style="line-height: 2;">
+                    <li><strong>Manage Profiles:</strong> Create, edit, or switch between multiple customer profiles</li>
+                    <li><strong>Query Telemetry:</strong> Use the chat participant (@bc-telemetry-buddy) to analyze your data</li>
+                    <li><strong>Run KQL:</strong> Execute KQL queries directly from .kql files</li>
+                </ul>
+                <div style="margin-top: 15px;">
+                    <button id="btn-manage-profiles" style="margin-right: 10px;">👥 Manage Profiles</button>
+                </div>
             </div>
 
             <div class="button-group" id="finishButtonGroup" style="display: none; justify-content: flex-end;">
@@ -1513,6 +1533,7 @@ export class SetupWizardProvider {
                 const saveStatusContent = document.getElementById('saveStatusContent');
                 const saveButton = document.getElementById('btn-save-config');
                 const finishButtonGroup = document.getElementById('finishButtonGroup');
+                const nextStepsContainer = document.getElementById('nextStepsContainer');
 
                 if (!saveStatusContainer || !saveStatusContent) return;
 
@@ -1525,9 +1546,10 @@ export class SetupWizardProvider {
                         '<div style="margin-top: 10px; font-size: 12px;">File: <code>' + message.filePath + '</code></div>' +
                         '<p style="margin-top: 15px;">Your BC Telemetry Buddy is now configured and ready to use!</p>';
                     
-                    // Hide save button, show finish button
+                    // Hide save button, show finish button and next steps
                     if (saveButton) saveButton.style.display = 'none';
                     if (finishButtonGroup) finishButtonGroup.style.display = 'flex';
+                    if (nextStepsContainer) nextStepsContainer.style.display = 'block';
                 } else {
                     saveStatusContainer.style.background = 'var(--vscode-inputValidation-errorBackground)';
                     saveStatusContainer.style.border = '1px solid var(--vscode-inputValidation-errorBorder)';
@@ -1569,6 +1591,9 @@ export class SetupWizardProvider {
             document.getElementById('btn-prev-5-top').addEventListener('click', goPrev);
             document.getElementById('btn-save-config').addEventListener('click', saveConfiguration);
             document.getElementById('btn-finish').addEventListener('click', finish);
+            document.getElementById('btn-manage-profiles').addEventListener('click', function() {
+                vscode.postMessage({ type: 'manageProfiles' });
+            });
 
             console.log('Wizard initialized, currentStep:', currentStep);
         })();

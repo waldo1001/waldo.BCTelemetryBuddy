@@ -107,6 +107,31 @@
             {
                 "command": "bctb.refreshProfileStatusBar",
                 "title": "BC Telemetry Buddy: Refresh Profile Status Bar"
+            },
+            {
+                "command": "bctb.createProfile",
+                "title": "BC Telemetry Buddy: Create Profile",
+                "icon": "$(add)"
+            },
+            {
+                "command": "bctb.editProfile",
+                "title": "BC Telemetry Buddy: Edit Profile",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "bctb.deleteProfile",
+                "title": "BC Telemetry Buddy: Delete Profile",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "bctb.setDefaultProfile",
+                "title": "BC Telemetry Buddy: Set Default Profile",
+                "icon": "$(star)"
+            },
+            {
+                "command": "bctb.manageProfiles",
+                "title": "BC Telemetry Buddy: Manage Profiles",
+                "icon": "$(settings-gear)"
             }
         ],
         "configuration": {

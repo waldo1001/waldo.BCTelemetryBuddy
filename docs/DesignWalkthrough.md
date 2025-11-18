@@ -1329,3 +1329,24 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Status audit vs refactoring plan [Entry: f976a3b6-5977-403c-82e4-f163ea569b1c]
   - **Why:** Provide clear progress mapping to identify remaining work and prioritize next steps.
   - **How:** Reviewed MCP refactoring phases, marked completed items, updated TODO list with remaining test, documentation, and UX enhancements.
+- **2025-11-18** — Implemented profile management commands [Entry: d2c6cece-2df2-4306-ba97-f3f8c62cc48e]
+  - **Why:** Complete missing profile UI from refactoring plan - wizard, create, edit, delete, set default, manage
+  - **How:** Added 5 command handlers to extension.ts, registered ProfileWizardProvider, wired up commands to package.json contributions
+- **2025-11-18** — Fixed ProfileWizardProvider registration [Entry: c9a2397c-de38-4de3-abbd-fe1017ee94d5]
+  - **Why:** ProfileWizard webview view wasn't registered, causing 'command not found' error
+  - **How:** Added views contribution to package.json, registered ProfileWizardProvider in activate(), removed lazy registration from commands
+- **2025-11-18** — Changed ProfileWizard to webview panel [Entry: 16f406d7-92df-4bbb-82d7-cbb4dcdcb0aa]
+  - **Why:** User wanted full-screen webview like SetupWizard, not sidebar panel
+  - **How:** Removed WebviewViewProvider interface, used createWebviewPanel like SetupWizard, removed views contribution from package.json, changed show() method
+- **2025-11-18** — Fixed ProfileWizard config structure [Entry: 3442ef74-4c35-484f-89a1-bbfe6e11fe7b]
+  - **Why:** Wizard was saving nested workspace:{path, queriesFolder} instead of flat workspacePath, queriesFolder, references[]
+  - **How:** Flattened getProfileData() to use workspacePath/queriesFolder at top level, added references:[], updated loadProfile to support both formats
+- **2025-11-18** — Added profile management to Setup Wizard [Entry: bfa9a52e-bb4b-4926-9cde-64dbc448b43f]
+  - **Why:** Guide users to profile management after initial setup completes
+  - **How:** Added Next Steps section to Step 5 with Manage Profiles button, wired to bctb.manageProfiles command, shows after successful save
+- **2025-11-18** - Documented profile switching behavior in UserGuide [Entry: 31cb4a74-01db-43c1-aaf1-e66dd87950a8]
+  - **Why:** Clarify that profile switching affects only extension commands, not chat participant
+  - **How:** Added Multi-Profile Management section to Advanced Configuration explaining switch profile scope, extension vs chat independence, profile inheritance, and example config
+- **2025-11-18** - Removed all skipped tests from test suites [Entry: 26afba38-e381-4f6f-bbd0-4b8c0eca9788]
+  - **Why:** Clean up codebase by removing obsolete skipped tests that were never being executed
+  - **How:** Deleted mcp-standalone.test.ts (entire file skipped), setup-wizard.test.ts (entire file skipped), command-handlers.test.ts (entire file skipped), verified all tests pass (extension: 196 tests, mcp: 116 tests)

@@ -5,6 +5,7 @@ import * as child_process from 'child_process';
 import { MCPClient } from './mcpClient';
 import { ResultsWebview } from './resultsWebview';
 import { SetupWizardProvider } from './webviews/SetupWizardProvider';
+import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { CHATMODE_DEFINITIONS } from './chatmodeDefinitions';
 import { TelemetryService } from './services/telemetryService';
@@ -28,6 +29,7 @@ let telemetryService: TelemetryService | null = null;
 let migrationService: MigrationService | null = null;
 let profileStatusBar: ProfileStatusBar | null = null;
 let profileManager: ProfileManager | null = null;
+let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let extensionContext: vscode.ExtensionContext;
@@ -326,6 +328,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize setup wizard
     setupWizard = new SetupWizardProvider(context.extensionUri);
 
+    // Initialize profile wizard
+    profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel);
+    outputChannel.appendLine('✓ ProfileWizardProvider initialized');
+
     // Initialize migration service
     migrationService = new MigrationService(outputChannel);
 
@@ -370,7 +376,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
         vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand()),
         vscode.commands.registerCommand('bctb.switchProfile', () => switchProfileCommand()),
-        vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand())
+        vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand()),
+        vscode.commands.registerCommand('bctb.createProfile', () => createProfileCommand()),
+        vscode.commands.registerCommand('bctb.editProfile', () => editProfileCommand()),
+        vscode.commands.registerCommand('bctb.deleteProfile', () => deleteProfileCommand()),
+        vscode.commands.registerCommand('bctb.setDefaultProfile', () => setDefaultProfileCommand()),
+        vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand())
     );
 
     // Register CodeLens provider for .kql files
@@ -1400,6 +1411,170 @@ async function refreshProfileStatusBarCommand(): Promise<void> {
         outputChannel.appendLine('✓ Profile status bar refreshed');
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to refresh profile status bar: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Create new profile
+ */
+async function createProfileCommand(): Promise<void> {
+    try {
+        if (!profileWizard) {
+            vscode.window.showErrorMessage('Profile wizard not initialized');
+            return;
+        }
+
+        // Show the wizard panel
+        await profileWizard.show();
+
+        outputChannel.appendLine('✓ Profile wizard opened for creating new profile');
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to open profile wizard: ${err.message}`);
+        outputChannel.show();
+    }
+}/**
+ * Command: Edit existing profile
+ */
+async function editProfileCommand(): Promise<void> {
+    try {
+        if (!profileManager || !profileManager.hasConfigFile()) {
+            vscode.window.showErrorMessage('No profiles found. Create one first.');
+            return;
+        }
+
+        const profiles = profileManager.listProfiles();
+        const profileNames = profiles.map(p => p.name);
+
+        const selected = await vscode.window.showQuickPick(profileNames, {
+            placeHolder: 'Select profile to edit'
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        if (!profileWizard) {
+            vscode.window.showErrorMessage('Profile wizard not initialized');
+            return;
+        }
+
+        // Show wizard with existing profile data
+        await profileWizard.show(selected);
+
+        outputChannel.appendLine(`✓ Profile wizard opened for editing profile: ${selected}`);
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to edit profile: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Delete profile
+ */
+async function deleteProfileCommand(): Promise<void> {
+    try {
+        if (!profileManager || !profileManager.hasConfigFile()) {
+            vscode.window.showErrorMessage('No profiles found.');
+            return;
+        }
+
+        const profiles = profileManager.listProfiles();
+        const profileNames = profiles.map(p => p.name);
+
+        const selected = await vscode.window.showQuickPick(profileNames, {
+            placeHolder: 'Select profile to delete'
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        const confirm = await vscode.window.showWarningMessage(
+            `Delete profile "${selected}"? This cannot be undone.`,
+            { modal: true },
+            'Delete'
+        );
+
+        if (confirm !== 'Delete') {
+            return;
+        }
+
+        await profileManager.deleteProfile(selected);
+
+        vscode.window.showInformationMessage(`Profile "${selected}" deleted successfully`);
+        outputChannel.appendLine(`✓ Profile deleted: ${selected}`);
+
+        // Refresh status bar
+        await refreshProfileStatusBarCommand();
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to delete profile: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Set default profile
+ */
+async function setDefaultProfileCommand(): Promise<void> {
+    try {
+        if (!profileManager || !profileManager.hasConfigFile()) {
+            vscode.window.showErrorMessage('No profiles found.');
+            return;
+        }
+
+        const profiles = profileManager.listProfiles();
+        const profileNames = profiles.map(p => p.name);
+        const currentDefault = profileManager.getDefaultProfile();
+
+        const items = profileNames.map(name => ({
+            label: name,
+            description: name === currentDefault ? '(current default)' : undefined
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select default profile'
+        });
+
+        if (!selected) {
+            return;
+        }
+
+        await profileManager.setDefaultProfile(selected.label);
+
+        vscode.window.showInformationMessage(`Default profile set to "${selected.label}"`);
+        outputChannel.appendLine(`✓ Default profile set to: ${selected.label}`);
+
+        // Refresh status bar
+        await refreshProfileStatusBarCommand();
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to set default profile: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Manage profiles (show quick pick with all profile operations)
+ */
+async function manageProfilesCommand(): Promise<void> {
+    try {
+        const actions = [
+            { label: '$(add) Create New Profile', command: 'bctb.createProfile' },
+            { label: '$(edit) Edit Profile', command: 'bctb.editProfile' },
+            { label: '$(arrow-swap) Switch Profile', command: 'bctb.switchProfile' },
+            { label: '$(star) Set Default Profile', command: 'bctb.setDefaultProfile' },
+            { label: '$(trash) Delete Profile', command: 'bctb.deleteProfile' }
+        ];
+
+        const selected = await vscode.window.showQuickPick(actions, {
+            placeHolder: 'Select profile management action'
+        });
+
+        if (selected) {
+            await vscode.commands.executeCommand(selected.command);
+        }
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Profile management failed: ${err.message}`);
         outputChannel.show();
     }
 }

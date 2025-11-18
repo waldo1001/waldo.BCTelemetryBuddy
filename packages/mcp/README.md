@@ -1,10 +1,139 @@
 # BC Telemetry Buddy - MCP Server
 
-Model Context Protocol (MCP) backend server for querying Business Central telemetry from Application Insights/Kusto.
+**Standalone Model Context Protocol (MCP) server for querying Business Central telemetry from Application Insights/Kusto.**
+
+[![npm version](https://img.shields.io/npm/v/bc-telemetry-buddy-mcp)](https://www.npmjs.com/package/bc-telemetry-buddy-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
-This is the backend server component that provides telemetry access to the VSCode extension and GitHub Copilot. It implements the Model Context Protocol (MCP) specification for language model integration.
+BC Telemetry Buddy MCP Server is a **standalone NPM package** that enables AI assistants (GitHub Copilot, Claude Desktop, Copilot Studio) to query Business Central telemetry data. It implements the [Model Context Protocol](https://modelcontextprotocol.io/) specification for seamless language model integration.
+
+**Key Features:**
+- 🚀 **Standalone Package**: Install globally with `npm install -g bc-telemetry-buddy-mcp`
+- 🤖 **AI Assistant Ready**: Works with GitHub Copilot, Claude Desktop, and Copilot Studio
+- 🔧 **CLI Interface**: `bctb-mcp` CLI with commands for initialization, validation, and server management
+- 📁 **File-Based Config**: Simple `.bctb-config.json` for all settings
+- 👥 **Multi-Profile Support**: Manage multiple customers/environments in single config file
+- 🔌 **Optional for VSCode**: VSCode extension works standalone; MCP only needed for chat features
+
+## Installation
+
+### Global Installation (Recommended)
+
+```bash
+npm install -g bc-telemetry-buddy-mcp
+```
+
+### Verify Installation
+
+```bash
+bctb-mcp --version
+# Should show: 1.0.0
+```
+
+## Quick Start
+
+### 1. Initialize Configuration
+
+```bash
+bctb-mcp init
+# Creates .bctb-config.json with template
+```
+
+### 2. Edit Configuration
+
+Edit `.bctb-config.json` with your Application Insights details:
+
+```json
+{
+  "authFlow": "azure_cli",
+  "applicationInsights": {
+    "appId": "your-app-insights-app-id"
+  },
+  "kusto": {
+    "clusterUrl": "https://ade.applicationinsights.io/subscriptions/your-subscription-id",
+    "database": "your-app-insights-app-id"
+  }
+}
+```
+
+### 3. Test Configuration
+
+```bash
+bctb-mcp validate
+# Validates config file and tests connection
+
+bctb-mcp test-auth
+# Tests authentication flow
+```
+
+### 4. Start Server
+
+```bash
+bctb-mcp start
+# Starts MCP server in stdio mode (for AI assistants)
+```
+
+## Usage Scenarios
+
+### With VSCode Extension
+
+The [BC Telemetry Buddy VSCode extension](https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy) offers automatic installation:
+
+1. Install extension from marketplace
+2. Extension detects MCP not installed
+3. Click "Install MCP Server" notification
+4. Extension installs and configures MCP automatically
+
+**Note:** VSCode extension works fully standalone for direct commands (Run KQL Query, Save Query, etc.). MCP is only needed for chat participant features (`@bc-telemetry-buddy`).
+
+### With Claude Desktop
+
+Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on Mac):
+
+```json
+{
+  "mcpServers": {
+    "bc-telemetry-buddy": {
+      "command": "bctb-mcp",
+      "args": ["start"],
+      "env": {
+        "BCTB_CONFIG": "/path/to/.bctb-config.json"
+      }
+    }
+  }
+}
+```
+
+### With Copilot Studio
+
+Register as Custom Action:
+- **Command:** `bctb-mcp start`
+- **Transport:** stdio
+- **Config:** Use `BCTB_CONFIG` environment variable or place `.bctb-config.json` in working directory
+
+## CLI Commands
+
+```bash
+# Initialize configuration
+bctb-mcp init [--output <path>]
+
+# Validate configuration
+bctb-mcp validate [--config <path>] [--profile <name>]
+
+# Test authentication
+bctb-mcp test-auth [--config <path>] [--profile <name>]
+
+# Start MCP server (stdio mode, default)
+bctb-mcp start [--config <path>] [--profile <name>]
+
+# Show version
+bctb-mcp --version
+
+# Show help
+bctb-mcp --help
+```
 
 ## Features
 
@@ -119,80 +248,124 @@ The MCP tools are designed to be used in a systematic workflow by Copilot:
 - **Before Step 4**: Call `bctb_get_tenant_mapping` to map company name to tenant ID
 - **Example**: "Contoso" → "12345678-1234-..." → Filter KQL by aadTenantId
 
-## Server Modes
+## Configuration
 
-### STDIO Mode (Default for Copilot)
-VSCode automatically manages the server in STDIO mode for GitHub Copilot integration:
+The MCP server uses `.bctb-config.json` for all configuration. This file can be created automatically with `bctb-mcp init` or manually.
+
+### Config File Discovery Order
+
+1. `--config <path>` CLI argument (highest priority)
+2. `.bctb-config.json` in current directory
+3. `.bctb-config.json` in workspace root (if `BCTB_WORKSPACE` env var set)
+4. `~/.bctb/config.json` (user home directory)
+5. Environment variables (fallback)
+
+### Single Profile Configuration
+
 ```json
 {
-  "mcpServers": {
-    "bc-telemetry-buddy": {
-      "command": "node",
-      "args": ["path/to/server.js"],
-      "env": {
-        "BCTB_TENANT_ID": "...",
-        "BCTB_APP_INSIGHTS_APP_ID": "...",
-        "BCTB_KUSTO_CLUSTER_URL": "..."
+  "$schema": "https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/mcp/config-schema.json",
+  "authFlow": "azure_cli",
+  "applicationInsights": {
+    "appId": "your-app-insights-app-id"
+  },
+  "kusto": {
+    "clusterUrl": "https://ade.applicationinsights.io/subscriptions/your-subscription-id",
+    "database": "your-app-insights-app-id"
+  },
+  "workspacePath": ".",
+  "cache": {
+    "enabled": true,
+    "ttlSeconds": 3600
+  }
+}
+```
+
+### Multi-Profile Configuration
+
+Manage multiple customers/environments in one file:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/mcp/config-schema.json",
+  "defaultProfile": "customer-a-prod",
+  "profiles": {
+    "customer-a-prod": {
+      "authFlow": "azure_cli",
+      "applicationInsights": {
+        "appId": "app-id-customer-a"
+      },
+      "kusto": {
+        "clusterUrl": "https://ade.applicationinsights.io/subscriptions/sub-id",
+        "database": "app-id-customer-a"
+      }
+    },
+    "customer-b-prod": {
+      "authFlow": "client_credentials",
+      "tenantId": "${CUSTOMER_B_TENANT_ID}",
+      "clientId": "${CUSTOMER_B_CLIENT_ID}",
+      "applicationInsights": {
+        "appId": "app-id-customer-b"
+      },
+      "kusto": {
+        "clusterUrl": "https://ade.applicationinsights.io/subscriptions/sub-id",
+        "database": "app-id-customer-b"
       }
     }
   }
 }
 ```
 
-### HTTP Mode (For Command Palette)
-Manually start for direct API access:
+**Profile Selection:**
 ```bash
-npm start
-```
+# Use specific profile
+bctb-mcp start --profile customer-b-prod
 
-Server runs on `http://localhost:52345` (configurable via `bctb.mcp.port`).
-
-## Configuration
-
-Configuration is provided via:
-1. **VSCode Settings**: Extension reads `.vscode/settings.json` and passes to MCP server
-2. **Environment Variables**: For sensitive values like client secrets
-
-### Required Configuration
-```json
-{
-  "bctb.mcp.tenantId": "azure-tenant-id",
-  "bctb.mcp.applicationInsights.appId": "app-insights-app-id",
-  "bctb.mcp.kusto.clusterUrl": "https://ade.applicationinsights.io/subscriptions/<id>",
-  "bctb.mcp.authFlow": "azure_cli"
-}
+# Or set environment variable
+export BCTB_PROFILE=customer-b-prod
+bctb-mcp start
 ```
 
 ### Authentication Flows
 
 **Azure CLI** (recommended, default):
 - Uses cached credentials from existing `az login` session
-- **No additional configuration needed** - just set `authFlow: "azure_cli"`
+- **No additional configuration needed** - just set `"authFlow": "azure_cli"`
 - No tenant ID, client ID, or secrets required
 - Works for interactive development
 - Supports all Azure resources you have access to
 
 **Device Code**:
 - Browser-based authentication with device code flow
-- Requires `bctb.mcp.tenantId` (no client ID needed)
-- Interactive prompt each time MCP starts
+- Requires `tenantId` in config (no client ID needed)
+- Interactive prompt when server starts
 - No Azure app registration required
 - Good fallback when Azure CLI is not available
 
 **Client Credentials**:
 - Service principal for automation and unattended scenarios
-- Requires `bctb.mcp.tenantId`, `bctb.mcp.clientId`
-- Secret provided via `BCTB_CLIENT_SECRET` environment variable (never in settings.json)
+- Requires `tenantId` and `clientId` in config
+- Secret provided via environment variable: `${CLIENT_SECRET_VAR_NAME}`
 - Best for CI/CD pipelines, scheduled jobs, production automation
 
-### Optional Configuration
+**Environment Variable Substitution:**
+
+Use `${VAR_NAME}` in config for secrets:
+
 ```json
 {
-  "bctb.queries.folder": "queries",
-  "bctb.mcp.cache.enabled": true,
-  "bctb.mcp.cache.ttlSeconds": 3600,
-  "bctb.mcp.sanitize.removePII": false
+  "authFlow": "client_credentials",
+  "tenantId": "${AZURE_TENANT_ID}",
+  "clientId": "${AZURE_CLIENT_ID}"
 }
+```
+
+Then set environment variables before starting:
+```bash
+export AZURE_TENANT_ID="your-tenant-id"
+export AZURE_CLIENT_ID="your-client-id"
+export AZURE_CLIENT_SECRET="your-secret"
+bctb-mcp start
 ```
 
 ## Development
@@ -202,92 +375,174 @@ Configuration is provided via:
 - npm 9+
 - Azure CLI (for `azure_cli` auth flow)
 
-### Build
+### Build from Source
+
 ```bash
+# Clone repository
+git clone https://github.com/waldo1001/waldo.BCTelemetryBuddy.git
+cd waldo.BCTelemetryBuddy
+
+# Install dependencies (monorepo)
 npm install
+
+# Build MCP package
+cd packages/mcp
 npm run build
 ```
 
-### Test
+### Local Testing
+
+```bash
+# Link globally for testing
+npm link
+
+# Test CLI commands
+bctb-mcp --version
+bctb-mcp init --output /tmp/test-config.json
+bctb-mcp validate --config /tmp/test-config.json
+
+# Start server with test config
+bctb-mcp start --config /tmp/test-config.json
+```
+
+### Run Tests
+
 ```bash
 # Run all tests
 npm test
 
 # Run with coverage
 npm run test:coverage
+
+# Watch mode
+npm run test:watch
 ```
 
-### Watch Mode
+### Watch Mode (Development)
+
 ```bash
 npm run dev
-```
-
-### Manual Testing
-```bash
-# Start HTTP server
-npm start
-
-# Query with curl
-curl -X POST http://localhost:52345/query \
-  -H "Content-Type: application/json" \
-  -d '{"kql": "traces | take 10"}'
+# TypeScript compiler watches for changes
 ```
 
 ## Architecture
 
+### Package Structure
+
+This is part of the BC Telemetry Buddy monorepo:
+
+```
+packages/
+├── shared/     - Core business logic (bundled at build time)
+├── mcp/        - This package (standalone MCP server)
+└── extension/  - VSCode extension (works independently)
+```
+
+The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, queries), which gets bundled during build. This ensures the MCP server is completely standalone with no runtime dependencies on other packages.
+
 ### Core Modules
 
-**`server.ts`** - Main entry point, handles STDIO/HTTP mode selection, request routing
+**`cli.ts`** - CLI entry point with Commander.js
+- Commands: `start`, `init`, `validate`, `test-auth`
+- Config file management and validation
 
-**`auth/`** - Authentication handling
-- `auth.ts` - MSAL integration, supports Azure CLI, Device Code, Client Credentials
-- Token caching and refresh
+**`server.ts`** - MCP server implementation  
+- JSON-RPC 2.0 protocol over stdio
+- Tool registration and request handling
+- Error handling and logging
 
-**`kusto/`** - Query execution
-- `kusto.ts` - Kusto client wrapper, query execution, error handling
-- Application Insights API integration
+**`config.ts`** - Configuration management
+- File-based config with discovery
+- Multi-profile support with inheritance
+- Environment variable substitution
+- Schema validation
 
-**`queries/`** - Query library management
-- `queries.ts` - Save/load/search queries from workspace
-- Pattern matching for NL-to-KQL translation
-- Customer-specific folder organization
-
-**`cache/`** - Result caching
-- `cache.ts` - File-based caching with TTL
-- Automatic cleanup of expired entries
-
-**`config/`** - Configuration management
-- `config.ts` - Load settings from VSCode or environment variables
-- Validation and defaults
-
-**`sanitize/`** - PII protection
-- `sanitize.ts` - Optional PII removal from query results
-
-**`references/`** - External resources
-- `references.ts` - Fetch KQL examples from GitHub repos
+**From `@bctb/shared` (bundled):**
+- **`auth.ts`** - MSAL authentication (Azure CLI, Device Code, Client Credentials)
+- **`kusto.ts`** - KQL execution against Application Insights
+- **`cache.ts`** - File-based result caching with TTL
+- **`queries.ts`** - Saved query management (.kql files)
+- **`sanitize.ts`** - PII removal and data sanitization
+- **`eventLookup.ts`** - Telemetry event catalog and schema discovery
+- **`references.ts`** - External KQL example fetching
 
 ### Data Flow
 
-1. **Request**: Language model (Copilot) or VSCode extension calls MCP tool
-2. **Authentication**: Server acquires Azure token via configured auth flow
-3. **Discovery** (if needed): Browse event catalog/schemas
-4. **Query Generation**: If natural language provided, match patterns from saved queries to generate KQL
-5. **Execution**: Execute KQL against Application Insights via Kusto API
-6. **Caching**: Store results with TTL
-7. **Response**: Return formatted results to caller
+1. **Startup**: CLI parses arguments → loads config → validates → starts server
+2. **Tool Request**: AI assistant calls MCP tool via JSON-RPC
+3. **Authentication**: Server acquires Azure token via configured auth flow
+4. **Discovery** (optional): Browse event catalog/schemas to understand available data
+5. **Execution**: Execute KQL query against Application Insights
+6. **Caching**: Store results with TTL for performance
+7. **Response**: Return formatted results to AI assistant
+
+## Publishing
+
+### Publish to NPM
+
+```bash
+# Ensure you're logged into NPM
+npm login
+
+# Build package
+npm run build
+
+# Publish (first time or major version)
+npm publish --access public
+
+# Publish patch/minor updates
+npm version patch  # or minor, major
+npm publish
+```
+
+### What Gets Published
+
+- `dist/` - Compiled JavaScript and sourcemaps
+- `config-schema.json` - JSON schema for config validation
+- `package.json` - Package metadata
+- `README.md` - This file
+- `LICENSE` - MIT license
+- `CHANGELOG.md` - Version history
+
+**Excluded from publish:**
+- `src/` - TypeScript source (compiled to dist/)
+- `__tests__/` - Test files
+- `node_modules/` - Dependencies (bundled into dist/)
+- Development files (.gitignore, tsconfig.json, jest.config.js)
 
 ## Testing
 
-Test coverage requirements: 70% minimum (enforced by CI)
+Test coverage requirements: **70% minimum** (enforced by CI)
 
-Current coverage (excluding server.ts entry point):
+Current coverage:
 - Statements: 83%+
 - Branches: 75%+
-- Functions: 95%+
+- Functions: 95%+  
 - Lines: 83%+
 
-See [CHANGELOG.md](./CHANGELOG.md) for version history.
+Run tests locally:
+```bash
+npm test                 # Run all tests
+npm run test:coverage    # With coverage report
+npm run test:watch       # Watch mode for development
+```
+
+## Related Projects
+
+- **[VSCode Extension](../extension/README.md)** - BC Telemetry Buddy VSCode extension (works standalone, MCP optional)
+- **[Shared Library](../shared/README.md)** - Core business logic (private package, bundled into MCP)
+- **[MCP Specification](https://modelcontextprotocol.io/)** - Model Context Protocol documentation
+
+## Support & Contributing
+
+- **Issues**: [GitHub Issues](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/waldo1001/waldo.BCTelemetryBuddy/discussions)
+- **Contributing**: See [CONTRIBUTING.md](../../CONTRIBUTING.md) (if available)
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
 
 ## License
 
-MIT
+MIT - See [LICENSE](./LICENSE) for details.

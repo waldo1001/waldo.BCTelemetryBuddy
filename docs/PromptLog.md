@@ -2017,3 +2017,27 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Yet again - check the refactoring plan and see where we are?"
 
 ---
+### Entry ID: d2c6cece-2df2-4306-ba97-f3f8c62cc48e — 2025-11-18 13:42
+> "Continue implementing profile management commands - add command handlers and registrations to extension.ts"
+
+---
+### Entry ID: c9a2397c-de38-4de3-abbd-fe1017ee94d5 — 2025-11-18 13:45
+> "Fix 'command bctb.profileWizard.focus not found' error"
+
+---
+### Entry ID: 16f406d7-92df-4bbb-82d7-cbb4dcdcb0aa — 2025-11-18 13:58
+> "Change ProfileWizardProvider from webview view (sidebar) to webview panel (main area) like SetupWizard"
+
+---
+### Entry ID: 3442ef74-4c35-484f-89a1-bbfe6e11fe7b — 2025-11-18 14:00
+> "Fix ProfileWizard to save flat structure (workspacePath, queriesFolder) instead of nested workspace object"
+
+---
+### Entry ID: bfa9a52e-bb4b-4926-9cde-64dbc448b43f — 2025-11-18 14:06
+> "Add profile management link to Setup Wizard final step"
+
+---
+### Entry ID: 31cb4a74-01db-43c1-aaf1-e66dd87950a8 - 2025-11-18 14:20
+> "is that well documented?"
+
+---

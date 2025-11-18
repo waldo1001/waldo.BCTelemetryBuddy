@@ -752,6 +752,106 @@ This context helps Copilot generate more accurate, relevant KQL queries.
 
 ## Advanced Configuration
 
+### Multi-Profile Management
+
+BC Telemetry Buddy supports managing multiple customers/environments in a single workspace through **profile management**.
+
+#### Creating and Managing Profiles
+
+**Create a new profile:**
+1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Run: `BC Telemetry Buddy: Create Profile`
+3. Or: `BC Telemetry Buddy: Manage Profiles` (visual wizard)
+
+**Available commands:**
+- `BC Telemetry Buddy: Create Profile` - Create a new profile from scratch
+- `BC Telemetry Buddy: Edit Profile` - Edit an existing profile's settings
+- `BC Telemetry Buddy: Delete Profile` - Remove a profile
+- `BC Telemetry Buddy: Set Default Profile` - Choose which profile loads on startup
+- `BC Telemetry Buddy: Manage Profiles` - Visual interface for all profile operations
+
+Profiles are stored in `.bctb-config.json` in your workspace root.
+
+#### Understanding Profile Switching
+
+**What does "Switch Profile" do?**
+
+When you switch profiles via the status bar dropdown or `BC Telemetry Buddy: Switch Profile` command:
+
+✅ **Affects Extension Commands:**
+- `BC Telemetry Buddy: Run KQL Query`
+- `BC Telemetry Buddy: Run KQL From Document`
+- CodeLens "▶ Run Query" in `.kql` files
+- Status bar queries
+- All direct query execution through the extension
+
+❌ **Does NOT affect Chat Participant:**
+- `@bc-telemetry-buddy` chat participant is **independent**
+- Chat uses MCP tools to detect and select profiles intelligently
+- Chat analyzes your question to determine which profile you're asking about
+- If you mention "CustomerA" in your question, chat uses CustomerA profile regardless of status bar
+
+**Example Scenario:**
+```
+Extension current profile: CustomerA (via status bar)
+Your chat question: "@bc-telemetry-buddy show me errors for CustomerB"
+
+Result:
+- Extension commands (Run KQL Query) use CustomerA credentials
+- Chat detects "CustomerB" in your question and uses CustomerB profile
+- They operate independently
+```
+
+**Why is chat independent?**
+- Chat needs to answer questions about any customer dynamically
+- Chat intelligently picks the right profile based on your question
+- Extension commands use a fixed "current profile" for consistency
+
+**When to switch profiles:**
+- You're switching focus to a different customer/environment
+- You want `Run KQL Query` to use different credentials
+- You want CodeLens queries to execute against different data
+- The status bar shows which profile extension commands will use
+
+**Profile inheritance:**
+Profiles can inherit common settings from a base profile to reduce duplication. See `.bctb-config.json` schema for details.
+
+#### Profile Configuration Example
+
+```json
+{
+  "defaultProfile": "CustomerA",
+  "profiles": {
+    "CustomerA": {
+      "workspacePath": "${workspaceFolder}",
+      "queriesFolder": "queries/CustomerA",
+      "connectionName": "CustomerA-Production",
+      "authFlow": "azure_cli",
+      "tenantId": "customer-a-tenant-id",
+      "applicationInsightsAppId": "app-id-a",
+      "kustoClusterUrl": "https://ade.applicationinsights.io/...",
+      "references": [
+        {
+          "name": "BC Telemetry Samples",
+          "type": "github",
+          "url": "https://github.com/microsoft/BCTech/tree/master/samples/AppInsights",
+          "enabled": true
+        }
+      ]
+    },
+    "CustomerB": {
+      "workspacePath": "${workspaceFolder}",
+      "queriesFolder": "queries/CustomerB",
+      "connectionName": "CustomerB-Test",
+      "authFlow": "device_code",
+      "tenantId": "customer-b-tenant-id",
+      "applicationInsightsAppId": "app-id-b",
+      "kustoClusterUrl": "https://ade.applicationinsights.io/..."
+    }
+  }
+}
+```
+
 ### Caching
 
 Control query result caching:
