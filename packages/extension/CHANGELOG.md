@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2025-11-18
+
+### Fixed
+
+- **MCP Update Command**: Changed from `npm update -g` to `npm install -g bc-telemetry-buddy-mcp@latest` for reliable updates (npm update doesn't work consistently for global packages)
+- **Release Notes Version**: Updated "Note from waldo" webview to show correct version (v1.0.3) instead of outdated v0.3.0
+
 ## [1.0.2] - 2025-11-18
 
 ### 🚨 BREAKING CHANGES
