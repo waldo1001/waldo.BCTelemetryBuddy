@@ -96,7 +96,7 @@ export async function installMCP(update: boolean = false): Promise<boolean> {
     outputChannel.appendLine(`Running: ${command}\n`);
 
     try {
-        const success = await vscode.window.withProgress({
+        await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `${operationType} MCP server...`,
             cancellable: false

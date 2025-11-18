@@ -153,15 +153,20 @@ export class ProfileWizardProvider {
             const configPath = this.getConfigPath();
             let config: ProfiledConfig;
 
-            // Load or create config
-            if (fs.existsSync(configPath)) {
+            // Load or create config (avoid race condition)
+            try {
                 const fileContent = fs.readFileSync(configPath, 'utf-8');
                 config = JSON.parse(fileContent);
-            } else {
-                config = {
-                    profiles: {},
-                    defaultProfile: profileName
-                };
+            } catch (error: any) {
+                // File doesn't exist or can't be read - create new config
+                if (error.code === 'ENOENT') {
+                    config = {
+                        profiles: {},
+                        defaultProfile: profileName
+                    };
+                } else {
+                    throw error;
+                }
             }
 
             // Initialize profiles object if needed
@@ -208,11 +213,15 @@ export class ProfileWizardProvider {
 
     private loadConfig(): ProfiledConfig {
         const configPath = this.getConfigPath();
-        if (!fs.existsSync(configPath)) {
-            return { profiles: {} };
+        try {
+            const fileContent = fs.readFileSync(configPath, 'utf-8');
+            return JSON.parse(fileContent);
+        } catch (error: any) {
+            if (error.code === 'ENOENT') {
+                return { profiles: {} };
+            }
+            throw error;
         }
-        const fileContent = fs.readFileSync(configPath, 'utf-8');
-        return JSON.parse(fileContent);
     }
 
     private getConfigPath(): string {
@@ -223,7 +232,7 @@ export class ProfileWizardProvider {
         return path.join(workspaceFolders[0].uri.fsPath, '.bctb-config.json');
     }
 
-    private _getHtmlForWebview(webview: vscode.Webview) {
+    private _getHtmlForWebview() {
         return `<!DOCTYPE html>
 <html lang="en">
 <head>

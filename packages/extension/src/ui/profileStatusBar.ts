@@ -6,7 +6,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ProfileManager } from '../services/profileManager';
 
 export class ProfileStatusBar {

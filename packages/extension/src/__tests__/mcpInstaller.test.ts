@@ -518,7 +518,6 @@ describe('mcpInstaller', () => {
 
     describe('isMCPUpdateAvailable', () => {
         it('should return true when update is available', async () => {
-            let callCount = 0;
             mockExec.mockImplementation((cmd, callback: any) => {
                 if (cmd.includes('--version')) {
                     callback(null, { stdout: '1.0.0', stderr: '' });

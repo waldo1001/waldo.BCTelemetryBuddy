@@ -129,7 +129,6 @@ describe('Shared Package Integration', () => {
 
     describe('Module Resolution', () => {
         it('should resolve @bctb/shared from extension node_modules', () => {
-            const path = require('path');
             const resolvedPath = require.resolve('@bctb/shared');
 
             // Should resolve to packages/shared/dist/index.js
