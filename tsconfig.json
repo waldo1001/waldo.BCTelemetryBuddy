@@ -15,20 +15,9 @@
         "sourceMap": true,
         "outDir": "./dist",
         "rootDir": "./packages",
-        "composite": true,
+        "composite": false,
         "incremental": true
     },
-    "references": [
-        {
-            "path": "./packages/shared"
-        },
-        {
-            "path": "./packages/mcp"
-        },
-        {
-            "path": "./packages/extension"
-        }
-    ],
     "exclude": [
         "node_modules",
         "dist",

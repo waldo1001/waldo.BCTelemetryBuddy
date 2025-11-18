@@ -1113,3 +1113,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-18** — Fixed CodeQL warnings in PR #58 [Entry: 53079ba4-f13d-40fd-b3b9-60f73110d3d6]
   - **Why:** GitHub Actions failing due to unused variables and TOCTOU race condition
   - **How:** Removed unused variables (callCount, path import, success), fixed file system race condition in ProfileWizardProvider using try-catch instead of existsSync
+- **2025-11-18** — Fixed PR auto-label workflow [Entry: 095b38d4-0887-45c4-b7b5-76a495375417]
+  - **Why:** GitHub Actions labeler@v5 requires different YAML syntax
+  - **How:** Updated labeler.yml to use changed-files array syntax with any-glob-to-any-file matchers

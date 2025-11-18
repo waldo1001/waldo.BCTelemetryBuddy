@@ -1,7 +1,9 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "composite": true,
+        "composite": false,
+        "declaration": false,
+        "declarationMap": false,
         "module": "CommonJS",
         "moduleResolution": "node",
         "outDir": "./dist",
