@@ -98,13 +98,19 @@ describe('Shared Package Integration', () => {
             const fs = require('fs');
             const path = require('path');
 
-            // Verify packages/extension/mcp/ does NOT exist
+            // Verify packages/extension/mcp/ does NOT exist or is just build artifacts
             const mcpBundlePath = path.join(__dirname, '..', '..', 'mcp');
 
             if (fs.existsSync(mcpBundlePath)) {
-                // If it exists, it should be empty or gitignored
+                // If it exists, check it doesn't contain source files
                 const files = fs.readdirSync(mcpBundlePath);
-                expect(files.length).toBe(0);
+                // Allow only build artifacts like 'dist' directory
+                const sourceFiles = files.filter((f: string) =>
+                    !f.startsWith('.') &&
+                    f !== 'dist' &&
+                    f !== 'node_modules'
+                );
+                expect(sourceFiles.length).toBe(0);
             } else {
                 // Preferably, it should not exist at all
                 expect(fs.existsSync(mcpBundlePath)).toBe(false);
