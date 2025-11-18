@@ -101,9 +101,12 @@ Before installing BC Telemetry Buddy, ensure you have:
 - **Azure Application Insights** access for your Business Central environment
 - **Azure tenant** with permissions to authenticate
 
-### Optional
+### Optional (for GitHub Copilot Chat Integration)
 - **GitHub Copilot** subscription (for intelligent query generation with discovery tools)
+- **MCP Server** (`bc-telemetry-buddy-mcp`) - Setup Wizard can install this for you
 - **Azure service principal** (for unattended/automated scenarios)
+
+**Note:** All Command Palette features work without MCP. MCP is only needed for the `@bc-telemetry-buddy` chat participant.
 
 ---
 
@@ -139,14 +142,18 @@ The **Setup Wizard** provides a guided, 5-step process with validation and testi
 1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
 2. Run: `BC Telemetry Buddy: Setup Wizard`
 3. Follow the steps:
-   - **Step 1 - Workspace Check**: Wizard verifies you have a workspace folder open
+   - **Step 1 - MCP & Workspace Check**: 
+     - Wizard verifies you have a workspace folder open
+     - Shows MCP server status (installed/not installed)
+     - Offers to install or update MCP if needed (for Copilot Chat features)
+     - You can skip MCP installation and use Command Palette features only
    - **Step 2 - Azure Configuration**: Enter your tenant ID, Application Insights App ID, and Kusto cluster URL
    - **Step 3 - Authentication**: Choose authentication method (Azure CLI recommended)
    - **Step 4 - Connection Testing**: Wizard validates settings and runs a test query
    - **Step 5 - Complete**: Settings are saved automatically, quick-start tips displayed
    - **Optional**: Check "Install chatmode" to create `.github/chatmodes/BCTelemetryBuddy.chatmode.md` for enhanced Copilot Chat integration
 
-**Benefits**: No manual JSON editing, validation before saving, connection testing, clear error messages.
+**Benefits**: No manual JSON editing, one-click MCP installation, validation before saving, connection testing, clear error messages.
 
 ### Option 2: Manual Configuration
 
@@ -186,18 +193,42 @@ To find your Application Insights details:
 
 **Note**: The Setup Wizard pre-fills the Kusto cluster URL format for you.
 
-### 4. Start the MCP Server
+### 4. Install MCP Server (Optional)
 
-The MCP server starts automatically when you:
-- Run a query via Command Palette
-- Use Copilot to query telemetry
-- Run the Setup Wizard
+**What is MCP?**
+The Model Context Protocol (MCP) server enables GitHub Copilot Chat integration. It's **not required** for Command Palette features like running queries, saving queries, or viewing results.
 
-To manually start the server, open the **Command Palette** (Ctrl+Shift+P / Cmd+Shift+P) and run:
+**When do you need MCP?**
+- Using `@bc-telemetry-buddy` chat participant in Copilot Chat
+- Natural language query generation
+- Event catalog discovery via chat
+- Advanced Copilot-powered features
 
+**Installation Options:**
+
+**Option A: Via Setup Wizard (Recommended)**
+1. Run `BC Telemetry Buddy: Setup Wizard` from Command Palette
+2. In Step 1, check the MCP status
+3. Click "Install MCP" or "Update MCP" button if shown
+4. Wait for installation to complete (~30 seconds)
+5. MCP is now ready for Copilot Chat
+
+**Option B: Manual Installation**
+```bash
+npm install -g bc-telemetry-buddy-mcp
 ```
-BC Telemetry Buddy: Start MCP Server
+
+**Option C: First-Run Notification**
+- If MCP is not installed, you'll see a notification on first use
+- Click "Open Setup Wizard" to install MCP
+- Or dismiss and install later when needed
+
+**Verification:**
+Check MCP status anytime via Command Palette:
 ```
+BC Telemetry Buddy: Setup Wizard
+```
+Step 1 shows: ✓ Installed (version X.Y.Z) or ✗ Not installed
 
 The extension will:
 - Validate your settings

@@ -642,6 +642,7 @@ export class SetupWizardProvider {
                     <p style="margin:8px 0 14px 0;">
                         The MCP server unlocks rich GitHub Copilot Chat integration: query telemetry, discover events, analyze schemas.
                         You can still use command palette features without it.
+                        <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy#mcp-server" target="_blank" style="margin-left:6px; font-size:11px;">Learn more →</a>
                     </p>
                     <div id="mcpActions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <button id="btn-install-mcp" class="secondary" disabled>Install MCP</button>
@@ -650,6 +651,9 @@ export class SetupWizardProvider {
                         <span id="mcpExtraInfo" style="font-size:11px; opacity:0.8;"></span>
                     </div>
                     <div id="mcpError" style="display:none; margin-top:10px; font-size:11px; color: var(--vscode-errorForeground);"></div>
+                    <div id="mcpPathWarning" style="display:none; margin-top:10px; padding:8px; background: var(--vscode-inputValidation-warningBackground); border-radius:3px; font-size:11px;">
+                        ⚠ <strong>MCP installed but not in PATH.</strong> You may need to restart VS Code or your terminal for the CLI command to work.
+                    </div>
                 </div>
 
                 <div style="margin: 30px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-foreground); border-radius: 4px;">
@@ -1118,6 +1122,7 @@ export class SetupWizardProvider {
             const mcpStatusBadge = document.getElementById('mcpStatusBadge');
             const mcpExtraInfo = document.getElementById('mcpExtraInfo');
             const mcpError = document.getElementById('mcpError');
+            const mcpPathWarning = document.getElementById('mcpPathWarning');
 
             if (btnInstallMcp) {
                 btnInstallMcp.addEventListener('click', () => {
@@ -1150,6 +1155,7 @@ export class SetupWizardProvider {
                     mcpStatusBadge.style.background = 'var(--vscode-inputValidation-errorBackground)';
                     mcpError.style.display = 'block';
                     mcpError.textContent = message.error;
+                    if (mcpPathWarning) mcpPathWarning.style.display = 'none';
                     return;
                 }
                 mcpError.style.display = 'none';
@@ -1160,6 +1166,12 @@ export class SetupWizardProvider {
                     mcpStatusBadge.style.color = 'var(--vscode-editor-foreground)';
                     if (btnInstallMcp) btnInstallMcp.style.display = 'none';
                     if (btnRefreshMcp) btnRefreshMcp.style.display = 'inline-block';
+                    
+                    // Show PATH warning if installed but not in PATH
+                    if (mcpPathWarning) {
+                        mcpPathWarning.style.display = message.inPath ? 'none' : 'block';
+                    }
+                    
                     if (message.updateAvailable) {
                         if (btnUpdateMcp) {
                             btnUpdateMcp.style.display = 'inline-block';
@@ -1180,6 +1192,7 @@ export class SetupWizardProvider {
                     }
                     if (btnUpdateMcp) btnUpdateMcp.style.display = 'none';
                     if (btnRefreshMcp) btnRefreshMcp.style.display = 'inline-block';
+                    if (mcpPathWarning) mcpPathWarning.style.display = 'none';
                     mcpExtraInfo.textContent = 'MCP is optional but recommended';
                 }
             }
