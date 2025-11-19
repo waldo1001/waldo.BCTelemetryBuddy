@@ -1167,3 +1167,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-19** — Released v1.0.5/v2.0.5 patch with CI test fixes [Entry: 20e35f92-a0b9-4f27-9ebf-db2ec7c2e24d]
   - **Why:** Include all test fixes from v1.0.4/v2.0.4 in proper release build
   - **How:** Bumped versions, updated CHANGELOGs and test expectations, committed and tagged
+- **2025-11-19**  Updated BC Telemetry Buddy chatmode File Organization section [Entry: acd2ba15-1310-44a3-965b-c06d0601c6b1]
+  - **Why:** Removed workspace-specific path structure from iFacto workspace, added VDA customer example for consistency
+  - **How:** Updated File Organization section in chatmodeDefinitions.ts to match standardized template with generic paths
+- **2025-11-19**  Removed AL extension tools from chatmode tools array [Entry: 912fd13a-d4b3-4e3a-843c-4e878ebeb292]
+  - **Why:** Template removed all ms-dynamics-smb.al/* tools and extensions/todos tools from the tools array
+  - **How:** Simplified tools array to only include core VSCode tools without AL-specific commands
+- **2025-11-19**  Removed AL extension tools from chatmode tools array [Entry: 912fd13a-d4b3-4e3a-843c-4e878ebeb292]
+  - **Why:** Template removed all ms-dynamics-smb.al/* tools and extensions/todos tools from the tools array
+  - **How:** Simplified tools array to only include core VSCode tools without AL-specific commands
