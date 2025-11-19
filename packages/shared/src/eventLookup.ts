@@ -30,6 +30,9 @@ export interface EventCategoryInfo {
 interface CacheEntry {
     data: EventCategoryInfo;
     expiresAt: number;
+    _meta?: {
+        createdBy: string;
+    };
 }
 
 // Cache TTL: 24 hours (Microsoft docs don't change that often)
@@ -95,7 +98,10 @@ function saveToCache(eventId: string, info: EventCategoryInfo): void {
 
         const entry: CacheEntry = {
             data: info,
-            expiresAt: Date.now() + CACHE_TTL_MS
+            expiresAt: Date.now() + CACHE_TTL_MS,
+            _meta: {
+                createdBy: "waldo's BCTelemetryBuddy (AI-assisted)"
+            }
         };
 
         fs.writeFileSync(cacheFile, JSON.stringify(entry, null, 2), 'utf-8');

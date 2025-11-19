@@ -1176,3 +1176,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-19**  Removed AL extension tools from chatmode tools array [Entry: 912fd13a-d4b3-4e3a-843c-4e878ebeb292]
   - **Why:** Template removed all ms-dynamics-smb.al/* tools and extensions/todos tools from the tools array
   - **How:** Simplified tools array to only include core VSCode tools without AL-specific commands
+- **2025-11-19** — Added AI disclaimers to all file creation operations [Entry: 71f386a1-87ef-47a9-927a-67dc180768d0]
+  - **Why:** Ensure transparency and attribution for AI-generated content in user workspace
+  - **How:** Added 'Created with waldo's BCTelemetryBuddy (AI-assisted)' disclaimer to .kql query files and _meta field to JSON cache files in queries.ts, cache.ts, and eventLookup.ts
+- **2025-11-19** — Added AI disclaimer instructions to chatmode definitions [Entry: 6c1b7c24-f451-434b-9185-e6926cd96678]
+  - **Why:** Ensure chat agent adds disclaimers to ALL files it creates during conversations (KQL queries, markdown reports, Python scripts)
+  - **How:** Added comprehensive 'AI Disclaimers in Created Files' section to both BCTelemetryBuddy and BCPerformanceAnalysis chatmodes with examples for .kql, .md, .py, and .json files

@@ -2174,3 +2174,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "There should also be a change in the tools: [] section"
 
 ---
+### Entry ID: 71f386a1-87ef-47a9-927a-67dc180768d0 — 2025-11-19 21:23
+> "Whenever the agent creates files, it should be signed with something like: created with waldo's BCTelemetryBuddy, created with AI, ... a typical (short) AI disclaimer"
+
+---
+### Entry ID: 6c1b7c24-f451-434b-9185-e6926cd96678 — 2025-11-19 21:27
+> "What I meant was definitely also an instruction for this chatmode"
+
+---

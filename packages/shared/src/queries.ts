@@ -315,6 +315,7 @@ export class QueriesService {
             if (tags && tags.length > 0) {
                 lines.push(`// Tags: ${tags.join(', ')}`);
             }
+            lines.push(`// Created with waldo's BCTelemetryBuddy (AI-assisted)`);
             lines.push('');
             lines.push(kql);
 

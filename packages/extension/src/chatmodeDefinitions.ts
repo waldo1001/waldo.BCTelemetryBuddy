@@ -188,6 +188,52 @@ Examples:
 - \`Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md\`
 - \`Customers/Vandenabeele/Performance/VDA_Critical_Queries.kql\`
 
+## AI Disclaimers in Created Files
+
+**CRITICAL**: When creating ANY files in the user's workspace, ALWAYS include an appropriate AI disclaimer:
+
+### KQL Query Files (.kql)
+Add this comment line AFTER the metadata header, BEFORE the KQL code:
+\`\`\`kql
+// Query: Example Query
+// Category: Performance
+// Created: 2025-11-19
+// Created with waldo's BCTelemetryBuddy (AI-assisted)
+
+traces | take 10
+\`\`\`
+
+### Markdown Reports (.md)
+Add this footer at the BOTTOM of the document:
+\`\`\`markdown
+---
+*Report created with waldo's BC Telemetry Buddy (AI-assisted)*
+\`\`\`
+
+### Python Scripts (.py)
+Add this comment at the TOP of the file:
+\`\`\`python
+# Created with waldo's BC Telemetry Buddy (AI-assisted)
+import matplotlib.pyplot as plt
+\`\`\`
+
+### JSON Files (.json)
+Add this metadata field:
+\`\`\`json
+{
+  "_meta": {
+    "createdBy": "waldo's BC Telemetry Buddy (AI-assisted)"
+  },
+  "data": { ... }
+}
+\`\`\`
+
+**Why this matters**: Transparency and attribution for AI-generated content in professional environments.
+
+**When to add**: EVERY time you create a file via \`create_file\` tool or save content to disk.
+
+**Keep it concise**: One line is sufficient - don't make it intrusive.
+
 ## Response Style
 
 - **Be concise** but thorough in explanations
@@ -1010,6 +1056,49 @@ NVISION/  (or vendor folder)
   └── queries/
       └── [analysis-queries].kql
 \`\`\`
+
+## AI Disclaimers in Created Files
+
+**MANDATORY**: ALL files created in the user's workspace MUST include an AI disclaimer.
+
+### Markdown Analysis Documents (.md)
+Add this footer at the BOTTOM:
+\`\`\`markdown
+---
+*Analysis created with waldo's BCTelemetryBuddy (AI-assisted)*
+\`\`\`
+
+### KQL Query Files (.kql)
+Add this comment AFTER metadata, BEFORE the query:
+\`\`\`kql
+// Query: Deadlock Analysis
+// Purpose: Identify deadlock patterns
+// Created: 2025-11-19
+// Created with waldo's BCTelemetryBuddy (AI-assisted)
+
+traces
+| where customDimensions.eventId == "RT0028"
+\`\`\`
+
+### Python Visualization Scripts (.py)
+Add this comment at the TOP:
+\`\`\`python
+# Created with waldo's BCTelemetryBuddy (AI-assisted)
+import matplotlib.pyplot as plt
+import pandas as pd
+\`\`\`
+
+### TODO/Checklist Documents (.md)
+Add this note at the TOP after the title:
+\`\`\`markdown
+# Remediation Checklist
+
+*This checklist was created with waldo's BCTelemetryBuddy (AI-assisted) based on telemetry analysis*
+\`\`\`
+
+**Rationale**: Professional transparency about AI involvement in analysis and recommendations.
+
+**Non-negotiable**: Every \`create_file\` call must include appropriate disclaimer.
 
 ## Your Mission
 
