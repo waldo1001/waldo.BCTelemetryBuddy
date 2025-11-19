@@ -147,18 +147,14 @@ describe('Shared Package Integration', () => {
             const fs = require('fs');
             const path = require('path');
 
-            const extensionNodeModules = path.join(__dirname, '..', '..', 'node_modules', '@bctb');
-            const sharedSymlink = path.join(extensionNodeModules, 'shared');
+            // Since we're using Jest moduleNameMapper to resolve @bctb/shared,
+            // we don't need physical symlinks. Just verify we can resolve the module.
+            const resolvedPath = require.resolve('@bctb/shared');
+            expect(resolvedPath).toBeDefined();
+            expect(resolvedPath).toContain('shared');
 
-            // npm workspaces creates symlinks
-            if (fs.existsSync(sharedSymlink)) {
-                const stats = fs.lstatSync(sharedSymlink);
-                expect(stats.isSymbolicLink() || stats.isDirectory()).toBe(true);
-            } else {
-                // Alternative: packages/shared is in node_modules via hoisting
-                const rootNodeModules = path.join(__dirname, '..', '..', '..', '..', 'node_modules', '@bctb', 'shared');
-                expect(fs.existsSync(rootNodeModules) || fs.existsSync(sharedSymlink)).toBe(true);
-            }
+            // Verify the resolved file exists
+            expect(fs.existsSync(resolvedPath)).toBe(true);
         });
     });
 

@@ -2166,3 +2166,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Create a new patch release one again"
 
 ---
+### Entry ID: 1ea1e839-3df4-45c5-bbbe-657580b8124b  2025-11-19 13:14
+> "When I open a workspace that doesn't have to use the telemetry buddy, the MCP always fails with an error. Make it start successfully but inform the user through the LLM interface when config is incomplete."
+
+---
+### Entry ID: a9974856-c350-4e11-ae69-30dc36379ade  2025-11-19 13:14
+> "Update MCP error messages to be client-agnostic - support both VSCode extension and standalone MCP clients like Claude Desktop."
+
+---
+### Entry ID: c456aebd-9bdd-4565-87b7-a353eafcd17d  2025-11-19 13:14
+> "Ok, I messed up - my codebase wasn't up-to-date. Can you resolve the merge conflicts by implementing the code changes taking into account what we did in this conversation?"
+
+---
+### Entry ID: 58a91ccd-d8c0-4438-9cd9-8eef8191ca2f  2025-11-19 13:37
+> "fix: Shared package integration needs fixing and some extension features need additional test coverage"
+
+---

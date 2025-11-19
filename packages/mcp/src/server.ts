@@ -393,6 +393,26 @@ export class MCPServer {
                     break;
 
                 case 'query_telemetry':
+                    // Check if configuration is incomplete
+                    if (this.configErrors.length > 0) {
+                        result = {
+                            type: 'error',
+                            kql: rpcRequest.params.kql || '',
+                            summary: 'BC Telemetry Buddy MCP server configuration is incomplete. Please configure the required settings.',
+                            recommendations: [
+                                'If using VSCode: Run "BC Telemetry Buddy: Setup Wizard" from the Command Palette (Ctrl+Shift+P)',
+                                'If using Claude Desktop or other MCP clients: Set environment variables in your MCP settings:',
+                                '  - BCTB_WORKSPACE_PATH: Path to your workspace',
+                                '  - BCTB_TENANT_ID: Your Azure tenant ID',
+                                '  - BCTB_APP_INSIGHTS_ID: Your Application Insights app ID',
+                                '  - BCTB_KUSTO_URL: Kusto cluster URL (e.g., https://ade.applicationinsights.io/subscriptions/...)',
+                                '  - BCTB_AUTH_FLOW: Authentication method (azure_cli, device_code, or client_credentials)'
+                            ],
+                            cached: false
+                        };
+                        break;
+                    }
+
                     // Execute KQL query
                     const kqlQuery = rpcRequest.params.kql;
 
@@ -439,7 +459,17 @@ export class MCPServer {
                     break;
 
                 case 'get_auth_status':
-                    result = this.auth.getStatus();
+                    // Check if configuration is incomplete
+                    if (this.configErrors.length > 0) {
+                        result = {
+                            authenticated: false,
+                            error: 'BC Telemetry Buddy MCP server configuration is incomplete. Required settings missing.',
+                            configurationIssues: this.configErrors,
+                            hint: 'VSCode users: Run Setup Wizard from Command Palette. MCP client users: Configure environment variables in your MCP settings.'
+                        };
+                    } else {
+                        result = this.auth.getStatus();
+                    }
                     break;
 
                 case 'get_external_queries':
@@ -447,6 +477,11 @@ export class MCPServer {
                     break;
 
                 case 'get_event_catalog':
+                    // Check if configuration is incomplete
+                    if (this.configErrors.length > 0) {
+                        throw new Error('BC Telemetry Buddy MCP server configuration is incomplete. VSCode users: Run "BC Telemetry Buddy: Setup Wizard" from Command Palette. MCP client users: Configure required environment variables (BCTB_TENANT_ID, BCTB_APP_INSIGHTS_ID, BCTB_KUSTO_URL, etc.) in your MCP client settings.');
+                    }
+
                     result = await this.getEventCatalog(
                         rpcRequest.params?.daysBack || 10,
                         rpcRequest.params?.status || 'all',
@@ -1784,8 +1819,18 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
     } catch (error: any) {
         console.error('\n⚠️  MCP Server encountered an error during startup:');
         console.error(error.message);
-        console.error('\nThe server will continue running but queries may fail.');
-        console.error('Run "bctb-mcp init" to create a config file, or check your .bctb-config.json settings.\n');
+        console.error('\nThe server will continue running in configuration mode.');
+        console.error('- If using VSCode: Run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.');
+        console.error('- If using Claude Desktop or other MCP clients: Configure environment variables in your MCP settings.');
+        console.error('- Or run "bctb-mcp init" to create a .bctb-config.json file.\n');
+
+        // Create a minimal server instance that can handle configuration requests
+        const server = new MCPServer();
+        if (isStdioMode) {
+            await server.startStdio();
+        } else {
+            await server.startHTTP();
+        }
     }
 }
 

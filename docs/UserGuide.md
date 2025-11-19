@@ -1020,6 +1020,111 @@ For **client_credentials flow:**
 
 ---
 
+## Using with Other MCP Clients
+
+BC Telemetry Buddy's MCP server is **independent** and can be used with any MCP-compatible client, not just the VSCode extension.
+
+### Supported MCP Clients
+
+- **VSCode Extension** (this extension) - Full integration with GitHub Copilot
+- **Claude Desktop** - Anthropic's desktop app with MCP support
+- **Other MCP Clients** - Any tool that supports the Model Context Protocol
+
+### Configuration for Claude Desktop / Other MCP Clients
+
+To use BC Telemetry Buddy MCP server with Claude Desktop or other standalone MCP clients:
+
+#### 1. Install the Package
+
+```bash
+npm install -g bc-telemetry-buddy-mcp
+```
+
+#### 2. Configure Environment Variables
+
+Add the following to your MCP client's configuration (e.g., Claude Desktop's `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "bc-telemetry-buddy": {
+      "command": "node",
+      "args": ["/path/to/bctb-mcp/dist/launcher.js"],
+      "env": {
+        "BCTB_WORKSPACE_PATH": "/path/to/your/workspace",
+        "BCTB_TENANT_ID": "your-azure-tenant-id",
+        "BCTB_APP_INSIGHTS_ID": "your-app-insights-id",
+        "BCTB_KUSTO_URL": "https://ade.applicationinsights.io/subscriptions/...",
+        "BCTB_AUTH_FLOW": "azure_cli",
+        "BCTB_CACHE_ENABLED": "true",
+        "BCTB_CACHE_TTL": "3600",
+        "BCTB_REMOVE_PII": "false"
+      }
+    }
+  }
+}
+```
+
+#### 3. Authentication Options
+
+**Azure CLI (Recommended for standalone use):**
+- Set `BCTB_AUTH_FLOW=azure_cli`
+- Run `az login` before starting your MCP client
+- Uses your existing Azure CLI session
+
+**Device Code Flow:**
+- Set `BCTB_AUTH_FLOW=device_code`
+- Follow device code prompt when MCP server starts
+- No Azure app registration required
+
+**Client Credentials:**
+- Set `BCTB_AUTH_FLOW=client_credentials`
+- Requires `BCTB_CLIENT_ID` and `BCTB_CLIENT_SECRET`
+- Best for automated/unattended scenarios
+
+#### 4. Available Tools
+
+The MCP server exposes these tools to your client:
+
+- `query_telemetry` - Execute KQL queries
+- `get_event_catalog` - Discover available events
+- `get_event_field_samples` - Analyze event field structure
+- `get_saved_queries` - Access saved query library
+- `save_query` - Save new queries
+- `search_queries` - Find queries by tags/keywords
+- `get_external_queries` - Retrieve reference queries
+- And more...
+
+### Differences from VSCode Extension
+
+When using with standalone MCP clients:
+
+**Available:**
+- ✅ All query and discovery tools
+- ✅ Authentication flows
+- ✅ Caching and performance features
+- ✅ Saved queries and external references
+
+**Not Available:**
+- ❌ Setup Wizard UI (manual configuration required)
+- ❌ CodeLens integration
+- ❌ Results webview
+- ❌ Command Palette commands
+
+### Graceful Degradation
+
+The MCP server will start successfully even in workspaces without BC Telemetry Buddy configuration. If configuration is incomplete, you'll receive helpful error messages when attempting to query:
+
+```
+BC Telemetry Buddy MCP server configuration is incomplete.
+- If using VSCode: Run "BC Telemetry Buddy: Setup Wizard" from Command Palette
+- If using Claude Desktop or other MCP clients: Configure environment variables in your MCP settings
+```
+
+This allows the extension to be installed globally without causing startup failures in non-BC workspaces.
+
+---
+
 ## Migrating from v0.2.x
 
 If you're upgrading from BC Telemetry Buddy v0.2.x, this section explains what changed and how to migrate smoothly.

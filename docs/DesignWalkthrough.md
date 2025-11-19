@@ -1167,3 +1167,22 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-19** — Released v1.0.5/v2.0.5 patch with CI test fixes [Entry: 20e35f92-a0b9-4f27-9ebf-db2ec7c2e24d]
   - **Why:** Include all test fixes from v1.0.4/v2.0.4 in proper release build
   - **How:** Bumped versions, updated CHANGELOGs and test expectations, committed and tagged
+- **2025-11-19**  Graceful MCP startup with incomplete configuration [Entry: b8a5c7f3-1a9d-4e2a-8f3c-6b7d2e9a1c4f]
+  - **Why:** Allow MCP server to start in workspaces without BC Telemetry Buddy configuration, preventing error messages in non-BC workspaces
+  - **How:** Modified config loading to use fallback values, added configuration checks to query methods that return helpful error messages through LLM interface instead of failing at startup
+- **2025-11-19**  MCP-client agnostic error messages [Entry: 015eb41a-84bd-47ea-ae5c-3ce2d4ba4ca7]
+  - **Why:** MCP server is independent and can be used by any MCP client (VSCode, Claude Desktop, etc.), not just VSCode extension
+  - **How:** Updated error messages to provide configuration guidance for both VSCode users (Setup Wizard) and direct MCP client users (environment variables in MCP settings)
+
+- **2025-11-19**  MCP graceful startup with incomplete configuration [Entry: 1ea1e839-3df4-45c5-bbbe-657580b8124b]
+  - **Why:** MCP server failed to start in workspaces without BC Telemetry Buddy config, preventing extension use in non-BC projects
+  - **How:** Changed config loading to use fallback values (process.cwd()), moved validation from startup to runtime, return helpful error messages instead of exiting
+- **2025-11-19**  Made MCP error messages client-agnostic [Entry: a9974856-c350-4e11-ae69-30dc36379ade]
+  - **Why:** MCP server is independent and used by VSCode extension AND standalone clients (Claude Desktop, etc.) - error messages were VSCode-centric
+  - **How:** Updated error messages in server.ts to provide separate guidance for VSCode users (Setup Wizard) vs standalone MCP clients (environment variables)
+- **2025-11-19**  Resolved merge conflicts from out-of-date codebase [Entry: c456aebd-9bdd-4565-87b7-a353eafcd17d]
+  - **Why:** User's local codebase wasn't up-to-date, causing merge conflicts when implementing graceful startup changes
+  - **How:** Applied graceful startup code changes to current codebase, resolved conflicts in config.ts, server.ts, CHANGELOG.md, and UserGuide.md
+- **2025-11-19**  Fixed shared package integration and improved test coverage [Entry: cf7d8e92-1b47-4a3b-9874-5c3d2e1f6a89]
+  - **Why:** Shared package wasn't building/resolving correctly, causing 11 integration tests to fail. Extension test coverage needed improvement.
+  - **How:** Built shared package, configured Jest moduleNameMapper and TypeScript paths for @bctb/shared resolution, fixed symlink test to use module resolution instead.

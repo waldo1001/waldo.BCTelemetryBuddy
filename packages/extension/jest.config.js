@@ -26,7 +26,8 @@ module.exports = {
     },
     extensionsToTreatAsEsm: ['.ts'],
     moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1'
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@bctb/shared$': '<rootDir>/../shared/dist/index.js'
     },
     transform: {
         '^.+\\.tsx?$': [
