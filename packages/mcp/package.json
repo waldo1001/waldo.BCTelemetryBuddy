@@ -11,7 +11,7 @@
     "scripts": {
         "build": "npm run build:shared && npm run build:server && npm run build:cli",
         "build:shared": "cd ../shared && npm run build",
-        "build:server": "esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --minify",
+        "build:server": "node scripts/generate-version.js && esbuild src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs --sourcemap --minify",
         "build:cli": "node scripts/generate-version.js && esbuild src/cli.ts --bundle --outfile=dist/cli.js --platform=node --format=cjs --sourcemap --minify --banner:js=\"#!/usr/bin/env node\"",
         "dev": "tsc --build --watch",
         "compile": "tsc --noEmit",

@@ -1241,3 +1241,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Fixed MCP server startup failure with missing config [Entry: 1a44b867-0482-4dbb-a6db-63da9646df6d]
   - **Why:** Server was throwing 'No config file found' error and exiting, instead of starting gracefully with env vars
   - **How:** Changed loadConfigFromFile() to return null instead of throwing, updated constructor to handle null, removed problematic catch block that created infinite loop
+- **2025-11-21** — Fixed CI build failure in GitHub Actions [Entry: 33a35a14-3de6-4d63-8bd4-4e11d42baff7]
+  - **Why:** build:server script tried to import version.js before it was generated
+  - **How:** Added 'node scripts/generate-version.js' to build:server script (same as build:cli)

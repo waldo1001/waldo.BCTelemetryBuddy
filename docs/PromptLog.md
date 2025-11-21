@@ -2240,3 +2240,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Fix MCP server failing to start when no config file exists - return null instead of throwing error"
 
 ---
+### Entry ID: 33a35a14-3de6-4d63-8bd4-4e11d42baff7 — 2025-11-21 23:31
+> "Fix CI build failure - version.js not generated before server build"
+
+---
