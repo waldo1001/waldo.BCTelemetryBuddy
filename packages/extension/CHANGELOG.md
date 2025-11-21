@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Manual check available via Command Palette: "BC Telemetry Buddy: Check for MCP Updates"
   - Respects notification frequency (won't spam - max once per day)
 
+## [1.1.1] - 2025-11-22
+
+### Fixed
+
+- **MCP Server Startup**: Updated bundled MCP server to v2.1.1
+  - Fixes startup failure when no config file exists (no more exit code 1 errors)
+  - MCP server now starts gracefully with incomplete configuration
+  - Clear configuration warnings shown in extension logs
+  - Users can use Setup Wizard to complete configuration at their convenience
+- **CI Build**: MCP server build now generates version file correctly
+
 ## [1.1.0] - 2025-11-21
 
 No changes in this release (MCP-only minor release for new features and improvements)

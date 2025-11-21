@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Non-blocking with 5-second timeout to avoid delaying startup
   - Silently fails on network errors (won't break offline usage)
 
+## [2.1.1] - 2025-11-21
+
+### Fixed
+
+- **MCP server startup failure**: Fixed issue where server would exit with code 1 when no config file exists
+  - `loadConfigFromFile()` now returns `null` instead of throwing when no config is found
+  - Server gracefully falls back to environment variables
+  - Removed problematic catch block that caused infinite loop on startup
+  - Server now starts successfully and shows clear configuration warnings in logs
+- **CI build failure**: Fixed GitHub Actions build error where `version.js` wasn't generated before server build
+  - Added version generation script to `build:server` npm script
+  - Both server and CLI builds now generate version file before bundling
+
 ## [2.1.0] - 2025-11-21
 
 ### Added
