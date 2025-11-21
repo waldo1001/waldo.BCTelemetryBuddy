@@ -1232,3 +1232,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Achieved 80%+ code coverage with telemetryService tests [Entry: 169bf43d-ed12-496d-aa11-2b48fe572a34]
   - **Why:** Increase overall test coverage from 75.82% to 80.74% to ensure code quality and catch regressions
   - **How:** Added 11 new comprehensive tests for telemetryService: cache management, query search, profile switching, and error paths
+- **2025-11-21** — Released extension v1.1.0 and MCP v2.1.0 [Entry: 7c5e9a43-f621-4b8d-9e3f-2a8d5c1b4e6a]
+  - **Why:** Minor version bumps with MCP configuration improvements
+  - **How:** Bumped versions, updated CHANGELOGs, committed, tagged (v1.1.0, mcp-v2.1.0), and pushed to GitHub
