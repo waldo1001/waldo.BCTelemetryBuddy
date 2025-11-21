@@ -2212,3 +2212,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I don't want any KQL in any telemetry event .. that should be considered to be sensitive! But I'm ok with the 'Real-World Scenarios' you just listed!"
 
 ---
+### Entry ID: d1cc9890-a454-42da-9a18-1575f9882186 — 2025-11-21 13:07
+> "Carefully read this document, and see if all info is correct. [User requested validation of README.md, then requested changes be performed]"
+
+---

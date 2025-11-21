@@ -1213,3 +1213,10 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Added strong warnings that KQL query text is sensitive data [Entry: 4b3c2eaa-be68-4b15-9466-db39e3914714]
   - **Why:** Prevent any KQL query text from being included in telemetry as it may contain secrets, customer-specific logic, table names, and PII in filters
   - **How:** Enhanced NEVER include sections with explicit KQL warnings, added guidance on safely deriving queryName from saved query names, chat labels, or generic identifiers - never from actual KQL text or table names
+
+- **2025-11-21** — Fixed outdated README.md development status and version info [Entry: d1cc9890-a454-42da-9a18-1575f9882186]
+  - **Why:** README claimed v0.2.24 as stable with 21 failing tests, but v1.0.5 is current with all 212 tests passing
+  - **How:** Removed obsolete development status section, updated Node.js prereq to 20+, removed Express reference from MCP description
+- **2025-11-21** — Fixed outdated README.md development status and version info [Entry: 03979994-807a-40d6-8fdb-1ef2067410bc]
+  - **Why:** README claimed v0.2.24 as stable with 21 failing tests, but v1.0.5 is current with all 212 tests passing
+  - **How:** Removed obsolete development status section, updated Node.js prereq to 20+, removed Express reference from MCP description

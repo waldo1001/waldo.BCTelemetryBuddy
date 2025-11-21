@@ -7,21 +7,6 @@
 
 Query Business Central telemetry from VSCode using natural language with GitHub Copilot integration.
 
-## ⚠️ Development Status
-
-**Current Stable Version:** v0.2.24 (recommended for production)  
-**Next Version:** v1.0.0 (in development - NOT released)
-
-**v1.0.0 Development Status:**
-- 🚧 21 of 178 tests failing (multi-root migration, command handlers)
-- 🚧 Automatic migration UI not implemented
-- 🚧 Direct command execution without MCP not working
-- 🚧 Multi-root workspace support incomplete
-
-**Recommendation:** Use v0.2.24 from marketplace for production. Install from repository only for testing/development.
-
----
-
 ## Overview
 
 BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query Business Central telemetry data from Application Insights/Kusto. It combines:
@@ -135,13 +120,13 @@ See [docs/UserGuide.md](docs/UserGuide.md) for detailed configuration and advanc
 
 This is a monorepo containing:
 
-- `packages/mcp/` - MCP backend server (TypeScript + Express)
+- `packages/mcp/` - MCP backend server (TypeScript)
 - `packages/extension/` - VSCode extension (TypeScript)
 - `packages/shared/` - Shared core library (TypeScript)
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm 9+
 
 ### Build
