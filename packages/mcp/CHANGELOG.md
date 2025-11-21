@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-11-21
+
+### Added
+
+- New features and improvements (minor release)
+
 ### Changed
+
 - **Graceful startup with incomplete configuration**: MCP server now starts successfully even when configuration is incomplete, instead of failing with exit code 1
 - Configuration validation moved from startup (throwing errors) to runtime (returning helpful error messages through MCP interface)
 - Error messages are now MCP-client agnostic, providing guidance for both VSCode extension users and standalone MCP client users (Claude Desktop, etc.)
 
 ### Fixed
+
 - Server no longer fails to start in workspaces without BC Telemetry Buddy configuration
 - Missing `BCTB_WORKSPACE_PATH` now uses `process.cwd()` as fallback instead of throwing error
 
