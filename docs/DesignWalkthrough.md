@@ -1238,3 +1238,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Added automatic MCP update checking [Entry: 2041a492-159e-4a8d-a8a6-03914d917fbc]
   - **Why:** Users need to be notified when MCP updates are available without manual checking
   - **How:** Periodic background checks every 24 hours, smart notifications, manual command available
+- **2025-11-21** — Fixed MCP server startup failure with missing config [Entry: 1a44b867-0482-4dbb-a6db-63da9646df6d]
+  - **Why:** Server was throwing 'No config file found' error and exiting, instead of starting gracefully with env vars
+  - **How:** Changed loadConfigFromFile() to return null instead of throwing, updated constructor to handle null, removed problematic catch block that created infinite loop

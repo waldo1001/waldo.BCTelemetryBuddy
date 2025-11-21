@@ -341,10 +341,11 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert
-            expect(loaded.connectionName).toBe('Test Connection');
-            expect(loaded.tenantId).toBe('test-tenant');
-            expect(loaded.authFlow).toBe('azure_cli');
-            expect(loaded.applicationInsightsAppId).toBe('test-app-id');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Test Connection');
+            expect(loaded!.tenantId).toBe('test-tenant');
+            expect(loaded!.authFlow).toBe('azure_cli');
+            expect(loaded!.applicationInsightsAppId).toBe('test-app-id');
         });
 
         it('should load multi-profile config with default profile', () => {
@@ -379,8 +380,9 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert
-            expect(loaded.connectionName).toBe('Production');
-            expect(loaded.tenantId).toBe('prod-tenant');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Production');
+            expect(loaded!.tenantId).toBe('prod-tenant');
         });
 
         it('should load specific profile when profileName is provided', () => {
@@ -415,8 +417,9 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath, 'staging');
 
             // Assert
-            expect(loaded.connectionName).toBe('Staging');
-            expect(loaded.tenantId).toBe('staging-tenant');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Staging');
+            expect(loaded!.tenantId).toBe('staging-tenant');
         });
 
         it('should handle profile inheritance with extends', () => {
@@ -447,11 +450,12 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert - should have both base and child properties
-            expect(loaded.connectionName).toBe('Production');
-            expect(loaded.tenantId).toBe('prod-tenant');
-            expect(loaded.authFlow).toBe('azure_cli'); // Inherited from base
-            expect(loaded.kustoClusterUrl).toBe('https://ade.applicationinsights.io'); // Inherited
-            expect(loaded.cacheEnabled).toBe(true); // Inherited
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Production');
+            expect(loaded!.tenantId).toBe('prod-tenant');
+            expect(loaded!.authFlow).toBe('azure_cli'); // Inherited from base
+            expect(loaded!.kustoClusterUrl).toBe('https://ade.applicationinsights.io'); // Inherited
+            expect(loaded!.cacheEnabled).toBe(true); // Inherited
         });
 
         it('should expand environment variables in config', () => {
@@ -475,8 +479,9 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert
-            expect(loaded.tenantId).toBe('env-tenant-id');
-            expect(loaded.applicationInsightsAppId).toBe('env-app-id');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.tenantId).toBe('env-tenant-id');
+            expect(loaded!.applicationInsightsAppId).toBe('env-app-id');
 
             // Cleanup
             delete process.env.TEST_TENANT_ID;
@@ -513,12 +518,13 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert
-            expect(loaded.cacheEnabled).toBe(false);
-            expect(loaded.cacheTTLSeconds).toBe(7200);
-            expect(loaded.removePII).toBe(true);
+            expect(loaded).not.toBeNull();
+            expect(loaded!.cacheEnabled).toBe(false);
+            expect(loaded!.cacheTTLSeconds).toBe(7200);
+            expect(loaded!.removePII).toBe(true);
         });
 
-        it('should throw error when config file not found', () => {
+        it('should return null when config file not found', () => {
             // Arrange
             const originalCwd = process.cwd();
             const emptyDir = path.join(testConfigDir, 'empty-nowhere');
@@ -526,8 +532,11 @@ describe('Configuration Module', () => {
             process.chdir(emptyDir); // Change to directory without any config
             delete process.env.BCTB_WORKSPACE_PATH; // Ensure no workspace path
 
-            // Act & Assert
-            expect(() => loadConfigFromFile()).toThrow('No config file found');
+            // Act
+            const result = loadConfigFromFile();
+
+            // Assert
+            expect(result).toBeNull();
 
             // Cleanup
             process.chdir(originalCwd);
@@ -634,7 +643,8 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile(configPath);
 
             // Assert
-            expect(loaded.connectionName).toBe('Staging');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Staging');
 
             // Cleanup
             delete process.env.BCTB_PROFILE;
@@ -660,7 +670,8 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile();
 
             // Assert
-            expect(loaded.connectionName).toBe('Test');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Test');
 
             // Cleanup
             process.chdir(originalCwd);
@@ -692,7 +703,8 @@ describe('Configuration Module', () => {
             const loaded = loadConfigFromFile();
 
             // Assert
-            expect(loaded.connectionName).toBe('Workspace Config');
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Workspace Config');
 
             // Cleanup
             process.chdir(originalCwd);

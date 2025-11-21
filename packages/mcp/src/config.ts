@@ -156,8 +156,9 @@ export function validateConfig(config: MCPConfig): string[] {
 
 /**
  * Load config from file with discovery and profile support
+ * Returns null if no config file is found (allows fallback to env vars)
  */
-export function loadConfigFromFile(configPath?: string, profileName?: string): MCPConfig {
+export function loadConfigFromFile(configPath?: string, profileName?: string): MCPConfig | null {
     let filePath: string | null = null;
 
     // Discovery order (as per refactoring plan):
@@ -197,7 +198,8 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
     }
 
     if (!filePath) {
-        throw new Error('No config file found. Run: bctb-mcp init');
+        // No config file found - return null to allow fallback to env vars
+        return null;
     }
 
     console.log(`📄 Loading config from: ${filePath}`);

@@ -75,10 +75,11 @@ export class MCPServer {
         if (config) {
             this.config = config;
         } else {
-            try {
-                // Prefer file-based config (.bctb-config.json)
-                this.config = loadConfigFromFile();
-            } catch (error) {
+            // Try file-based config (.bctb-config.json)
+            const fileConfig = loadConfigFromFile();
+            if (fileConfig) {
+                this.config = fileConfig;
+            } else {
                 // Fall back to env vars (for VSCode extension or legacy setups)
                 console.warn('[MCP] No config file found, using environment variables');
                 this.config = loadConfig();
@@ -1882,20 +1883,14 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
             await server.startHTTP();
         }
     } catch (error: any) {
-        console.error('\n⚠️  MCP Server encountered an error during startup:');
+        console.error('\n⚠️  MCP Server encountered a fatal error during startup:');
         console.error(error.message);
-        console.error('\nThe server will continue running in configuration mode.');
+        console.error('\nTroubleshooting:');
         console.error('- If using VSCode: Run "BC Telemetry Buddy: Setup Wizard" from Command Palette to configure.');
         console.error('- If using Claude Desktop or other MCP clients: Configure environment variables in your MCP settings.');
-        console.error('- Or run "bctb-mcp init" to create a .bctb-config.json file.\n');
-
-        // Create a minimal server instance that can handle configuration requests
-        const server = new MCPServer();
-        if (isStdioMode) {
-            await server.startStdio();
-        } else {
-            await server.startHTTP();
-        }
+        console.error('- Or run "bctb-mcp init" to create a .bctb-config.json file.');
+        console.error('\nServer cannot start without valid configuration.\n');
+        process.exit(1);
     }
 }
 

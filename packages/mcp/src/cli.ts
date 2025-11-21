@@ -22,6 +22,12 @@ program
     .action(async (options) => {
         try {
             const config = loadConfigFromFile(options.config, options.profile);
+            if (!config) {
+                console.error('No config file found.');
+                console.error('Run: bctb-mcp init');
+                process.exit(1);
+            }
+
             const errors = validateConfig(config);
 
             if (errors.length > 0) {
@@ -76,6 +82,11 @@ program
     .action((options) => {
         try {
             const config = loadConfigFromFile(options.config, options.profile);
+            if (!config) {
+                console.error('✗ No config file found.');
+                console.error('Run: bctb-mcp init');
+                process.exit(1);
+            }
             const errors = validateConfig(config);
 
             if (errors.length === 0) {
@@ -102,6 +113,11 @@ program
     .action(async (options) => {
         try {
             const config = loadConfigFromFile(options.config, options.profile);
+            if (!config) {
+                console.error('✗ No config file found.');
+                console.error('Run: bctb-mcp init');
+                process.exit(1);
+            }
             const auth = new AuthService(config);
 
             console.log(`Testing authentication for: ${config.connectionName}`);

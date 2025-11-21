@@ -2236,3 +2236,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "I notice the MCP doesn't automatically update. Can we do that?"
 
 ---
+### Entry ID: 1a44b867-0482-4dbb-a6db-63da9646df6d — 2025-11-21 23:29
+> "Fix MCP server failing to start when no config file exists - return null instead of throwing error"
+
+---
