@@ -81,13 +81,37 @@
             ],
             "env": {
                 "BCTB_WORKSPACE_PATH": "${workspaceFolder}",
-                "BCTB_MCP_PORT": "52345",
-                "BCTB_TENANT_ID": "",
-                "BCTB_CLIENT_ID": "",
-                "BCTB_APP_INSIGHTS_APP_ID": "",
+                "BCTB_MODE": "http",
                 "NODE_ENV": "development"
             },
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug MCP Server (No Config)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/packages/mcp/dist/server.js",
+            "cwd": "${workspaceFolder}/packages/mcp",
+            "outFiles": [
+                "${workspaceFolder}/packages/mcp/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build - packages/mcp",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "BCTB_WORKSPACE_PATH": "${workspaceFolder}/packages/mcp",
+                "BCTB_MODE": "http",
+                "NODE_ENV": "development",
+                "BCTB_APP_INSIGHTS_ID": "",
+                "BCTB_KUSTO_URL": "",
+                "BCTB_TENANT_ID": ""
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "group": "MCP Debug",
+                "order": 2
+            }
         }
     ],
     "compounds": [
