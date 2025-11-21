@@ -1201,4 +1201,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-19** — Added AI disclaimer instructions to chatmode definitions [Entry: 6c1b7c24-f451-434b-9185-e6926cd96678]
   - **Why:** Ensure chat agent adds disclaimers to ALL files it creates during conversations (KQL queries, markdown reports, Python scripts)
   - **How:** Added comprehensive 'AI Disclaimers in Created Files' section to both BCTelemetryBuddy and BCPerformanceAnalysis chatmodes with examples for .kql, .md, .py, and .json files
-
+- **2025-11-20** - Enhanced telemetry design with improvements [Entry: 2771aba0-11b6-4802-b07b-298a08f120c7]
+  - **Why:** Added naming clarification, VS Code API guidance, config integration, MCP correlation, cost control, sampling, session/user ID, and enhanced error context.
+  - **How:** Updated Telemetry-Design-and-Implementation.md with: UsageTelemetryService naming, @vscode/extension-telemetry vs applicationinsights SDK, .bctb-config.json structure, correlation IDs, sampling strategies, session/user identification, stack hashing, and expanded checklist.
+- **2025-11-21** — Simplified MCP telemetry pattern to per-tool completion events [Entry: 88dc21ce-974a-4589-8a9a-cf0d82e2d309]
+  - **Why:** Reduce event volume and complexity by removing ToolInvoked events and creating separate completion event per MCP tool
+  - **How:** Updated telemetry design doc: replaced generic Mcp.ToolInvoked/ToolCompleted with 7 tool-specific events (TB-MCP-101 through TB-MCP-107), updated pattern description, sampling examples, queries, and test descriptions
+- **2025-11-21** — Hashed cluster and database names in telemetry [Entry: 323d4024-e222-41b3-adab-caa3305732b0]
+  - **Why:** Prevent leaking customer/tenant identification through Kusto cluster and database names
+  - **How:** Updated telemetry design: replaced cluster and database with clusterHash and databaseHash (8-char truncated SHA256) in all trackDependency calls, event tables, properties documentation, and code examples
+- **2025-11-21** — Added strong warnings that KQL query text is sensitive data [Entry: 4b3c2eaa-be68-4b15-9466-db39e3914714]
+  - **Why:** Prevent any KQL query text from being included in telemetry as it may contain secrets, customer-specific logic, table names, and PII in filters
+  - **How:** Enhanced NEVER include sections with explicit KQL warnings, added guidance on safely deriving queryName from saved query names, chat labels, or generic identifiers - never from actual KQL text or table names

@@ -2196,3 +2196,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "What I meant was definitely also an instruction for this chatmode"
 
 ---
+### Entry ID: 2771aba0-11b6-4802-b07b-298a08f120c7 - 2025-11-20 23:15
+> "Review telemetry design document and add improvements"
+
+---
+### Entry ID: 88dc21ce-974a-4589-8a9a-cf0d82e2d309 — 2025-11-21 08:02
+> "I don't want the separation between toolinvoked and toolcompleted. Just take the completed (or failed). And I want an event per tool."
+
+---
+### Entry ID: 323d4024-e222-41b3-adab-caa3305732b0 — 2025-11-21 08:15
+> "Hash cluster and database names"
+
+---
+### Entry ID: 4b3c2eaa-be68-4b15-9466-db39e3914714 — 2025-11-21 08:18
+> "I don't want any KQL in any telemetry event .. that should be considered to be sensitive! But I'm ok with the 'Real-World Scenarios' you just listed!"
+
+---
