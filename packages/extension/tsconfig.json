@@ -11,7 +11,15 @@
         "sourceMap": true,
         "declaration": false,
         "declarationMap": false,
-        "composite": false
+        "composite": false,
+        "paths": {
+            "@bctb/shared": [
+                "../shared/src/index.ts"
+            ],
+            "@bctb/shared/*": [
+                "../shared/src/*"
+            ]
+        }
     },
     "references": [
         {

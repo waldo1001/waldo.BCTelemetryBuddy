@@ -79,12 +79,15 @@ describe('Configuration Module', () => {
             });
         });
 
-        it('should throw error when BCTB_WORKSPACE_PATH is missing', () => {
+        it('should use current directory when BCTB_WORKSPACE_PATH is missing', () => {
             // Arrange
             delete process.env.BCTB_WORKSPACE_PATH;
 
-            // Act & Assert
-            expect(() => loadConfig()).toThrow('BCTB_WORKSPACE_PATH environment variable is required');
+            // Act
+            const config = loadConfig();
+
+            // Assert
+            expect(config.workspacePath).toBe(process.cwd());
         });
 
         it('should handle cache disabled via env var', () => {

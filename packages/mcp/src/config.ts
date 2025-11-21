@@ -63,13 +63,14 @@ import * as os from 'os';
  * Extension passes workspace settings via env vars when spawning MCP
  */
 export function loadConfig(): MCPConfig {
-    const workspacePath = process.env.BCTB_WORKSPACE_PATH;
+    let workspacePath = process.env.BCTB_WORKSPACE_PATH;
 
     if (!workspacePath) {
         console.error('\n❌ Configuration Error: BCTB_WORKSPACE_PATH environment variable is required');
         console.error('Set it to your workspace path, e.g.: $env:BCTB_WORKSPACE_PATH="C:\\path\\to\\workspace"');
         console.error('Or create a .bctb-config.json file - run: bctb-mcp init\n');
-        throw new Error('BCTB_WORKSPACE_PATH environment variable is required');
+        // Use a default workspace path to allow server to start gracefully
+        workspacePath = process.cwd();
     }
 
     return {
@@ -116,6 +117,11 @@ function parseReferences(referencesJson: string): Reference[] {
  */
 export function validateConfig(config: MCPConfig): string[] {
     const errors: string[] = [];
+
+    // Check if workspace path was set properly (check if environment variable was provided)
+    if (!process.env.BCTB_WORKSPACE_PATH) {
+        errors.push('BCTB_WORKSPACE_PATH environment variable is required - set it to your workspace path');
+    }
 
     // Azure CLI doesn't need tenantId (uses current az login session)
     if (config.authFlow !== 'azure_cli' && !config.tenantId) {
