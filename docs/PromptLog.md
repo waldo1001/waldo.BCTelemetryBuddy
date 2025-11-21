@@ -2180,5 +2180,19 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 ---
 ### Entry ID: 58a91ccd-d8c0-4438-9cd9-8eef8191ca2f  2025-11-19 13:37
 > "fix: Shared package integration needs fixing and some extension features need additional test coverage"
+### Entry ID: acd2ba15-1310-44a3-965b-c06d0601c6b1  2025-11-19 13:47
+> "below is an updated chatmode - change ours accordingly (removed workspace-specific path structure, added VDA example)"
+
+---
+### Entry ID: 912fd13a-d4b3-4e3a-843c-4e878ebeb292  2025-11-19 13:49
+> "There should also be a change in the tools: [] section"
+
+---
+### Entry ID: 71f386a1-87ef-47a9-927a-67dc180768d0 — 2025-11-19 21:23
+> "Whenever the agent creates files, it should be signed with something like: created with waldo's BCTelemetryBuddy, created with AI, ... a typical (short) AI disclaimer"
+
+---
+### Entry ID: 6c1b7c24-f451-434b-9185-e6926cd96678 — 2025-11-19 21:27
+> "What I meant was definitely also an instruction for this chatmode"
 
 ---

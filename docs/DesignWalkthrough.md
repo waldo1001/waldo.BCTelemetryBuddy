@@ -1186,3 +1186,19 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-19**  Fixed shared package integration and improved test coverage [Entry: cf7d8e92-1b47-4a3b-9874-5c3d2e1f6a89]
   - **Why:** Shared package wasn't building/resolving correctly, causing 11 integration tests to fail. Extension test coverage needed improvement.
   - **How:** Built shared package, configured Jest moduleNameMapper and TypeScript paths for @bctb/shared resolution, fixed symlink test to use module resolution instead.
+- **2025-11-19**  Updated BC Telemetry Buddy chatmode File Organization section [Entry: acd2ba15-1310-44a3-965b-c06d0601c6b1]
+  - **Why:** Removed workspace-specific path structure from iFacto workspace, added VDA customer example for consistency
+  - **How:** Updated File Organization section in chatmodeDefinitions.ts to match standardized template with generic paths
+- **2025-11-19**  Removed AL extension tools from chatmode tools array [Entry: 912fd13a-d4b3-4e3a-843c-4e878ebeb292]
+  - **Why:** Template removed all ms-dynamics-smb.al/* tools and extensions/todos tools from the tools array
+  - **How:** Simplified tools array to only include core VSCode tools without AL-specific commands
+- **2025-11-19**  Removed AL extension tools from chatmode tools array [Entry: 912fd13a-d4b3-4e3a-843c-4e878ebeb292]
+  - **Why:** Template removed all ms-dynamics-smb.al/* tools and extensions/todos tools from the tools array
+  - **How:** Simplified tools array to only include core VSCode tools without AL-specific commands
+- **2025-11-19** — Added AI disclaimers to all file creation operations [Entry: 71f386a1-87ef-47a9-927a-67dc180768d0]
+  - **Why:** Ensure transparency and attribution for AI-generated content in user workspace
+  - **How:** Added 'Created with waldo's BCTelemetryBuddy (AI-assisted)' disclaimer to .kql query files and _meta field to JSON cache files in queries.ts, cache.ts, and eventLookup.ts
+- **2025-11-19** — Added AI disclaimer instructions to chatmode definitions [Entry: 6c1b7c24-f451-434b-9185-e6926cd96678]
+  - **Why:** Ensure chat agent adds disclaimers to ALL files it creates during conversations (KQL queries, markdown reports, Python scripts)
+  - **How:** Added comprehensive 'AI Disclaimers in Created Files' section to both BCTelemetryBuddy and BCPerformanceAnalysis chatmodes with examples for .kql, .md, .py, and .json files
+

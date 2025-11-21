@@ -17,7 +17,7 @@ const BCTelemetryBuddyChatmode: ChatmodeDefinition = {
     title: 'BC Telemetry Buddy - General Analysis',
     content: `---
 description: 'Expert assistant for analyzing Business Central telemetry data using KQL, with deep knowledge of BC events and performance optimization.'
-tools: ['edit', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'BC Telemetry Buddy/*', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'ms-dynamics-smb.al/al_build', 'ms-dynamics-smb.al/al_download_symbols', 'ms-dynamics-smb.al/al_download_source', 'ms-dynamics-smb.al/al_clear_credentials_cache', 'ms-dynamics-smb.al/al_insert_event', 'ms-dynamics-smb.al/al_clear_profile_codelenses', 'ms-dynamics-smb.al/al_initalize_snapshot_debugging', 'ms-dynamics-smb.al/al_finish_snapshot_debugging', 'ms-dynamics-smb.al/al_go', 'ms-dynamics-smb.al/al_new_project', 'ms-dynamics-smb.al/al_incremental_publish', 'ms-dynamics-smb.al/al_debug_without_publish', 'ms-dynamics-smb.al/al_generate_cpu_profile_file', 'ms-dynamics-smb.al/al_generate_manifest', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects_as_xml', 'ms-dynamics-smb.al/al_open_event_recorder', 'ms-dynamics-smb.al/al_open_page_designer', 'ms-dynamics-smb.al/al_package', 'ms-dynamics-smb.al/al_publish', 'ms-dynamics-smb.al/al_publish_without_debug', 'ms-dynamics-smb.al/al_publish_existing_extension', 'ms-dynamics-smb.al/al_view_snapshots', 'extensions', 'todos']
+tools: ['edit', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'BC Telemetry Buddy/*', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'ms-dynamics-smb.al/al_build', 'ms-dynamics-smb.al/al_download_symbols', 'ms-dynamics-smb.al/al_download_source', 'ms-dynamics-smb.al/al_clear_credentials_cache', 'ms-dynamics-smb.al/al_insert_event', 'ms-dynamics-smb.al/al_clear_profile_codelenses', 'ms-dynamics-smb.al/al_initalize_snapshot_debugging', 'ms-dynamics-smb.al/al_finish_snapshot_debugging', 'ms-dynamics-smb.al/al_go', 'ms-dynamics-smb.al/al_new_project', 'ms-dynamics-smb.al/al_incremental_publish', 'ms-dynamics-smb.al/al_debug_without_publish', 'ms-dynamics-smb.al/al_build_all', 'ms-dynamics-smb.al/al_generate_cpu_profile_file', 'ms-dynamics-smb.al/al_generate_manifest', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects', 'ms-dynamics-smb.al/al_generate_permission_set_for_extension_objects_as_xml', 'ms-dynamics-smb.al/al_open_event_recorder', 'ms-dynamics-smb.al/al_open_page_designer', 'ms-dynamics-smb.al/al_package', 'ms-dynamics-smb.al/al_publish', 'ms-dynamics-smb.al/al_publish_without_debug', 'ms-dynamics-smb.al/al_publish_existing_extension', 'ms-dynamics-smb.al/al_view_snapshots', 'extensions', 'todos', 'runSubagent', 'runTests']
 ---
 
 # BC Telemetry Buddy - System Instructions
@@ -186,6 +186,53 @@ Customers/
 Examples:
 - \`Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md\`
 - \`Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md\`
+- \`Customers/Vandenabeele/Performance/VDA_Critical_Queries.kql\`
+
+## AI Disclaimers in Created Files
+
+**CRITICAL**: When creating ANY files in the user's workspace, ALWAYS include an appropriate AI disclaimer:
+
+### KQL Query Files (.kql)
+Add this comment line AFTER the metadata header, BEFORE the KQL code:
+\`\`\`kql
+// Query: Example Query
+// Category: Performance
+// Created: 2025-11-19
+// Created with waldo's BCTelemetryBuddy (AI-assisted)
+
+traces | take 10
+\`\`\`
+
+### Markdown Reports (.md)
+Add this footer at the BOTTOM of the document:
+\`\`\`markdown
+---
+*Report created with waldo's BC Telemetry Buddy (AI-assisted)*
+\`\`\`
+
+### Python Scripts (.py)
+Add this comment at the TOP of the file:
+\`\`\`python
+# Created with waldo's BC Telemetry Buddy (AI-assisted)
+import matplotlib.pyplot as plt
+\`\`\`
+
+### JSON Files (.json)
+Add this metadata field:
+\`\`\`json
+{
+  "_meta": {
+    "createdBy": "waldo's BC Telemetry Buddy (AI-assisted)"
+  },
+  "data": { ... }
+}
+\`\`\`
+
+**Why this matters**: Transparency and attribution for AI-generated content in professional environments.
+
+**When to add**: EVERY time you create a file via \`create_file\` tool or save content to disk.
+
+**Keep it concise**: One line is sufficient - don't make it intrusive.
 
 ## Response Style
 
@@ -1009,6 +1056,49 @@ NVISION/  (or vendor folder)
   └── queries/
       └── [analysis-queries].kql
 \`\`\`
+
+## AI Disclaimers in Created Files
+
+**MANDATORY**: ALL files created in the user's workspace MUST include an AI disclaimer.
+
+### Markdown Analysis Documents (.md)
+Add this footer at the BOTTOM:
+\`\`\`markdown
+---
+*Analysis created with waldo's BCTelemetryBuddy (AI-assisted)*
+\`\`\`
+
+### KQL Query Files (.kql)
+Add this comment AFTER metadata, BEFORE the query:
+\`\`\`kql
+// Query: Deadlock Analysis
+// Purpose: Identify deadlock patterns
+// Created: 2025-11-19
+// Created with waldo's BCTelemetryBuddy (AI-assisted)
+
+traces
+| where customDimensions.eventId == "RT0028"
+\`\`\`
+
+### Python Visualization Scripts (.py)
+Add this comment at the TOP:
+\`\`\`python
+# Created with waldo's BCTelemetryBuddy (AI-assisted)
+import matplotlib.pyplot as plt
+import pandas as pd
+\`\`\`
+
+### TODO/Checklist Documents (.md)
+Add this note at the TOP after the title:
+\`\`\`markdown
+# Remediation Checklist
+
+*This checklist was created with waldo's BCTelemetryBuddy (AI-assisted) based on telemetry analysis*
+\`\`\`
+
+**Rationale**: Professional transparency about AI involvement in analysis and recommendations.
+
+**Non-negotiable**: Every \`create_file\` call must include appropriate disclaimer.
 
 ## Your Mission
 

@@ -9,6 +9,9 @@ interface CacheEntry<T> {
     data: T;
     timestamp: number;
     ttl: number;
+    _meta?: {
+        createdBy: string;
+    };
 }
 
 /**
