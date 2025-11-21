@@ -2216,3 +2216,15 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Carefully read this document, and see if all info is correct. [User requested validation of README.md, then requested changes be performed]"
 
 ---
+### Entry ID: fcfc53a1-0f17-417b-a046-7e999200a1ec — 2025-11-21 13:11
+> "I see in this readme that 'codecov' is 'unknown' .. how can we make sure that it's filled in?"
+
+---
+### Entry ID: f397eec0-c506-413b-95f3-ac7028cd8e6f — 2025-11-21 13:37
+> "Continue improving code coverage to above 80%"
+
+---
+### Entry ID: 169bf43d-ed12-496d-aa11-2b48fe572a34 — 2025-11-21 16:57
+> "Continue improving code coverage to above 80% - added comprehensive telemetryService tests"
+
+---

@@ -1220,3 +1220,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Fixed outdated README.md development status and version info [Entry: 03979994-807a-40d6-8fdb-1ef2067410bc]
   - **Why:** README claimed v0.2.24 as stable with 21 failing tests, but v1.0.5 is current with all 212 tests passing
   - **How:** Removed obsolete development status section, updated Node.js prereq to 20+, removed Express reference from MCP description
+- **2025-11-21** — Removed broken codecov badge from README.md [Entry: a21502c6-6325-4416-8f96-54fd1630c559]
+  - **Why:** Badge showed 'unknown' because codecov.io repository not activated or CODECOV_TOKEN secret missing
+  - **How:** Removed badge line from README; provided instructions to re-enable if needed (activate repo on codecov.io + add secret)
+- **2025-11-21** — Removed broken codecov badge from README.md [Entry: 9c6d3d1b-c4ec-40eb-b94f-0ddda000837b]
+  - **Why:** Badge showed 'unknown' because codecov.io repository not activated or CODECOV_TOKEN secret missing
+  - **How:** Removed badge line from README; provided instructions to re-enable if needed (activate repo on codecov.io + add secret)
+- **2025-11-21** — Added migrationService test coverage
+  - **Why:** Increase coverage from 77% toward 80% target
+  - **How:** Added 14 comprehensive test cases for migrationService (v0.2.x settings, edge cases, error handling) - increased from 62% to 69.62%
+- **2025-11-21** — Achieved 80%+ code coverage with telemetryService tests [Entry: 169bf43d-ed12-496d-aa11-2b48fe572a34]
+  - **Why:** Increase overall test coverage from 75.82% to 80.74% to ensure code quality and catch regressions
+  - **How:** Added 11 new comprehensive tests for telemetryService: cache management, query search, profile switching, and error paths
