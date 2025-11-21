@@ -13,6 +13,8 @@ import type { AuthResult } from '@bctb/shared';
 import type { SavedQuery } from '@bctb/shared';
 import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
+import { VERSION } from './version.js';
+import * as https from 'https';
 
 /**
  * JSON-RPC 2.0 request structure
@@ -1787,6 +1789,66 @@ ${extendStatements}
  * @param config Configuration object (if not provided, loads from env vars)
  * @param mode 'stdio' or 'http'
  */
+/**
+ * Check for MCP updates by querying npm registry
+ */
+async function checkForUpdates(): Promise<void> {
+    return new Promise<void>((resolve) => {
+        // Set a timeout so update check doesn't delay startup
+        const timeoutId = setTimeout(() => {
+            resolve();
+        }, 5000); // 5 second timeout
+
+        const options = {
+            hostname: 'registry.npmjs.org',
+            path: '/bc-telemetry-buddy-mcp/latest',
+            method: 'GET',
+            headers: {
+                'User-Agent': 'bc-telemetry-buddy-mcp'
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                clearTimeout(timeoutId);
+                try {
+                    const packageInfo = JSON.parse(data);
+                    const latestVersion = packageInfo.version;
+
+                    if (latestVersion && latestVersion !== VERSION) {
+                        console.log('\n⚠️  ═══════════════════════════════════════════════════════');
+                        console.log('⚠️  MCP UPDATE AVAILABLE');
+                        console.log('⚠️  ═══════════════════════════════════════════════════════');
+                        console.log(`⚠️  Current version: ${VERSION}`);
+                        console.log(`⚠️  Latest version:  ${latestVersion}`);
+                        console.log('⚠️');
+                        console.log('⚠️  Update with: npm install -g bc-telemetry-buddy-mcp@latest');
+                        console.log('⚠️  Or use VSCode command: "BC Telemetry Buddy: Check for MCP Updates"');
+                        console.log('⚠️  ═══════════════════════════════════════════════════════\n');
+                    }
+                } catch (error) {
+                    // Silently ignore JSON parse errors
+                }
+                resolve();
+            });
+        });
+
+        req.on('error', () => {
+            // Silently ignore network errors
+            clearTimeout(timeoutId);
+            resolve();
+        });
+
+        req.end();
+    });
+}
+
 export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): Promise<void> {
     // Detect mode if not specified
     const forcedMode = mode || process.env.BCTB_MODE?.toLowerCase() as 'stdio' | 'http' | undefined;
@@ -1810,6 +1872,9 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
 
     try {
         const server = new MCPServer(config);
+
+        // Check for updates asynchronously (don't await - let it run in background)
+        checkForUpdates().catch(() => { });
 
         if (isStdioMode) {
             await server.startStdio();

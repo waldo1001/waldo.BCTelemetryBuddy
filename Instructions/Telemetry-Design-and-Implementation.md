@@ -61,6 +61,39 @@ All telemetry must respect user privacy, be configurable/disable‑able, and com
 - Treat it as sensitive; rotate if compromised.
 - Given everyone runs locally with no shared identity, this is the only practical way to achieve "one shared connection string for all users."
 
+**Security Safeguards (Required):**
+
+To protect against abuse, quota exhaustion, and cost overruns, implement these safeguards:
+
+1. **Azure Cost Budget Alerts**:
+   - In Azure Portal → Cost Management → Budgets
+   - Create budget for Application Insights resource
+   - Set thresholds: 50%, 80%, 100%, 150% of expected monthly cost
+   - Configure email alerts to project owner
+   - Recommended starting budget: $50/month (adjust based on actual usage)
+
+2. **Anomaly Detection Alerts**:
+   - In Application Insights → Alerts → New alert rule
+   - Create alerts for:
+     - **Ingestion volume spike**: Alert if data ingestion exceeds 10x daily average
+     - **Error rate spike**: Alert if exceptions exceed 100/hour
+     - **Unique user spike**: Alert if unique `userId` count exceeds 2x expected
+   - Actions: Email + SMS to project owner
+
+3. **Client-Side Rate Limiting** (Implementation Required):
+   - Prevent runaway telemetry in error loops
+   - Limit identical errors to 10 per session
+   - Limit total events to 1000 per session
+   - See implementation in Section 6 below
+
+4. **Connection String Rotation Procedure**:
+   - If compromised, generate new connection string in Azure Portal
+   - Update CI secret (`AI_CONNECTION_STRING`)
+   - Trigger new build and release
+   - Old connection string remains valid for 30 days (grace period for users to update)
+   - After 30 days, disable old connection string in Azure
+   - Document rotation in release notes
+
 **Best-Effort Telemetry:**
 
 - Telemetry must **never affect extension or MCP behavior**.
@@ -124,7 +157,260 @@ Add a **global `telemetry` section** to `.bctb-config.json` with optional per-pr
 
 ---
 
-## 2. Telemetry Abstraction
+## 2. Client-Side Rate Limiting
+
+To prevent runaway telemetry costs from error loops or malicious usage, implement rate limiting on the client side.
+
+### 2.1 Rate Limiting Strategy
+
+**Goals**:
+- Prevent identical errors from flooding Application Insights
+- Limit total telemetry events per session
+- Preserve critical error information (first occurrence always sent)
+- Fail gracefully without affecting extension/MCP functionality
+
+**Implementation**:
+
+```typescript
+interface RateLimitConfig {
+  maxIdenticalErrors: number;      // Max same error per session (default: 10)
+  maxEventsPerSession: number;     // Max total events per session (default: 1000)
+  maxEventsPerMinute: number;      // Max events per minute (default: 100)
+  errorCooldownMs: number;         // Cooldown after max errors (default: 60000)
+}
+
+class RateLimitedUsageTelemetry implements IUsageTelemetry {
+  private innerTelemetry: IUsageTelemetry;
+  private config: RateLimitConfig;
+  
+  // Tracking state
+  private errorCounts = new Map<string, number>();
+  private eventCount = 0;
+  private minuteEventCounts: { timestamp: number; count: number }[] = [];
+  private throttledErrors = new Set<string>();
+
+  constructor(innerTelemetry: IUsageTelemetry, config?: Partial<RateLimitConfig>) {
+    this.innerTelemetry = innerTelemetry;
+    this.config = {
+      maxIdenticalErrors: config?.maxIdenticalErrors ?? 10,
+      maxEventsPerSession: config?.maxEventsPerSession ?? 1000,
+      maxEventsPerMinute: config?.maxEventsPerMinute ?? 100,
+      errorCooldownMs: config?.errorCooldownMs ?? 60000
+    };
+  }
+
+  trackEvent(name: string, properties?: Record<string, any>, measurements?: Record<string, number>): void {
+    if (!this.shouldTrack(name)) {
+      return;
+    }
+
+    try {
+      this.innerTelemetry.trackEvent(name, properties, measurements);
+      this.incrementEventCount();
+    } catch (error) {
+      // Never fail - telemetry is best-effort
+    }
+  }
+
+  trackException(error: Error, properties?: Record<string, string>): void {
+    const errorKey = `${error.name}:${properties?.stackHash || ''}`;
+    
+    // Check if this error is throttled
+    if (this.throttledErrors.has(errorKey)) {
+      return;
+    }
+
+    const count = this.errorCounts.get(errorKey) || 0;
+    
+    if (count < this.config.maxIdenticalErrors) {
+      try {
+        this.innerTelemetry.trackException(error, {
+          ...properties,
+          errorOccurrence: (count + 1).toString(),
+          isThrottled: 'false'
+        });
+        this.errorCounts.set(errorKey, count + 1);
+        this.incrementEventCount();
+      } catch (err) {
+        // Never fail
+      }
+    } else if (count === this.config.maxIdenticalErrors) {
+      // Send one final "throttled" event
+      try {
+        this.innerTelemetry.trackEvent('Telemetry.ErrorThrottled', {
+          errorType: error.name,
+          errorKey,
+          occurrenceCount: count.toString(),
+          message: `Error throttled after ${count} occurrences`
+        });
+        this.throttledErrors.add(errorKey);
+        
+        // Schedule cooldown removal
+        setTimeout(() => {
+          this.throttledErrors.delete(errorKey);
+          this.errorCounts.delete(errorKey);
+        }, this.config.errorCooldownMs);
+      } catch (err) {
+        // Never fail
+      }
+    }
+  }
+
+  trackDependency(name: string, data: string, durationMs: number, success: boolean, resultCode?: string, properties?: Record<string, string>): void {
+    if (!this.shouldTrack('dependency')) {
+      return;
+    }
+
+    try {
+      this.innerTelemetry.trackDependency(name, data, durationMs, success, resultCode, properties);
+      this.incrementEventCount();
+    } catch (error) {
+      // Never fail
+    }
+  }
+
+  trackTrace(message: string, properties?: Record<string, string>): void {
+    if (!this.shouldTrack('trace')) {
+      return;
+    }
+
+    try {
+      this.innerTelemetry.trackTrace(message, properties);
+      this.incrementEventCount();
+    } catch (error) {
+      // Never fail
+    }
+  }
+
+  async flush(): Promise<void> {
+    try {
+      await this.innerTelemetry.flush();
+    } catch (error) {
+      // Never fail
+    }
+  }
+
+  private shouldTrack(eventType: string): boolean {
+    // Check session limit
+    if (this.eventCount >= this.config.maxEventsPerSession) {
+      return false;
+    }
+
+    // Check per-minute limit
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    
+    // Clean old entries
+    this.minuteEventCounts = this.minuteEventCounts.filter(e => e.timestamp > oneMinuteAgo);
+    
+    // Count events in last minute
+    const recentCount = this.minuteEventCounts.reduce((sum, e) => sum + e.count, 0);
+    
+    if (recentCount >= this.config.maxEventsPerMinute) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private incrementEventCount(): void {
+    this.eventCount++;
+    
+    const now = Date.now();
+    const currentMinute = Math.floor(now / 60000) * 60000;
+    
+    const existing = this.minuteEventCounts.find(e => e.timestamp === currentMinute);
+    if (existing) {
+      existing.count++;
+    } else {
+      this.minuteEventCounts.push({ timestamp: currentMinute, count: 1 });
+    }
+  }
+}
+```
+
+### 2.2 Usage in Extension and MCP
+
+**Extension (packages/extension/src/extension.ts)**:
+```typescript
+let telemetry: IUsageTelemetry;
+
+export function activate(context: vscode.ExtensionContext) {
+  try {
+    const connectionString = TELEMETRY_CONNECTION_STRING;
+    
+    if (!connectionString || !vscode.env.isTelemetryEnabled) {
+      telemetry = new NoOpUsageTelemetry();
+    } else {
+      const reporter = new TelemetryReporter(connectionString);
+      const baseTelemetry = new VSCodeUsageTelemetry(reporter);
+      
+      // Wrap with rate limiting
+      telemetry = new RateLimitedUsageTelemetry(baseTelemetry, {
+        maxIdenticalErrors: 10,
+        maxEventsPerSession: 1000,
+        maxEventsPerMinute: 100
+      });
+    }
+  } catch (error) {
+    // Fall back to no-op if initialization fails
+    telemetry = new NoOpUsageTelemetry();
+  }
+}
+```
+
+**MCP Backend (packages/mcp/src/server.ts)**:
+```typescript
+let telemetry: IUsageTelemetry;
+
+function initializeTelemetry(config: Config) {
+  try {
+    const connectionString = TELEMETRY_CONNECTION_STRING;
+    
+    if (!connectionString || !config.telemetry?.enabled) {
+      telemetry = new NoOpUsageTelemetry();
+    } else {
+      appInsights.setup(connectionString)
+        .setAutoCollectRequests(true)
+        .setAutoCollectDependencies(true)
+        .start();
+      
+      const baseTelemetry = new AppInsightsUsageTelemetry(appInsights.defaultClient);
+      
+      // Wrap with rate limiting
+      telemetry = new RateLimitedUsageTelemetry(baseTelemetry, {
+        maxIdenticalErrors: 10,
+        maxEventsPerSession: 2000,  // Higher limit for MCP (more events)
+        maxEventsPerMinute: 200
+      });
+    }
+  } catch (error) {
+    telemetry = new NoOpUsageTelemetry();
+  }
+}
+```
+
+### 2.3 Monitoring Rate Limiting
+
+Track when rate limiting is triggered:
+
+```kusto
+// Find sessions hitting rate limits
+customEvents
+| where name == "Telemetry.ErrorThrottled"
+| summarize 
+    throttledErrors = count(),
+    uniqueErrors = dcount(tostring(customDimensions.errorType))
+  by sessionId = tostring(customDimensions.sessionId)
+| where throttledErrors > 5
+| order by throttledErrors desc
+```
+
+This helps identify problematic users or bugs causing excessive telemetry.
+
+---
+
+## 3. Telemetry Abstraction
 
 To keep the implementation clean and testable, introduce an explicit telemetry abstraction that can be used by both Extension and MCP.
 
@@ -134,7 +420,7 @@ To keep the implementation clean and testable, introduce an explicit telemetry a
 - **UsageTelemetryService**: For tracking extension/MCP usage
 - **TelemetryService**: Existing service for querying BC telemetry (keep as-is)
 
-### 2.1 Usage Telemetry Interface (shared)
+### 3.1 Usage Telemetry Interface (shared)
 
 Create a TypeScript interface in `shared/src/usageTelemetry.ts`:
 
@@ -152,20 +438,121 @@ Concrete implementations:
 - **AppInsightsUsageTelemetry**: Sends data to Application Insights (for MCP backend).
 - **VSCodeUsageTelemetry**: Uses `@vscode/extension-telemetry` TelemetryReporter (for extension).
 - **NoOpUsageTelemetry**: Used when telemetry is disabled or configuration is missing.
+- **TelemetryLevelFilter**: Filters events based on VS Code telemetry level (extension only).
 
-### 2.2 Extension vs MCP Implementation
+### 3.2 Telemetry Level Filter (VS Code Extension Only)
+
+**Purpose**: Respect VS Code's granular telemetry levels.
+
+```typescript
+/**
+ * Filters telemetry events based on VS Code telemetry level
+ */
+class TelemetryLevelFilter implements IUsageTelemetry {
+  private innerTelemetry: IUsageTelemetry;
+  private level: 'off' | 'crash' | 'error' | 'all';
+
+  constructor(innerTelemetry: IUsageTelemetry, level: 'off' | 'crash' | 'error' | 'all') {
+    this.innerTelemetry = innerTelemetry;
+    this.level = level;
+  }
+
+  trackEvent(name: string, properties?: Record<string, any>, measurements?: Record<string, number>): void {
+    // Level 'off' - nothing gets through (handled by NoOp)
+    // Level 'crash' - extensions don't handle crashes, so nothing
+    // Level 'error' - only error/exception events
+    // Level 'all' - everything
+    
+    if (this.level === 'all') {
+      this.innerTelemetry.trackEvent(name, properties, measurements);
+      return;
+    }
+    
+    if (this.level === 'error' && (name.includes('Error') || name.includes('Failed'))) {
+      this.innerTelemetry.trackEvent(name, properties, measurements);
+      return;
+    }
+    
+    // For 'crash' or 'error' with non-error events, do nothing
+  }
+
+  trackException(error: Error, properties?: Record<string, string>): void {
+    // Exceptions are tracked at 'error' and 'all' levels
+    if (this.level === 'error' || this.level === 'all') {
+      this.innerTelemetry.trackException(error, properties);
+    }
+  }
+
+  trackDependency(name: string, data: string, durationMs: number, success: boolean, resultCode?: string, properties?: Record<string, string>): void {
+    // Dependencies are only tracked at 'all' level
+    if (this.level === 'all') {
+      this.innerTelemetry.trackDependency(name, data, durationMs, success, resultCode, properties);
+    }
+  }
+
+  trackTrace(message: string, properties?: Record<string, string>): void {
+    // Traces are only tracked at 'all' level
+    if (this.level === 'all') {
+      this.innerTelemetry.trackTrace(message, properties);
+    }
+  }
+
+  async flush(): Promise<void> {
+    await this.innerTelemetry.flush();
+  }
+}
+```
+
+**Behavior by level**:
+- `off`: No telemetry (use `NoOpUsageTelemetry` instead)
+- `crash`: No telemetry (extensions can't report crashes separately)
+- `error`: Only `trackException()` and error-related events
+- `all`: Full telemetry (default)
+
+### 3.3 Extension vs MCP Implementation
 
 **Extension (VS Code)**:
 - Use **`@vscode/extension-telemetry`** package (official VS Code telemetry API)
-- Automatically respects user's global telemetry preference (`vscode.env.isTelemetryEnabled`)
+- Must respect user's **granular telemetry level** (`telemetry.telemetryLevel` setting)
 - Requires `TelemetryReporter` initialized with your AI instrumentation key
 - Aligns with VS Code marketplace guidelines
 
+**VS Code Telemetry Levels** (handle all four):
+- `off` - No telemetry at all (use `NoOpUsageTelemetry`)
+- `crash` - Only unhandled crashes (not applicable to extensions)
+- `error` - Crashes + errors (track exceptions only)
+- `all` - Full telemetry (track everything)
+
 ```typescript
 import TelemetryReporter from '@vscode/extension-telemetry';
+import * as vscode from 'vscode';
 
-const reporter = new TelemetryReporter('your-instrumentation-key');
-// Wrap in IUsageTelemetry interface for consistency
+function getTelemetryLevel(): 'off' | 'crash' | 'error' | 'all' {
+  const config = vscode.workspace.getConfiguration('telemetry');
+  const level = config.get<string>('telemetryLevel', 'all');
+  
+  // Legacy support for isTelemetryEnabled (deprecated but still used)
+  if (!vscode.env.isTelemetryEnabled) {
+    return 'off';
+  }
+  
+  return level as 'off' | 'crash' | 'error' | 'all';
+}
+
+function createTelemetry(connectionString: string, context: vscode.ExtensionContext): IUsageTelemetry {
+  const level = getTelemetryLevel();
+  
+  if (level === 'off') {
+    return new NoOpUsageTelemetry();
+  }
+  
+  const reporter = new TelemetryReporter(connectionString);
+  const baseTelemetry = new VSCodeUsageTelemetry(reporter);
+  const rateLimited = new RateLimitedUsageTelemetry(baseTelemetry);
+  
+  // Wrap with level filter
+  return new TelemetryLevelFilter(rateLimited, level);
+}
 ```
 
 **MCP Backend (Node.js)**:
@@ -182,14 +569,19 @@ appInsights.setup('your-connection-string')
     .start();
 ```
 
-### 2.3 Initialization Pattern
+### 3.4 Initialization Pattern
 
 - Initialize telemetry **once per process**:
   - **Extension**: in `activate` (in `packages/extension/src/extension.ts`).
-    - Check `vscode.env.isTelemetryEnabled` before initializing
+    - Check `telemetry.telemetryLevel` setting (VS Code marketplace requirement)
+    - Support legacy `vscode.env.isTelemetryEnabled` for backward compatibility
     - Import `TELEMETRY_CONNECTION_STRING` from the CI-generated file
-    - If connection string is empty/missing → use `NoOpUsageTelemetry`
-    - Otherwise, create `VSCodeUsageTelemetry` wrapper around `TelemetryReporter`
+    - If connection string is empty/missing OR level is 'off' → use `NoOpUsageTelemetry`
+    - Otherwise, create telemetry stack:
+      1. `TelemetryReporter` (base)
+      2. `VSCodeUsageTelemetry` (wrapper)
+      3. `RateLimitedUsageTelemetry` (rate limiting)
+      4. `TelemetryLevelFilter` (respect VS Code level)
     - Wrap initialization in try/catch; on error → fall back to `NoOpUsageTelemetry`
   - **MCP**: in `server` startup (in `packages/mcp/src/server.ts`).
     - Check config `telemetry.enabled` flag
@@ -208,9 +600,9 @@ appInsights.setup('your-connection-string')
 
 ---
 
-## 3. Extension Telemetry (VS Code)
+## 4. Extension Telemetry (VS Code)
 
-### 3.1 Command Usage
+### 4.1 Command Usage
 
 For every command contributed by the extension (registered in `extension.ts`):
 
@@ -235,7 +627,7 @@ This yields:
 - **What commands are used** (by counting `Extension.CommandCompleted` by `commandName`).
 - **How long they take** (using the `durationMs` measurement).
 
-### 3.2 Extension Errors
+### 4.2 Extension Errors
 
 Whenever a command or background operation throws:
 
@@ -247,9 +639,9 @@ Optionally, add a tiny wrapper for command registration that always applies try/
 
 ---
 
-## 4. MCP Telemetry
+## 5. MCP Telemetry
 
-### 4.1 MCP Tool Usage & Request Correlation
+### 5.1 MCP Tool Usage & Request Correlation
 
 Each MCP tool (method exposed by the MCP server) should send telemetry on invocation and completion.
 
@@ -312,7 +704,7 @@ app.post('/jsonrpc', async (req, res) => {
 - **How long they take** and how often they fail
 - **Distributed debugging**: Find all related events by `correlationId`
 
-### 4.2 Kusto (KQL) Performance
+### 5.2 Kusto (KQL) Performance
 
 Wherever Kusto is called (likely in `shared/src/kusto.ts` or MCP‑specific query module):
 
@@ -331,13 +723,9 @@ try {
   const result = await kustoClient.execute(kql, token);
   const durationMs = Date.now() - startTime;
   
-  // Hash cluster/database for privacy
-  const clusterHash = hashValue(cluster).substring(0, 8);
-  const databaseHash = hashValue(database).substring(0, 8);
-  
   telemetry.trackDependency(
     'Kusto',                    // dependencyTypeName
-    `${clusterHash}/${databaseHash}`,   // name (hashed)
+    'AppInsights',              // name (generic, no cluster/database info)
     durationMs,                 // duration
     true,                       // success
     '200',                      // resultCode
@@ -346,22 +734,20 @@ try {
       correlationId,
       cacheHit: 'false',
       component: 'shared',
-      clusterHash,
-      databaseHash,
       rowCount: result.rows.length.toString()
     }
   );
 } catch (error) {
   const durationMs = Date.now() - startTime;
-  const clusterHash = hashValue(cluster).substring(0, 8);
-  const databaseHash = hashValue(database).substring(0, 8);
   
-  telemetry.trackDependency('Kusto', `${clusterHash}/${databaseHash}`, durationMs, false, '500', {
+  // CRITICAL: Only track repo-internal errors, sanitize external errors
+  const sanitizedError = sanitizeExternalError(error);
+  
+  telemetry.trackDependency('Kusto', 'AppInsights', durationMs, false, '500', {
     queryName: 'SlowQueries',
     correlationId,
-    clusterHash,
-    databaseHash,
-    errorType: error.name
+    errorType: sanitizedError.type,
+    errorCategory: sanitizedError.category  // 'KustoError', 'NetworkError', etc.
   });
   throw error;
 }
@@ -369,11 +755,13 @@ try {
 
 **Properties to include**:
 - `queryName` (logical identifier, e.g., "ErrorsByDay", "SlowQueries")
-- `clusterHash`, `databaseHash` (hashed for privacy, 8-char truncated SHA256)
 - `cacheHit` (boolean)
 - `correlationId` (for request tracing)
 - `component = "mcp"` or `"shared"`
 - `rowCount` (aggregated count, not actual data)
+
+**❌ REMOVED FOR PRIVACY**:
+- ~~`clusterHash`, `databaseHash`~~ - Even hashed, these can fingerprint customer environments
 
 **⚠️ CRITICAL: NEVER include**:
 - **KQL query text** - ANY raw query text is considered sensitive data (may contain secrets, customer-specific table names, business logic, filters with PII)
@@ -398,7 +786,7 @@ This yields:
 - Insight into slow or failing queries
 - Visual dependency graph in Application Insights
 
-### 4.3 MCP Errors
+### 5.3 MCP Errors
 
 On unhandled exceptions or explicit error paths in the MCP:
 
@@ -407,9 +795,9 @@ On unhandled exceptions or explicit error paths in the MCP:
 
 ---
 
-## 5. Event Naming and Data Model
+## 6. Event Naming and Data Model
 
-### 5.1 Event Names
+### 6.1 Event Names
 
 Use consistent, hierarchical names for events:
 
@@ -432,7 +820,7 @@ Use consistent, hierarchical names for events:
   - `Kusto.QueryExecuted`
   - `Kusto.QueryFailed` (or rely on `exceptions` / dependency failures).
 
-### 5.2 Common Properties
+### 6.2 Common Properties
 
 Define a small core set of shared dimensions applied to most events:
 
@@ -440,7 +828,7 @@ Define a small core set of shared dimensions applied to most events:
 - `environment`: `dev` | `test` | `prod` (from config).
 - `version`: extension or MCP version.
 - `sessionId`: random GUID per process start.
-- `userId`: a pseudonymous identifier (e.g. hash of something stable, or random per installation), if needed.
+- `installationId`: random identifier (changes on reinstall, NOT tied to user/machine).
 - `os`, `nodeVersion`, `vscodeVersion` (where known and useful).
 
 Domain‑specific properties:
@@ -452,10 +840,10 @@ Domain‑specific properties:
   - `toolName`, `requestId`, `caller`, `queryName`.
 
 - **Kusto**:
-  - `queryName`, `clusterHash`, `databaseHash`, `cacheHit`.
+  - `queryName`, `cacheHit` (NO cluster/database identifiers).
 
 - **Errors**:
-  - `errorType`, `errorMessageShort`, `stackHash`, `operation`, `toolName` / `commandName`.
+  - `errorType` (sanitized), `errorCategory`, `stackHash` (repo-only frames), `operation`, `toolName` / `commandName`.
 
 Measurements (numeric):
 - `durationMs` for commands, tools, and queries.
@@ -463,9 +851,9 @@ Measurements (numeric):
 
 ---
 
-## 7. Cost Control and Sampling
+## 8. Cost Control and Sampling
 
-### 7.1 Application Insights Costs
+### 8.1 Application Insights Costs
 
 Application Insights pricing is based on **data volume ingested** (per GB). High-frequency events can become expensive.
 
@@ -475,7 +863,7 @@ Application Insights pricing is based on **data volume ingested** (per GB). High
 - 1M events = ~1-2 GB (~$2-3/month at current Azure pricing)
 - Active users generating 100+ events/day can add up quickly
 
-### 7.2 Sampling Strategies
+### 8.2 Sampling Strategies
 
 **Adaptive Sampling (Built-in)**:
 - Application Insights SDK includes adaptive sampling by default
@@ -528,7 +916,7 @@ class SampledUsageTelemetry implements IUsageTelemetry {
 - **Successful Kusto queries**: 10-25% (high volume)
 - **Cache hits**: 5% (very high volume, less important)
 
-### 7.3 Configuration
+### 8.3 Configuration
 
 Add `samplingPercentage` to `.bctb-config.json`:
 
@@ -547,9 +935,9 @@ Add `samplingPercentage` to `.bctb-config.json`:
 }
 ```
 
-## 8. Session and User Identification
+## 9. Session and User Identification
 
-### 8.1 Session ID
+### 9.1 Session ID
 
 Generate once per process and include in all events:
 
@@ -574,44 +962,124 @@ telemetry.trackEvent('Mcp.QueryTelemetry', {
 });
 ```
 
-### 8.2 User Identification (Pseudonymous)
+### 9.2 Installation Identification (Privacy-First)
 
-**Extension**: Use VS Code machine ID (hashed for privacy):
+**PRIVACY PRINCIPLE**: Track installations pseudonymously for debugging, allow users to reset their ID.
+
+**Design Goals**:
+- ✅ Unique per installation (analyze patterns: "does error X only affect user Y?")
+- ✅ Persistent across sessions (track behavior over time)
+- ✅ User-resettable (GDPR compliance: user can "start fresh")
+- ✅ Not tied to personal identifiers (no machineId, username, workspace path)
+- ✅ Transparent (user can see/reset their ID via command)
+
+**Extension**: Generate random installation ID stored in extension global state:
 ```typescript
-import { env } from 'vscode';
+import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 
-const machineId = env.machineId; // VS Code provides this
-const userId = crypto.createHash('sha256').update(machineId).digest('hex').substring(0, 16);
+function getInstallationId(context: vscode.ExtensionContext): string {
+  const key = 'bcTelemetryBuddy.installationId';
+  let installationId = context.globalState.get<string>(key);
+  
+  if (!installationId) {
+    // Generate new random installation ID
+    installationId = crypto.randomBytes(16).toString('hex');
+    context.globalState.update(key, installationId);
+  }
+  
+  return installationId;
+}
+
+// Allow users to reset their installation ID (GDPR "right to start fresh")
+function resetInstallationId(context: vscode.ExtensionContext): string {
+  const key = 'bcTelemetryBuddy.installationId';
+  const newId = crypto.randomBytes(16).toString('hex');
+  context.globalState.update(key, newId);
+  return newId;
+}
+
+// Register command for users to reset ID
+vscode.commands.registerCommand('bcTelemetryBuddy.resetTelemetryId', async () => {
+  const newId = resetInstallationId(context);
+  vscode.window.showInformationMessage(
+    `Telemetry ID reset. Your new anonymous ID: ${newId.substring(0, 8)}...`
+  );
+});
 
 // Include in telemetry
 telemetry.trackEvent('Extension.CommandInvoked', {
-  userId,  // Hashed, not directly identifiable
+  installationId,  // Random but persistent, user can reset anytime
   sessionId
 });
 ```
 
-**MCP Backend**: Generate a random user ID per installation (or hash workspace path):
+**MCP Backend**: Generate random installation ID per workspace:
 ```typescript
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-function getUserId(workspacePath: string): string {
-  const idFile = path.join(workspacePath, '.bctb-user-id');
+function getInstallationId(workspacePath: string): string {
+  const idFile = path.join(workspacePath, '.bctb-installation-id');
   
   if (fs.existsSync(idFile)) {
     return fs.readFileSync(idFile, 'utf-8').trim();
   }
   
-  // Generate new user ID
-  const userId = crypto.randomBytes(16).toString('hex');
-  fs.writeFileSync(idFile, userId);
-  return userId;
+  // Generate new random installation ID
+  const installationId = crypto.randomBytes(16).toString('hex');
+  fs.writeFileSync(idFile, installationId);
+  
+  // Add to .gitignore if not already there
+  addToGitignore(workspacePath, '.bctb-installation-id');
+  
+  return installationId;
+}
+
+// Allow users to reset by deleting the file
+function resetInstallationId(workspacePath: string): string {
+  const idFile = path.join(workspacePath, '.bctb-installation-id');
+  if (fs.existsSync(idFile)) {
+    fs.unlinkSync(idFile);
+  }
+  return getInstallationId(workspacePath); // Generates new one
 }
 ```
 
-### 8.3 Profile Correlation
+**CRITICAL GDPR Compliance**:
+- Installation ID is **pseudonymous** - random, not derived from user data
+- Installation ID is **persistent** - same ID across sessions for pattern analysis
+- Installation ID is **resettable** - user can reset via command or deleting file
+- Installation ID is **transparent** - user can see it via command
+- No link to real identity without user's cooperation
+
+**User Control**:
+1. **Extension**: `Ctrl+Shift+P` → "BC Telemetry Buddy: Reset Telemetry ID"
+2. **MCP**: Delete `.bctb-installation-id` file in workspace root
+3. **Document in UserGuide**: How to reset, why it exists, what it's used for
+
+**What This Enables**:
+```kusto
+// Find errors that only affect one installation
+customEvents
+| where name == "Extension.Error"
+| summarize 
+    installations = dcount(tostring(customDimensions.installationId)),
+    occurrences = count()
+  by errorType = tostring(customDimensions.errorType)
+| where installations == 1 and occurrences > 5
+// Shows errors that repeatedly affect the same installation
+```
+
+**GDPR Justification**:
+- **Legitimate Interest**: Debugging and improving software quality
+- **Minimal Data**: Only a random ID, no personal information
+- **User Control**: Can reset ID anytime, can disable telemetry entirely
+- **Transparency**: Documented in privacy policy, visible via command
+- **No Profiling**: Used only for error correlation, not behavioral tracking
+
+### 9.3 Profile Correlation
 
 Track which profile is being used (without exposing customer names):
 
@@ -625,24 +1093,83 @@ telemetry.trackEvent('Mcp.QueryTelemetry', {
   eventId: 'TB-MCP-101',
   profileHash,  // E.g., "a1b2c3d4e5f6" instead of "Acme Corp"
   sessionId,
-  userId,
+  installationId,  // Random, not tied to user
   success: 'true'
 });
 ```
 
-## 9. Privacy, Opt‑In, and Documentation
+## 10. Privacy, Opt‑In, and Documentation
 
-### 9.1 Opt‑In / Opt‑Out
+### 10.1 GDPR Compliance Summary
 
-- Telemetry must be **configurable**:
-  - Extension automatically respects VS Code's global telemetry setting (`vscode.env.isTelemetryEnabled`)
-  - No separate opt-in required for the extension
-  - MCP backend telemetry controlled via `.bctb-config.json` or environment variable
-- The MCP backend should follow config-driven control:
-  - `telemetry.enabled = false` in `.bctb-config.json` must fully disable telemetry
-  - `BC_TB_TELEMETRY_ENABLED=false` environment variable as fallback
+**Privacy-First Approach**: This telemetry design prioritizes user privacy and GDPR compliance:
 
-### 9.2 Data Minimization
+1. **Pseudonymous Installation Tracking**:
+   - ✅ Random installation IDs (not derived from user data)
+   - ✅ Persistent across sessions (enables error pattern analysis)
+   - ✅ User-resettable anytime (via command or file deletion)
+   - ✅ Transparent (user can view/reset their ID)
+   - ❌ No link to personal identifiers (machine, email, username)
+   - **GDPR Basis**: Legitimate interest (software quality), minimal data, user control
+
+2. **No Personal Data in Errors**:
+   - ❌ No file paths containing usernames
+   - ❌ No email addresses, tenant IDs, or customer identifiers
+   - ❌ No database/cluster information (even hashed)
+   - ✅ Only repo-internal stack traces (external errors categorized generically)
+
+2. **No Personal Data in Errors**:
+   - ❌ No file paths containing usernames
+   - ❌ No email addresses, tenant IDs, or customer identifiers
+   - ❌ No database/cluster information (even hashed)
+   - ✅ Only repo-internal stack traces (external errors categorized generically)
+
+3. **Repo-Internal Errors Only**:
+   - ✅ Track only errors originating from BCTelemetryBuddy code
+   - ❌ External errors (Kusto, Azure, npm) are categorized generically
+   - ✅ Stack traces limited to repo frames only
+   - ❌ No detailed Kusto error messages (may contain customer data)
+
+4. **Data Retention**: 
+   - Default: 90 days in Azure Application Insights
+   - Configurable via Azure Portal (can be reduced to 30 days)
+   - No long-term archival
+
+5. **"Right to Start Fresh"**:
+   - User can reset installation ID anytime
+   - Extension: Command `BC Telemetry Buddy: Reset Telemetry ID`
+   - MCP: Delete `.bctb-installation-id` file
+   - New ID generated → past telemetry cannot be linked to new sessions
+   - Equivalent to "right to be forgotten" for pseudonymous data
+
+6. **Opt-Out Mechanism**:
+   - VS Code global telemetry setting (extension)
+   - `.bctb-config.json` or environment variable (MCP)
+   - Telemetry disabled by default if setting not found
+
+7. **Geographic Data Residency**:
+   - Recommended: Use EU Azure region for EU users' data sovereignty
+   - Alternative: US region (acceptable for pseudonymous data)
+
+### 10.2 Opt‑In / Opt‑Out
+
+**Extension (VS Code)**:
+- **Must respect `telemetry.telemetryLevel` setting** (VS Code marketplace requirement):
+  - `off` - No telemetry
+  - `crash` - No telemetry (extensions don't report crashes separately)
+  - `error` - Only exceptions and error events
+  - `all` - Full telemetry (default)
+- Also respect legacy `vscode.env.isTelemetryEnabled` for backward compatibility
+- No separate extension-specific setting needed (use VS Code global setting)
+
+**MCP Backend**:
+- Controlled via `.bctb-config.json`:
+  - `telemetry.enabled = false` fully disables telemetry
+- Environment variable as fallback:
+  - `BC_TB_TELEMETRY_ENABLED=false`
+- Default: Enabled if no setting found
+
+### 10.2 Data Minimization
 
 - Do **not** send:
   - **KQL query text** - treat ALL raw query text as sensitive (may contain secrets, customer-specific logic, table names with business context, filters with PII).
@@ -652,48 +1179,230 @@ telemetry.trackEvent('Mcp.QueryTelemetry', {
 - Prefer short identifiers or hashes (e.g. `profileIdHash`) for correlation.
 - Use logical, predefined names for `queryName` (never derived from actual KQL text).
 
-### 9.3 User‑Facing Documentation
+### 10.4 User‑Facing Documentation
 
-Update `docs/UserGuide.md` with a **Telemetry** section that explains:
+Update `docs/UserGuide.md` with a **Telemetry & Privacy** section that explains:
 
-- What is collected (high‑level usage, performance, errors).
-- What is **not** collected (no raw data, no PII).
-- How to enable/disable telemetry (settings and environment variables).
-- Where telemetry is sent (Azure Application Insights, owned by you).
-- How data is pseudonymized (hashed user/profile IDs).
+- What is collected (high‑level usage, performance, repo-internal errors only).
+- What is **NOT** collected:
+  - ❌ No KQL query text or results
+  - ❌ No file paths, usernames, or PII
+  - ❌ No customer/tenant identifiers
+  - ❌ No database/cluster information
+  - ❌ External error details (Kusto errors, Azure errors)
+  - ✅ Only errors from BCTelemetryBuddy code itself
+- How to enable/disable telemetry:
+  - **Extension**: VS Code setting `telemetry.telemetryLevel`
+    - `File` → `Preferences` → `Settings` → Search "telemetry"
+    - Options: `off` (disabled), `error` (errors only), `all` (full telemetry)
+  - **MCP**: `.bctb-config.json` → `telemetry.enabled: false`
+  - **MCP**: Environment variable `BC_TB_TELEMETRY_ENABLED=false`
+- Where telemetry is sent (Azure Application Insights, project-owned).
+- Privacy approach:
+  - Random installation IDs (not tied to users or machines)
+  - **Persistent across sessions** for debugging (analyze patterns per installation)
+  - **User can reset ID anytime**:
+    - Extension: `Ctrl+Shift+P` → "BC Telemetry Buddy: Reset Telemetry ID"
+    - MCP: Delete `.bctb-installation-id` file in workspace
+  - Profile names hashed (customer names not exposed)
+  - Only repo-internal stack traces tracked
 - Sampling strategy (not all events are sent, errors always captured).
+- Data retention: 90 days (configurable in Azure).
+- **Why we track installation IDs**:
+  - Enables debugging: "Does error X only affect installation Y?"
+  - No personal data: Random ID, no link to identity
+  - Full user control: Reset anytime to "start fresh"
 
 ---
 
-## 10. Enhanced Error Context
+## 11. Enhanced Error Context
 
-### 10.1 Stack Traces
+### 11.1 Stack Traces - Repo-Only Frames
 
-Full stack traces can contain PII (file paths with usernames). Use a **hashing strategy**:
+**PRIVACY PRINCIPLE**: Only track stack frames from this repository. External errors (Kusto, Azure, npm packages) are sanitized.
 
 ```typescript
-function trackExceptionSafe(error: Error, properties?: Record<string, string>) {
-  // Extract top 5 stack frames only
-  const stack = error.stack?.split('\n').slice(0, 5).join('\n') || '';
+/**
+ * Sanitize stack trace to only include frames from this repo
+ * Removes: file paths with usernames, external package frames, system paths
+ */
+function sanitizeStackTrace(stack: string | undefined, repoRoot: string): string {
+  if (!stack) return '';
   
-  // Hash the stack for grouping without exposing paths
-  const stackHash = crypto.createHash('md5').update(stack).digest('hex').substring(0, 12);
+  const lines = stack.split('\n');
+  const repoFrames: string[] = [];
+  
+  for (const line of lines) {
+    // Only include frames from our repo
+    if (line.includes(repoRoot)) {
+      // Remove full path, keep only relative path from repo root
+      const relativePath = line.substring(line.indexOf(repoRoot) + repoRoot.length)
+        .replace(/\\/g, '/')
+        .replace(/^[\/]+/, '');
+      
+      // Extract just the file and function (no line numbers, no full paths)
+      const sanitized = relativePath
+        .replace(/:\d+:\d+/g, '')  // Remove line:column
+        .replace(/\s+at\s+/g, 'at ');  // Normalize spacing
+      
+      repoFrames.push(sanitized);
+    }
+  }
+  
+  // Return only top 5 repo frames
+  return repoFrames.slice(0, 5).join('\n');
+}
+
+function hashStackTrace(stack: string): string {
+  if (!stack) return 'no-stack';
+  return crypto.createHash('sha256').update(stack).digest('hex').substring(0, 12);
+}
+
+function trackExceptionSafe(error: Error, properties?: Record<string, string>, repoRoot: string) {
+  // Sanitize stack to repo-only frames
+  const sanitizedStack = sanitizeStackTrace(error.stack, repoRoot);
+  const stackHash = hashStackTrace(sanitizedStack);
+  
+  // Sanitize error message (remove external error details)
+  const sanitizedMessage = sanitizeErrorMessage(error.message);
+  
+  // Categorize error source
+  const errorCategory = categorizeError(error, sanitizedStack);
   
   telemetry.trackException(error, {
     ...properties,
     stackHash,
-    errorMessage: error.message.substring(0, 200),  // Truncate long messages
-    errorType: error.name
+    errorMessage: sanitizedMessage.substring(0, 200),
+    errorType: error.name,
+    errorCategory,  // 'RepoInternal', 'ExternalAPI', 'Network', etc.
+    hasRepoFrames: (sanitizedStack.length > 0).toString()
   });
 }
 ```
 
 **Benefits**:
-- Group similar errors by `stackHash`
-- No PII in stack traces
-- Still enough context to identify unique error patterns
+- Zero PII (no file paths with usernames)
+- Only track errors originating from our code
+- External API errors (Kusto, Azure) are categorized but not detailed
 
-### 10.2 Request Correlation
+### 11.2 Error Message Sanitization
+
+**PRIVACY PRINCIPLE**: Only track error messages from repo code. External errors are categorized generically.
+
+```typescript
+/**
+ * Sanitize error message to remove PII and external service details
+ */
+function sanitizeErrorMessage(message: string): string {
+  if (!message) return 'No error message';
+  
+  // Block common PII patterns
+  let sanitized = message
+    // Remove file paths
+    .replace(/[A-Za-z]:\\[^\s"']+/g, '[path]')
+    .replace(/\/[^\s"']+\/(Users|home)\/[^\s"'\/]+/g, '[path]')
+    // Remove email addresses
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[email]')
+    // Remove URLs with potential tenant/customer info
+    .replace(/https?:\/\/[^\s"']+/g, '[url]')
+    // Remove GUIDs (could be customer IDs)
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '[guid]')
+    // Remove IP addresses
+    .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[ip]');
+  
+  // If this is an external error (Kusto, Azure, etc.), use generic message
+  if (isExternalError(message)) {
+    return categorizeExternalError(message);
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Detect if error is from external service (not our repo)
+ */
+function isExternalError(message: string): boolean {
+  const externalIndicators = [
+    'Kusto',
+    'Azure',
+    'Application Insights',
+    'authentication',
+    'AADSTS',  // Azure AD error codes
+    'https.ingest.monitor.azure.com',
+    'RequestId:',
+    'CorrelationId:'
+  ];
+  
+  return externalIndicators.some(indicator => 
+    message.toLowerCase().includes(indicator.toLowerCase())
+  );
+}
+
+/**
+ * Categorize external errors generically
+ */
+function categorizeExternalError(message: string): string {
+  const msg = message.toLowerCase();
+  
+  if (msg.includes('kusto') || msg.includes('query')) {
+    return 'External: Kusto query error';
+  }
+  if (msg.includes('auth') || msg.includes('token') || msg.includes('aadsts')) {
+    return 'External: Authentication error';
+  }
+  if (msg.includes('network') || msg.includes('timeout') || msg.includes('econnrefused')) {
+    return 'External: Network error';
+  }
+  if (msg.includes('application insights')) {
+    return 'External: Application Insights error';
+  }
+  
+  return 'External: Unknown external service error';
+}
+
+/**
+ * Categorize error by source
+ */
+function categorizeError(error: Error, sanitizedStack: string): string {
+  // Has repo frames → internal error
+  if (sanitizedStack.length > 0) {
+    return 'RepoInternal';
+  }
+  
+  // Check error type and message for categorization
+  const message = error.message.toLowerCase();
+  
+  if (error.name === 'TypeError' || error.name === 'ReferenceError') {
+    return 'RepoInternal';
+  }
+  
+  if (message.includes('kusto')) return 'ExternalKusto';
+  if (message.includes('auth')) return 'ExternalAuth';
+  if (message.includes('network')) return 'ExternalNetwork';
+  if (message.includes('azure')) return 'ExternalAzure';
+  
+  return 'ExternalUnknown';
+}
+
+/**
+ * Sanitize external errors for dependency tracking
+ */
+function sanitizeExternalError(error: any): { type: string; category: string } {
+  return {
+    type: error.name || 'Error',
+    category: categorizeError(error, '')
+  };
+}
+```
+
+**What gets tracked**:
+- ✅ Errors from repo code (with sanitized stack traces)
+- ✅ Error categories for external services ('ExternalKusto', 'ExternalAuth', etc.)
+- ❌ Detailed Kusto error messages (may contain customer data)
+- ❌ Azure error details (may contain tenant/subscription info)
+- ❌ Any file paths, URLs, emails, GUIDs, or IPs
+
+### 11.3 Request Correlation
 
 For distributed debugging, link related events:
 
@@ -734,7 +1443,7 @@ union customEvents, exceptions, dependencies
 | order by timestamp asc
 ```
 
-### 10.3 Environment Context
+### 11.3 Environment Context
 
 Include environment info for debugging platform-specific issues:
 
@@ -756,9 +1465,9 @@ telemetry.trackEvent('Extension.CommandInvoked', {
 
 ---
 
-## 11. Testing and Validation
+## 12. Testing and Validation
 
-### 11.1 Local Testing
+### 12.1 Local Testing
 
 - Use a **separate AI resource** for local/dev validation.
 - Run the extension and MCP in dev mode and perform typical operations:
@@ -770,7 +1479,7 @@ telemetry.trackEvent('Extension.CommandInvoked', {
   - `dependencies` for Kusto calls (if tracked).
   - `exceptions` for errors.
 
-### 11.2 Automated Tests
+### 12.2 Automated Tests
 
 - Add unit tests around telemetry integration:
   - Use a **mock telemetry implementation** to assert that:
@@ -781,11 +1490,11 @@ telemetry.trackEvent('Extension.CommandInvoked', {
 
 ---
 
-## 12. Sample Analysis Queries (in Application Insights)
+## 13. Sample Analysis Queries (in Application Insights)
 
 Once telemetry is flowing, these Kusto queries (in the AI workspace) answer the original questions.
 
-### 12.1 Which Extension Commands Are Used?
+### 13.1 Which Extension Commands Are Used?
 
 ```kusto
 customEvents
@@ -794,7 +1503,7 @@ customEvents
 | order by count_ desc
 ```
 
-### 12.2 How Long Does KQL Take?
+### 13.2 How Long Does KQL Take?
 
 ```kusto
 customEvents
@@ -807,7 +1516,7 @@ customEvents
 | order by p95DurationMs desc
 ```
 
-### 12.3 Which MCP Tools Are Used?
+### 13.3 Which MCP Tools Are Used?
 
 ```kusto
 customEvents
@@ -820,7 +1529,7 @@ customEvents
 | order by invocations desc
 ```
 
-### 12.4 Error Hotspots
+### 13.4 Error Hotspots
 
 ```kusto
 exceptions
@@ -831,7 +1540,7 @@ exceptions
 | order by count_ desc
 ```
 
-### 12.5 End-to-End Request Tracing
+### 13.5 End-to-End Request Tracing
 
 ```kusto
 let correlationId = "abc-123-def-456";  // From a specific error or command
@@ -850,7 +1559,7 @@ union customEvents, exceptions, dependencies
 
 This shows the full flow: Extension.CommandInvoked → Mcp.QueryTelemetry (or other tool event) → Kusto dependency → Results
 
-### 12.6 Performance by Profile
+### 13.6 Performance by Profile
 
 ```kusto
 dependencies
@@ -866,7 +1575,7 @@ dependencies
 
 ---
 
-## 13. Complete Event Catalog
+## 14. Complete Event Catalog
 
 This section lists all telemetry events with their IDs, custom dimensions, and measurements.
 
@@ -877,7 +1586,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.1 Extension Events
+### 14.1 Extension Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -893,7 +1602,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.2 MCP Server Events
+### 14.2 MCP Server Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -901,7 +1610,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 | **TB-MCP-002** | `Mcp.ConfigurationLoaded` | `eventId`, `source`, `hasMultipleProfiles`, `profileCount`, `validationErrors`, `sessionId`, `timestamp` | - |
 | **TB-MCP-005** | `Mcp.Error` | `eventId`, `errorType`, `operation`, `correlationId`, `toolName`, `stackHash`, `sessionId`, `profileHash`, `timestamp` | - |
 
-### 13.2.1 MCP Tool Events (Per Tool)
+### 14.2.1 MCP Tool Events (Per Tool)
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -915,7 +1624,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.3 Authentication Events
+### 14.3 Authentication Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -926,7 +1635,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.4 Kusto Query Events
+### 14.4 Kusto Query Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -937,7 +1646,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.5 Cache Events
+### 14.5 Cache Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -949,7 +1658,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.6 Chat Participant Events
+### 14.6 Chat Participant Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -960,7 +1669,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.7 Migration Events
+### 14.7 Migration Events
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
@@ -970,7 +1679,7 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 ---
 
-### 13.8 Common Dimensions Reference
+### 14.8 Common Dimensions Reference
 
 All events should include these **standard dimensions**:
 
@@ -997,7 +1706,7 @@ All events should include these **standard dimensions**:
 
 ---
 
-### 13.9 Sampling Configuration by Event
+### 14.9 Sampling Configuration by Event
 
 ```json
 {
@@ -1035,7 +1744,7 @@ All events should include these **standard dimensions**:
 
 ---
 
-### 13.10 Usage Example
+### 14.10 Usage Example
 
 **Extension Command Handler:**
 ```typescript
@@ -1047,7 +1756,7 @@ telemetry.trackEvent('Extension.CommandInvoked', {
   commandName: 'runQuery',
   correlationId,
   sessionId: this.sessionId,
-  userId: this.userId,
+  installationId: this.installationId,  // Random, not tied to user
   version: this.extensionVersion,
   profileHash: hashValue(this.currentProfile),
   vsCodeVersion: vscode.version,
@@ -1064,7 +1773,7 @@ try {
     commandName: 'runQuery',
     correlationId,
     sessionId: this.sessionId,
-    userId: this.userId,
+    installationId: this.installationId,
     success: 'true',
     profileHash: hashValue(this.currentProfile),
     timestamp: new Date().toISOString()
@@ -1080,7 +1789,7 @@ try {
     commandName: 'runQuery',
     stackHash: hashStack(error.stack),
     sessionId: this.sessionId,
-    userId: this.userId,
+    installationId: this.installationId,
     timestamp: new Date().toISOString()
   });
 }
@@ -1106,7 +1815,7 @@ try {
     cacheHit: result.cached.toString(),
     profileHash: hashValue(this.currentProfile),
     sessionId: this.sessionId,
-    userId: this.userId,
+    installationId: this.installationId,
     component: 'mcp',
     timestamp: new Date().toISOString()
   }, {
@@ -1125,7 +1834,7 @@ try {
     caller: params.caller || 'extension',
     profileHash: hashValue(this.currentProfile),
     sessionId: this.sessionId,
-    userId: this.userId,
+    installationId: this.installationId,
     component: 'mcp',
     timestamp: new Date().toISOString()
   }, {
@@ -1203,25 +1912,34 @@ try {
 
 ---
 
-## 14. Implementation Checklist
+## 15. Implementation Checklist
 
 **Shared Package**
 - [ ] Create `shared/src/usageTelemetry.ts` with `IUsageTelemetry` interface
 - [ ] Implement `NoOpUsageTelemetry` (when disabled or connection string missing)
+- [ ] Implement `RateLimitedUsageTelemetry` wrapper (Section 2)
+- [ ] Implement `TelemetryLevelFilter` (VS Code level support - Section 3.2)
 - [ ] Add telemetry config to `shared/src/config.ts` (global + per-profile, excluding connection string)
-- [ ] Add utility functions: `generateGuid()`, `hashValue()`, `trackExceptionSafe()`
+- [ ] Add utility functions: `generateGuid()`, `hashValue()`, `sanitizeStackTrace()`, `sanitizeErrorMessage()`, `categorizeError()`
 - [ ] Create `shared/src/telemetryConfig.generated.ts` template (gitignored) for CI injection
 
 **Extension**
 - [ ] Install `@vscode/extension-telemetry` package
 - [ ] Implement `VSCodeUsageTelemetry` wrapper around `TelemetryReporter`
-- [ ] Initialize in `activate()`, check `vscode.env.isTelemetryEnabled` and connection string presence
+- [ ] **Check `telemetry.telemetryLevel` setting** (VS Code marketplace requirement)
+- [ ] **Support all four telemetry levels**: `off`, `crash`, `error`, `all`
+- [ ] Support legacy `vscode.env.isTelemetryEnabled` for backward compatibility
+- [ ] Initialize in `activate()`, check telemetry level and connection string presence
 - [ ] Import `TELEMETRY_CONNECTION_STRING` from generated file, fall back to `NoOpUsageTelemetry` if missing
 - [ ] Wrap all telemetry initialization and calls in try/catch (never fail commands)
+- [ ] **Create telemetry stack**: Reporter → VSCode wrapper → Rate limiter → Level filter
+- [ ] **Generate random `installationId` in extension global state** (persistent, not from machineId)
+- [ ] **Register command `bcTelemetryBuddy.resetTelemetryId`** (allows users to reset their ID)
 - [ ] Wrap command handlers with correlation ID and telemetry
+- [ ] **Use `sanitizeStackTrace()` and `sanitizeErrorMessage()` for all exceptions**
 - [ ] Add error telemetry in key services (`mcpClient`, `migrationService`)
 - [ ] Pass `correlationId` to MCP requests
-- [ ] Add common properties: `sessionId`, `userId` (hashed), `version`, `os`
+- [ ] Add common properties: `sessionId`, `installationId` (random), `version`, `os`
 
 **MCP Backend**
 - [ ] Install `applicationinsights` package
@@ -1229,13 +1947,16 @@ try {
 - [ ] Add telemetry config reading from `.bctb-config.json` (enabled, environment, sampling only)
 - [ ] Import `TELEMETRY_CONNECTION_STRING` from generated file, fall back to `NoOpUsageTelemetry` if missing
 - [ ] Wrap all telemetry initialization and calls in try/catch (never fail MCP operations)
+- [ ] **Generate random `installationId` per workspace** (stored in `.bctb-installation-id`)
+- [ ] **Add `.bctb-installation-id` to `.gitignore` automatically**
 - [ ] Initialize in server startup with connection string
 - [ ] Create Express middleware for request correlation
 - [ ] Wrap MCP tool handlers with telemetry (invoked/completed)
-- [ ] Use `trackDependency` for Kusto calls in `shared/src/kusto.ts`
-- [ ] Add error telemetry with stack hashing
+- [ ] **Use `trackDependency` for Kusto calls WITHOUT cluster/database identifiers**
+- [ ] **Use `sanitizeExternalError()` for all Kusto/Azure errors**
+- [ ] Add error telemetry with stack hashing (repo frames only)
 - [ ] Implement sampling logic (per event type)
-- [ ] Add common properties: `sessionId`, `userId`, `profileHash`
+- [ ] Add common properties: `sessionId`, `installationId`, `profileHash`
 
 **Configuration & CI**
 - [ ] Update `.bctb-config.json` schema with `telemetry` section (enabled, environment, sampling - NO connection string)
@@ -1245,11 +1966,17 @@ try {
 - [ ] Add `shared/src/telemetryConfig.generated.ts` to `.gitignore`
 - [ ] Create separate dev/prod AI resources (dev for local testing, prod for releases)
 - [ ] Document local dev setup with `.env` file for `AI_CONNECTION_STRING`
+- [ ] **Set up Azure cost budget alerts** ($50/month starting point)
+- [ ] **Configure anomaly detection alerts** (ingestion spike, error spike, user spike)
+- [ ] **Document connection string rotation procedure**
 
 **Docs & Tests**
 - [ ] Update `docs/UserGuide.md` with telemetry section (what's collected, privacy, how to disable)
+- [ ] **Document `Reset Telemetry ID` command** (how to reset, why, GDPR compliance)
 - [ ] Document sampling strategy and cost estimates
 - [ ] Add unit tests using mock `IUsageTelemetry` implementation
 - [ ] Test correlation flow: Extension → MCP → Kusto
 - [ ] Validate telemetry end‑to‑end in a dev AI resource
 - [ ] Create example analysis queries in Application Insights
+- [ ] **Test installation ID persistence** (survives restart, command resets it)
+- [ ] **Verify `.bctb-installation-id` is gitignored**

@@ -2232,3 +2232,7 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Prepare a release - both components with minor version bumps"
 
 ---
+### Entry ID: 2041a492-159e-4a8d-a8a6-03914d917fbc — 2025-11-21 22:49
+> "I notice the MCP doesn't automatically update. Can we do that?"
+
+---

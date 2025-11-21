@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Automatic MCP Updates**: Extension now automatically checks for MCP updates daily
+  - Silent background checks every 24 hours (won't interrupt your work)
+  - Update notification shows current version → new version
+  - One-click update from notification
+  - Option to view changes on npm before updating
+  - Manual check available via Command Palette: "BC Telemetry Buddy: Check for MCP Updates"
+  - Respects notification frequency (won't spam - max once per day)
+
 ## [1.1.0] - 2025-11-21
 
 No changes in this release (MCP-only minor release for new features and improvements)

@@ -962,6 +962,22 @@ All extension settings with their types, defaults, and descriptions:
 
 ## Troubleshooting
 
+### Automatic MCP Updates
+
+**Keep your MCP up to date automatically!**
+
+The extension checks for MCP updates in the background:
+- **Automatic checks**: Every 24 hours (silent, won't interrupt work)
+- **Smart notifications**: Only notifies once per day when updates are available
+- **Manual check**: Run `BC Telemetry Buddy: Check for MCP Updates` from Command Palette
+- **One-click update**: Click "Update Now" in the notification to install the latest version
+- **View changes**: Click "View Changes" to see what's new on npm
+
+**Manual Update:**
+```bash
+npm install -g bc-telemetry-buddy-mcp@latest
+```
+
 ### MCP Server Won't Start
 
 **Symptoms:** Error when running "Start MCP Server" command

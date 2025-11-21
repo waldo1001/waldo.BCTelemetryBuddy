@@ -13,7 +13,7 @@ import { TelemetryService } from './services/telemetryService';
 import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
 import { ProfileManager } from './services/profileManager';
-import { showFirstRunNotification } from './services/mcpInstaller';
+import { showFirstRunNotification, startPeriodicUpdateChecks, checkForMCPUpdates } from './services/mcpInstaller';
 
 /**
  * MCP process handle
@@ -374,6 +374,11 @@ export function activate(context: vscode.ExtensionContext) {
         await showFirstRunNotification(context);
     }, 5000);
 
+    // Start periodic MCP update checks
+    context.subscriptions.push(
+        startPeriodicUpdateChecks(context)
+    );
+
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('bctb.setupWizard', async () => {
@@ -411,7 +416,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand()),
         vscode.commands.registerCommand('bctb.createProfile', () => createProfileCommand()),
         vscode.commands.registerCommand('bctb.setDefaultProfile', () => setDefaultProfileCommand()),
-        vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand())
+        vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand()),
+        vscode.commands.registerCommand('bctb.checkForMCPUpdates', () => checkForMCPUpdates(context, false))
     );
 
     // Register CodeLens provider for .kql files

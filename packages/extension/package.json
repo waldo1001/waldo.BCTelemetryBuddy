@@ -118,6 +118,11 @@
             {
                 "command": "bctb.showReleaseNotes",
                 "title": "BC Telemetry Buddy: What's New"
+            },
+            {
+                "command": "bctb.checkForMCPUpdates",
+                "title": "BC Telemetry Buddy: Check for MCP Updates",
+                "icon": "$(cloud-download)"
             }
         ],
         "configuration": {

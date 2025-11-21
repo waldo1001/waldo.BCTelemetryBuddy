@@ -10,7 +10,9 @@ import {
     checkMCPHealth,
     showFirstRunNotification,
     getLatestMCPVersion,
-    isMCPUpdateAvailable
+    isMCPUpdateAvailable,
+    checkForMCPUpdates,
+    startPeriodicUpdateChecks
 } from '../services/mcpInstaller';
 
 // Mock child_process
@@ -567,6 +569,163 @@ describe('mcpInstaller', () => {
 
             const updateAvailable = await isMCPUpdateAvailable();
             expect(updateAvailable).toBe(false);
+        });
+    });
+
+    describe('checkForMCPUpdates', () => {
+        let mockContext: vscode.ExtensionContext;
+
+        beforeEach(() => {
+            mockContext = {
+                globalState: {
+                    get: jest.fn().mockReturnValue(0),
+                    update: jest.fn(),
+                    keys: jest.fn(),
+                    setKeysForSync: jest.fn()
+                }
+            } as any;
+        });
+
+        it('should notify when update is available', async () => {
+            mockExec.mockImplementation((cmd, callback: any) => {
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
+                    callback(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' });
+                } else if (cmd.includes('--version')) {
+                    callback(null, { stdout: '1.0.0', stderr: '' });
+                } else if (cmd.includes('npm view')) {
+                    callback(null, { stdout: '1.1.0', stderr: '' });
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('Remind Me Later');
+
+            await checkForMCPUpdates(mockContext, false);
+
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+                expect.stringContaining('v1.0.0 → v1.1.0'),
+                'Update Now',
+                'View Changes',
+                'Remind Me Later'
+            );
+        });
+
+        it('should trigger update when user selects Update Now', async () => {
+            mockExec.mockImplementation((cmd, options: any, callback: any) => {
+                const cb = typeof options === 'function' ? options : callback;
+
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
+                    setTimeout(() => cb(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('--version')) {
+                    setTimeout(() => cb(null, { stdout: '1.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('npm view')) {
+                    setTimeout(() => cb(null, { stdout: '1.1.0', stderr: '' }), 0);
+                } else if (cmd.includes('npm install -g')) {
+                    setTimeout(() => cb(null, { stdout: 'Updated', stderr: '' }), 0);
+                } else if (cmd.includes('where.exe') || cmd.includes('which')) {
+                    setTimeout(() => cb(null, { stdout: '/usr/local/bin/bctb-mcp', stderr: '' }), 0);
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            (vscode.window.showInformationMessage as jest.Mock).mockResolvedValueOnce('Update Now');
+
+            await checkForMCPUpdates(mockContext, false);
+
+            expect(mockContext.globalState.update).toHaveBeenCalledWith('mcpUpdateLastNotified', expect.any(Number));
+        });
+
+        it('should show up to date message when no update available (non-silent)', async () => {
+            mockExec.mockImplementation((cmd, callback: any) => {
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
+                    callback(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' });
+                } else if (cmd.includes('--version') || cmd.includes('npm view')) {
+                    callback(null, { stdout: '1.0.0', stderr: '' });
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            await checkForMCPUpdates(mockContext, false);
+
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+                expect.stringContaining('up to date'),
+                'OK'
+            );
+        });
+
+        it('should not notify when silent and recently notified', async () => {
+            // Set last notified to 1 hour ago
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            mockContext.globalState.get = jest.fn().mockReturnValue(oneHourAgo);
+
+            mockExec.mockImplementation((cmd, callback: any) => {
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
+                    callback(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' });
+                } else if (cmd.includes('--version')) {
+                    callback(null, { stdout: '1.0.0', stderr: '' });
+                } else if (cmd.includes('npm view')) {
+                    callback(null, { stdout: '1.1.0', stderr: '' });
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            await checkForMCPUpdates(mockContext, true);
+
+            expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
+        });
+
+        it('should prompt to install when MCP not installed (non-silent)', async () => {
+            mockExec.mockImplementation((cmd, callback: any) => {
+                callback(new Error('Not found'), null);
+                return {} as childProcess.ChildProcess;
+            });
+
+            (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('Not Now');
+
+            await checkForMCPUpdates(mockContext, false);
+
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+                expect.stringContaining('not installed'),
+                'Install',
+                'Not Now'
+            );
+        });
+    });
+
+    describe('startPeriodicUpdateChecks', () => {
+        let mockContext: vscode.ExtensionContext;
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+            mockContext = {
+                globalState: {
+                    get: jest.fn().mockReturnValue(0),
+                    update: jest.fn(),
+                    keys: jest.fn(),
+                    setKeysForSync: jest.fn()
+                }
+            } as any;
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should start periodic update checks', () => {
+            const disposable = startPeriodicUpdateChecks(mockContext);
+            expect(disposable).toBeDefined();
+            expect(typeof disposable.dispose).toBe('function');
+            disposable.dispose();
+        });
+
+        it('should clear interval when disposed', () => {
+            const disposable = startPeriodicUpdateChecks(mockContext);
+            const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+            disposable.dispose();
+
+            expect(clearIntervalSpy).toHaveBeenCalled();
+            clearIntervalSpy.mockRestore();
         });
     });
 });

@@ -329,3 +329,105 @@ export async function isMCPUpdateAvailable(): Promise<boolean> {
     // Simple version comparison (assumes semver format)
     return currentVersion !== latestVersion;
 }
+
+/**
+ * Check for MCP updates and notify user if available
+ */
+export async function checkForMCPUpdates(
+    context: vscode.ExtensionContext,
+    silent: boolean = false
+): Promise<void> {
+    try {
+        // Check if MCP is installed
+        const installed = await isMCPInstalled();
+        if (!installed) {
+            if (!silent) {
+                const choice = await vscode.window.showInformationMessage(
+                    'BC Telemetry Buddy MCP is not installed. Install now for full Copilot Chat integration?',
+                    'Install',
+                    'Not Now'
+                );
+                if (choice === 'Install') {
+                    await installMCP(false);
+                }
+            }
+            return;
+        }
+
+        // Check if update is available
+        const updateAvailable = await isMCPUpdateAvailable();
+        if (!updateAvailable) {
+            if (!silent) {
+                const version = await getMCPVersion();
+                vscode.window.showInformationMessage(
+                    `BC Telemetry Buddy MCP is up to date (v${version})`,
+                    'OK'
+                );
+            }
+            return;
+        }
+
+        // Update is available - get versions
+        const [currentVersion, latestVersion] = await Promise.all([
+            getMCPVersion(),
+            getLatestMCPVersion()
+        ]);
+
+        // Store update notification time
+        const lastNotified = context.globalState.get<number>('mcpUpdateLastNotified', 0);
+        const now = Date.now();
+        const dayInMs = 24 * 60 * 60 * 1000;
+
+        // Only notify once per day (unless forced with silent=false)
+        if (silent && (now - lastNotified) < dayInMs) {
+            return;
+        }
+
+        await context.globalState.update('mcpUpdateLastNotified', now);
+
+        const choice = await vscode.window.showInformationMessage(
+            `BC Telemetry Buddy MCP update available: v${currentVersion} → v${latestVersion}`,
+            'Update Now',
+            'View Changes',
+            'Remind Me Later'
+        );
+
+        if (choice === 'Update Now') {
+            await installMCP(true);
+        } else if (choice === 'View Changes') {
+            vscode.env.openExternal(vscode.Uri.parse(
+                'https://www.npmjs.com/package/bc-telemetry-buddy-mcp?activeTab=versions'
+            ));
+        }
+    } catch (error: any) {
+        if (!silent) {
+            vscode.window.showErrorMessage(
+                `Failed to check for MCP updates: ${error.message}`,
+                'OK'
+            );
+        }
+    }
+}
+
+/**
+ * Start periodic MCP update checks
+ */
+export function startPeriodicUpdateChecks(
+    context: vscode.ExtensionContext
+): vscode.Disposable {
+    // Check for updates on activation (silent)
+    setTimeout(() => {
+        checkForMCPUpdates(context, true).catch(() => { });
+    }, 10000); // Wait 10 seconds after activation
+
+    // Then check daily
+    const intervalId = setInterval(() => {
+        checkForMCPUpdates(context, true).catch(() => { });
+    }, 24 * 60 * 60 * 1000); // Every 24 hours
+
+    return {
+        dispose: () => {
+            clearInterval(intervalId);
+        }
+    };
+}

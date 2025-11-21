@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Automatic Update Notifications**: MCP server now checks for updates on startup
+  - Queries npm registry for latest version asynchronously
+  - Logs prominent warning banner when updates are available
+  - Shows current version → latest version
+  - Provides update instructions (npm install and VSCode command)
+  - Non-blocking with 5-second timeout to avoid delaying startup
+  - Silently fails on network errors (won't break offline usage)
+
 ## [2.1.0] - 2025-11-21
 
 ### Added

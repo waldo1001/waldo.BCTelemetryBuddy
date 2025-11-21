@@ -1235,3 +1235,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Released extension v1.1.0 and MCP v2.1.0 [Entry: 7c5e9a43-f621-4b8d-9e3f-2a8d5c1b4e6a]
   - **Why:** Minor version bumps with MCP configuration improvements
   - **How:** Bumped versions, updated CHANGELOGs, committed, tagged (v1.1.0, mcp-v2.1.0), and pushed to GitHub
+- **2025-11-21** — Added automatic MCP update checking [Entry: 2041a492-159e-4a8d-a8a6-03914d917fbc]
+  - **Why:** Users need to be notified when MCP updates are available without manual checking
+  - **How:** Periodic background checks every 24 hours, smart notifications, manual command available

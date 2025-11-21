@@ -1,5 +1,7 @@
 # TODOs
 
+MCP Auto-update?
+
 
 
 new feature.  
