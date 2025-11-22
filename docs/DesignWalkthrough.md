@@ -1244,3 +1244,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-21** — Fixed CI build failure in GitHub Actions [Entry: 33a35a14-3de6-4d63-8bd4-4e11d42baff7]
   - **Why:** build:server script tried to import version.js before it was generated
   - **How:** Added 'node scripts/generate-version.js' to build:server script (same as build:cli)
+- **2025-11-22** — Show release notes only on MAJOR version updates [Entry: d9101277-232c-4410-be9a-3c7296c1264b]
+  - **Why:** User requested release notes page only appear for major version changes (e.g., 1.x.x → 2.0.0), not for minor or patch updates
+  - **How:** Modified extension.ts checkAndShowReleaseNotes() to parse and compare major version numbers; updated copilot-instructions.md to document new behavior; added 14 comprehensive tests covering all version change scenarios

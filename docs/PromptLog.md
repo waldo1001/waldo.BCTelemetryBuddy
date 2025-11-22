@@ -2244,3 +2244,11 @@ Each entry is numbered sequentially and referenced from `docs/DesignWalkthrough.
 > "Fix CI build failure - version.js not generated before server build"
 
 ---
+### Entry ID: d9101277-232c-4410-be9a-3c7296c1264b — 2025-11-22 10:40
+> "the "what's new" page always shows when een new version is published.  I only want to do that when a MAJOR version of these packages are published.
+
+Also, the documentation is never updated.
+
+Change instructions an business logic to do this."
+
+---

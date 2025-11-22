@@ -287,6 +287,7 @@ function registerLanguageModelTools(context: vscode.ExtensionContext): void {
 
 /**
  * Check if extension was updated and show release notes
+ * Only shows release notes when MAJOR version changes (X.0.0)
  */
 async function checkAndShowReleaseNotes(context: vscode.ExtensionContext): Promise<void> {
     try {
@@ -294,11 +295,20 @@ async function checkAndShowReleaseNotes(context: vscode.ExtensionContext): Promi
         const lastVersion = context.globalState.get<string>('bctb.lastVersion');
 
         if (lastVersion && lastVersion !== currentVersion) {
-            // Version changed - show release notes
-            outputChannel.appendLine(`Version updated from ${lastVersion} to ${currentVersion}`);
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
-            ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
+            // Version changed - check if MAJOR version changed
+            const currentMajor = parseInt(currentVersion.split('.')[0], 10);
+            const lastMajor = parseInt(lastVersion.split('.')[0], 10);
+
+            if (currentMajor > lastMajor) {
+                // MAJOR version changed - show release notes
+                outputChannel.appendLine(`MAJOR version updated from ${lastVersion} to ${currentVersion} - showing release notes`);
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
+                ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
+            } else {
+                // Minor or patch update - just log
+                outputChannel.appendLine(`Version updated from ${lastVersion} to ${currentVersion} (no release notes for non-major updates)`);
+            }
         }
 
         // Update stored version

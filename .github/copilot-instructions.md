@@ -321,11 +321,18 @@ Ask clarifying questions if not specified:
 # 2. Calculate new version (patch: X.Y.Z+1, minor: X.Y+1.0, major: X+1.0.0)
 # 3. Update version field in package.json
 # 4. Update CHANGELOG.md: Add new [X.Y.Z] - YYYY-MM-DD section with release notes
+# 5. Update ReleaseNotesProvider.ts content if MAJOR version (extension only)
 ```
 
 **What to change:**
 - `packages/[component]/package.json`: Bump the `version` field
 - `packages/[component]/CHANGELOG.md`: Add `## [X.Y.Z] - 2025-MM-DD` section with release notes
+- `packages/extension/src/webviews/ReleaseNotesProvider.ts`: Update HTML content (MAJOR releases only)
+
+**Release Notes Behavior (Extension Only):**
+- Release notes page automatically shows ONLY on MAJOR version updates (e.g., 1.x.x → 2.0.0)
+- Patch and minor updates do NOT trigger the release notes page
+- Update `ReleaseNotesProvider.ts` content when doing MAJOR releases to reflect new features
 
 ### STEP 3: Ask for Confirmation
 
@@ -374,11 +381,13 @@ For MCP: https://www.npmjs.com/package/bc-telemetry-buddy-mcp
 
 **CRITICAL RULES:**
 1. **ALWAYS bump versions manually FIRST** - Edit package.json and CHANGELOG.md before any git operations
-2. **Wait for user confirmation** - User reviews changes before you commit/push
-3. **Extension tags**: `v0.3.0` (no prefix)
-4. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
-5. **Cannot release both simultaneously** - Different tag formats required
-6. **Use semantic versioning** - patch (X.Y.Z+1), minor (X.Y+1.0), major (X+1.0.0)
+2. **Update ReleaseNotesProvider.ts for MAJOR extension releases** - Content must match new version features
+3. **Wait for user confirmation** - User reviews changes before you commit/push
+4. **Extension tags**: `v0.3.0` (no prefix)
+5. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
+6. **Cannot release both simultaneously** - Different tag formats required
+7. **Use semantic versioning** - patch (X.Y.Z+1), minor (X.Y+1.0), major (X+1.0.0)
+8. **Release notes auto-show on MAJOR only** - Extension shows release notes page only when X changes in X.Y.Z
 
 **Script Parameters:**
 - `-BumpType`: patch, minor, or major (REQUIRED)
