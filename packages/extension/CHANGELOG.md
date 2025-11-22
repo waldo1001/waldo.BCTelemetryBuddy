@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-11-22
+
+### Changed
+
+- **Release Notes Display**: Release notes page now only shows for MAJOR version updates
+  - MAJOR updates (e.g., 1.x.x → 2.0.0): Release notes page will appear
+  - Minor updates (e.g., 1.0.0 → 1.1.0): No release notes page
+  - Patch updates (e.g., 1.0.0 → 1.0.1): No release notes page
+  - Reduces interruptions for routine bug fixes and minor enhancements
+  - Users only see "Note from waldo" page for significant breaking changes or major features
+
 ## [1.1.2] - 2025-11-22
 
 ### Fixed
