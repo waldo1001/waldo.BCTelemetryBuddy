@@ -7,17 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-11-22
+
+### Fixed
+
+- **MCP Server Startup**: Fixed bundled MCP server path detection
+  - Extension now correctly uses bundled MCP files from `mcp/dist/launcher.js`
+  - Fixed issue where extension was calling CLI instead of using bundled server directly
+  - Server now starts gracefully without config file (shows warnings but continues running)
+  - Bundled MCP server updated to v2.1.2 with graceful startup fixes
+
+## [1.1.1] - 2025-11-22
+
 ### Added
 
-- **Automatic MCP Updates**: Extension now automatically checks for MCP updates daily
+- **Automatic MCP Updates**: Extension automatically checks for MCP updates daily
   - Silent background checks every 24 hours (won't interrupt your work)
   - Update notification shows current version → new version
   - One-click update from notification
   - Option to view changes on npm before updating
   - Manual check available via Command Palette: "BC Telemetry Buddy: Check for MCP Updates"
   - Respects notification frequency (won't spam - max once per day)
-
-## [1.1.1] - 2025-11-22
 
 ### Fixed
 

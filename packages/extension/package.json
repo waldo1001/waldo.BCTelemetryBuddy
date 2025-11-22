@@ -2,7 +2,7 @@
     "name": "bc-telemetry-buddy",
     "displayName": "BC Telemetry Buddy",
     "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "publisher": "waldoBC",
     "license": "MIT",
     "icon": "images/waldo.png",
@@ -272,7 +272,7 @@
     "scripts": {
         "vscode:prepublish": "npm run build && npm run copy-mcp",
         "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --minify",
-        "copy-mcp": "node -e \"const fs=require('fs'); const path=require('path'); const srcDir=path.join(__dirname,'..','mcp','dist'); const destDir=path.join(__dirname,'mcp','dist'); fs.mkdirSync(destDir,{recursive:true}); ['launcher.js','server.js','cli.js'].forEach(f=>{const src=path.join(srcDir,f); const dest=path.join(destDir,f); if(fs.existsSync(src)){fs.copyFileSync(src,dest); console.log('Copied '+f);}});\"",
+        "copy-mcp": "node -e \"const fs=require('fs'); const path=require('path'); const mcpDir=path.join(__dirname,'..','mcp'); const destDir=path.join(__dirname,'mcp','dist'); fs.mkdirSync(destDir,{recursive:true}); fs.copyFileSync(path.join(mcpDir,'launcher.js'),path.join(destDir,'launcher.js')); ['server.js','cli.js'].forEach(f=>{fs.copyFileSync(path.join(mcpDir,'dist',f),path.join(destDir,f));}); console.log('Copied MCP files');\"",
         "dev": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
         "compile": "tsc --noEmit",
         "compile-tests": "tsc -p ./ --outDir dist",

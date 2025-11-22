@@ -1894,7 +1894,5 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
     }
 }
 
-// If running directly (not imported), start the server
-if (require.main === module) {
-    startServer();
-}
+// Note: No auto-start here - launcher.js calls startServer() explicitly
+// This prevents double execution when bundled with esbuild

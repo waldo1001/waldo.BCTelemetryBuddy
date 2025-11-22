@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2025-11-22
+
+### Fixed
+
+- **Bundled Server Startup**: Fixed bundled server.js being executed twice causing startup failures
+  - Removed auto-execution code (`require.main === module` check) from server.ts
+  - Server now only starts when explicitly called via `startServer()` function
+  - Prevents CLI error messages when launched from VSCode extension
+  - Resolves issue where bundled server would exit with code 1 in VSCode
+
+## [2.1.1] - 2025-11-22
+
 ### Added
 
-- **Automatic Update Notifications**: MCP server now checks for updates on startup
+- **Automatic Update Notifications**: MCP server checks for updates on startup
   - Queries npm registry for latest version asynchronously
   - Logs prominent warning banner when updates are available
   - Shows current version → latest version
@@ -17,16 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Non-blocking with 5-second timeout to avoid delaying startup
   - Silently fails on network errors (won't break offline usage)
 
-## [2.1.1] - 2025-11-21
-
 ### Fixed
 
-- **MCP server startup failure**: Fixed issue where server would exit with code 1 when no config file exists
-  - `loadConfigFromFile()` now returns `null` instead of throwing when no config is found
-  - Server gracefully falls back to environment variables
+- **Graceful Config Loading**: Server now handles missing config files gracefully
+  - `loadConfigFromFile()` returns `null` instead of throwing when no config is found
+  - Server falls back to environment variables when no config file exists
   - Removed problematic catch block that caused infinite loop on startup
-  - Server now starts successfully and shows clear configuration warnings in logs
-- **CI build failure**: Fixed GitHub Actions build error where `version.js` wasn't generated before server build
+  - Server shows clear configuration warnings in logs but continues running
+- **CI Build**: Fixed GitHub Actions build error
   - Added version generation script to `build:server` npm script
   - Both server and CLI builds now generate version file before bundling
 
