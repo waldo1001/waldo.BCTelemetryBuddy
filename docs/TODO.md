@@ -1,9 +1,5 @@
 # TODOs
 
-MCP Auto-update?
-
-
-
 new feature.  
   Working with configurable instruction sets to do an analysis.
   eg: a performance analysis, which has instructions on how to use the telemetry, which events, and so on.  
