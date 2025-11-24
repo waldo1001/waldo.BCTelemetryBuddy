@@ -1280,3 +1280,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fix CodeQL security alerts [Entry: b4a227b0-0db0-410c-846b-5ccc4b1fe0af]
   - **Why:** High severity TOCTOU race condition, unused variable, and unused imports flagged by CodeQL analysis
   - **How:** Fixed race condition by reading file directly (atomic), removed unused durationMs variable, removed unused imports (Reference, RateLimitConfig)
+- **2025-11-24** — Added comprehensive file naming conventions [Entry: see PromptLog]
+  - **Why:** Ensure consistent date-first naming for chronological sorting and easy identification of latest analyses
+  - **How:** Updated both BCTelemetryBuddy and BCPerformanceAnalysis chatmodes with YYYY-MM-DD_Description.md convention, examples, and guidelines for when to use dates vs topic names

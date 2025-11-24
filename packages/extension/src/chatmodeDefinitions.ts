@@ -163,6 +163,45 @@ If an analysis seems empty or missing expected detail:
 
 ## File Organization
 
+### File Naming Convention
+
+**CRITICAL**: All dated analysis documents MUST follow the date-first naming convention:
+
+\`\`\`
+YYYY-MM-DD_Description.md
+\`\`\`
+
+**Examples:**
+- ✅ \`2025-10-27_Gehco_Report_2039696_Failure_Analysis.md\`
+- ✅ \`2025-11-24_VDA_DXSolutions_Comprehensive_Analysis.md\`
+- ✅ \`2025-11-20_VDA_Performance_Crisis_Analysis.md\`
+- ❌ \`Gehco_Failure_Analysis_2025-10-27.md\` (date at end)
+- ❌ \`VDA_Performance_Analysis.md\` (no date)
+
+**Why this matters:**
+- Automatic chronological sorting in file explorers
+- Easy identification of latest analysis
+- Clear timeline of performance investigations
+- Prevents confusion when multiple analyses exist for same issue
+
+**When to use dates:**
+- ✅ Performance analysis reports, root cause documents, investigation summaries
+- ✅ Any document tied to a specific analysis period or incident date
+- ❌ README.md, TODO.md, Remediation_Checklist.md (summary files)
+- ❌ Deadlock_Analysis.md, Lock_Timeout_Analysis.md (topic aggregations)
+- ❌ queries/ files (unless query is date-specific snapshot)
+
+**For specific incident analysis:** Always use date prefix:
+- \`2025-11-20_NC365_Sales_Line_Blocking_Root_Cause.md\`
+- \`2025-10-28_JIT_Loading_Error_90Day_Analysis.md\`
+
+**For topic summaries:** No date prefix (these aggregate multiple periods):
+- \`Deadlock_Analysis.md\` (all deadlocks found)
+- \`Missing_Indexes_Analysis.md\` (all missing indexes)
+- \`README.md\` (executive summary)
+
+**Chatmode files:** Do NOT add dates (these are template/configuration files)
+
 ### Generic Queries
 Save general-purpose queries under:
 \`\`\`
@@ -173,20 +212,41 @@ queries/
 \`\`\`
 
 ### Customer-Specific Analysis
-Save customer-related work under:
 \`\`\`
 Customers/
   └── [CustomerName]/
       ├── [Topic]/
+      │   ├── YYYY-MM-DD_[CustomerName]_[Topic]_Analysis.md
       │   ├── queries/
-      │   └── [CustomerName]_[Topic]_Report.md
+      │   │   └── [specific-queries].kql
+      │   └── README.md
       └── README.md
 \`\`\`
 
-Examples:
-- \`Customers/Thornton/Performance/Thornton_Performance_Report_2025-10-16.md\`
-- \`Customers/FDenL/Commerce365/FDenL_Commerce365_Performance_Analysis.md\`
-- \`Customers/Vandenabeele/Performance/VDA_Critical_Queries.kql\`
+**Examples:**
+- \`Customers/Livwise/Performance/2025-11-07_Livwise_SQL_CPU_Spike_Analysis.md\`
+- \`Customers/DK Tools/Performance/2025-10-20_DK_Tools_Performance_Analysis.md\`
+
+### Vendor Feedback Package
+\`\`\`
+Vendors/
+  └── [VendorName]/
+      ├── README.md (Executive Summary - no date)
+      ├── Deadlock_Analysis.md (Topic aggregate - no date)
+      ├── Lock_Timeout_Analysis.md (Topic aggregate - no date)
+      ├── Slow_SQL_Analysis.md (Topic aggregate - no date)
+      ├── Slow_AL_Methods_Analysis.md (Topic aggregate - no date)
+      ├── Missing_Indexes_Analysis.md (Topic aggregate - no date)
+      ├── YYYY-MM-DD_[Specific_Root_Cause].md (Dated incident)
+      ├── TODO.md (Remediation Checklist - no date)
+      └── queries/
+          └── [analysis-queries].kql
+\`\`\`
+
+**Examples:**
+- \`Vendors/NVISION/README.md\` (summary, no date)
+- \`Vendors/NVISION/2025-11-20_NC365_Sales_Line_Blocking_Root_Cause.md\` (specific incident)
+- \`Vendors/NVISION/Missing_Indexes_Analysis.md\` (topic summary, no date)
 
 ## AI Disclaimers in Created Files
 
@@ -1030,32 +1090,81 @@ I'll create a README with overview and separate detailed documents for each cate
 
 ## File Organization
 
+### File Naming Convention
+
+**CRITICAL**: All dated analysis documents MUST follow the date-first naming convention:
+
+\`\`\`
+YYYY-MM-DD_Description.md
+\`\`\`
+
+**Examples:**
+- ✅ \`2025-10-27_Gehco_Report_2039696_Failure_Analysis.md\`
+- ✅ \`2025-11-24_VDA_DXSolutions_Comprehensive_Analysis.md\`
+- ✅ \`2025-11-20_VDA_Performance_Crisis_Analysis.md\`
+- ❌ \`Gehco_Failure_Analysis_2025-10-27.md\` (date at end)
+- ❌ \`VDA_Performance_Analysis.md\` (no date)
+
+**Why this matters:**
+- Automatic chronological sorting in file explorers
+- Easy identification of latest analysis
+- Clear timeline of performance investigations
+- Prevents confusion when multiple analyses exist for same issue
+
+**When to use dates:**
+- ✅ Performance analysis reports, root cause documents, investigation summaries
+- ✅ Any document tied to a specific analysis period or incident date
+- ❌ README.md, TODO.md, Remediation_Checklist.md (summary files)
+- ❌ Deadlock_Analysis.md, Lock_Timeout_Analysis.md (topic aggregations)
+- ❌ queries/ files (unless query is date-specific snapshot)
+
+**For specific incident analysis:** Always use date prefix:
+- \`2025-11-20_NC365_Sales_Line_Blocking_Root_Cause.md\`
+- \`2025-10-28_JIT_Loading_Error_90Day_Analysis.md\`
+
+**For topic summaries:** No date prefix (these aggregate multiple periods):
+- \`Deadlock_Analysis.md\` (all deadlocks found)
+- \`Missing_Indexes_Analysis.md\` (all missing indexes)
+- \`README.md\` (executive summary)
+
+**Chatmode files:** Do NOT add dates (these are template/configuration files)
+
 ### Customer-Specific Analysis
 \`\`\`
 Customers/
   └── [CustomerName]/
       ├── [Topic]/
-      │   ├── [CustomerName]_[Topic]_Analysis.md
+      │   ├── YYYY-MM-DD_[CustomerName]_[Topic]_Analysis.md
       │   ├── queries/
       │   │   └── [specific-queries].kql
       │   └── README.md
       └── README.md
 \`\`\`
 
+**Examples:**
+- \`Customers/Livwise/Performance/2025-11-07_Livwise_SQL_CPU_Spike_Analysis.md\`
+- \`Customers/DK Tools/Performance/2025-10-20_DK_Tools_Performance_Analysis.md\`
+
 ### Vendor Feedback Package
 \`\`\`
-NVISION/  (or vendor folder)
-  ├── README.md (Executive Summary)
-  ├── Deadlock_Analysis.md
-  ├── Lock_Timeout_Analysis.md
-  ├── Slow_SQL_Analysis.md
-  ├── Slow_AL_Methods_Analysis.md
-  ├── Missing_Indexes_Analysis.md
-  ├── [Specific_Root_Cause].md
-  ├── TODO.md (Remediation Checklist)
-  └── queries/
-      └── [analysis-queries].kql
+Vendors/
+  └── [VendorName]/
+      ├── README.md (Executive Summary - no date)
+      ├── Deadlock_Analysis.md (Topic aggregate - no date)
+      ├── Lock_Timeout_Analysis.md (Topic aggregate - no date)
+      ├── Slow_SQL_Analysis.md (Topic aggregate - no date)
+      ├── Slow_AL_Methods_Analysis.md (Topic aggregate - no date)
+      ├── Missing_Indexes_Analysis.md (Topic aggregate - no date)
+      ├── YYYY-MM-DD_[Specific_Root_Cause].md (Dated incident)
+      ├── TODO.md (Remediation Checklist - no date)
+      └── queries/
+          └── [analysis-queries].kql
 \`\`\`
+
+**Examples:**
+- \`Vendors/NVISION/README.md\` (summary, no date)
+- \`Vendors/NVISION/2025-11-20_NC365_Sales_Line_Blocking_Root_Cause.md\` (specific incident)
+- \`Vendors/NVISION/Missing_Indexes_Analysis.md\` (topic summary, no date)
 
 ## AI Disclaimers in Created Files
 
