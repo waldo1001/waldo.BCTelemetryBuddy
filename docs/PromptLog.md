@@ -2307,3 +2307,7 @@ Change instructions an business logic to do this."
 > "Add file naming conventions to chatmodes (date-first naming for analysis documents)"
 
 ---
+### Entry ID: 03210c0b-8c55-4260-a304-ca1ef33d5042 — 2025-11-24 14:42
+> "Show MCP update notification every time VSCode starts (if update available)"
+
+---

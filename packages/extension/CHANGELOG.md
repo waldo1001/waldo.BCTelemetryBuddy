@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- 2025-11-24 21:31 — MCP update notifications now appear on every VSCode startup — Removed rate limiting so users always see update notifications when available, reduced startup check delay from 10s to 2s for faster notifications (chat-driven)
 - 2025-11-24 20:15 — Added comprehensive file naming conventions to chatmode definitions — Ensures consistent YYYY-MM-DD_Description.md naming for analysis documents with automatic chronological sorting (chat-driven)
 
 ## [1.2.0] - 2025-11-24

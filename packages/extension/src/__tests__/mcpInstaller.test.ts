@@ -653,11 +653,7 @@ describe('mcpInstaller', () => {
             );
         });
 
-        it('should not notify when silent and recently notified', async () => {
-            // Set last notified to 1 hour ago
-            const oneHourAgo = Date.now() - (60 * 60 * 1000);
-            mockContext.globalState.get = jest.fn().mockReturnValue(oneHourAgo);
-
+        it('should always notify when update available (silent mode)', async () => {
             mockExec.mockImplementation((cmd, callback: any) => {
                 if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
                     callback(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' });
@@ -671,7 +667,12 @@ describe('mcpInstaller', () => {
 
             await checkForMCPUpdates(mockContext, true);
 
-            expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+                expect.stringContaining('update available'),
+                'Update Now',
+                'View Changes',
+                'Remind Me Later'
+            );
         });
 
         it('should prompt to install when MCP not installed (non-silent)', async () => {

@@ -373,18 +373,7 @@ export async function checkForMCPUpdates(
             getLatestMCPVersion()
         ]);
 
-        // Store update notification time
-        const lastNotified = context.globalState.get<number>('mcpUpdateLastNotified', 0);
-        const now = Date.now();
-        const dayInMs = 24 * 60 * 60 * 1000;
-
-        // Only notify once per day (unless forced with silent=false)
-        if (silent && (now - lastNotified) < dayInMs) {
-            return;
-        }
-
-        await context.globalState.update('mcpUpdateLastNotified', now);
-
+        // Always show update notification when update is available
         const choice = await vscode.window.showInformationMessage(
             `BC Telemetry Buddy MCP update available: v${currentVersion} → v${latestVersion}`,
             'Update Now',
@@ -415,10 +404,10 @@ export async function checkForMCPUpdates(
 export function startPeriodicUpdateChecks(
     context: vscode.ExtensionContext
 ): vscode.Disposable {
-    // Check for updates on activation (silent)
+    // Check for updates immediately on activation
     setTimeout(() => {
         checkForMCPUpdates(context, true).catch(() => { });
-    }, 10000); // Wait 10 seconds after activation
+    }, 2000); // Wait 2 seconds after activation for extension to fully initialize
 
     // Then check daily
     const intervalId = setInterval(() => {

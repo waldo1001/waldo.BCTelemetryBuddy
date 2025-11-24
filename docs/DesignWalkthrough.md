@@ -1283,3 +1283,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Added comprehensive file naming conventions [Entry: see PromptLog]
   - **Why:** Ensure consistent date-first naming for chronological sorting and easy identification of latest analyses
   - **How:** Updated both BCTelemetryBuddy and BCPerformanceAnalysis chatmodes with YYYY-MM-DD_Description.md convention, examples, and guidelines for when to use dates vs topic names
+- **2025-11-24** — MCP update notification on every VSCode startup [Entry: 03210c0b-8c55-4260-a304-ca1ef33d5042]
+  - **Why:** User wants to see update notifications immediately on startup if update is available
+  - **How:** Removed rate limiting, reduced startup delay from 10s to 2s, always show notification when update available
