@@ -153,25 +153,25 @@ export function getInstallationId(context: vscode.ExtensionContext): string {
     // Check for existing global ID first
     let installationId = context.globalState.get<string>('installationId');
 
-    // Migration: Check for legacy workspace file and migrate it
-    if (!installationId) {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        if (workspaceFolder) {
-            const legacyFile = path.join(workspaceFolder.uri.fsPath, '.bctb-installation-id');
-            try {
-                if (fs.existsSync(legacyFile)) {
-                    // Read existing workspace ID and migrate to global storage
+    // Migration: Always check for legacy workspace file and clean it up
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (workspaceFolder) {
+        const legacyFile = path.join(workspaceFolder.uri.fsPath, '.bctb-installation-id');
+        try {
+            if (fs.existsSync(legacyFile)) {
+                // If we don't have a global ID yet, migrate the workspace ID
+                if (!installationId) {
                     const workspaceId = fs.readFileSync(legacyFile, 'utf8').trim();
                     if (workspaceId) {
                         installationId = workspaceId;
                         context.globalState.update('installationId', installationId);
-                        // Clean up workspace file
-                        fs.unlinkSync(legacyFile);
                     }
                 }
-            } catch (error) {
-                // Ignore migration errors, will generate new ID below
+                // Always remove the workspace file (cleanup)
+                fs.unlinkSync(legacyFile);
             }
+        } catch (error) {
+            // Ignore migration errors
         }
     }
 

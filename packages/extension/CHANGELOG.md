@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2025-11-24
+
+### Fixed
+- **Migration Logic**: Workspace `.bctb-installation-id` files now always cleaned up on activation
+  - Previously only migrated when no global ID existed
+  - Now removes workspace file even if user already has global installation ID
+  - Ensures complete cleanup of legacy workspace files
+
 ## [1.2.5] - 2025-11-24
 
 ### Changed
