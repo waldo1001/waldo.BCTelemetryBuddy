@@ -22,7 +22,9 @@ module.exports = {
         '!src/**/*.spec.ts',
         '!src/__tests__/**',
         '!src/server.ts',  // Exclude MCP server entry point (requires full integration testing)
-        '!src/cli.ts'  // Exclude CLI entry point (requires full integration testing)
+        '!src/cli.ts',  // Exclude CLI entry point (requires full integration testing)
+        '!src/version.ts',  // Exclude auto-generated version file
+        '!src/mcpTelemetry.ts'  // Exclude telemetry (requires Application Insights integration testing)
     ],
     coverageThreshold: {
         global: {

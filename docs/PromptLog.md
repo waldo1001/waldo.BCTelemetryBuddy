@@ -2286,3 +2286,8 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: fd8b4046-72ae-49ae-b4c4-ef2d1a8babaa — 2025-11-24 08:59
 > "Update all necessary documentation. changelog, readme, docs-folder - update all that is necessary."
+
+### Entry ID: 300f3e93-aa44-42b0-99f5-d45656341add — 2025-11-24 11:24
+> "Fix CI build failures in waldo/AddTelemetry branch - MCP tests failing due to console.error pollution and coverage thresholds not being met"
+
+---

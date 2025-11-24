@@ -5,8 +5,12 @@ import { loadConfig, validateConfig } from '../config.js';
  */
 describe('Graceful Startup', () => {
     const originalEnv = process.env;
+    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
+        // Mock console.error to suppress output during tests
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
         // Clear environment to simulate fresh workspace
         process.env = { ...originalEnv };
         delete process.env.BCTB_WORKSPACE_PATH;
@@ -19,6 +23,7 @@ describe('Graceful Startup', () => {
 
     afterEach(() => {
         process.env = originalEnv;
+        consoleErrorSpy.mockRestore();
     });
 
     describe('with no configuration at all', () => {

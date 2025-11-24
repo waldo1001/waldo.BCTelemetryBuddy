@@ -6,11 +6,19 @@ import * as os from 'os';
 describe('Configuration Module', () => {
     // Store original environment
     const originalEnv = process.env;
+    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
+        // Mock console.error to suppress output during tests
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
         // Reset environment before each test
         jest.resetModules();
         process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     afterAll(() => {
