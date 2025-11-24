@@ -1,6 +1,6 @@
 /**
  * Generate telemetry config for CI builds
- * Creates a dev-mode telemetry config with empty connection string
+ * Creates telemetry config with connection string from environment variable or empty for dev mode
  */
 
 const fs = require('fs');
@@ -12,14 +12,18 @@ const filePath = path.join(dir, 'telemetryConfig.generated.ts');
 // Ensure directory exists
 fs.mkdirSync(dir, { recursive: true });
 
-// Generate dev-mode config (no telemetry)
+// Get connection string from environment or use empty string
+const connectionString = process.env.AI_CONNECTION_STRING || '';
+
+// Generate config
 const content = `/**
  * GENERATED FILE - DO NOT EDIT MANUALLY
- * CI Build - Development mode (no telemetry)
+ * ${connectionString ? 'Production build - Azure Application Insights enabled' : 'CI Build - Development mode (no telemetry)'}
  */
-export const TELEMETRY_CONNECTION_STRING = '';
+export const TELEMETRY_CONNECTION_STRING = '${connectionString}';
 `;
 
 fs.writeFileSync(filePath, content, 'utf8');
 
-console.log(`✓ Generated ${filePath} (dev mode - no telemetry)`);
+console.log(`✓ Generated ${filePath} ${connectionString ? '(production mode with telemetry)' : '(dev mode - no telemetry)'}`);
+

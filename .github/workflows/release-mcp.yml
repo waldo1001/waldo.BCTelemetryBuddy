@@ -44,15 +44,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config with AI connection string
-        run: |
-          mkdir -p packages/shared/src
-          cat > packages/shared/src/telemetryConfig.generated.ts << 'EOF'
-          /**
-           * GENERATED FILE - DO NOT EDIT MANUALLY
-           * Production build - Azure Application Insights enabled
-           */
-          export const TELEMETRY_CONNECTION_STRING = '${{ secrets.AI_CONNECTION_STRING }}';
-          EOF
+        run: node scripts/generate-telemetry-config-ci.js
         env:
           AI_CONNECTION_STRING: ${{ secrets.AI_CONNECTION_STRING }}
       
@@ -229,6 +221,11 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Generate telemetry config
+        run: node scripts/generate-telemetry-config-ci.js
+        env:
+          AI_CONNECTION_STRING: ${{ secrets.AI_CONNECTION_STRING }}
       
       - name: Build shared package
         run: npm run build --workspace=packages/shared
