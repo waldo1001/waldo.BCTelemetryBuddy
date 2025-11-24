@@ -50,3 +50,4 @@ logs/
 # OS
 Thumbs.db
 .bctb-config.json
+.vscode/.bctb/cache/*.json

@@ -1,0 +1,37 @@
+// Query: Usage Telemetry - Geographic Distribution
+// Purpose: Analyze countries where BC Telemetry Buddy is being used
+// Author: System
+// Date: 2025-11-24
+// Category: Analytics
+
+// Analyze geographic distribution of tool usage
+customEvents
+| where timestamp >= ago(30d)
+| extend country = tostring(client_CountryOrRegion)
+| extend city = tostring(client_City)
+| extend state = tostring(client_StateOrProvince)
+| summarize 
+    TotalEvents = count(),
+    UniqueUsers = dcount(user_Id),
+    UniqueSessions = dcount(session_Id),
+    EventTypes = make_set(name),
+    FirstSeen = min(timestamp),
+    LastSeen = max(timestamp),
+    Cities = make_set(city)
+    by Country = country
+| order by TotalEvents desc
+| project Country, TotalEvents, UniqueUsers, UniqueSessions, Cities, EventTypes, FirstSeen, LastSeen
+
+// Alternative: Quick country summary
+// customEvents
+// | where timestamp >= ago(30d)
+// | summarize Events = count(), Users = dcount(user_Id) by Country = tostring(client_CountryOrRegion)
+// | order by Events desc
+
+// Alternative: City-level detail
+// customEvents
+// | where timestamp >= ago(30d)
+// | extend country = tostring(client_CountryOrRegion)
+// | extend city = tostring(client_City)
+// | summarize Events = count(), Users = dcount(user_Id) by Country = country, City = city
+// | order by Events desc
