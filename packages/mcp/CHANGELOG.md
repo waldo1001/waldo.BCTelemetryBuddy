@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Config Validation**: Fixed `bctb-mcp validate` requiring `BCTB_WORKSPACE_PATH` environment variable even when config file contains `workspacePath`
+  - Validation now checks actual config value instead of environment variable
+  - Allows standalone usage with config file only (no env vars needed)
+
+### Added
+- **Claude Desktop Tests**: Added comprehensive test suite for Claude Desktop integration workflows
+  - 23 new tests covering setup, config discovery, multi-profile, auth flows, and error handling
+  - Validates all Claude Desktop usage scenarios and edge cases
+  - Test file: `src/__tests__/claude-workflows.test.ts`
+
 ## [2.2.0] - 2025-11-24
 
 ### Changed

@@ -2315,3 +2315,7 @@ Change instructions an business logic to do this."
 > "I want to analyze the usagetelemetry of this software project with BC Telemetry Buddy. But - this time, the queries don't go through traces, but through other tables (see attached). Can you create some instructions in this folder for the telemetry buddy to act decently, and to analyze its UsageTelemetry?"
 
 ---
+### Entry ID: 98fb8089-9780-469a-bed7-bf34cf7b3445 — 2025-11-24 15:41
+> "Please create tests to test Claude-workflows as well."
+
+---

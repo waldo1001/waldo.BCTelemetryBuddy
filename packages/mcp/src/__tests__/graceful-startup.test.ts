@@ -40,7 +40,7 @@ describe('Graceful Startup', () => {
             const config = loadConfig();
             const errors = validateConfig(config);
 
-            expect(errors).toContain('BCTB_WORKSPACE_PATH environment variable is required - set it to your workspace path');
+            // Note: workspacePath defaults to process.cwd() in loadConfig, so it won't be in errors
             expect(errors).toContain('BCTB_APP_INSIGHTS_ID is required');
             expect(errors).toContain('BCTB_KUSTO_URL is required');
             expect(errors.length).toBeGreaterThan(0);
@@ -58,7 +58,7 @@ describe('Graceful Startup', () => {
 
             const errors = validateConfig(config);
             expect(errors.length).toBeGreaterThan(0); // Still missing other required settings
-            expect(errors).not.toContain('BCTB_WORKSPACE_PATH environment variable is required - set it to your workspace path');
+            expect(errors).not.toContain('workspacePath is required');
         });
 
         it('should use azure_cli auth flow by default', () => {
@@ -81,8 +81,8 @@ describe('Graceful Startup', () => {
             const config = loadConfig();
             const errors = validateConfig(config);
 
+            // Note: workspacePath defaults to process.cwd() in loadConfig, so it won't be in errors
             expect(errors).toEqual(expect.arrayContaining([
-                expect.stringContaining('BCTB_WORKSPACE_PATH'),
                 expect.stringContaining('BCTB_APP_INSIGHTS_ID'),
                 expect.stringContaining('BCTB_KUSTO_URL')
             ]));

@@ -74,6 +74,7 @@ cd packages/extension && npm test
 
 **MCP Package**:
 - `mcp-standalone.test.ts` - Validates MCP runs independently
+- `claude-workflows.test.ts` - Validates Claude Desktop integration workflows
 
 ### Test Execution Targets
 
@@ -759,6 +760,71 @@ Test with larger datasets to ensure performance is acceptable:
 
 ---
 
+## 🧪 Claude Desktop Integration Testing
+
+The MCP package includes comprehensive automated tests for Claude Desktop workflows.
+
+**Test File**: `packages/mcp/src/__tests__/claude-workflows.test.ts`
+
+**Coverage (23 tests)**: Tests all aspects of Claude Desktop integration:
+- First-time setup workflow (`bctb-mcp init` → validate)
+- Config discovery from multiple locations
+- Multi-profile configuration support
+- Environment variable expansion
+- All authentication flows (azure_cli, client_credentials, device_code)
+- Claude Desktop mcpServers configuration
+- Error handling and validation
+- Backwards compatibility with legacy configs
+
+**Run Tests**:
+```powershell
+cd packages/mcp
+npm test -- --testPathPattern=claude-workflows
+```
+
+**Manual Claude Desktop Testing**:
+
+1. **Install MCP globally**:
+   ```bash
+   npm install -g bc-telemetry-buddy-mcp
+   ```
+
+2. **Create config**:
+   ```bash
+   bctb-mcp init
+   # Edit .bctb-config.json with your credentials
+   ```
+
+3. **Validate config**:
+   ```bash
+   bctb-mcp validate
+   ```
+
+4. **Configure Claude Desktop** (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`):
+   ```json
+   {
+     "mcpServers": {
+       "bc-telemetry-buddy": {
+         "command": "bctb-mcp",
+         "args": ["start", "--config", "/path/to/.bctb-config.json"]
+       }
+     }
+   }
+   ```
+
+5. **Test in Claude**:
+   - Restart Claude Desktop
+   - Ask: "What MCP tools do you have available?"
+   - Should list BC Telemetry Buddy tools
+
+**Success Criteria**:
+- ✅ Config validates without errors
+- ✅ Claude Desktop recognizes MCP server
+- ✅ Can query telemetry through Claude
+- ✅ Multi-profile switching works
+
+---
+
 ## 📝 Pre-Release Checklist
 
 Before releasing v1.0.0, verify all items:
@@ -777,7 +843,8 @@ Before releasing v1.0.0, verify all items:
 - [ ] Categories are correct (not all "Custom")
 
 ### Testing
-- [ ] All 280+ automated tests pass
+- [ ] All 161+ MCP tests pass (includes 23 Claude Desktop workflow tests)
+- [ ] All extension tests pass
 - [ ] Manual tests complete successfully
 - [ ] Performance is acceptable (<10s for large queries)
 

@@ -1296,3 +1296,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Created usage telemetry analysis instructions for customEvents/customMetrics tables [Entry: fdb7faed-4a8e-452c-8218-2324aea18398]
   - **Why:** BC Telemetry Buddy needs to analyze its own usage telemetry (stored in customEvents/customMetrics) differently than BC telemetry (stored in traces table).
   - **How:** Created comprehensive documentation in UsageTelemetryAnalysis/ folder: README.md with table structure and query patterns, COPILOT-INSTRUCTIONS.md for chat participant context switching, QUICK-REFERENCE.md for quick lookup, and 6 KQL templates (discovery, user activity, feature usage, errors, performance, sessions, versions).
+
+- **2025-11-24** — Added comprehensive Claude Desktop workflow tests [Entry: 98fb8089-9780-469a-bed7-bf34cf7b3445]
+  - **Why:** Ensure MCP works correctly with Claude Desktop in all scenarios
+  - **How:** Created claude-workflows.test.ts covering 8 scenarios: setup, config discovery, multi-profile, env vars, auth flows, Claude integration, error handling, backwards compatibility

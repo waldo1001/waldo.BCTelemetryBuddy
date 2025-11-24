@@ -118,9 +118,9 @@ function parseReferences(referencesJson: string): Reference[] {
 export function validateConfig(config: MCPConfig): string[] {
     const errors: string[] = [];
 
-    // Check if workspace path was set properly (check if environment variable was provided)
-    if (!process.env.BCTB_WORKSPACE_PATH) {
-        errors.push('BCTB_WORKSPACE_PATH environment variable is required - set it to your workspace path');
+    // Check if workspace path is set (either from config file or environment variable)
+    if (!config.workspacePath) {
+        errors.push('workspacePath is required - set it in your config file or via BCTB_WORKSPACE_PATH environment variable');
     }
 
     // Azure CLI doesn't need tenantId (uses current az login session)
