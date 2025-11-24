@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.1] - 2025-11-24
+## [1.2.2] - 2025-11-24
+
+### Fixed
+- **CI Tests**: Fixed mcpInstaller test to match v1.2.1 behavior (no rate limiting)
 
 ### Changed
 - **MCP Update Notifications**: Update notifications now appear on every VSCode startup (removed rate limiting)
