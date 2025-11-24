@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2025-11-24
+
+### Changed
+- **MCP Independence**: Extension now defaults to globally installed MCP from NPM instead of bundled version
+  - Restores original design: extension and MCP are independent packages
+  - Users get latest MCP updates immediately via `npm install -g bc-telemetry-buddy-mcp@latest`
+  - No need to wait for extension updates when MCP is fixed
+  - Set `bctb.mcp.preferGlobal: false` in settings to use bundled version (fallback mode)
+
 ## [1.2.3] - 2025-11-24
 
 ### Fixed
