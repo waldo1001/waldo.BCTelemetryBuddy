@@ -20,12 +20,13 @@ export class AppInsightsUsageTelemetry implements IUsageTelemetry {
         // Configure Application Insights
         appInsights.setup(connectionString)
             .setAutoCollectRequests(false)
-            .setAutoCollectPerformance(false)
+            .setAutoCollectPerformance(false, false)
             .setAutoCollectExceptions(false)
             .setAutoCollectDependencies(false)
             .setAutoCollectConsole(false)
-            .setUseDiskRetryCaching(true)
-            .start();
+            .setUseDiskRetryCaching(true);
+        
+        appInsights.start();
 
         this.client = appInsights.defaultClient;
 
@@ -85,12 +86,9 @@ export class AppInsightsUsageTelemetry implements IUsageTelemetry {
 
     async flush(): Promise<void> {
         return new Promise((resolve) => {
-            this.client.flush({
-                callback: () => {
-                    // Wait a bit for final flush
-                    setTimeout(resolve, 2000);
-                }
-            });
+            this.client.flush();
+            // Wait a bit for final flush
+            setTimeout(resolve, 2000);
         });
     }
 }
