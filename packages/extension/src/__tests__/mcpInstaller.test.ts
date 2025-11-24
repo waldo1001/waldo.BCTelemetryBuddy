@@ -632,7 +632,14 @@ describe('mcpInstaller', () => {
 
             await checkForMCPUpdates(mockContext, false);
 
-            expect(mockContext.globalState.update).toHaveBeenCalledWith('mcpUpdateLastNotified', expect.any(Number));
+            // Note: Rate limiting was removed in v1.2.1, so mcpUpdateLastNotified is no longer updated
+            // Verify that update notification was shown instead
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+                expect.stringContaining('MCP update available'),
+                'Update Now',
+                'View Changes',
+                'Remind Me Later'
+            );
         });
 
         it('should show up to date message when no update available (non-silent)', async () => {
