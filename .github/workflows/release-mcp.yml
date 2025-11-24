@@ -164,6 +164,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Generate telemetry config
+        run: node scripts/generate-telemetry-config-ci.js
+        env:
+          AI_CONNECTION_STRING: ${{ secrets.AI_CONNECTION_STRING }}
+      
       - name: Build shared package
         run: npm run build --workspace=packages/shared
       
