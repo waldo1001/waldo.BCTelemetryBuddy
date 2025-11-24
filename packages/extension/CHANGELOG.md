@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2025-11-24
+
+### Changed
+- **Telemetry Storage**: Installation ID now stored only in VS Code global storage (user profile)
+  - Removed invasive `.bctb-installation-id` workspace files
+  - Automatic migration: existing workspace files are moved to user profile and cleaned up
+  - Cleaner workspaces with fewer hidden files
+  - No gitignore configuration needed for installation ID
+
 ## [1.2.4] - 2025-11-24
 
 ### Changed

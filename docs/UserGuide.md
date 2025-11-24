@@ -180,7 +180,23 @@ Add the following configuration (replace placeholders with your actual values):
 }
 ```
 
-### 3. Get Your Application Insights Details
+### 3. Add to .gitignore (Recommended)
+
+BC Telemetry Buddy creates these files in your workspace that should not be committed to version control:
+
+```gitignore
+# BC Telemetry Buddy generated files
+.bctb-config.json           # Configuration file (may contain sensitive data)
+.vscode/.bctb/              # Cache directory
+```
+
+**Why ignore these files?**
+- `.bctb-config.json` - May contain tenant IDs and environment-specific settings
+- `.vscode/.bctb/` - Cache files that are regenerated automatically
+
+**Note:** If you want to share configuration across your team, you can commit `.bctb-config.json` after removing any sensitive values and using placeholders. The extension stores the anonymous telemetry installation ID in VS Code's global storage (user profile), not in workspace files.
+
+### 4. Get Your Application Insights Details
 
 To find your Application Insights details:
 
@@ -193,7 +209,7 @@ To find your Application Insights details:
 
 **Note**: The Setup Wizard pre-fills the Kusto cluster URL format for you.
 
-### 4. Install MCP Server (Optional)
+### 5. Install MCP Server (Optional)
 
 **What is MCP?**
 The Model Context Protocol (MCP) server enables GitHub Copilot Chat integration. It's **not required** for Command Palette features like running queries, saving queries, or viewing results.
@@ -1333,10 +1349,10 @@ All telemetry data is automatically sanitized:
 ### Installation IDs (GDPR Compliance)
 
 Each installation is assigned a **pseudonymous installation ID** (a random UUID) to track sessions without identifying you personally. This ID:
-- Is stored locally (`.bctb-installation-id` file or global VS Code state)
+- Is stored in VS Code's global storage (in your user profile, not in workspace files)
 - **Can be reset anytime** by running **"BC Telemetry Buddy: Reset Telemetry ID"** command
-- Is separate for each workspace (workspace-specific ID) and global (fallback ID)
 - Does not contain personal information
+- Is user-wide (not workspace-specific)
 
 ### VS Code Telemetry Levels
 

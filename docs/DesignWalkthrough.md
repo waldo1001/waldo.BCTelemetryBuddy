@@ -1306,3 +1306,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fixed MCP config loading to respect BCTB_WORKSPACE_PATH [Entry: 630aba9c-dfb3-473e-b931-e41ad0fe83a2]
   - **Why:** loadConfigFromFile() was defaulting workspacePath to process.cwd() instead of BCTB_WORKSPACE_PATH env var
   - **How:** Changed fallback chain to: config.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd()
+- **2025-11-24** — Removed workspace file for installation ID [Entry: a26e2604-11a6-48f0-b8de-4850869b7e87]
+  - **Why:** User found .bctb-installation-id invasive in customer workspaces
+  - **How:** Simplified getInstallationId() to use only VS Code globalState storage
+- **2025-11-24** — Added migration for workspace installation ID files [Entry: 395c29c6-d20e-46b0-9f07-318433bfa175]
+  - **Why:** Automatically migrate existing .bctb-installation-id files to user profile storage
+  - **How:** getInstallationId() now checks for legacy workspace file, migrates to globalState, and removes workspace file

@@ -2331,3 +2331,11 @@ Change instructions an business logic to do this."
 > "Config file uses VS Code placeholder \${workspaceFolder}\ but environment variable expansion wasn't handling it"
 
 ---
+### Entry ID: a26e2604-11a6-48f0-b8de-4850869b7e87 — 2025-11-24 17:34
+> "Change installation ID to use only VS Code global storage instead of workspace file (.bctb-installation-id)"
+
+---
+### Entry ID: 395c29c6-d20e-46b0-9f07-318433bfa175 — 2025-11-24 17:38
+> "Add migration logic to move existing .bctb-installation-id files from workspace to user profile"
+
+---

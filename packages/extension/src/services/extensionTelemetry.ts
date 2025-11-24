@@ -142,41 +142,40 @@ export class VSCodeUsageTelemetry implements IUsageTelemetry {
  * Installation ID management for GDPR-compliant pseudonymous tracking
  */
 
-const INSTALLATION_ID_FILE = '.bctb-installation-id';
-
 /**
- * Get or create installation ID (stored in workspace or global storage)
- * Returns a stable pseudonymous identifier per installation
+ * Get or create installation ID (stored in VS Code global storage)
+ * Returns a stable pseudonymous identifier per user
+ * 
+ * Migration: If a workspace .bctb-installation-id file exists, it will be
+ * migrated to global storage and removed from the workspace.
  */
 export function getInstallationId(context: vscode.ExtensionContext): string {
-    // Try workspace storage first (workspace-specific ID)
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (workspaceFolder) {
-        const workspaceIdFile = path.join(workspaceFolder.uri.fsPath, INSTALLATION_ID_FILE);
-        try {
-            // Try to read existing file first (atomic operation)
-            const existingId = fs.readFileSync(workspaceIdFile, 'utf8').trim();
-            if (existingId) {
-                return existingId;
-            }
-        } catch (error: any) {
-            // File doesn't exist or can't be read - generate and write new workspace ID
-            if (error.code === 'ENOENT') {
-                try {
-                    const newId = crypto.randomUUID();
-                    fs.writeFileSync(workspaceIdFile, newId, 'utf8');
-                    return newId;
-                } catch {
-                    // Fall through to global storage
+    // Check for existing global ID first
+    let installationId = context.globalState.get<string>('installationId');
+
+    // Migration: Check for legacy workspace file and migrate it
+    if (!installationId) {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (workspaceFolder) {
+            const legacyFile = path.join(workspaceFolder.uri.fsPath, '.bctb-installation-id');
+            try {
+                if (fs.existsSync(legacyFile)) {
+                    // Read existing workspace ID and migrate to global storage
+                    const workspaceId = fs.readFileSync(legacyFile, 'utf8').trim();
+                    if (workspaceId) {
+                        installationId = workspaceId;
+                        context.globalState.update('installationId', installationId);
+                        // Clean up workspace file
+                        fs.unlinkSync(legacyFile);
+                    }
                 }
+            } catch (error) {
+                // Ignore migration errors, will generate new ID below
             }
-            // Other errors also fall through to global storage
         }
     }
 
-    // Fall back to global storage (user-wide ID)
-    let installationId = context.globalState.get<string>('installationId');
-
+    // Generate new ID if still not found
     if (!installationId) {
         installationId = crypto.randomUUID();
         context.globalState.update('installationId', installationId);
@@ -189,19 +188,6 @@ export function getInstallationId(context: vscode.ExtensionContext): string {
  * Reset installation ID (GDPR right to reset pseudonymous identifier)
  */
 export function resetInstallationId(context: vscode.ExtensionContext): void {
-    // Clear workspace-specific ID
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (workspaceFolder) {
-        const workspaceIdFile = path.join(workspaceFolder.uri.fsPath, INSTALLATION_ID_FILE);
-        try {
-            if (fs.existsSync(workspaceIdFile)) {
-                fs.unlinkSync(workspaceIdFile);
-            }
-        } catch {
-            // Ignore errors
-        }
-    }
-
     // Generate new global ID
     const newId = crypto.randomUUID();
     context.globalState.update('installationId', newId);
