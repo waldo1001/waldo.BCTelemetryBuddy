@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate telemetry config (dev mode - no connection string)
+        run: node scripts/generate-telemetry-config-ci.js
+
       - name: Build packages
         run: |
           npm run build --workspace=packages/mcp

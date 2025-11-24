@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Generate telemetry config (dev mode - no connection string)
+        run: node scripts/generate-telemetry-config-ci.js
+      
       - name: Build MCP
         run: npm run build --workspace=packages/mcp
       
@@ -68,6 +71,9 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Generate telemetry config (dev mode - no connection string)
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Build MCP (required by extension)
         run: npm run build --workspace=packages/mcp
@@ -116,6 +122,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Generate telemetry config (dev mode - no connection string)
+        run: node scripts/generate-telemetry-config-ci.js
+      
       - name: Check TypeScript compilation (MCP must build first)
         run: |
           npm run build --workspace=packages/mcp
@@ -150,6 +159,9 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Generate telemetry config (dev mode - no connection string)
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Build MCP
         run: npm run build --workspace=packages/mcp

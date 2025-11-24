@@ -7,7 +7,15 @@ import {
     QueriesService,
     ReferencesService,
     sanitizeObject,
-    lookupEventCategory
+    lookupEventCategory,
+    IUsageTelemetry,
+    NoOpUsageTelemetry,
+    RateLimitedUsageTelemetry,
+    TELEMETRY_CONNECTION_STRING,
+    TELEMETRY_EVENTS,
+    createCommonProperties,
+    cleanTelemetryProperties,
+    hashValue
 } from '@bctb/shared';
 import type { AuthResult } from '@bctb/shared';
 import type { SavedQuery } from '@bctb/shared';
@@ -15,6 +23,8 @@ import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
 import { VERSION } from './version.js';
 import * as https from 'https';
+import { createMCPUsageTelemetry, getMCPInstallationId } from './mcpTelemetry.js';
+import * as crypto from 'crypto';
 
 /**
  * JSON-RPC 2.0 request structure
@@ -66,6 +76,9 @@ export class MCPServer {
     protected queries: QueriesService;
     protected references: ReferencesService;
     protected configErrors: string[];
+    protected usageTelemetry: IUsageTelemetry; // Usage telemetry (tracks MCP usage)
+    protected sessionId: string; // Session identifier for this server instance
+    protected installationId: string; // Installation identifier from workspace
 
     constructor(config?: MCPConfig) {
         this.app = express();
@@ -104,9 +117,56 @@ export class MCPServer {
         }
         console.log('=====================================\n');
 
-        // Initialize services
+        // Generate session ID for this server instance
+        this.sessionId = crypto.randomUUID();
+
+        // Initialize Usage Telemetry (tracks MCP usage)
+        const connectionString = TELEMETRY_CONNECTION_STRING;
+        const telemetryEnabled = true; // Always enabled (no config override for now)
+
+        if (connectionString && telemetryEnabled) {
+            const baseTelemetry = createMCPUsageTelemetry(connectionString, this.config.workspacePath, VERSION);
+            if (baseTelemetry) {
+                // Get installation ID from workspace
+                this.installationId = getMCPInstallationId(this.config.workspacePath);
+
+                // Apply rate limiting for MCP (higher limits than extension)
+                this.usageTelemetry = new RateLimitedUsageTelemetry(baseTelemetry, {
+                    maxIdenticalErrors: 10,
+                    maxEventsPerSession: 2000,
+                    maxEventsPerMinute: 200
+                });
+                console.log('✓ Usage Telemetry initialized\n');
+
+                // Track server startup with common properties
+                const profileHash = this.config.connectionName ? hashValue(this.config.connectionName).substring(0, 16) : undefined;
+                const startupProps = createCommonProperties(
+                    TELEMETRY_EVENTS.MCP.SERVER_STARTED,
+                    'mcp',
+                    this.sessionId,
+                    this.installationId,
+                    VERSION,
+                    {
+                        profileHash,
+                        authFlow: this.config.authFlow,
+                        cacheEnabled: String(this.config.cacheEnabled)
+                    }
+                );
+                this.usageTelemetry.trackEvent('Mcp.ServerStarted', cleanTelemetryProperties(startupProps));
+            } else {
+                this.usageTelemetry = new NoOpUsageTelemetry();
+                this.installationId = 'unknown';
+                console.log('⚠️  Usage Telemetry initialization failed\n');
+            }
+        } else {
+            this.usageTelemetry = new NoOpUsageTelemetry();
+            this.installationId = 'unknown';
+            console.log('ℹ️  Usage Telemetry disabled\n');
+        }
+
+        // Initialize services (pass telemetry to KustoService for dependency tracking)
         this.auth = new AuthService(this.config);
-        this.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl);
+        this.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl, this.usageTelemetry);
         this.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
         this.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);
         this.references = new ReferencesService(this.config.references, this.cache);
@@ -251,6 +311,13 @@ export class MCPServer {
      */
     private async handleJSONRPC(req: Request, res: Response): Promise<void> {
         const rpcRequest: JSONRPCRequest = req.body;
+        const startTime = Date.now();
+
+        // Extract or generate correlationId for distributed tracing
+        const correlationId = (rpcRequest.params?._correlationId as string) || crypto.randomUUID();
+
+        // Get profileHash from config
+        const profileHash = this.config.connectionName ? hashValue(this.config.connectionName).substring(0, 16) : undefined;
 
         // Validate JSON-RPC structure
         if (rpcRequest.jsonrpc !== '2.0' || !rpcRequest.method) {
@@ -262,6 +329,7 @@ export class MCPServer {
                 },
                 id: null
             };
+
             res.json(errorResponse);
             return;
         }
@@ -426,7 +494,9 @@ export class MCPServer {
                     result = await this.executeQuery(
                         kqlQuery,
                         rpcRequest.params.useContext || false,
-                        rpcRequest.params.includeExternal || false
+                        rpcRequest.params.includeExternal || false,
+                        'UserQuery',
+                        correlationId
                     );
                     break;
 
@@ -543,6 +613,25 @@ export class MCPServer {
                 console.error('[MCP] Stack:', error.stack);
             }
 
+            // Track exception with full context
+            const errorProps = createCommonProperties(
+                TELEMETRY_EVENTS.MCP.ERROR,
+                'mcp',
+                this.sessionId,
+                this.installationId,
+                VERSION,
+                {
+                    correlationId,
+                    profileHash,
+                    toolName: rpcRequest.method,
+                    errorMessage,
+                    errorCategory: error.name || 'Error'
+                }
+            );
+            if (error instanceof Error) {
+                this.usageTelemetry.trackException(error, cleanTelemetryProperties(errorProps) as Record<string, string>);
+            }
+
             const errorResponse: JSONRPCResponse = {
                 jsonrpc: '2.0',
                 error: {
@@ -573,7 +662,9 @@ export class MCPServer {
     private async executeQuery(
         kql: string,
         useContext: boolean,
-        includeExternal: boolean
+        includeExternal: boolean,
+        queryName?: string,
+        correlationId?: string
     ): Promise<QueryResult> {
         try {
             // Check configuration before attempting query
@@ -603,8 +694,13 @@ export class MCPServer {
             // Authenticate and get access token
             const accessToken = await this.auth.getAccessToken();
 
-            // Execute query
-            const rawResult = await this.kusto.executeQuery(kql, accessToken);
+            // Execute query with telemetry tracking
+            const rawResult = await this.kusto.executeQuery(
+                kql,
+                accessToken,
+                queryName || 'UserQuery',
+                correlationId
+            );
             const parsed = this.kusto.parseResult(rawResult);
 
             // Build result
@@ -1308,13 +1404,15 @@ ${extendStatements}
         }
 
         // Graceful shutdown
-        process.on('SIGINT', () => {
+        process.on('SIGINT', async () => {
             console.log('\nShutting down gracefully...');
+            await this.usageTelemetry.flush();
             process.exit(0);
         });
 
-        process.on('SIGTERM', () => {
+        process.on('SIGTERM', async () => {
             console.log('\nShutting down gracefully...');
+            await this.usageTelemetry.flush();
             process.exit(0);
         });
     }
@@ -1363,19 +1461,22 @@ ${extendStatements}
             }
         });
 
-        process.stdin.on('end', () => {
+        process.stdin.on('end', async () => {
             console.log('Stdin closed, shutting down');
+            await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         // Graceful shutdown
-        process.on('SIGINT', () => {
+        process.on('SIGINT', async () => {
             console.log('Shutting down gracefully...');
+            await this.usageTelemetry.flush();
             process.exit(0);
         });
 
-        process.on('SIGTERM', () => {
+        process.on('SIGTERM', async () => {
             console.log('Shutting down gracefully...');
+            await this.usageTelemetry.flush();
             process.exit(0);
         });
     }
@@ -1687,100 +1788,174 @@ ${extendStatements}
      * Execute tool call (for stdio mode tools/call)
      */
     private async executeToolCall(toolName: string, params: any): Promise<any> {
-        switch (toolName) {
-            case 'query_telemetry':
-                // Execute KQL query
-                const kqlQuery3 = params.kql;
+        const startTime = Date.now();
+        const profileHash = this.config.connectionName ? hashValue(this.config.connectionName).substring(0, 16) : undefined;
 
-                if (!kqlQuery3 || kqlQuery3.trim() === '') {
-                    throw new Error('kql parameter is required. PREREQUISITE: Call get_event_catalog() to discover events and get_event_field_samples() to understand field structure BEFORE constructing queries.');
+        try {
+            let result: any;
+
+            switch (toolName) {
+                case 'query_telemetry':
+                    // Execute KQL query
+                    const kqlQuery3 = params.kql;
+
+                    if (!kqlQuery3 || kqlQuery3.trim() === '') {
+                        throw new Error('kql parameter is required. PREREQUISITE: Call get_event_catalog() to discover events and get_event_field_samples() to understand field structure BEFORE constructing queries.');
+                    }
+
+                    result = await this.executeQuery(
+                        kqlQuery3,
+                        params.useContext || false,
+                        params.includeExternal || false
+                    );
+                    break;
+
+                case 'get_saved_queries':
+                    result = this.queries.getAllQueries();
+                    break;
+
+                case 'search_queries':
+                    result = this.queries.searchQueries(params.searchTerms || []);
+                    break;
+
+                case 'save_query':
+                    const filePath = this.queries.saveQuery(
+                        params.name,
+                        params.kql,
+                        params.purpose,
+                        params.useCase,
+                        params.tags,
+                        params.category,
+                        params.companyName
+                    );
+                    result = { filePath };
+                    break;
+
+                case 'get_categories':
+                    result = this.queries.getCategories();
+                    break;
+
+                case 'get_recommendations':
+                    result = await this.generateRecommendations(params.kql, params.results);
+                    break;
+
+                case 'get_external_queries':
+                    result = await this.references.getAllExternalQueries();
+                    break;
+
+                case 'get_event_catalog':
+                    result = await this.getEventCatalog(
+                        params?.daysBack || 10,
+                        params?.status || 'all',
+                        params?.minCount || 1,
+                        params?.includeCommonFields || false
+                    );
+                    break;
+
+                case 'get_event_schema':
+                    if (!params?.eventId) {
+                        throw new Error('eventId parameter is required');
+                    }
+                    result = await this.getEventSchema(
+                        params.eventId,
+                        params?.sampleSize || 100
+                    );
+                    break;
+
+                case 'get_event_field_samples':
+                    if (!params?.eventId) {
+                        throw new Error('eventId parameter is required');
+                    }
+                    result = await this.getEventFieldSamples(
+                        params.eventId,
+                        params?.sampleCount || 20,
+                        params?.daysBack || 7
+                    );
+                    break;
+
+                case 'get_tenant_mapping':
+                    result = await this.getTenantMapping(
+                        params?.daysBack || 10,
+                        params?.companyNameFilter
+                    );
+                    break;
+
+                case 'get_cache_stats':
+                    result = this.cache.getStats();
+                    break;
+
+                case 'clear_cache':
+                    this.cache.clear();
+                    result = { success: true, message: 'Cache cleared successfully' };
+                    break;
+
+                case 'list_profiles':
+                    result = this.listProfiles();
+                    break;
+
+                case 'cleanup_cache':
+                    this.cache.cleanupExpired();
+                    const stats = this.cache.getStats();
+                    result = { success: true, message: `Cleaned up expired entries. ${stats.totalEntries} entries remaining`, stats };
+                    break;
+
+                default:
+                    throw new Error(`Unknown tool: ${toolName}`);
+            }
+
+            // Track successful tool completion
+            const durationMs = Date.now() - startTime;
+            const completedProps = createCommonProperties(
+                TELEMETRY_EVENTS.MCP_TOOLS.QUERY_TELEMETRY, // Will be replaced per tool
+                'mcp',
+                this.sessionId,
+                this.installationId,
+                VERSION,
+                {
+                    toolName,
+                    profileHash
                 }
+            );
+            this.usageTelemetry.trackEvent('Mcp.ToolCompleted', cleanTelemetryProperties(completedProps), { duration: durationMs });
 
-                const result3 = await this.executeQuery(
-                    kqlQuery3,
-                    params.useContext || false,
-                    params.includeExternal || false
-                );
-
-                return result3;
-
-            case 'get_saved_queries':
-                return this.queries.getAllQueries();
-
-            case 'search_queries':
-                return this.queries.searchQueries(params.searchTerms || []);
-
-            case 'save_query':
-                const filePath = this.queries.saveQuery(
-                    params.name,
-                    params.kql,
-                    params.purpose,
-                    params.useCase,
-                    params.tags,
-                    params.category,
-                    params.companyName
-                );
-                return { filePath };
-
-            case 'get_categories':
-                return this.queries.getCategories();
-
-            case 'get_recommendations':
-                return await this.generateRecommendations(params.kql, params.results);
-
-            case 'get_external_queries':
-                return await this.references.getAllExternalQueries();
-
-            case 'get_event_catalog':
-                return await this.getEventCatalog(
-                    params?.daysBack || 10,
-                    params?.status || 'all',
-                    params?.minCount || 1,
-                    params?.includeCommonFields || false
-                );
-
-            case 'get_event_schema':
-                if (!params?.eventId) {
-                    throw new Error('eventId parameter is required');
+            return result;
+        } catch (error: any) {
+            // Track failed tool completion
+            const durationMs = Date.now() - startTime;
+            const errorType = error?.constructor?.name || 'UnknownError';
+            const failedProps = createCommonProperties(
+                TELEMETRY_EVENTS.MCP.ERROR,
+                'mcp',
+                this.sessionId,
+                this.installationId,
+                VERSION,
+                {
+                    toolName,
+                    profileHash,
+                    errorType
                 }
-                return await this.getEventSchema(
-                    params.eventId,
-                    params?.sampleSize || 100
-                );
+            );
+            this.usageTelemetry.trackEvent('Mcp.ToolFailed', cleanTelemetryProperties(failedProps), { duration: durationMs });
 
-            case 'get_event_field_samples':
-                if (!params?.eventId) {
-                    throw new Error('eventId parameter is required');
+            // Also track exception
+            const exceptionProps = createCommonProperties(
+                TELEMETRY_EVENTS.MCP.ERROR,
+                'mcp',
+                this.sessionId,
+                this.installationId,
+                VERSION,
+                {
+                    toolName,
+                    profileHash,
+                    errorType,
+                    operation: 'tool'
                 }
-                return await this.getEventFieldSamples(
-                    params.eventId,
-                    params?.sampleCount || 20,
-                    params?.daysBack || 7
-                );
+            );
+            if (error instanceof Error) {
+                this.usageTelemetry.trackException(error, cleanTelemetryProperties(exceptionProps) as Record<string, string>);
+            }
 
-            case 'get_tenant_mapping':
-                return await this.getTenantMapping(
-                    params?.daysBack || 10,
-                    params?.companyNameFilter
-                );
-
-            case 'get_cache_stats':
-                return this.cache.getStats();
-
-            case 'clear_cache':
-                this.cache.clear();
-                return { success: true, message: 'Cache cleared successfully' };
-
-            case 'list_profiles':
-                return this.listProfiles();
-
-            case 'cleanup_cache':
-                this.cache.cleanupExpired();
-                const stats = this.cache.getStats();
-                return { success: true, message: `Cleaned up expired entries. ${stats.totalEntries} entries remaining`, stats };
-
-            default:
-                throw new Error(`Unknown tool: ${toolName}`);
+            throw error;
         }
     }
 }

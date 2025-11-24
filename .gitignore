@@ -13,6 +13,7 @@ out/
 
 # Auto-generated files
 packages/mcp/src/version.ts
+packages/shared/src/telemetryConfig.generated.ts
 
 # Copied MCP bundle (created during extension packaging, not committed)
 packages/extension/mcp/
@@ -38,6 +39,9 @@ coverage/
 .env
 .env.local
 .env.*.local
+
+# Telemetry installation IDs (pseudonymous user tracking)
+.bctb-installation-id
 
 # Logs
 logs/

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Usage Telemetry**: Anonymous usage telemetry to improve the extension
+  - Tracks extension lifecycle events (activation, deactivation)
+  - Records command usage with execution duration (Run KQL Query, Setup Wizard, Save Query, etc.)
+  - Monitors feature adoption (authentication methods, query types)
+  - Captures error events with stack traces for debugging
+  - Measures performance metrics (query execution time, MCP startup duration)
+  - **Privacy-focused**: Respects VS Code's `telemetry.telemetryLevel` setting
+  - **Anonymized**: Uses hashed session IDs, no user identification
+  - **Transparent**: Clear disclosure in README about what's collected
+  - **Opt-out**: Disable via VS Code setting `"telemetry.telemetryLevel": "off"`
+  - **No PII**: Does not collect queries, results, credentials, or customer data
+- **Telemetry Documentation**: Added comprehensive telemetry disclosure section to README
+  - What's collected vs. what's NOT collected
+  - Privacy safeguards and data handling practices
+  - How to disable telemetry
+  - Link to detailed design documentation
+
 ## [1.1.3] - 2025-11-22
 
 ### Changed

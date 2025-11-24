@@ -167,6 +167,40 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 See [.github/workflows/README.md](.github/workflows/README.md) for workflow documentation.
 
+## Usage Telemetry
+
+BC Telemetry Buddy collects anonymous usage telemetry to help improve the extension. This is **separate from** the Business Central telemetry data you query.
+
+**What's Collected:**
+- Extension activation/deactivation events
+- Command execution (e.g., "Run KQL Query", "Setup Wizard")
+- Feature usage patterns (query types, authentication methods)
+- Error events with stack traces (for debugging)
+- Performance metrics (query execution time, MCP startup time)
+
+**What's NOT Collected:**
+- Your KQL queries or query results
+- Customer names, company names, or business data
+- Personally identifiable information (PII)
+- Azure credentials or connection strings
+- Application Insights data you're querying
+
+**Privacy:**
+- All telemetry is anonymized using hashed session IDs
+- Data is stored in a separate Azure Application Insights resource (not your BC telemetry)
+- Used exclusively for product improvement and debugging
+- Follows Microsoft's data collection practices
+
+**Disable Telemetry:**
+Set VS Code's global telemetry setting:
+```json
+{
+  "telemetry.telemetryLevel": "off"
+}
+```
+
+BC Telemetry Buddy respects this setting - when VS Code telemetry is disabled, no usage data is collected.
+
 ## Documentation
 
 - [User Guide](docs/UserGuide.md) - Installation and usage
@@ -174,6 +208,7 @@ See [.github/workflows/README.md](.github/workflows/README.md) for workflow docu
 - [Design Walkthrough](docs/DesignWalkthrough.md) - Architecture and design decisions
 - [Instructions](Instructions/Instructions.md) - Technical implementation details
 - [Workflow Documentation](.github/workflows/README.md) - CI/CD setup and usage
+- [Telemetry Design](Instructions/Telemetry-Design-and-Implementation.md) - Usage telemetry implementation
 - [MCP Changelog](packages/mcp/CHANGELOG.md) - MCP backend version history
 - [Extension Changelog](packages/extension/CHANGELOG.md) - Extension version history
 

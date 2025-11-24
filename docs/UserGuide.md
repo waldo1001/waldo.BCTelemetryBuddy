@@ -1294,6 +1294,144 @@ bctb-mcp --version
 
 ---
 
+## Telemetry & Privacy
+
+BC Telemetry Buddy includes **usage telemetry** to help improve the extension. This section explains what data is collected, how it's used, and how to control it.
+
+### What is Usage Telemetry?
+
+Usage telemetry tracks **how you use the extension** (e.g., which commands you run, errors encountered). This is **completely separate** from Business Central telemetry data querying - we never collect your BC telemetry data or query results.
+
+### What Data is Collected?
+
+**Collected:**
+- Extension version and installation ID (pseudonymous, user-resettable)
+- Command invocations (e.g., "Run KQL Query", "Clear Cache")
+- Feature usage (e.g., profile switching, query saving)
+- Performance metrics (query execution time, dependency calls)
+- Error information (sanitized error messages, stack traces from extension code only)
+- VS Code telemetry level setting
+
+**Never Collected:**
+- Your Business Central telemetry data or query results
+- Kusto queries or KQL code you write
+- Personal information (names, emails, IP addresses)
+- File paths containing usernames
+- Azure credentials, connection strings, or secrets
+- Workspace-specific data (customer names, project names)
+
+### Data Sanitization
+
+All telemetry data is automatically sanitized:
+- **File paths**: Replaced with `<user-path>` or `<repo>` placeholders
+- **Credentials**: Connection strings, passwords, tokens redacted as `<redacted>`
+- **Email addresses**: Replaced with `<email>` placeholder
+- **IP addresses**: Replaced with `<ip>` placeholder
+- **GUIDs**: Replaced with `<guid>` placeholder (except installation IDs)
+- **Stack traces**: Only extension code included, third-party code excluded
+
+### Installation IDs (GDPR Compliance)
+
+Each installation is assigned a **pseudonymous installation ID** (a random UUID) to track sessions without identifying you personally. This ID:
+- Is stored locally (`.bctb-installation-id` file or global VS Code state)
+- **Can be reset anytime** by running **"BC Telemetry Buddy: Reset Telemetry ID"** command
+- Is separate for each workspace (workspace-specific ID) and global (fallback ID)
+- Does not contain personal information
+
+### VS Code Telemetry Levels
+
+Usage telemetry **respects your VS Code telemetry setting** (`telemetry.telemetryLevel`):
+
+| Level | What's Tracked |
+|-------|----------------|
+| **off** | Nothing (telemetry completely disabled) |
+| **crash** | Only unhandled exceptions/crashes |
+| **error** | Only errors and exceptions |
+| **all** | All events, errors, and usage data (default) |
+
+**To change your VS Code telemetry level:**
+1. Open Settings (`Ctrl+,` or `Cmd+,`)
+2. Search for `telemetry.telemetryLevel`
+3. Choose your preferred level
+
+### How to Disable Usage Telemetry
+
+**Method 1: VS Code Telemetry Settings (Recommended)**
+1. Open Settings (`Ctrl+,`)
+2. Search for `telemetry.telemetryLevel`
+3. Set to **"off"**
+
+**Method 2: Per-Workspace Configuration**
+Add to your `.bctb-config.json`:
+```json
+{
+  "telemetry": {
+    "enabled": false
+  }
+}
+```
+
+**Method 3: Environment Variable**
+Set `AI_CONNECTION_STRING` to empty (removes telemetry endpoint):
+```bash
+# In .env file or environment
+AI_CONNECTION_STRING=
+```
+
+### Reset Your Installation ID
+
+You can reset your pseudonymous installation ID at any time:
+
+**Command Palette:**
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+2. Run **"BC Telemetry Buddy: Reset Telemetry ID"**
+3. Confirm the reset
+
+This generates a new anonymous ID, disassociating future telemetry from your previous sessions.
+
+### Rate Limiting (Cost Protection)
+
+Telemetry has built-in rate limits to prevent runaway costs:
+- **Extension**: Max 1000 events/session, 100 events/minute
+- **MCP**: Max 2000 events/session, 200 events/minute
+- **Identical errors**: Max 10 per session (then throttled with cooldown)
+
+### Where is Data Sent?
+
+Usage telemetry data is sent to **Azure Application Insights** (West Europe region), operated by the extension author. Data is:
+- Stored in Azure Application Insights (Microsoft-managed)
+- Retained for 90 days
+- Used only for improving BC Telemetry Buddy
+- Not shared with third parties
+- Not used for marketing or tracking
+
+### GDPR & Privacy Rights
+
+BC Telemetry Buddy is GDPR-compliant:
+- **Right to reset ID**: Run "Reset Telemetry ID" command anytime
+- **Right to opt-out**: Disable telemetry via VS Code settings
+- **Data minimization**: Only pseudonymous, sanitized data collected
+- **Purpose limitation**: Data used only for extension improvement
+- **Data retention**: 90 days maximum in Azure Application Insights
+
+### Open Source Transparency
+
+All telemetry code is open source and auditable:
+- Telemetry implementation: `packages/shared/src/usageTelemetry.ts`
+- Sanitization logic: `packages/shared/src/usageTelemetryUtils.ts`
+- Extension integration: `packages/extension/src/services/extensionTelemetry.ts`
+- MCP integration: `packages/mcp/src/mcpTelemetry.ts`
+
+**View the code:** [GitHub Repository](https://github.com/waldo1001/waldo.BCTelemetryBuddy)
+
+### Questions About Telemetry?
+
+If you have concerns or questions about usage telemetry:
+- Open an issue: [GitHub Issues](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues)
+- Start a discussion: [GitHub Discussions](https://github.com/waldo1001/waldo.BCTelemetryBuddy/discussions)
+
+---
+
 ## FAQ
 
 ### Do I need GitHub Copilot to use this extension?

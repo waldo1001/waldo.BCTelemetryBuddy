@@ -380,6 +380,41 @@ The extension will automatically detect the globally-installed MCP and use it fo
 - Downgrading requires restoring old VSCode settings
 - Recommend staying on v1.0.0 (more stable, faster)
 
+## Usage Telemetry
+
+BC Telemetry Buddy collects anonymous usage telemetry to improve the extension. **This is separate from the Business Central telemetry data you query.**
+
+### What's Collected
+- Extension lifecycle events (activation, deactivation)
+- Command usage (Run KQL Query, Setup Wizard, Save Query, etc.)
+- Feature adoption metrics (authentication methods, query types)
+- Error events with stack traces (for debugging)
+- Performance metrics (query execution time, MCP startup duration)
+
+### What's NOT Collected
+- Your KQL queries or query results
+- Customer names, company names, or business data  
+- Personally identifiable information (PII)
+- Azure credentials or Application Insights connection strings
+- BC telemetry data you're analyzing
+
+### Privacy
+- All telemetry is anonymized (hashed session IDs, no user identification)
+- Data stored in a separate Azure Application Insights resource
+- Used exclusively for product improvement and debugging
+- Follows Microsoft's privacy and data collection practices
+
+### Disable Telemetry
+BC Telemetry Buddy respects VS Code's global telemetry setting:
+```json
+{
+  "telemetry.telemetryLevel": "off"
+}
+```
+When VS Code telemetry is disabled, BC Telemetry Buddy collects **no usage data**.
+
+For more details, see [Telemetry Design Documentation](../../Instructions/Telemetry-Design-and-Implementation.md).
+
 ## License
 
 MIT

@@ -35,6 +35,26 @@ export interface MCPConfig {
 
     // Profile inheritance support (optional)
     extends?: string;
+
+    // Usage Telemetry (tracks extension/MCP usage, NOT BC telemetry data)
+    telemetry?: TelemetryConfig;
+}
+
+/**
+ * Usage Telemetry Configuration (tracks extension/MCP usage)
+ * Separate from Business Central telemetry querying
+ */
+export interface TelemetryConfig {
+    // Enable/disable usage telemetry (respects VS Code telemetry level)
+    enabled: boolean;
+
+    // Rate limiting (prevent runaway costs)
+    rateLimiting?: {
+        maxIdenticalErrors?: number;      // Default: 10
+        maxEventsPerSession?: number;     // Default: 1000 (extension), 2000 (MCP)
+        maxEventsPerMinute?: number;      // Default: 100 (extension), 200 (MCP)
+        errorCooldownMs?: number;         // Default: 60000 (1 minute)
+    };
 }
 
 /**
@@ -61,6 +81,9 @@ export interface ProfiledConfig {
 
     // Global references (shared across profiles)
     references?: Reference[];
+
+    // Global usage telemetry settings
+    telemetry?: TelemetryConfig;
 
     // Single-profile mode (backward compatible)
     // If profiles is not set, treat entire config as one profile

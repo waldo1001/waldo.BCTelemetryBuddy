@@ -123,6 +123,11 @@
                 "command": "bctb.checkForMCPUpdates",
                 "title": "BC Telemetry Buddy: Check for MCP Updates",
                 "icon": "$(cloud-download)"
+            },
+            {
+                "command": "bctb.resetTelemetryId",
+                "title": "BC Telemetry Buddy: Reset Telemetry ID",
+                "icon": "$(refresh) "
             }
         ],
         "configuration": {
@@ -284,10 +289,11 @@
         "install-mcp-dev": "cd ../mcp && npm link"
     },
     "dependencies": {
+        "@bctb/shared": "file:../shared",
+        "@vscode/extension-telemetry": "^1.2.0",
         "axios": "^1.13.2"
     },
     "devDependencies": {
-        "@bctb/shared": "file:../shared",
         "@types/jest": "^30.0.0",
         "@types/node": "^22.18.11",
         "@types/vscode": "^1.85.0",
