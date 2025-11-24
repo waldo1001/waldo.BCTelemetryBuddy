@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2025-11-24
+
+### Fixed
+- **MCP Bundling**: Updated bundled MCP to v2.2.4 with critical config loading fix
+  - Fixes regression from v2.2.1 where config files stopped loading from workspace root
+  - `workspacePath` now correctly falls back to `BCTB_WORKSPACE_PATH` environment variable
+  - `${workspaceFolder}` placeholder in config files now properly expands
+  - Resolves "workspacePath is required" errors when using extension with valid config file
+
 ## [1.2.2] - 2025-11-24
 
 ### Fixed
