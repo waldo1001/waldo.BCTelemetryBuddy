@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-11-24
+
 ### Changed
-- **No Telemetry in MCP Server**: Confirmed that MCP server does not collect any usage telemetry
-  - All telemetry collection (if enabled) happens in VSCode extension layer
-  - Standalone MCP server usage (Claude Desktop, etc.) sends no data to Microsoft or BC Telemetry Buddy team
-  - Added telemetry clarification section to README
+- **Telemetry Clarification**: Updated documentation to clarify MCP server telemetry behavior
+  - MCP server collects anonymous usage telemetry (tool invocations, performance metrics, errors)
+  - Uses same privacy-focused approach as extension (hashed IDs, no PII, no query content)
+  - Telemetry sent to BC Telemetry Buddy Application Insights (not customer telemetry databases)
+  - Helps improve tool reliability and identify common issues
+  - Standalone MCP users (Claude Desktop, etc.) can disable by removing connection string from environment
+  - Added telemetry disclosure section to README matching extension documentation
 
 ## [2.1.2] - 2025-11-22
 

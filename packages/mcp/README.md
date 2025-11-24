@@ -544,9 +544,61 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
 
 ## Usage Telemetry
 
-The MCP server does **not** collect usage telemetry. All telemetry collection (if enabled) happens in the VSCode extension layer.
+The MCP server **collects anonymous usage telemetry** to help improve the tool. This section explains what data is collected and how to control it.
 
-When using the standalone MCP server with Claude Desktop or other AI assistants, no usage data is sent to Microsoft or the BC Telemetry Buddy team.
+### What Data is Collected?
+
+**Collected:**
+- MCP server version and installation ID (pseudonymous, workspace-specific)
+- Tool invocations (e.g., query_telemetry, get_event_catalog)
+- Performance metrics (query execution time, tool duration)
+- Error information (sanitized error messages, exception types)
+- Authentication flow used (azure_cli, device_code, client_credentials)
+- Profile usage (hashed profile names for privacy)
+
+**Never Collected:**
+- Your Business Central telemetry data or query results
+- KQL queries you execute
+- Personal information (names, emails, IP addresses)
+- Azure credentials, connection strings, or secrets
+- Customer names or company identifiers
+- File paths or workspace details
+
+### Privacy & Anonymization
+
+All telemetry data is automatically sanitized:
+- **Installation IDs**: Random UUIDs stored per workspace (`.bctb-installation-id` file)
+- **Profile names**: Hashed (first 16 chars of SHA-256) before transmission
+- **No query content**: KQL queries and results are never sent
+- **Error messages**: Sanitized to remove paths, credentials, PII
+- **Rate limited**: Max 2000 events/session, 200 events/minute to prevent spam
+
+### How to Disable Telemetry
+
+**VSCode Extension Users:**
+- Telemetry respects VS Code's `telemetry.telemetryLevel` setting
+- Set to `"off"` to disable all telemetry (extension + MCP)
+
+**Standalone MCP Users (Claude Desktop, etc.):**
+- Remove the `BCTB_TELEMETRY_CONNECTION_STRING` environment variable from your MCP client configuration
+- The MCP server will gracefully fall back to no-op telemetry when connection string is missing
+
+### Where is Data Sent?
+
+Telemetry data is sent to **Azure Application Insights** (West Europe region), operated by the extension author:
+- Stored for 90 days maximum
+- Used only for improving BC Telemetry Buddy
+- Not shared with third parties
+- GDPR compliant with pseudonymous identifiers
+
+### Open Source Transparency
+
+All telemetry code is open source and auditable:
+- MCP telemetry: `packages/mcp/src/mcpTelemetry.ts`
+- Shared telemetry logic: `packages/shared/src/usageTelemetry.ts`
+- Sanitization: `packages/shared/src/usageTelemetryUtils.ts`
+
+**View the code:** [GitHub Repository](https://github.com/waldo1001/waldo.BCTelemetryBuddy)
 
 ## License
 
