@@ -353,6 +353,9 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy');
     outputChannel.appendLine('BC Telemetry Buddy extension activated');
 
+    // Get installation ID early (also triggers migration cleanup of legacy workspace files)
+    installationId = getInstallationId(context);
+
     // Initialize Usage Telemetry (tracks extension usage, respects VS Code telemetry settings)
     sessionId = require('crypto').randomUUID(); // Generate session ID once per activation
     try {
@@ -373,7 +376,6 @@ export function activate(context: vscode.ExtensionContext) {
             usageTelemetry = levelFiltered;
 
             // Track extension activation with common properties
-            installationId = getInstallationId(context);
             currentProfileHash = getCurrentProfileHash();
             const activationProps = createCommonProperties(
                 TELEMETRY_EVENTS.EXTENSION.ACTIVATED,

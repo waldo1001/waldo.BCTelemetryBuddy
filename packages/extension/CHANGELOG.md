@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2025-11-24
+
+### Fixed
+- **Migration Activation**: Installation ID migration now runs on every extension activation
+  - Previously only ran when telemetry was enabled
+  - Now runs early in activation before telemetry initialization
+  - Ensures workspace `.bctb-installation-id` files are always cleaned up
+
 ## [1.2.6] - 2025-11-24
 
 ### Fixed
