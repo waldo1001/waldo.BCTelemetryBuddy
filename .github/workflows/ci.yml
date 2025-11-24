@@ -30,15 +30,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: |
-          mkdir -p packages/shared/src
-          cat > packages/shared/src/telemetryConfig.generated.ts << 'EOF'
-          /**
-           * GENERATED FILE - DO NOT EDIT MANUALLY
-           * CI Build - Development mode (no telemetry)
-           */
-          export const TELEMETRY_CONNECTION_STRING = '';
-          EOF
+        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
       
       - name: Build MCP
         run: npm run build --workspace=packages/mcp
@@ -81,15 +73,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: |
-          mkdir -p packages/shared/src
-          cat > packages/shared/src/telemetryConfig.generated.ts << 'EOF'
-          /**
-           * GENERATED FILE - DO NOT EDIT MANUALLY
-           * CI Build - Development mode (no telemetry)
-           */
-          export const TELEMETRY_CONNECTION_STRING = '';
-          EOF
+        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
       
       - name: Build MCP (required by extension)
         run: npm run build --workspace=packages/mcp
@@ -139,15 +123,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: |
-          mkdir -p packages/shared/src
-          cat > packages/shared/src/telemetryConfig.generated.ts << 'EOF'
-          /**
-           * GENERATED FILE - DO NOT EDIT MANUALLY
-           * CI Build - Development mode (no telemetry)
-           */
-          export const TELEMETRY_CONNECTION_STRING = '';
-          EOF
+        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
       
       - name: Check TypeScript compilation (MCP must build first)
         run: |
@@ -185,15 +161,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: |
-          mkdir -p packages/shared/src
-          cat > packages/shared/src/telemetryConfig.generated.ts << 'EOF'
-          /**
-           * GENERATED FILE - DO NOT EDIT MANUALLY
-           * CI Build - Development mode (no telemetry)
-           */
-          export const TELEMETRY_CONNECTION_STRING = '';
-          EOF
+        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
       
       - name: Build MCP
         run: npm run build --workspace=packages/mcp
