@@ -25,7 +25,7 @@ export class AppInsightsUsageTelemetry implements IUsageTelemetry {
             .setAutoCollectDependencies(false)
             .setAutoCollectConsole(false)
             .setUseDiskRetryCaching(true);
-        
+
         appInsights.start();
 
         this.client = appInsights.defaultClient;
