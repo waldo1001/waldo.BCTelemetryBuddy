@@ -1300,3 +1300,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Added comprehensive Claude Desktop workflow tests [Entry: 98fb8089-9780-469a-bed7-bf34cf7b3445]
   - **Why:** Ensure MCP works correctly with Claude Desktop in all scenarios
   - **How:** Created claude-workflows.test.ts covering 8 scenarios: setup, config discovery, multi-profile, env vars, auth flows, Claude integration, error handling, backwards compatibility
+- **2025-11-24** — Fix MCP server startup - launcher.js missing from build [Entry: c6c77761-8e6e-49dc-b406-b09a787e6561]
+  - **Why:** MCP launcher.js wasn't being copied during build, preventing VS Code from starting the MCP server
+  - **How:** Added copy:launcher npm script to packages/mcp/package.json build process
+- **2025-11-24** — Fixed MCP config loading to respect BCTB_WORKSPACE_PATH [Entry: 630aba9c-dfb3-473e-b931-e41ad0fe83a2]
+  - **Why:** loadConfigFromFile() was defaulting workspacePath to process.cwd() instead of BCTB_WORKSPACE_PATH env var
+  - **How:** Changed fallback chain to: config.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd()

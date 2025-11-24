@@ -199,10 +199,12 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
 
     if (!filePath) {
         // No config file found - return null to allow fallback to env vars
+        console.log('[Config] No config file found in any location');
         return null;
     }
 
     console.log(`📄 Loading config from: ${filePath}`);
+    console.log(`[Config] BCTB_WORKSPACE_PATH env var = ${process.env.BCTB_WORKSPACE_PATH || '(not set)'}`);
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const rawConfig = JSON.parse(fileContent) as ProfiledConfig & Partial<MCPConfig>;
@@ -322,7 +324,9 @@ function expandEnvironmentVariables(config: any): any {
         return config.replace(/\$\{([^}]+)\}/g, (_, varName) => {
             // Special case: ${workspaceFolder} maps to BCTB_WORKSPACE_PATH
             if (varName === 'workspaceFolder') {
-                return process.env.BCTB_WORKSPACE_PATH || process.cwd();
+                const value = process.env.BCTB_WORKSPACE_PATH || process.cwd();
+                console.log(`[Config] Expanding \${workspaceFolder} to: ${value}`);
+                return value;
             }
             return process.env[varName] || '';
         });

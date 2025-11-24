@@ -2319,3 +2319,15 @@ Change instructions an business logic to do this."
 > "Please create tests to test Claude-workflows as well."
 
 ---
+### Entry ID: c6c77761-8e6e-49dc-b406-b09a787e6561 — 2025-11-24 16:33
+> "The latest changes broke the MCP! At least the usages from VSCode. Now I get errors like: 'The telemetry tool needs configuration.' Even in this very workspace, I have a config file, but the MCP server doesn't seem to read it anymore."
+
+---
+### Entry ID: 630aba9c-dfb3-473e-b931-e41ad0fe83a2 — 2025-11-24 16:46
+> "Fix MCP configuration loading - config file not being loaded from workspace root anymore since v1.2.1"
+
+---
+### Entry ID: 7cc07245-83ed-49cc-b2a3-835d81f80655 — 2025-11-24 16:47
+> "Config file uses VS Code placeholder \${workspaceFolder}\ but environment variable expansion wasn't handling it"
+
+---
