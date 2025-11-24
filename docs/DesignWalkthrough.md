@@ -1274,3 +1274,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fix CI telemetry config generation [Entry: 59a0fee4-6547-4b10-90a0-d037c5d375cc]
   - **Why:** Inline JavaScript with escaped quotes caused syntax error in GitHub Actions
   - **How:** Created scripts/generate-telemetry-config-ci.js and replaced all inline node -e commands in ci.yml
+- **2025-11-24** — Fix CodeQL workflow [Entry: d65e8a73-1a57-46e5-b83c-641176c17f14]
+  - **Why:** Missing telemetry config generation step caused build to fail
+  - **How:** Added node scripts/generate-telemetry-config-ci.js step to codeql.yml before build

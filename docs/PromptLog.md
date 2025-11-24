@@ -2295,3 +2295,7 @@ Change instructions an business logic to do this."
 > "Fix telemetry config generation failure in CI - syntax error due to incorrect escaping in inline JavaScript"
 
 ---
+### Entry ID: d65e8a73-1a57-46e5-b83c-641176c17f14 — 2025-11-24 11:47
+> "Fix CodeQL workflow failure - missing telemetry config generation step"
+
+---
