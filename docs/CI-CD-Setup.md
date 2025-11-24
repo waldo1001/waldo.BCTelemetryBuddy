@@ -85,17 +85,55 @@
 
 Configure these in **Settings → Secrets and variables → Actions**:
 
-| Secret | Purpose | Get From |
-|--------|---------|----------|
-| `VSCE_PAT` | VS Code Marketplace publishing | https://marketplace.visualstudio.com/manage |
-| `OVSX_PAT` | Open VSX publishing (optional) | https://open-vsx.org/ |
-| `CODECOV_TOKEN` | Coverage reports (optional) | https://codecov.io/ |
+| Secret | Purpose | Get From | Required For |
+|--------|---------|----------|--------------|
+| `AI_CONNECTION_STRING` | Azure Application Insights telemetry | Azure Portal | **Release builds** |
+| `VSCE_PAT` | VS Code Marketplace publishing | https://marketplace.visualstudio.com/manage | Extension releases |
+| `NPM_TOKEN` | NPM registry publishing | https://www.npmjs.com/ | MCP releases |
+| `CODECOV_TOKEN` | Coverage reports (optional) | https://codecov.io/ | CI (optional) |
+| `OVSX_PAT` | Open VSX publishing (optional) | https://open-vsx.org/ | Extension releases (optional) |
+
+### ⚡ NEW: Application Insights Telemetry
+
+The project now includes **usage telemetry** to track extension/MCP usage (not BC telemetry data).
+
+**How CI/CD injects the connection string:**
+- **CI builds** (test/PR): Empty connection string → No telemetry sent
+- **Release builds** (tags): Injects `AI_CONNECTION_STRING` → Telemetry enabled in published artifacts
+
+**Setup Steps:**
+1. Create/select an Application Insights resource in Azure Portal
+2. Copy the **Connection String** from Overview page
+3. Add to GitHub secrets as `AI_CONNECTION_STRING`
+4. See **`docs/GitHub-Secrets-Setup.md`** for detailed instructions
+
+**Security Safeguards (IMPORTANT):**
+- ✅ Set up Azure Cost Budget alerts ($50/month starting point)
+- ✅ Configure anomaly detection alerts (ingestion volume, error rate)
+- ✅ Client-side rate limiting is already implemented in code
+- ✅ Connection string rotation procedure documented
+
+**What gets tracked:**
+- Extension activation, command usage, error rates
+- MCP tool invocations, query performance
+- No PII, no user code, no sensitive data
+- Respects VS Code telemetry settings (off/crash/error/all)
+
+See `Instructions/Telemetry-Design-and-Implementation.md` for full design details.
 
 ### Steps to Get `VSCE_PAT`:
 1. Go to https://marketplace.visualstudio.com/manage
 2. Create publisher account (e.g., `waldo` or `waldo1001`)
 3. Click "New Token" → Name: "GitHub Actions" → Organization: All accessible organizations → Scopes: **Marketplace → Manage**
-4. Copy token and add to GitHub repository secrets as `VSCE_PAT`
+3. Copy token and add to GitHub repository secrets as `VSCE_PAT`
+
+### Steps to Get `NPM_TOKEN`:
+1. Sign in to https://www.npmjs.com/
+2. Click profile → **Access Tokens** → **Generate New Token**
+3. Type: **"Automation"** (for CI/CD)
+4. Copy token and add to GitHub secrets as `NPM_TOKEN`
+
+See **`docs/GitHub-Secrets-Setup.md`** for complete instructions for all secrets.
 
 ## 📋 Recommended Branch Protection Rules
 

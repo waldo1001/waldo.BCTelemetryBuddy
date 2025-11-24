@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **No Telemetry in MCP Server**: Confirmed that MCP server does not collect any usage telemetry
+  - All telemetry collection (if enabled) happens in VSCode extension layer
+  - Standalone MCP server usage (Claude Desktop, etc.) sends no data to Microsoft or BC Telemetry Buddy team
+  - Added telemetry clarification section to README
+
 ## [2.1.2] - 2025-11-22
 
 ### Fixed

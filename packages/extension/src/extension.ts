@@ -14,6 +14,14 @@ import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
 import { ProfileManager } from './services/profileManager';
 import { showFirstRunNotification, startPeriodicUpdateChecks, checkForMCPUpdates } from './services/mcpInstaller';
+import {
+    VSCodeUsageTelemetry,
+    TelemetryLevelFilter,
+    getVSCodeTelemetryLevel,
+    getInstallationId,
+    resetInstallationId
+} from './services/extensionTelemetry';
+import { IUsageTelemetry, NoOpUsageTelemetry, RateLimitedUsageTelemetry, TELEMETRY_CONNECTION_STRING, TELEMETRY_EVENTS, createCommonProperties, cleanTelemetryProperties, hashValue } from '@bctb/shared';
 
 /**
  * MCP process handle
@@ -27,6 +35,7 @@ interface MCPProcess {
 let mcpProcess: MCPProcess | null = null;
 let mcpClient: MCPClient | null = null;
 let telemetryService: TelemetryService | null = null;
+let usageTelemetry: IUsageTelemetry | null = null; // Usage telemetry (tracks extension usage)
 let migrationService: MigrationService | null = null;
 let profileStatusBar: ProfileStatusBar | null = null;
 let profileManager: ProfileManager | null = null;
@@ -34,6 +43,24 @@ let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let extensionContext: vscode.ExtensionContext;
+
+// Common telemetry properties (set once during activation)
+let sessionId: string;
+let installationId: string;
+let extensionVersion: string;
+let currentProfileHash: string = 'default'; // Hash of current profile name
+
+/**
+ * Get current profile hash for telemetry
+ */
+function getCurrentProfileHash(): string {
+    try {
+        const profileName = profileManager?.getCurrentProfile() || 'default';
+        return hashValue(String(profileName)).substring(0, 16);
+    } catch {
+        return 'default';
+    }
+}
 
 /**
  * Register MCP tools with VSCode's language model API
@@ -326,6 +353,51 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy');
     outputChannel.appendLine('BC Telemetry Buddy extension activated');
 
+    // Initialize Usage Telemetry (tracks extension usage, respects VS Code telemetry settings)
+    sessionId = require('crypto').randomUUID(); // Generate session ID once per activation
+    try {
+        const packageJson = require('../../package.json');
+        const extensionId = packageJson.publisher + '.' + packageJson.name;
+        extensionVersion = packageJson.version;
+        const connectionString = TELEMETRY_CONNECTION_STRING;
+
+        if (connectionString && getVSCodeTelemetryLevel() !== 'off') {
+            // Create telemetry stack: VSCode wrapper -> Rate limiter -> Level filter
+            const vscodeReporter = new VSCodeUsageTelemetry(extensionId, extensionVersion, connectionString);
+            const rateLimited = new RateLimitedUsageTelemetry(vscodeReporter, {
+                maxIdenticalErrors: 10,
+                maxEventsPerSession: 1000,
+                maxEventsPerMinute: 100
+            });
+            const levelFiltered = new TelemetryLevelFilter(rateLimited, getVSCodeTelemetryLevel);
+            usageTelemetry = levelFiltered;
+
+            // Track extension activation with common properties
+            installationId = getInstallationId(context);
+            currentProfileHash = getCurrentProfileHash();
+            const activationProps = createCommonProperties(
+                TELEMETRY_EVENTS.EXTENSION.ACTIVATED,
+                'extension',
+                sessionId,
+                installationId,
+                extensionVersion,
+                { profileHash: currentProfileHash }
+            );
+            usageTelemetry.trackEvent('Extension.Activated', {
+                ...activationProps,
+                vscodeVersion: vscode.version,
+                os: process.platform,
+                nodeVersion: process.version
+            }); outputChannel.appendLine('✓ Usage Telemetry initialized (respects VS Code telemetry level)');
+        } else {
+            usageTelemetry = new NoOpUsageTelemetry();
+            outputChannel.appendLine('ℹ️  Usage Telemetry disabled (no connection string or telemetry off)');
+        }
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  Usage Telemetry initialization failed: ${error.message}`);
+        usageTelemetry = new NoOpUsageTelemetry();
+    }
+
     // Initialize ProfileManager (handles multi-profile configurations)
     try {
         profileManager = new ProfileManager(outputChannel);
@@ -389,12 +461,80 @@ export function activate(context: vscode.ExtensionContext) {
         startPeriodicUpdateChecks(context)
     );
 
+    /**
+     * Telemetry wrapper for commands - tracks invocation, duration, success/failure
+     */
+    function withCommandTelemetry<T extends any[]>(
+        commandName: string,
+        handler: (...args: T) => Promise<void> | void
+    ): (...args: T) => Promise<void> {
+        return async (...args: T) => {
+            const startTime = Date.now();
+
+            try {
+                await handler(...args);
+
+                // Track successful completion
+                const durationMs = Date.now() - startTime;
+                const completedProps = createCommonProperties(
+                    TELEMETRY_EVENTS.EXTENSION.COMMAND_COMPLETED,
+                    'extension',
+                    sessionId,
+                    installationId,
+                    extensionVersion,
+                    {
+                        commandName,
+                        profileHash: getCurrentProfileHash()
+                    }
+                );
+                usageTelemetry?.trackEvent('Extension.CommandCompleted', cleanTelemetryProperties(completedProps), { duration: durationMs });
+            } catch (error: any) {
+                // Track failed completion
+                const durationMs = Date.now() - startTime;
+                const errorType = error?.constructor?.name || 'UnknownError';
+                const failedProps = createCommonProperties(
+                    TELEMETRY_EVENTS.EXTENSION.COMMAND_FAILED,
+                    'extension',
+                    sessionId,
+                    installationId,
+                    extensionVersion,
+                    {
+                        commandName,
+                        profileHash: getCurrentProfileHash(),
+                        errorType
+                    }
+                );
+                usageTelemetry?.trackEvent('Extension.CommandFailed', cleanTelemetryProperties(failedProps), { duration: durationMs });
+
+                // Also track exception with full context
+                const exceptionProps = createCommonProperties(
+                    TELEMETRY_EVENTS.EXTENSION.ERROR,
+                    'extension',
+                    sessionId,
+                    installationId,
+                    extensionVersion,
+                    {
+                        commandName,
+                        profileHash: getCurrentProfileHash(),
+                        errorType,
+                        operation: 'command'
+                    }
+                );
+                if (error instanceof Error) {
+                    usageTelemetry?.trackException(error, cleanTelemetryProperties(exceptionProps) as Record<string, string>);
+                }
+
+                throw error;
+            }
+        };
+    }
+
     // Register commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('bctb.setupWizard', async () => {
+        vscode.commands.registerCommand('bctb.setupWizard', withCommandTelemetry('setupWizard', async () => {
             await setupWizard?.show();
-        }),
-        vscode.commands.registerCommand('bctb.migrateSettings', async () => {
+        })),
+        vscode.commands.registerCommand('bctb.migrateSettings', withCommandTelemetry('migrateSettings', async () => {
             if (!migrationService) {
                 vscode.window.showErrorMessage('Migration service not initialized');
                 return;
@@ -402,32 +542,33 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Just migrate directly
             await migrationService.migrate(context);
-        }),
-        vscode.commands.registerCommand('bctb.resetMigrationState', async () => {
+        })),
+        vscode.commands.registerCommand('bctb.resetMigrationState', withCommandTelemetry('resetMigrationState', async () => {
             await context.globalState.update('bctb.migrationCompleted', undefined);
             await context.globalState.update('bctb.migrationDismissed', undefined);
             vscode.window.showInformationMessage('Migration state reset. Reload window to see notification again.');
-        }),
-        vscode.commands.registerCommand('bctb.showReleaseNotes', () => {
+        })),
+        vscode.commands.registerCommand('bctb.showReleaseNotes', withCommandTelemetry('showReleaseNotes', () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
             ReleaseNotesProvider.createOrShow(context.extensionUri, hasWorkspace);
-        }),
-        vscode.commands.registerCommand('bctb.startMCP', () => startMCPCommand()),
-        vscode.commands.registerCommand('bctb.runKQLQuery', () => runKQLQueryCommand(context)),
-        vscode.commands.registerCommand('bctb.runKQLFromDocument', () => runKQLFromDocumentCommand(context)),
-        vscode.commands.registerCommand('bctb.runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
+        })),
+        vscode.commands.registerCommand('bctb.startMCP', withCommandTelemetry('startMCP', () => startMCPCommand())),
+        vscode.commands.registerCommand('bctb.runKQLQuery', withCommandTelemetry('runKQLQuery', () => runKQLQueryCommand(context))),
+        vscode.commands.registerCommand('bctb.runKQLFromDocument', withCommandTelemetry('runKQLFromDocument', () => runKQLFromDocumentCommand(context))),
+        vscode.commands.registerCommand('bctb.runKQLFromCodeLens', withCommandTelemetry('runKQLFromCodeLens', (uri: vscode.Uri, startLine: number, endLine: number, queryText: string) =>
             runKQLFromCodeLensCommand(context, uri, startLine, endLine, queryText)
-        ),
-        vscode.commands.registerCommand('bctb.clearCache', () => clearCacheCommand()),
-        vscode.commands.registerCommand('bctb.showCacheStats', () => showCacheStatsCommand()),
-        vscode.commands.registerCommand('bctb.installChatmodes', () => installChatmodesCommand()),
-        vscode.commands.registerCommand('bctb.switchProfile', () => switchProfileCommand()),
-        vscode.commands.registerCommand('bctb.refreshProfileStatusBar', () => refreshProfileStatusBarCommand()),
-        vscode.commands.registerCommand('bctb.createProfile', () => createProfileCommand()),
-        vscode.commands.registerCommand('bctb.setDefaultProfile', () => setDefaultProfileCommand()),
-        vscode.commands.registerCommand('bctb.manageProfiles', () => manageProfilesCommand()),
-        vscode.commands.registerCommand('bctb.checkForMCPUpdates', () => checkForMCPUpdates(context, false))
+        )),
+        vscode.commands.registerCommand('bctb.clearCache', withCommandTelemetry('clearCache', () => clearCacheCommand())),
+        vscode.commands.registerCommand('bctb.showCacheStats', withCommandTelemetry('showCacheStats', () => showCacheStatsCommand())),
+        vscode.commands.registerCommand('bctb.installChatmodes', withCommandTelemetry('installChatmodes', () => installChatmodesCommand())),
+        vscode.commands.registerCommand('bctb.switchProfile', withCommandTelemetry('switchProfile', () => switchProfileCommand())),
+        vscode.commands.registerCommand('bctb.refreshProfileStatusBar', withCommandTelemetry('refreshProfileStatusBar', () => refreshProfileStatusBarCommand())),
+        vscode.commands.registerCommand('bctb.createProfile', withCommandTelemetry('createProfile', () => createProfileCommand())),
+        vscode.commands.registerCommand('bctb.setDefaultProfile', withCommandTelemetry('setDefaultProfile', () => setDefaultProfileCommand())),
+        vscode.commands.registerCommand('bctb.manageProfiles', withCommandTelemetry('manageProfiles', () => manageProfilesCommand())),
+        vscode.commands.registerCommand('bctb.checkForMCPUpdates', withCommandTelemetry('checkForMCPUpdates', () => checkForMCPUpdates(context, false))),
+        vscode.commands.registerCommand('bctb.resetTelemetryId', withCommandTelemetry('resetTelemetryId', () => resetTelemetryIdCommand(context)))
     );
 
     // Register CodeLens provider for .kql files
@@ -523,6 +664,14 @@ export function activate(context: vscode.ExtensionContext) {
  * Extension deactivation
  */
 export function deactivate() {
+    // Flush usage telemetry before shutdown
+    if (usageTelemetry) {
+        outputChannel.appendLine('Flushing usage telemetry...');
+        usageTelemetry.flush().catch((err: any) => {
+            outputChannel.appendLine(`⚠️  Failed to flush usage telemetry: ${err.message}`);
+        });
+    }
+
     if (mcpProcess) {
         outputChannel.appendLine('Stopping MCP process...');
         mcpProcess.process.kill();
@@ -1108,6 +1257,53 @@ async function clearCacheCommand(): Promise<void> {
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to clear cache: ${err.message}`);
         outputChannel.appendLine(`✗ Clear cache error: ${err.message}`);
+        outputChannel.show();
+    }
+}
+
+/**
+ * Command: Reset Telemetry ID (GDPR right to reset pseudonymous identifier)
+ * Generates a new installation ID to disassociate future telemetry from past sessions
+ */
+async function resetTelemetryIdCommand(context: vscode.ExtensionContext): Promise<void> {
+    try {
+        const result = await vscode.window.showWarningMessage(
+            'Reset Telemetry ID?\n\nThis will generate a new anonymous identifier for telemetry tracking. ' +
+            'Your past usage data will not be deleted but future data will not be linked to your previous sessions.',
+            { modal: true },
+            'Reset ID',
+            'Cancel'
+        );
+
+        if (result !== 'Reset ID') {
+            return;
+        }
+
+        resetInstallationId(context);
+
+        // Update module-level installationId variable to pick up new ID
+        installationId = getInstallationId(context);
+
+        if (usageTelemetry) {
+            const resetProps = createCommonProperties(
+                TELEMETRY_EVENTS.EXTENSION.TELEMETRY_ID_RESET,
+                'extension',
+                sessionId,
+                installationId,
+                extensionVersion,
+                {
+                    profileHash: getCurrentProfileHash(),
+                    newInstallationId: installationId
+                }
+            );
+            usageTelemetry.trackEvent('Telemetry.IdReset', cleanTelemetryProperties(resetProps));
+        }
+
+        vscode.window.showInformationMessage('Telemetry ID reset successfully. New anonymous ID generated.');
+        outputChannel.appendLine('✓ Telemetry ID reset - new installation ID generated');
+    } catch (err: any) {
+        vscode.window.showErrorMessage(`Failed to reset telemetry ID: ${err.message}`);
+        outputChannel.appendLine(`✗ Reset telemetry ID error: ${err.message}`);
         outputChannel.show();
     }
 }

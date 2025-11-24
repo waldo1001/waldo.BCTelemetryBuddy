@@ -2252,3 +2252,37 @@ Also, the documentation is never updated.
 Change instructions an business logic to do this."
 
 ---
+### Entry ID: 9857ac3d-b4fa-48f2-8222-4996d28b7ede — 2025-11-22 12:02
+> "Review implementation against design document - found 8 critical gaps requiring fixes: command tracking not implemented, MCP tool telemetry missing, Kusto dependency tracking missing, installation ID storage bug, sessionId not generated, common properties missing, sampling not implemented, reset command not in package.json."
+
+---
+### Entry ID: 4f3b1c87-f060-4e14-a4b0-02387124d3bb — 2025-11-22 15:30
+> "Check ALL requirements from design document for compliance"
+
+---
+### Entry ID: 58106d3d-1aad-4749-b92e-ed7c9a83bdd8 — 2025-11-23 10:11
+> "I now just notice - but didn't the #file:Telemetry-Design-and-Implementation.md describe I ONLY want "completed" and "failed" events, not "invoked" events?"
+
+---
+### Entry ID: 0747f3a4-d698-4721-8ca8-3f9c06a944a4 — 2025-11-23 10:11
+> "I now just notice - but didn't the #file:Telemetry-Design-and-Implementation.md describe I ONLY want "completed" and "failed" events, not "invoked" events?"
+
+---
+### Entry ID: 441f62a5-09f5-4389-8e33-33b8583c91e1 — 2025-11-23 10:36
+> "Remove the 'invoked' commands from the #file:Telemetry-Design-and-Implementation.md. Keep the Completed and Failed as separate events. Implement accordingly"
+
+---
+### Entry ID: ac5af053-bb7e-474c-b34d-df27bee73bc6 — 2025-11-23 11:43
+> "But but .. all the tools that the MCP executes - I'd like to track completion and fails there as well."
+
+---
+### Entry ID: ed2a9a1a-dfa3-42b0-998d-02646601dcb9 — 2025-11-23 23:30
+> "Add the missing tests. I want to have a minimum of 80% coverage."
+
+---
+### Entry ID: 9c25393c-9e6f-43a6-a1b7-3e7c68d784a3 — 2025-11-23 23:34
+> "now work on CI/CD - change the pipelines so that our ApplicationInsights-connectionstring is inserted when necessary. Also let me know how to set it up in GitHub"
+
+---
+### Entry ID: fd8b4046-72ae-49ae-b4c4-ef2d1a8babaa — 2025-11-24 08:59
+> "Update all necessary documentation. changelog, readme, docs-folder - update all that is necessary."

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { IUsageTelemetry, NoOpUsageTelemetry } from './usageTelemetry.js';
 
 /**
  * Kusto query result structure
@@ -27,10 +28,12 @@ export class KustoService {
     private client: AxiosInstance;
     private appInsightsAppId: string;
     private clusterUrl: string;
+    private usageTelemetry: IUsageTelemetry;
 
-    constructor(appInsightsAppId: string, clusterUrl: string) {
+    constructor(appInsightsAppId: string, clusterUrl: string, usageTelemetry?: IUsageTelemetry) {
         this.appInsightsAppId = appInsightsAppId;
         this.clusterUrl = clusterUrl;
+        this.usageTelemetry = usageTelemetry || new NoOpUsageTelemetry();
 
         this.client = axios.create({
             timeout: 60000, // 60 second timeout for queries
@@ -43,7 +46,15 @@ export class KustoService {
     /**
      * Execute KQL query against Application Insights
      */
-    async executeQuery(kql: string, accessToken: string): Promise<KustoQueryResult> {
+    async executeQuery(
+        kql: string,
+        accessToken: string,
+        queryName?: string,
+        correlationId?: string
+    ): Promise<KustoQueryResult> {
+        const startTime = Date.now();
+        const safeName = queryName || 'AdHocQuery'; // Never log raw KQL
+
         try {
             // Use correct Application Insights API endpoint
             // The clusterUrl from settings is ignored - we always use the standard API endpoint
@@ -63,13 +74,46 @@ export class KustoService {
 
             console.log(`✓ Query executed successfully, ${response.data.tables.length} table(s) returned`);
 
+            // Track successful dependency call
+            const durationMs = Date.now() - startTime;
+            this.usageTelemetry.trackDependency(
+                'Kusto',
+                safeName,
+                durationMs,
+                true,
+                '200',
+                {
+                    component: 'shared',
+                    correlationId: correlationId || 'unknown',
+                    cacheHit: 'false'
+                }
+            );
+
             return response.data;
         } catch (error) {
+            const durationMs = Date.now() - startTime;
+
             if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
                 const message = error.response?.data?.error?.message || error.message;
 
                 console.error(`Kusto query failed (${status}):`, message);
+
+                // Track failed dependency call
+                this.usageTelemetry.trackDependency(
+                    'Kusto',
+                    safeName,
+                    durationMs,
+                    false,
+                    String(status || 'error'),
+                    {
+                        component: 'shared',
+                        correlationId: correlationId || 'unknown',
+                        errorCategory: status === 400 ? 'InvalidQuery' :
+                            status === 401 || status === 403 ? 'AuthenticationError' :
+                                status === 429 ? 'RateLimitExceeded' : 'Unknown'
+                    }
+                );
 
                 // Provide helpful error messages
                 if (status === 401 || status === 403) {
@@ -82,6 +126,20 @@ export class KustoService {
                     throw new Error(`Query execution failed: ${message}`);
                 }
             }
+
+            // Track failed dependency call for non-axios errors
+            this.usageTelemetry.trackDependency(
+                'Kusto',
+                safeName,
+                durationMs,
+                false,
+                'error',
+                {
+                    component: 'shared',
+                    correlationId: correlationId || 'unknown',
+                    errorCategory: 'Unknown'
+                }
+            );
 
             throw error;
         }

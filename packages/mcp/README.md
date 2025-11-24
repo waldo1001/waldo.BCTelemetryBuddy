@@ -542,6 +542,12 @@ npm run test:watch       # Watch mode for development
 
 See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
 
+## Usage Telemetry
+
+The MCP server does **not** collect usage telemetry. All telemetry collection (if enabled) happens in the VSCode extension layer.
+
+When using the standalone MCP server with Claude Desktop or other AI assistants, no usage data is sent to Microsoft or the BC Telemetry Buddy team.
+
 ## License
 
 MIT - See [LICENSE](../../LICENSE) for details.

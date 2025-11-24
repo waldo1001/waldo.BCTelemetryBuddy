@@ -610,19 +610,19 @@ For every command contributed by the extension (registered in `extension.ts`):
 1. Wrap the command handler in a helper like `runWithUsageTelemetry(commandName, handler)`.
 2. On invocation:
    - Record `startTime = Date.now()`.
-   - Optionally send `Extension.CommandInvoked` with properties:
-     - `commandName`
-     - `source = "extension"`
-     - `version` (extension version)
-     - `profileIdHash`, `chatMode`, etc. (if applicable and non‑sensitive).
-3. On completion:
+3. On completion (success):
    - Compute `durationMs = Date.now() - startTime`.
    - Send `Extension.CommandCompleted` with:
      - `commandName`
-     - `success` (true/false)
-     - `errorType` (if failed, e.g. `ValidationError`, `McpError`)
-     - `errorMessageShort` (short, non‑PII description)
+     - `success = true`
    - Add `durationMs` as a measurement.
+4. On failure:
+   - Compute `durationMs = Date.now() - startTime`.
+   - Send `Extension.CommandFailed` with:
+     - `commandName`
+     - `errorType` (e.g. `ValidationError`, `McpError`)
+   - Add `durationMs` as a measurement.
+   - Also call `trackException(error, ...)` for full error details.
 
 This yields:
 - **What commands are used** (by counting `Extension.CommandCompleted` by `commandName`).
@@ -1591,15 +1591,15 @@ This section lists all telemetry events with their IDs, custom dimensions, and m
 
 | Event ID | Event Name | Custom Dimensions | Measurements |
 |----------|-----------|-------------------|--------------|
-| **TB-EXT-001** | `Extension.CommandInvoked` | `eventId`, `commandName`, `correlationId`, `sessionId`, `userId`, `version`, `profileHash`, `vsCodeVersion`, `os`, `timestamp` | - |
-| **TB-EXT-002** | `Extension.CommandCompleted` | `eventId`, `commandName`, `correlationId`, `sessionId`, `userId`, `success`, `errorType`, `profileHash`, `timestamp` | `durationMs` |
-| **TB-EXT-003** | `Extension.McpRequestSent` | `eventId`, `correlationId`, `method`, `sessionId`, `userId`, `profileHash`, `timestamp` | - |
-| **TB-EXT-004** | `Extension.McpResponseReceived` | `eventId`, `correlationId`, `method`, `sessionId`, `success`, `statusCode`, `timestamp` | `durationMs` |
-| **TB-EXT-005** | `Extension.ProfileSwitched` | `eventId`, `fromProfileHash`, `toProfileHash`, `sessionId`, `userId`, `timestamp` | - |
-| **TB-EXT-006** | `Extension.CacheCleared` | `eventId`, `sessionId`, `userId`, `component`, `timestamp` | `itemsCleared`, `bytesFreed` |
-| **TB-EXT-007** | `Extension.SetupWizardOpened` | `eventId`, `trigger`, `sessionId`, `userId`, `timestamp` | - |
-| **TB-EXT-008** | `Extension.SetupWizardCompleted` | `eventId`, `authFlow`, `hasAppInsights`, `hasKusto`, `sessionId`, `userId`, `timestamp` | `durationMs` |
-| **TB-EXT-009** | `Extension.Error` | `eventId`, `errorType`, `operation`, `correlationId`, `commandName`, `stackHash`, `sessionId`, `userId`, `timestamp` | - |
+| **TB-EXT-002** | `Extension.CommandCompleted` | `eventId`, `commandName`, `correlationId`, `sessionId`, `userId`, `profileHash`, `timestamp` | `durationMs` |
+| **TB-EXT-003** | `Extension.CommandFailed` | `eventId`, `commandName`, `correlationId`, `sessionId`, `userId`, `errorType`, `profileHash`, `timestamp` | `durationMs` |
+| **TB-EXT-004** | `Extension.McpRequestSent` | `eventId`, `correlationId`, `method`, `sessionId`, `userId`, `profileHash`, `timestamp` | - |
+| **TB-EXT-005** | `Extension.McpResponseReceived` | `eventId`, `correlationId`, `method`, `sessionId`, `success`, `statusCode`, `timestamp` | `durationMs` |
+| **TB-EXT-006** | `Extension.ProfileSwitched` | `eventId`, `fromProfileHash`, `toProfileHash`, `sessionId`, `userId`, `timestamp` | - |
+| **TB-EXT-007** | `Extension.CacheCleared` | `eventId`, `sessionId`, `userId`, `component`, `timestamp` | `itemsCleared`, `bytesFreed` |
+| **TB-EXT-008** | `Extension.SetupWizardOpened` | `eventId`, `trigger`, `sessionId`, `userId`, `timestamp` | - |
+| **TB-EXT-009** | `Extension.SetupWizardCompleted` | `eventId`, `authFlow`, `hasAppInsights`, `hasKusto`, `sessionId`, `userId`, `timestamp` | `durationMs` |
+| **TB-EXT-010** | `Extension.Error` | `eventId`, `errorType`, `operation`, `correlationId`, `commandName`, `stackHash`, `sessionId`, `userId`, `timestamp` | - |
 
 ---
 

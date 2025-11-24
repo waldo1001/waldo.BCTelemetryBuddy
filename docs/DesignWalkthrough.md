@@ -1247,3 +1247,24 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-22** — Show release notes only on MAJOR version updates [Entry: d9101277-232c-4410-be9a-3c7296c1264b]
   - **Why:** User requested release notes page only appear for major version changes (e.g., 1.x.x → 2.0.0), not for minor or patch updates
   - **How:** Modified extension.ts checkAndShowReleaseNotes() to parse and compare major version numbers; updated copilot-instructions.md to document new behavior; added 14 comprehensive tests covering all version change scenarios
+- **2025-11-22** — Implemented complete usage telemetry system with Azure Application Insights [Entry: 76a8c2d1-4f9b-4e3a-b2c5-8d9e1f2a3b4c]
+  - **Why:** Track extension and MCP usage patterns while respecting user privacy and GDPR compliance.
+  - **How:** Created shared telemetry infrastructure (rate limiting, sanitization), integrated VS Code extension telemetry SDK and Azure AI SDK, added installation ID management with reset command, comprehensive testing (83% coverage), and full user documentation.
+- **2025-11-23** — Removed invoked events per design spec [Entry: 0747f3a4-d698-4721-8ca8-3f9c06a944a4]
+  - **Why:** Design spec only requires 'completed' and 'failed' events, not 'invoked'
+  - **How:** Removed Extension.CommandInvoked, Mcp.ToolInvoked/Completed/Failed tracking
+- **2025-11-23** — Removed invoked events, implemented separate Completed/Failed events [Entry: 441f62a5-09f5-4389-8e33-33b8583c91e1]
+  - **Why:** Design spec requires NO invoked events and SEPARATE Completed (TB-EXT-002) and Failed (TB-EXT-003) events
+  - **How:** Updated design doc Sections 4.1 & 14.1, updated telemetryEvents.ts constants, updated extension.ts withCommandTelemetry to track separate events
+- **2025-11-23** — Added MCP tool completion/failure telemetry tracking [Entry: ac5af053-bb7e-474c-b34d-df27bee73bc6]
+  - **Why:** Track success and failure of all 16 MCP tools (query_telemetry, get_saved_queries, etc.) to understand tool usage patterns and errors
+  - **How:** Wrapped executeToolCall() with try/catch, tracks Mcp.ToolCompleted (success) and Mcp.ToolFailed (failure) events with toolName, profileHash, duration, errorType
+- **2025-11-23** — Improved test coverage to 80%+ across packages [Entry: 6b2e9f4a-3c8d-4a1b-9e7f-2d5c1a8b3e6f]
+  - **Why:** User requested minimum 80% coverage for all telemetry components
+  - **How:** Added comprehensive tests for config.ts (profile inheritance, env expansion), telemetryEvents.ts (constants validation), and extensionTelemetry.ts (VSCode telemetry wrapper). Shared: 87%, Extension: 80.3%, MCP: 94.4%
+- **2025-11-23** — Integrated AI connection string injection into CI/CD pipelines [Entry: 6329b252-0d8a-46af-816c-9bc71a67013e]
+  - **Why:** Usage telemetry requires Application Insights connection string to be injected during release builds, while keeping it empty for CI/test builds
+  - **How:** Modified ci.yml, release-extension.yml, and release-mcp.yml to generate telemetryConfig.generated.ts before builds. CI uses empty string, releases use GitHub secret AI_CONNECTION_STRING. Created comprehensive GitHub-Secrets-Setup.md guide and updated CI-CD-Setup.md with telemetry security safeguards
+- **2025-11-24** — Updated all documentation with usage telemetry information [Entry: fd8b4046-72ae-49ae-b4c4-ef2d1a8babaa]
+  - **Why:** Telemetry implementation complete but documentation needed updates to inform users about data collection, privacy safeguards, and opt-out options
+  - **How:** Updated README.md (main project) with comprehensive telemetry disclosure section covering what's collected/not collected/privacy/disable instructions; updated packages/extension/README.md with telemetry section; added telemetry note to packages/mcp/README.md clarifying MCP doesn't collect telemetry; updated docs/CHANGELOG.md, packages/extension/CHANGELOG.md, and packages/mcp/CHANGELOG.md with telemetry implementation entries; UserGuide.md already had comprehensive telemetry section from previous work; all documentation now transparently discloses usage telemetry with clear privacy safeguards and opt-out instructions

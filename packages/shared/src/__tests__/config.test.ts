@@ -1,4 +1,4 @@
-import { loadConfig, validateConfig, MCPConfig, Reference } from '../config.js';
+import { loadConfig, validateConfig, MCPConfig, Reference, resolveProfileInheritance, expandEnvironmentVariables } from '../config.js';
 
 describe('Configuration Module', () => {
     // Store original environment
@@ -300,6 +300,235 @@ describe('Configuration Module', () => {
             expect(errors).toContain('BCTB_KUSTO_URL is required');
             expect(errors).toContain('BCTB_CLIENT_ID is required for client_credentials auth flow');
             expect(errors).toContain('BCTB_CLIENT_SECRET is required for client_credentials auth flow');
+        });
+    });
+
+    describe('resolveProfileInheritance', () => {
+        it('should return profile without inheritance', () => {
+            const profiles = {
+                prod: {
+                    connectionName: 'Prod',
+                    tenantId: 'tenant-123',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: 'app-123',
+                    kustoClusterUrl: 'https://kusto.example.com',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                }
+            };
+
+            const resolved = resolveProfileInheritance(profiles, 'prod');
+
+            expect(resolved).toEqual(profiles.prod);
+            expect(resolved.extends).toBeUndefined();
+        });
+
+        it('should merge child profile over parent profile', () => {
+            const profiles = {
+                base: {
+                    connectionName: 'Base',
+                    tenantId: 'base-tenant',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: 'base-app',
+                    kustoClusterUrl: 'https://base.kusto.com',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                },
+                prod: {
+                    extends: 'base',
+                    connectionName: 'Prod Override',
+                    applicationInsightsAppId: 'prod-app',
+                    authFlow: 'device_code' as const,
+                    tenantId: 'base-tenant',
+                    kustoClusterUrl: 'https://base.kusto.com',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                }
+            };
+
+            const resolved = resolveProfileInheritance(profiles, 'prod');
+
+            expect(resolved.connectionName).toBe('Prod Override');
+            expect(resolved.applicationInsightsAppId).toBe('prod-app');
+            expect(resolved.authFlow).toBe('device_code'); // Overridden
+            expect(resolved.kustoClusterUrl).toBe('https://base.kusto.com');
+            expect(resolved.tenantId).toBe('base-tenant');
+            expect(resolved.extends).toBeUndefined(); // Removed after resolution
+        });
+
+        it('should throw error on circular inheritance', () => {
+            const profiles = {
+                a: {
+                    extends: 'b',
+                    connectionName: 'A',
+                    tenantId: '',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: '',
+                    kustoClusterUrl: '',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                },
+                b: {
+                    extends: 'a',
+                    connectionName: 'B',
+                    tenantId: '',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: '',
+                    kustoClusterUrl: '',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                }
+            };
+
+            expect(() => resolveProfileInheritance(profiles, 'a')).toThrow('Circular profile inheritance detected: a');
+        });
+
+        it('should throw error if parent profile not found', () => {
+            const profiles = {
+                prod: {
+                    extends: 'nonexistent',
+                    connectionName: 'Prod',
+                    tenantId: '',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: '',
+                    kustoClusterUrl: '',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                }
+            };
+
+            expect(() => resolveProfileInheritance(profiles, 'prod')).toThrow("Profile 'nonexistent' not found");
+        });
+
+        it('should expand environment variables in resolved profile', () => {
+            process.env.TEST_TENANT = 'test-tenant-id';
+            process.env.TEST_APP = 'test-app-id';
+
+            const profiles = {
+                prod: {
+                    connectionName: 'Prod',
+                    tenantId: '${TEST_TENANT}',
+                    authFlow: 'azure_cli' as const,
+                    applicationInsightsAppId: '${TEST_APP}',
+                    kustoClusterUrl: 'https://kusto.example.com',
+                    cacheEnabled: true,
+                    cacheTTLSeconds: 3600,
+                    removePII: false,
+                    port: 52345,
+                    workspacePath: '/workspace',
+                    queriesFolder: 'queries',
+                    references: []
+                }
+            };
+
+            const resolved = resolveProfileInheritance(profiles, 'prod');
+
+            expect(resolved.tenantId).toBe('test-tenant-id');
+            expect(resolved.applicationInsightsAppId).toBe('test-app-id');
+
+            delete process.env.TEST_TENANT;
+            delete process.env.TEST_APP;
+        });
+    });
+
+    describe('expandEnvironmentVariables', () => {
+        it('should expand environment variables in strings', () => {
+            process.env.TEST_VAR = 'test-value';
+
+            const config = {
+                tenantId: '${TEST_VAR}',
+                appId: 'app-${TEST_VAR}'
+            };
+
+            const expanded = expandEnvironmentVariables(config);
+
+            expect(expanded.tenantId).toBe('test-value');
+            expect(expanded.appId).toBe('app-test-value');
+
+            delete process.env.TEST_VAR;
+        });
+
+        it('should handle missing environment variables', () => {
+            const config = {
+                tenantId: '${NONEXISTENT_VAR}'
+            };
+
+            const expanded = expandEnvironmentVariables(config);
+
+            expect(expanded.tenantId).toBe('');
+        });
+
+        it('should expand nested objects', () => {
+            process.env.TEST_VAR = 'nested-value';
+
+            const config = {
+                nested: {
+                    field: '${TEST_VAR}'
+                }
+            };
+
+            const expanded = expandEnvironmentVariables(config);
+
+            expect(expanded.nested.field).toBe('nested-value');
+
+            delete process.env.TEST_VAR;
+        });
+
+        it('should handle arrays', () => {
+            process.env.TEST_VAR = 'array-value';
+
+            const config = ['${TEST_VAR}', 'static'];
+
+            const expanded = expandEnvironmentVariables(config);
+
+            expect(expanded[0]).toBe('array-value');
+            expect(expanded[1]).toBe('static');
+
+            delete process.env.TEST_VAR;
+        });
+
+        it('should not modify non-string values', () => {
+            const config = {
+                number: 123,
+                boolean: true,
+                null: null
+            };
+
+            const expanded = expandEnvironmentVariables(config);
+
+            expect(expanded.number).toBe(123);
+            expect(expanded.boolean).toBe(true);
+            expect(expanded.null).toBe(null);
         });
     });
 });
