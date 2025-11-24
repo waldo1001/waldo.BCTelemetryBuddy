@@ -51,7 +51,8 @@
     "kusto.validationEnabled": false,
     // NPM
     "npm.packageManager": "npm",
-    "npm.enableRunFromFolder": true
+    "npm.enableRunFromFolder": true,
+    "editor.codeLens": true
     // BC Telemetry Buddy - Test Configuration
     // ⚠️ DISABLED in development workspace to prevent auto-activation
     // Use F5 to debug the extension instead

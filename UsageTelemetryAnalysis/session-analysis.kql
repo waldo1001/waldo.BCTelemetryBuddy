@@ -1,0 +1,82 @@
+// Query: Session Analysis
+// Purpose: Understand user sessions, duration, and journey patterns
+// Author: System
+// Date: 2025-11-24
+// Category: User Behavior
+
+// Session statistics
+customEvents
+| where timestamp >= ago(7d)
+| summarize 
+    EventCount = count(),
+    SessionDuration = max(timestamp) - min(timestamp),
+    EventTypes = make_set(name),
+    FirstEvent = min(timestamp),
+    LastEvent = max(timestamp)
+    by session_Id, user_Id
+| extend SessionDurationMinutes = SessionDuration / 1m
+| summarize 
+    TotalSessions = count(),
+    AvgEventsPerSession = round(avg(EventCount), 2),
+    AvgSessionDurationMin = round(avg(SessionDurationMinutes), 2),
+    P50DurationMin = round(percentile(SessionDurationMinutes, 50), 2),
+    P95DurationMin = round(percentile(SessionDurationMinutes, 95), 2)
+
+// Alternative: Session journey (specific session)
+// let targetSession = "session-id-here";
+// customEvents
+// | where session_Id == targetSession
+// | extend 
+//     commandId = tostring(customDimensions.commandId),
+//     success = tobool(customDimensions.success)
+// | order by timestamp asc
+// | project 
+//     timestamp, 
+//     EventName = name, 
+//     commandId, 
+//     success, 
+//     customDimensions
+// | take 100
+
+// Alternative: Most common event sequences
+// customEvents
+// | where timestamp >= ago(7d)
+// | order by session_Id asc, timestamp asc
+// | extend NextEvent = next(name, 1), CurrentEvent = name
+// | where session_Id == next(session_Id, 1)
+// | summarize Count = count() by EventSequence = strcat(CurrentEvent, " → ", NextEvent)
+// | order by Count desc
+// | take 20
+
+// Alternative: Sessions by length
+// customEvents
+// | where timestamp >= ago(7d)
+// | summarize 
+//     EventCount = count(),
+//     Duration = max(timestamp) - min(timestamp)
+//     by session_Id
+// | extend 
+//     DurationMinutes = Duration / 1m,
+//     SessionType = case(
+//         EventCount == 1, "Single Event",
+//         EventCount <= 5, "Short Session",
+//         EventCount <= 20, "Medium Session",
+//         "Long Session"
+//     )
+// | summarize SessionCount = count() by SessionType
+// | order by SessionCount desc
+
+// Alternative: User's recent sessions
+// let targetUser = "user-id-here";
+// customEvents
+// | where user_Id == targetUser
+// | where timestamp >= ago(30d)
+// | summarize 
+//     EventCount = count(),
+//     Events = make_list(name),
+//     Duration = max(timestamp) - min(timestamp),
+//     FirstEvent = min(timestamp),
+//     LastEvent = max(timestamp)
+//     by session_Id
+// | extend DurationMinutes = round(Duration / 1m, 2)
+// | order by FirstEvent desc

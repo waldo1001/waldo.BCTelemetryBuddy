@@ -1,0 +1,30 @@
+// Query: Usage Telemetry - Event Discovery
+// Purpose: Discover all event types with counts and sample data for BC Telemetry Buddy
+// Author: System
+// Date: 2025-11-24
+// Category: Discovery
+
+// Get all event types with counts and a sample of their structure
+customEvents
+| where timestamp >= ago(30d)
+| summarize 
+    EventCount = count(),
+    UniqueUsers = dcount(user_Id),
+    SampleDimensions = take_any(customDimensions),
+    SampleMeasurements = take_any(customMeasurements),
+    FirstSeen = min(timestamp),
+    LastSeen = max(timestamp)
+    by EventName = name
+| order by EventCount desc
+
+// Alternative: Quick overview of last 24 hours
+// customEvents
+// | where timestamp >= ago(1d)
+// | summarize count() by name
+// | order by count_ desc
+
+// Alternative: Inspect a specific event structure
+// customEvents
+// | where name == "Mcp.QueryTelemetry"
+// | take 5
+// | project timestamp, name, customDimensions, customMeasurements, user_Id, session_Id

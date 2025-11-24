@@ -1,0 +1,67 @@
+// Query: Error Analysis
+// Purpose: Track errors, failures, and reliability metrics
+// Author: System
+// Date: 2025-11-24
+// Category: Quality / Reliability
+
+// Error summary by type and component
+customEvents
+| where timestamp >= ago(7d)
+| extend success = tobool(customDimensions.success)
+| where success == false
+| extend 
+    errorType = tostring(customDimensions.errorType),
+    errorMessage = tostring(customDimensions.errorMessage),
+    component = tostring(customDimensions.component),
+    eventName = name
+| summarize 
+    ErrorCount = count(),
+    AffectedUsers = dcount(user_Id),
+    SampleMessages = make_set(errorMessage, 5),
+    FirstOccurrence = min(timestamp),
+    LastOccurrence = max(timestamp)
+    by errorType, component, eventName
+| order by ErrorCount desc
+
+// Alternative: Error rate trend over time
+// customEvents
+// | where timestamp >= ago(7d)
+// | extend success = tobool(customDimensions.success)
+// | summarize 
+//     TotalEvents = count(),
+//     FailedEvents = countif(success == false),
+//     ErrorRate = round(countif(success == false) * 100.0 / count(), 2)
+//     by bin(timestamp, 1h)
+// | order by timestamp desc
+
+// Alternative: Success rate by feature
+// customEvents
+// | where timestamp >= ago(7d)
+// | extend success = tobool(customDimensions.success)
+// | summarize 
+//     Total = count(),
+//     Successful = countif(success == true),
+//     Failed = countif(success == false),
+//     SuccessRate = round(countif(success == true) * 100.0 / count(), 2)
+//     by Feature = name
+// | order by Failed desc
+
+// Alternative: Recent errors with context
+// customEvents
+// | where timestamp >= ago(24h)
+// | extend success = tobool(customDimensions.success)
+// | where success == false
+// | extend 
+//     errorType = tostring(customDimensions.errorType),
+//     errorMessage = tostring(customDimensions.errorMessage),
+//     version = tostring(customDimensions.version)
+// | project 
+//     timestamp, 
+//     Feature = name, 
+//     errorType, 
+//     errorMessage, 
+//     version, 
+//     user_Id, 
+//     session_Id
+// | order by timestamp desc
+// | take 50

@@ -1286,3 +1286,13 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — MCP update notification on every VSCode startup [Entry: 03210c0b-8c55-4260-a304-ca1ef33d5042]
   - **Why:** User wants to see update notifications immediately on startup if update is available
   - **How:** Removed rate limiting, reduced startup delay from 10s to 2s, always show notification when update available
+- **2025-11-24** — Created usage telemetry analysis instructions for customEvents/customMetrics tables [Entry: fdb7faed-4a8e-452c-8218-2324aea18398]
+  - **Why:** BC Telemetry Buddy needs to analyze its own usage telemetry (stored in customEvents/customMetrics) differently than BC telemetry (stored in traces table).
+  - **How:** Created comprehensive documentation in UsageTelemetryAnalysis/ folder: README.md with table structure and query patterns, COPILOT-INSTRUCTIONS.md for chat participant context switching, QUICK-REFERENCE.md for quick lookup, and 6 KQL templates (discovery, user activity, feature usage, errors, performance, sessions, versions).
+- **2025-11-24** — Created usage telemetry analysis instructions for customEvents/customMetrics tables [Entry: fdb7faed-4a8e-452c-8218-2324aea18398]
+  - **Why:** BC Telemetry Buddy needs to analyze its own usage telemetry (stored in customEvents/customMetrics) differently than BC telemetry (stored in traces table).
+  - **How:** Created comprehensive documentation in UsageTelemetryAnalysis/ folder: README.md with table structure and query patterns, COPILOT-INSTRUCTIONS.md for chat participant context switching, QUICK-REFERENCE.md for quick lookup, and 6 KQL templates (discovery, user activity, feature usage, errors, performance, sessions, versions).
+
+- **2025-11-24** — Created usage telemetry analysis instructions for customEvents/customMetrics tables [Entry: fdb7faed-4a8e-452c-8218-2324aea18398]
+  - **Why:** BC Telemetry Buddy needs to analyze its own usage telemetry (stored in customEvents/customMetrics) differently than BC telemetry (stored in traces table).
+  - **How:** Created comprehensive documentation in UsageTelemetryAnalysis/ folder: README.md with table structure and query patterns, COPILOT-INSTRUCTIONS.md for chat participant context switching, QUICK-REFERENCE.md for quick lookup, and 6 KQL templates (discovery, user activity, feature usage, errors, performance, sessions, versions).

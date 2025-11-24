@@ -1,0 +1,36 @@
+// Query: Usage Telemetry - Performance Metrics
+// Purpose: Analyze performance metrics for BC Telemetry Buddy
+// Author: System
+// Date: 2025-11-24
+// Category: Performance
+
+// Get all metric types with aggregations
+customMetrics
+| where timestamp >= ago(7d)
+| summarize 
+    MeasurementCount = sum(valueCount),
+    AvgValue = round(avg(value), 2),
+    P50Value = round(percentile(value, 50), 2),
+    P95Value = round(percentile(value, 95), 2),
+    MaxValue = max(value),
+    MinValue = min(value)
+    by MetricName = name
+| order by MeasurementCount desc
+
+// Alternative: Time-series view of metrics
+// customMetrics
+// | where timestamp >= ago(7d)
+// | summarize AvgValue = avg(value), SampleCount = sum(valueCount) 
+//   by name, bin(timestamp, 1h)
+// | order by timestamp desc, name asc
+
+// Alternative: Specific metric analysis
+// customMetrics
+// | where timestamp >= ago(7d)
+// | where name == "query.duration"
+// | summarize 
+//     P50 = percentile(value, 50),
+//     P95 = percentile(value, 95),
+//     P99 = percentile(value, 99),
+//     Max = max(value)
+//     by bin(timestamp, 1h)

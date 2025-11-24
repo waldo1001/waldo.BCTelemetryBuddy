@@ -1,0 +1,93 @@
+// Query: Version Adoption and Comparison
+// Purpose: Track version distribution and migration patterns
+// Author: System
+// Date: 2025-11-24
+// Category: Product Analytics
+
+// Current version distribution
+customEvents
+| where timestamp >= ago(7d)
+| extend 
+    version = tostring(customDimensions.version),
+    component = tostring(customDimensions.component)
+| summarize 
+    UniqueUsers = dcount(user_Id),
+    EventCount = count(),
+    LastSeen = max(timestamp)
+    by version, component
+| order by component asc, UniqueUsers desc
+
+// Alternative: Version adoption over time
+// customEvents
+// | where timestamp >= ago(90d)
+// | extend version = tostring(customDimensions.version)
+// | summarize ActiveUsers = dcount(user_Id) 
+//   by version, Week = startofweek(timestamp)
+// | order by Week asc, version asc
+
+// Alternative: Version comparison - feature usage
+// let version1 = "0.3.0";
+// let version2 = "0.4.0";
+// customEvents
+// | where timestamp >= ago(30d)
+// | extend version = tostring(customDimensions.version)
+// | where version in (version1, version2)
+// | summarize 
+//     Users = dcount(user_Id),
+//     Usage = count()
+//     by version, Feature = name
+// | order by Feature asc, version asc
+
+// Alternative: Version comparison - performance
+// let version1 = "0.3.0";
+// let version2 = "0.4.0";
+// customEvents
+// | where timestamp >= ago(30d)
+// | where name == "Mcp.QueryTelemetry"
+// | extend 
+//     version = tostring(customDimensions.version),
+//     durationMs = todouble(customMeasurements.durationMs)
+// | where version in (version1, version2)
+// | summarize 
+//     QueryCount = count(),
+//     AvgDuration = round(avg(durationMs), 2),
+//     P95Duration = round(percentile(durationMs, 95), 2)
+//     by version
+// | order by version asc
+
+// Alternative: Version comparison - reliability
+// let version1 = "0.3.0";
+// let version2 = "0.4.0";
+// customEvents
+// | where timestamp >= ago(30d)
+// | extend 
+//     version = tostring(customDimensions.version),
+//     success = tobool(customDimensions.success)
+// | where version in (version1, version2)
+// | summarize 
+//     TotalEvents = count(),
+//     SuccessRate = round(countif(success == true) * 100.0 / count(), 2),
+//     ErrorRate = round(countif(success == false) * 100.0 / count(), 2)
+//     by version
+// | order by version asc
+
+// Alternative: Migration tracking (users moving from old to new version)
+// let oldVersion = "0.3.0";
+// let newVersion = "0.4.0";
+// let usersOnOld = customEvents
+//     | where timestamp >= ago(14d) and timestamp < ago(7d)
+//     | extend version = tostring(customDimensions.version)
+//     | where version == oldVersion
+//     | distinct user_Id;
+// let usersOnNew = customEvents
+//     | where timestamp >= ago(7d)
+//     | extend version = tostring(customDimensions.version)
+//     | where version == newVersion
+//     | distinct user_Id;
+// print 
+//     OldVersionUsers = toscalar(usersOnOld | count),
+//     NewVersionUsers = toscalar(usersOnNew | count),
+//     MigratedUsers = toscalar(usersOnOld | join kind=inner (usersOnNew) on user_Id | count),
+//     MigrationRate = round(
+//         toscalar(usersOnOld | join kind=inner (usersOnNew) on user_Id | count) * 100.0 
+//         / toscalar(usersOnOld | count), 2)

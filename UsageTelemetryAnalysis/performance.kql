@@ -1,0 +1,89 @@
+// Query: Performance Analysis
+// Purpose: Monitor query performance, cache effectiveness, and response times
+// Author: System
+// Date: 2025-11-24
+// Category: Performance
+
+// Query performance metrics (P50, P95, P99)
+customEvents
+| where timestamp >= ago(7d)
+| where name == "Mcp.QueryTelemetry"
+| extend durationMs = todouble(customMeasurements.durationMs)
+| summarize 
+    QueryCount = count(),
+    P50Duration = round(percentile(durationMs, 50), 2),
+    P95Duration = round(percentile(durationMs, 95), 2),
+    P99Duration = round(percentile(durationMs, 99), 2),
+    MaxDuration = max(durationMs),
+    AvgDuration = round(avg(durationMs), 2)
+    by bin(timestamp, 1h)
+| order by timestamp desc
+
+// Alternative: Cache effectiveness over time
+// customEvents
+// | where timestamp >= ago(7d)
+// | where name == "Mcp.QueryTelemetry"
+// | extend cacheHit = tobool(customDimensions.cacheHit)
+// | summarize 
+//     TotalQueries = count(),
+//     CacheHits = countif(cacheHit == true),
+//     CacheMisses = countif(cacheHit == false),
+//     CacheHitRate = round(countif(cacheHit == true) * 100.0 / count(), 2)
+//     by bin(timestamp, 1d)
+// | order by timestamp desc
+
+// Alternative: Performance by query type
+// customEvents
+// | where timestamp >= ago(7d)
+// | where name == "Mcp.QueryTelemetry"
+// | extend 
+//     durationMs = todouble(customMeasurements.durationMs),
+//     queryName = tostring(customDimensions.queryName),
+//     cacheHit = tobool(customDimensions.cacheHit)
+// | summarize 
+//     Count = count(),
+//     AvgDuration = round(avg(durationMs), 2),
+//     P95Duration = round(percentile(durationMs, 95), 2),
+//     CacheHitRate = round(countif(cacheHit == true) * 100.0 / count(), 2)
+//     by queryName
+// | order by Count desc
+
+// Alternative: Slow queries (P95 > 2 seconds)
+// customEvents
+// | where timestamp >= ago(7d)
+// | where name == "Mcp.QueryTelemetry"
+// | extend 
+//     durationMs = todouble(customMeasurements.durationMs),
+//     queryName = tostring(customDimensions.queryName),
+//     resultRowCount = tolong(customMeasurements.resultRowCount)
+// | where durationMs > 2000
+// | project 
+//     timestamp,
+//     queryName,
+//     DurationSec = round(durationMs / 1000, 2),
+//     resultRowCount,
+//     user_Id,
+//     session_Id
+// | order by durationMs desc
+// | take 50
+
+// Alternative: Result size analysis
+// customEvents
+// | where timestamp >= ago(7d)
+// | where name == "Mcp.QueryTelemetry"
+// | extend 
+//     resultRowCount = tolong(customMeasurements.resultRowCount),
+//     durationMs = todouble(customMeasurements.durationMs)
+// | summarize 
+//     QueryCount = count(),
+//     AvgRows = round(avg(resultRowCount), 0),
+//     MaxRows = max(resultRowCount),
+//     AvgDuration = round(avg(durationMs), 2)
+//     by RowBucket = case(
+//         resultRowCount <= 10, "1-10 rows",
+//         resultRowCount <= 100, "11-100 rows",
+//         resultRowCount <= 1000, "101-1K rows",
+//         resultRowCount <= 10000, "1K-10K rows",
+//         "10K+ rows"
+//     )
+// | order by AvgDuration desc

@@ -1,0 +1,45 @@
+// Query: User Activity Analysis
+// Purpose: Analyze daily/weekly active users and engagement patterns
+// Author: System
+// Date: 2025-11-24
+// Category: User Analysis
+
+// Daily Active Users (DAU) trend
+customEvents
+| where timestamp >= ago(30d)
+| summarize DailyActiveUsers = dcount(user_Id) by bin(timestamp, 1d)
+| order by timestamp asc
+
+// Alternative: Weekly Active Users (WAU)
+// customEvents
+// | where timestamp >= ago(90d)
+// | summarize WeeklyActiveUsers = dcount(user_Id) by startofweek(timestamp)
+// | order by startofweek_timestamp asc
+
+// Alternative: User engagement breakdown
+// customEvents
+// | where timestamp >= ago(30d)
+// | summarize 
+//     EventsPerUser = count(),
+//     SessionsPerUser = dcount(session_Id),
+//     DaysActive = dcount(bin(timestamp, 1d))
+//     by user_Id
+// | summarize
+//     TotalUsers = count(),
+//     AvgEventsPerUser = round(avg(EventsPerUser), 2),
+//     AvgSessionsPerUser = round(avg(SessionsPerUser), 2),
+//     AvgDaysActive = round(avg(DaysActive), 2),
+//     PowerUsers = countif(EventsPerUser > 50),
+//     CasualUsers = countif(EventsPerUser <= 10)
+
+// Alternative: New vs Returning Users
+// let firstSeenUsers = customEvents
+//     | summarize FirstSeen = min(timestamp) by user_Id;
+// customEvents
+// | where timestamp >= ago(30d)
+// | join kind=inner (firstSeenUsers) on user_Id
+// | extend IsNewUser = FirstSeen >= ago(30d)
+// | summarize 
+//     NewUsers = dcountif(user_Id, IsNewUser),
+//     ReturningUsers = dcountif(user_Id, not(IsNewUser))
+//     by bin(timestamp, 1d)

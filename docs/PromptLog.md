@@ -2311,3 +2311,7 @@ Change instructions an business logic to do this."
 > "Show MCP update notification every time VSCode starts (if update available)"
 
 ---
+### Entry ID: fdb7faed-4a8e-452c-8218-2324aea18398 — 2025-11-24 15:12
+> "I want to analyze the usagetelemetry of this software project with BC Telemetry Buddy. But - this time, the queries don't go through traces, but through other tables (see attached). Can you create some instructions in this folder for the telemetry buddy to act decently, and to analyze its UsageTelemetry?"
+
+---

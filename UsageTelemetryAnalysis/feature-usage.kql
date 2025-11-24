@@ -1,0 +1,52 @@
+// Query: Feature Usage Analysis
+// Purpose: Understand which features are most/least used
+// Author: System
+// Date: 2025-11-24
+// Category: Product Analytics
+
+// Top features by usage count and unique users
+customEvents
+| where timestamp >= ago(30d)
+| summarize 
+    UsageCount = count(),
+    UniqueUsers = dcount(user_Id),
+    UniqueSessions = dcount(session_Id)
+    by Feature = name
+| extend 
+    AvgUsagePerUser = round(UsageCount * 1.0 / UniqueUsers, 2),
+    PercentOfTotalUsage = round(UsageCount * 100.0 / toscalar(customEvents | where timestamp >= ago(30d) | count), 2)
+| order by UsageCount desc
+
+// Alternative: Feature adoption over time
+// customEvents
+// | where timestamp >= ago(90d)
+// | summarize 
+//     Users = dcount(user_Id),
+//     Usage = count()
+//     by Feature = name, Week = startofweek(timestamp)
+// | order by Week asc, Usage desc
+
+// Alternative: Feature usage by component (Extension vs MCP)
+// customEvents
+// | where timestamp >= ago(30d)
+// | extend component = tostring(customDimensions.component)
+// | summarize 
+//     UsageCount = count(),
+//     UniqueUsers = dcount(user_Id)
+//     by component, Feature = name
+// | order by component asc, UsageCount desc
+
+// Alternative: MCP Tool usage breakdown
+// customEvents
+// | where timestamp >= ago(30d)
+// | where name startswith "Mcp."
+// | extend 
+//     toolName = replace_string(name, "Mcp.", ""),
+//     success = tobool(customDimensions.success)
+// | summarize 
+//     CallCount = count(),
+//     UniqueUsers = dcount(user_Id),
+//     SuccessRate = round(countif(success == true) * 100.0 / count(), 2),
+//     AvgDuration = round(avg(todouble(customMeasurements.durationMs)), 2)
+//     by toolName
+// | order by CallCount desc
