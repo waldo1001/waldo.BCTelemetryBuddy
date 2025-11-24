@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.4] - 2025-11-24
+
+### Changed
+- **Debug Logging**: Added debug output to config loading to help diagnose workspace path issues
+  - Shows which config file is loaded and BCTB_WORKSPACE_PATH value
+  - Logs ${workspaceFolder} placeholder expansion for troubleshooting
+
 ## [2.2.3] - 2025-11-24
 
 ### Fixed
