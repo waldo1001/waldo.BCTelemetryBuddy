@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-11-24
+
 ### Changed
-- 2025-11-24 21:31 — MCP update notifications now appear on every VSCode startup — Removed rate limiting so users always see update notifications when available, reduced startup check delay from 10s to 2s for faster notifications (chat-driven)
-- 2025-11-24 20:15 — Added comprehensive file naming conventions to chatmode definitions — Ensures consistent YYYY-MM-DD_Description.md naming for analysis documents with automatic chronological sorting (chat-driven)
+- **MCP Update Notifications**: Update notifications now appear on every VSCode startup (removed rate limiting)
+  - Reduced startup check delay from 10s to 2s for faster notifications
+  - Users always see update notifications when MCP updates are available
+  - Ensures users stay current with latest MCP bug fixes and features
+- **Chatmode File Naming**: Added comprehensive file naming conventions to chatmode definitions
+  - Ensures consistent YYYY-MM-DD_Description.md naming for analysis documents
+  - Automatic chronological sorting for better organization
+  - Improved documentation workflows
+
+### Fixed
+- **MCP Bundling**: Updated extension to use MCP v2.2.1 with config validation fix
+  - Fixes issue where `bctb-mcp validate` incorrectly required environment variables
 
 ## [1.2.0] - 2025-11-24
 
