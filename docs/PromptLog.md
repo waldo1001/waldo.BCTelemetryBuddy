@@ -2339,3 +2339,11 @@ Change instructions an business logic to do this."
 > "Add migration logic to move existing .bctb-installation-id files from workspace to user profile"
 
 ---
+### Entry ID: 64448716-8610-4ec7-8ffb-cbe4be5e7813 — 2025-11-24 18:27
+> "Fix migration logic to always clean up workspace installation ID files"
+
+---
+### Entry ID: bbe1ba04-d29f-461e-ab8b-5693bbbc1efa — 2025-11-24 19:22
+> "Move getInstallationId() call to run early in activation, before telemetry check"
+
+---

@@ -1312,3 +1312,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Added migration for workspace installation ID files [Entry: 395c29c6-d20e-46b0-9f07-318433bfa175]
   - **Why:** Automatically migrate existing .bctb-installation-id files to user profile storage
   - **How:** getInstallationId() now checks for legacy workspace file, migrates to globalState, and removes workspace file
+- **2025-11-24** — Fixed migration to always remove workspace files [Entry: 64448716-8610-4ec7-8ffb-cbe4be5e7813]
+  - **Why:** Migration was skipping cleanup if global ID already existed
+  - **How:** Changed getInstallationId() to always check and remove workspace file regardless of global ID
+- **2025-11-24** — Fixed migration to run on every activation [Entry: bbe1ba04-d29f-461e-ab8b-5693bbbc1efa]
+  - **Why:** Migration was skipped when telemetry disabled
+  - **How:** Moved getInstallationId() call before telemetry initialization in activate()
