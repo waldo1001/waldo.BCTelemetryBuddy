@@ -1271,3 +1271,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fix CI test failures [Entry: 300f3e93-aa44-42b0-99f5-d45656341add]
   - **Why:** MCP tests polluting console output and failing coverage thresholds
   - **How:** Suppressed console.error in tests with jest.spyOn, excluded untested files (mcpTelemetry.ts, version.ts) from coverage
+- **2025-11-24** — Fix CI telemetry config generation [Entry: 59a0fee4-6547-4b10-90a0-d037c5d375cc]
+  - **Why:** Inline JavaScript with escaped quotes caused syntax error in GitHub Actions
+  - **How:** Created scripts/generate-telemetry-config-ci.js and replaced all inline node -e commands in ci.yml

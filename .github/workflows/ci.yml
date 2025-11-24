@@ -30,7 +30,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Build MCP
         run: npm run build --workspace=packages/mcp
@@ -73,7 +73,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Build MCP (required by extension)
         run: npm run build --workspace=packages/mcp
@@ -123,7 +123,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Check TypeScript compilation (MCP must build first)
         run: |
@@ -161,7 +161,7 @@ jobs:
         run: npm ci
       
       - name: Generate telemetry config (dev mode - no connection string)
-        run: node -e "const fs=require('fs');const path=require('path');const dir=path.join('packages','shared','src');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'telemetryConfig.generated.ts'),'/**\\n * GENERATED FILE - DO NOT EDIT MANUALLY\\n * CI Build - Development mode (no telemetry)\\n */\\nexport const TELEMETRY_CONNECTION_STRING = \\'\\';\\n');"
+        run: node scripts/generate-telemetry-config-ci.js
       
       - name: Build MCP
         run: npm run build --workspace=packages/mcp

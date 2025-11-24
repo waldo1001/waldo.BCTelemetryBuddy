@@ -2291,3 +2291,7 @@ Change instructions an business logic to do this."
 > "Fix CI build failures in waldo/AddTelemetry branch - MCP tests failing due to console.error pollution and coverage thresholds not being met"
 
 ---
+### Entry ID: 59a0fee4-6547-4b10-90a0-d037c5d375cc — 2025-11-24 11:38
+> "Fix telemetry config generation failure in CI - syntax error due to incorrect escaping in inline JavaScript"
+
+---
