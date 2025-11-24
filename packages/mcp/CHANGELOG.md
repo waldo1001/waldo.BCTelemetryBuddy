@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.3] - 2025-11-24
+
+### Fixed
+- **Config Loading**: Fixed config file loading regression introduced in v2.2.1 (commit 8fe2926)
+  - `workspacePath` now correctly falls back to `BCTB_WORKSPACE_PATH` environment variable when not specified in config file
+  - `${workspaceFolder}` placeholder in config files now properly expands to `BCTB_WORKSPACE_PATH`
+  - Issue: Config validation became stricter but config loading didn't respect env vars properly
+  - Config files work again when used with VS Code extension
+
 ## [2.2.2] - 2025-11-24
 
 ### Fixed

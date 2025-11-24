@@ -232,7 +232,7 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
             removePII: resolvedProfile.removePII ?? rawConfig.sanitize?.removePII ?? false,
             references: resolvedProfile.references ?? rawConfig.references ?? [],
             port: resolvedProfile.port ?? 52345,
-            workspacePath: resolvedProfile.workspacePath ?? process.cwd(),
+            workspacePath: resolvedProfile.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd(),
             queriesFolder: resolvedProfile.queriesFolder ?? 'queries',
             connectionName: resolvedProfile.connectionName ?? 'Default',
             tenantId: resolvedProfile.tenantId ?? '',
@@ -257,7 +257,7 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
         cacheTTLSeconds: rawConfig.cacheTTLSeconds ?? 3600,
         removePII: rawConfig.removePII ?? false,
         port: rawConfig.port ?? 52345,
-        workspacePath: rawConfig.workspacePath ?? process.cwd(),
+        workspacePath: rawConfig.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd(),
         queriesFolder: rawConfig.queriesFolder ?? 'queries',
         references: rawConfig.references ?? []
     };
@@ -315,10 +315,15 @@ function deepMerge(parent: any, child: any): any {
 
 /**
  * Expand environment variables in config (${VAR_NAME})
+ * Special handling for VS Code placeholders like ${workspaceFolder}
  */
 function expandEnvironmentVariables(config: any): any {
     if (typeof config === 'string') {
         return config.replace(/\$\{([^}]+)\}/g, (_, varName) => {
+            // Special case: ${workspaceFolder} maps to BCTB_WORKSPACE_PATH
+            if (varName === 'workspaceFolder') {
+                return process.env.BCTB_WORKSPACE_PATH || process.cwd();
+            }
             return process.env[varName] || '';
         });
     }
