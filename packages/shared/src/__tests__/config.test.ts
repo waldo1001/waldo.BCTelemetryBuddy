@@ -1,4 +1,4 @@
-import { loadConfig, validateConfig, MCPConfig, Reference, resolveProfileInheritance, expandEnvironmentVariables } from '../config.js';
+import { loadConfig, validateConfig, MCPConfig, resolveProfileInheritance, expandEnvironmentVariables } from '../config.js';
 
 describe('Configuration Module', () => {
     // Store original environment

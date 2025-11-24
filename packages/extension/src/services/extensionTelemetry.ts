@@ -154,16 +154,23 @@ export function getInstallationId(context: vscode.ExtensionContext): string {
     if (workspaceFolder) {
         const workspaceIdFile = path.join(workspaceFolder.uri.fsPath, INSTALLATION_ID_FILE);
         try {
-            if (fs.existsSync(workspaceIdFile)) {
-                return fs.readFileSync(workspaceIdFile, 'utf8').trim();
+            // Try to read existing file first (atomic operation)
+            const existingId = fs.readFileSync(workspaceIdFile, 'utf8').trim();
+            if (existingId) {
+                return existingId;
             }
-
-            // File doesn't exist - generate and write new workspace ID
-            const newId = crypto.randomUUID();
-            fs.writeFileSync(workspaceIdFile, newId, 'utf8');
-            return newId;
-        } catch {
-            // Fall through to global storage
+        } catch (error: any) {
+            // File doesn't exist or can't be read - generate and write new workspace ID
+            if (error.code === 'ENOENT') {
+                try {
+                    const newId = crypto.randomUUID();
+                    fs.writeFileSync(workspaceIdFile, newId, 'utf8');
+                    return newId;
+                } catch {
+                    // Fall through to global storage
+                }
+            }
+            // Other errors also fall through to global storage
         }
     }
 

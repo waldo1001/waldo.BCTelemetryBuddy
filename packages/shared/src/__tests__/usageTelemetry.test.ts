@@ -2,7 +2,7 @@
  * Tests for Usage Telemetry core functionality
  */
 
-import { NoOpUsageTelemetry, RateLimitedUsageTelemetry, IUsageTelemetry, RateLimitConfig } from '../usageTelemetry';
+import { NoOpUsageTelemetry, RateLimitedUsageTelemetry, IUsageTelemetry } from '../usageTelemetry';
 
 describe('NoOpUsageTelemetry', () => {
     let telemetry: NoOpUsageTelemetry;

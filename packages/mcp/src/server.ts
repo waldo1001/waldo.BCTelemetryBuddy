@@ -614,7 +614,6 @@ export class MCPServer {
             }
 
             // Track exception with full context
-            const durationMs = Date.now() - startTime;
             const errorProps = createCommonProperties(
                 TELEMETRY_EVENTS.MCP.ERROR,
                 'mcp',

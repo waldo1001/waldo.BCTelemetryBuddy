@@ -1277,3 +1277,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fix CodeQL workflow [Entry: d65e8a73-1a57-46e5-b83c-641176c17f14]
   - **Why:** Missing telemetry config generation step caused build to fail
   - **How:** Added node scripts/generate-telemetry-config-ci.js step to codeql.yml before build
+- **2025-11-24** — Fix CodeQL security alerts [Entry: b4a227b0-0db0-410c-846b-5ccc4b1fe0af]
+  - **Why:** High severity TOCTOU race condition, unused variable, and unused imports flagged by CodeQL analysis
+  - **How:** Fixed race condition by reading file directly (atomic), removed unused durationMs variable, removed unused imports (Reference, RateLimitConfig)
