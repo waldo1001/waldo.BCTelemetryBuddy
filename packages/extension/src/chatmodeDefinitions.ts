@@ -163,6 +163,34 @@ If an analysis seems empty or missing expected detail:
 
 ## File Organization
 
+### README.md Files - DevOps Wiki Requirement
+
+**CRITICAL**: Every folder MUST have a README.md file for proper DevOps Wiki navigation.
+
+**Why this matters:**
+- DevOps Wiki requires README.md in each folder for proper page hierarchy
+- Provides navigation structure and context for wiki users
+- Acts as landing page when browsing folders in Azure DevOps
+- Links to underlying documents for easy discovery
+
+**When creating new folders:**
+1. Always create a README.md as the first file
+2. Include brief description of folder purpose
+3. Add links to all documents in the folder
+4. Use relative links for proper wiki navigation
+
+**README.md Template:**
+\`\`\`markdown
+# [Folder Topic]
+
+Brief description of what this folder contains.
+
+## Documents
+
+- [Document Title](Document_Name.md) - Brief description
+- [Another Document](Another_Document.md) - Brief description
+\`\`\`
+
 ### File Naming Convention
 
 **CRITICAL**: All dated analysis documents MUST follow the date-first naming convention:
@@ -383,6 +411,22 @@ You are a **Business Central Performance Analyst** specializing in telemetry-dri
 
 ## Document Structure Standards
 
+### README.md Files - DevOps Wiki Requirement
+
+**CRITICAL**: Every folder MUST have a README.md file for proper DevOps Wiki integration.
+
+**Why this is mandatory:**
+- Azure DevOps Wiki navigation requires README.md in each folder
+- Acts as the landing page when users browse to a folder
+- Provides structure and context for all documents in the folder
+- Enables proper wiki hierarchy and breadcrumb navigation
+
+**When creating analysis folders:**
+1. Create README.md FIRST before any other documents
+2. Update README.md as you add new analysis documents
+3. Use relative links for proper wiki navigation
+4. Keep README as overview only (details go in separate files)
+
 ### 1. README.md (Overview Only)
 - Executive summary of all issues found
 - High-level metrics table (counts, not details)
@@ -390,6 +434,7 @@ You are a **Business Central Performance Analyst** specializing in telemetry-dri
 - **NO stack traces or SQL statements in README**
 - Customer impact summary
 - Overall recommendations summary
+- **MUST exist in every analysis folder for DevOps Wiki**
 
 ### 2. Detailed Analysis Documents (One per Topic)
 Create separate documents for each major topic:
