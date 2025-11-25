@@ -10,12 +10,17 @@
 BC Telemetry Buddy MCP Server is a **standalone NPM package** that enables AI assistants (GitHub Copilot, Claude Desktop, Copilot Studio) to query Business Central telemetry data. It implements the [Model Context Protocol](https://modelcontextprotocol.io/) specification for seamless language model integration.
 
 **Key Features:**
-- 🚀 **Standalone Package**: Install globally with `npm install -g bc-telemetry-buddy-mcp`
-- 🤖 **AI Assistant Ready**: Works with GitHub Copilot, Claude Desktop, and Copilot Studio
-- 🔧 **CLI Interface**: `bctb-mcp` CLI with commands for initialization, validation, and server management
-- 📁 **File-Based Config**: Simple `.bctb-config.json` for all settings
-- 👥 **Multi-Profile Support**: Manage multiple customers/environments in single config file
-- 🔌 **Optional for VSCode**: VSCode extension works standalone; MCP only needed for chat features
+- 🚀 **Standalone Package**: Install globally with `npm install -g bc-telemetry-buddy-mcp` - no dependencies on VSCode extension
+- 🤖 **AI Assistant Ready**: Works with GitHub Copilot, Claude Desktop, and Copilot Studio via JSON-RPC 2.0 over stdio
+- 🔧 **CLI Interface**: `bctb-mcp` command with init, validate, test-auth, and start subcommands
+- 📁 **File-Based Config**: Simple `.bctb-config.json` with schema validation and environment variable substitution
+- 👥 **Multi-Profile Support**: Manage multiple customers/environments in single config file with profile switching
+- 🔌 **Optional for VSCode**: VSCode extension works standalone; MCP only required for chat participant features
+- 🔄 **Automatic Updates**: Update notifications on startup when newer versions are available on NPM
+- 🧪 **Comprehensive Testing**: 70%+ test coverage with dedicated test suites for Claude Desktop workflows
+- 🔐 **Flexible Authentication**: Azure CLI (recommended), Device Code, and Client Credentials flows via MSAL
+- 🐛 **Debug Logging**: Diagnostic output for config loading and workspace path troubleshooting
+- 📊 **Usage Telemetry**: Anonymous telemetry collection (tool invocations, performance, errors) - respects privacy with no PII or query content
 
 ## Installation
 
@@ -149,70 +154,65 @@ bctb-mcp --help
 
 ## MCP Tools
 
-The server exposes **11 tools** to language models (GitHub Copilot) for systematic telemetry analysis:
+The server exposes **11 tools** to language models (GitHub Copilot, Claude Desktop) for systematic telemetry analysis:
 
 ### Discovery Tools (Step 1 & 2 of workflow)
-- **`bctb_get_event_catalog`**: List available BC telemetry events with descriptions, frequency, status, and Learn URLs
-  - Parameters: `daysBack` (default: 10), `status` filter, `minCount` threshold, `includeCommonFields` (optional boolean)
+- **`get_event_catalog`**: List available BC telemetry events with descriptions, frequency, status, and Learn URLs
+  - Parameters: `daysBack` (default: 10), `status` filter, `minCount` threshold, `maxResults` (default: 50), `includeCommonFields` (optional boolean)
   - Returns: Event IDs sorted by frequency with occurrence counts and documentation links
   - When `includeCommonFields=true`: Includes field prevalence analysis (Universal 80%+, Common 50-79%, Occasional 20-49%, Rare <20%)
   - **When to use**: Start of any exploratory query - discover what events are firing and understand cross-event field patterns
 
-- **`bctb_get_event_field_samples`**: Analyze customDimensions structure for a specific event ID with field-level detail
-  - Parameters: `eventId` (required), `maxEvents` (default: 50), `daysBack` (default: 10)
+- **`get_event_field_samples`**: Analyze customDimensions structure for a specific event ID with field-level detail
+  - Parameters: `eventId` (required), `sampleCount` (default: 10), `daysBack` (default: 30)
   - Returns: Field names, data types, occurrence rates, sample values, and ready-to-use KQL template
   - **When to use**: Before writing queries for a specific event - discover exact field structure from real data
 
-- **`bctb_get_event_schema`**: Get detailed schema (customDimensions fields) for a specific event ID
+- **`get_event_schema`**: Get detailed schema (customDimensions fields) for a specific event ID
   - Parameters: `eventId` (required), `sampleSize` (default: 100)
   - Returns: Available fields with data types and example values, plus sample query
   - **When to use**: After discovering relevant event IDs - understand available data fields
 
-- **`bctb_get_tenant_mapping`**: Discover company names and map to Azure tenant IDs
+- **`get_tenant_mapping`**: Discover company names and map to Azure tenant IDs
   - Parameters: `daysBack` (default: 10), `companyNameFilter` (optional)
   - Returns: Company name to tenant ID mapping table
   - **When to use**: For customer-specific queries - map friendly names to tenant IDs
 
 ### Query Execution (Step 4 of workflow)
-- **`bctb_query_telemetry`**: Execute KQL queries (NL translation removed in v1.0.0 - use discovery tools first)
-  - Parameters: `kql` (required KQL query string)
+- **`query_telemetry`**: Execute KQL queries against Application Insights
+  - Parameters: `kql` (required KQL query string), `useContext` (boolean, default: true), `includeExternal` (boolean, default: true)
   - Returns: Query results with summary, recommendations, and chart suggestions
   - **When to use**: After discovery and understanding phases - execute the actual query with precise KQL
 
 ### Query Library (Step 3 of workflow)
-- **`bctb_get_saved_queries`**: List all saved queries with optional tag filtering
+- **`get_saved_queries`**: List all saved queries with optional tag filtering
   - Parameters: `tags` (optional array)
   - Returns: Saved query metadata (name, purpose, use case, tags, file path)
   - **When to use**: Check for existing patterns before writing new queries
 
-- **`bctb_search_queries`**: Search saved queries by keywords
+- **`search_queries`**: Search saved queries by keywords
   - Parameters: `searchTerms` (required array)
   - Returns: Matching queries with relevance scores
   - **When to use**: More targeted search when you know what you're looking for
 
-- **`bctb_save_query`**: Save query with metadata and automatic organization
-  - Parameters: `name`, `kql`, `purpose`, `useCase`, `tags`, `category`, `companyName`
+- **`save_query`**: Save query with metadata and automatic organization
+  - Parameters: `name`, `kql`, `purpose`, `useCase`, `tags`, `category`
   - Auto-organizes: Generic → `queries/[Category]/`, Customer → `queries/Companies/[CompanyName]/[Category]/`
   - **When to use**: After finding a useful query pattern
 
-- **`bctb_get_categories`**: List all query categories/folders
+- **`get_categories`**: List all query categories/folders
   - Returns: Available categories for organizing queries
   - **When to use**: Understanding workspace organization
 
 ### Analysis & Recommendations (Step 5 of workflow)
-- **`bctb_get_recommendations`**: Analyze query results and provide actionable insights
+- **`get_recommendations`**: Analyze query results and provide actionable insights
   - Parameters: `kql` (optional), `results` (optional)
   - Returns: Recommendations based on patterns, thresholds, and best practices
   - **When to use**: After query execution - get next steps and optimizations
 
-- **`bctb_get_external_queries`**: Fetch KQL examples from configured references
+- **`get_external_queries`**: Fetch KQL examples from configured references
   - Returns: External query examples from GitHub repos and documentation
   - **When to use**: Additional context for query generation
-
-### Cache Management
-- **`bctb_get_cache_stats`**: Get cache statistics (size, entry count, expirations)
-- **`bctb_clear_cache`**: Clear all cached results
-- **`bctb_cleanup_cache`**: Remove only expired cache entries
 
 ## Systematic Workflow
 
@@ -245,7 +245,7 @@ The MCP tools are designed to be used in a systematic workflow by Copilot:
 - **Example**: "High error rate detected → Check recent deployments"
 
 **For Customer-Specific Queries**, add this step:
-- **Before Step 4**: Call `bctb_get_tenant_mapping` to map company name to tenant ID
+- **Before Step 4**: Call `get_tenant_mapping` to map company name to tenant ID
 - **Example**: "Contoso" → "12345678-1234-..." → Filter KQL by aadTenantId
 
 ## Configuration

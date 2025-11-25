@@ -2,17 +2,18 @@
 
 VSCode extension for querying Business Central telemetry with natural language support and GitHub Copilot integration.
 
-## ⚡ What's New in v1.0.0
+## Overview
 
-**Major Architecture Change:** The extension now works **independently** without requiring the MCP server for direct commands!
+**BC Telemetry Buddy** helps you analyze Business Central telemetry data from Application Insights directly within VSCode. The extension works standalone for direct commands, with optional MCP server integration for GitHub Copilot chat features.
 
-**What This Means for You:**
-- ✅ **Direct Commands Work Without MCP**: Run KQL queries, save queries, manage cache - all work immediately after installation
-- ✅ **MCP Optional for Chat**: Only needed if you want to use the GitHub Copilot chat participant (`@bc-telemetry-buddy`)
-- ✅ **Faster Setup**: Extension is fully functional after running Setup Wizard - no additional installation needed
-- ✅ **Simpler Configuration**: Single `.bctb-config.json` file for all settings (replaces scattered VSCode settings)
-
-**Migrating from v0.2.x?** See [Migration Guide](#-migrating-from-v02x) below.
+**Key Capabilities:**
+- ✅ **Direct Query Execution**: Run KQL queries from Command Palette or CodeLens - no additional services required
+- ✅ **GitHub Copilot Integration**: Optional chat participant (`@bc-telemetry-buddy`) with 11 specialized tools for systematic telemetry analysis
+- ✅ **Guided Setup Wizard**: Step-by-step configuration with validation and connection testing
+- ✅ **Flexible Configuration**: Single `.bctb-config.json` file with multi-profile support for multiple customers
+- ✅ **Smart MCP Management**: Automatically uses globally-installed MCP for independent updates (configurable via `bctb.mcp.preferGlobal` setting)
+- ✅ **Usage Telemetry**: Anonymous telemetry collection to improve reliability (respects VS Code's `telemetry.telemetryLevel` setting)
+- ✅ **Automatic Migration**: Seamless migration from legacy VSCode settings to new file-based configuration
 
 ## 🚀 Quick Start
 
@@ -77,13 +78,20 @@ The setup wizard automatically appears on first activation and guides you throug
 | Command | Description |
 |---------|-------------|
 | **BC Telemetry Buddy: Setup Wizard** ⭐ | **Start here!** Guided 5-step configuration wizard with validation |
+| BC Telemetry Buddy: Migrate Settings to .bctb-config.json | Migrate legacy VSCode settings to new config file format |
 | BC Telemetry Buddy: Start MCP Server | Manually start the MCP backend (HTTP mode for Command Palette) |
-| BC Telemetry Buddy: Run KQL Query | Execute KQL or natural language query with results display |
+| BC Telemetry Buddy: Run KQL Query | Execute KQL query with results display |
 | BC Telemetry Buddy: Run KQL From Document | Execute query from current `.kql` file |
-| BC Telemetry Buddy: Save Query | Save current query to workspace library with category/metadata |
-| BC Telemetry Buddy: Open Queries Folder | Open saved queries folder in file explorer |
 | BC Telemetry Buddy: Clear Cache | Delete all cached query results for fresh data |
 | BC Telemetry Buddy: Show Cache Statistics | Display cache size, entry count, and expiration info |
+| BC Telemetry Buddy: Install Chatmodes | Install GitHub Copilot chat mode definitions for BC Telemetry analysis |
+| BC Telemetry Buddy: Switch Profile | Switch between configured profiles (multi-profile setups) |
+| BC Telemetry Buddy: Create Profile | Create a new configuration profile |
+| BC Telemetry Buddy: Set Default Profile | Set the default profile for workspace |
+| BC Telemetry Buddy: Manage Profiles | Open profile management interface |
+| BC Telemetry Buddy: What's New | Show release notes and what's new |
+| BC Telemetry Buddy: Check for MCP Updates | Check if newer MCP server version is available |
+| BC Telemetry Buddy: Reset Telemetry ID | Reset the anonymous installation ID for usage telemetry |
 
 ## ⚙️ Configuration
 

@@ -1318,3 +1318,13 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-24** — Fixed migration to run on every activation [Entry: bbe1ba04-d29f-461e-ab8b-5693bbbc1efa]
   - **Why:** Migration was skipped when telemetry disabled
   - **How:** Moved getInstallationId() call before telemetry initialization in activate()
+- **2025-11-25**  Updated README files to remove outdated version info and add recent developments summary [Entry: 586e764f-fb0d-4a4c-abf2-70a78883d7a7]
+  - **Why:** Extension and MCP READMEs showed obsolete v1.0.0 'What's New' section, confusing for users on current versions
+  - **How:** Replaced static version sections with ' Recent Updates' showing past 2 weeks of improvements from git history and CHANGELOGs (telemetry, migration, config fixes, Claude tests)
+- **2025-11-25** - Removed time-based language from README files and ensured comprehensive feature coverage [Entry: 52d757c0-6145-4f08-b2c4-f53ad0ad0600]
+  - **Why:** Time-based terms like 'Recent Updates' and 'Latest Features' become outdated and confusing for users
+  - **How:** Replaced with timeless 'Overview' section listing all current capabilities (usage telemetry, MCP independence, Claude Desktop support, automatic updates, multi-profile config, debug logging, migration)
+
+- **2025-11-25** - Audited and corrected README files against actual codebase [Entry: 2f942f80-16b7-4ff2-b172-7d2ba19da7a8]
+  - **Why:** Ensure documentation accurately reflects implemented features, commands, and MCP tools
+  - **How:** Verified package.json commands (found 17, added 8 missing), checked MCP tools (confirmed 11 tools), fixed tool name prefixes (removed bctb_), corrected parameter names (sampleCount vs maxEvents), added missing commands (Migrate Settings, Install Chatmodes, profile management, MCP updates, telemetry reset)

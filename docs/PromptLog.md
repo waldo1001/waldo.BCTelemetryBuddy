@@ -2347,3 +2347,28 @@ Change instructions an business logic to do this."
 > "Move getInstallationId() call to run early in activation, before telemetry check"
 
 ---
+### Entry ID: 75166e57-652e-4db2-afa5-f607fb10062e  2025-11-25 09:20
+> "The readme of the extension still shows an old version. Let's remove version-info and what's new in this file. Also update both readme's (from extension and mcp) with the latest info of the past 2 weeks (check git)"
+
+---
+### Entry ID: 586e764f-fb0d-4a4c-abf2-70a78883d7a7  2025-11-25 09:20
+> "The readme of the extension still shows an old version. Let's remove version-info and what's new in this file. Also update both readme's (from extension and mcp) with the latest info of the past 2 weeks (check git)"
+
+---
+### Entry ID: eb8de723-39b4-4d77-9d54-2115cb11dd67  2025-11-25 09:22
+> "Don't do anything time-wise - not even "latest features". Just make sure all features are addressed in the readme's."
+
+---
+### Entry ID: 0f739fb0-9434-44d5-b593-431460cfc856 - 2025-11-25 09:22
+> "Do not do anything time-wise - not even latest features. Just make sure all features are addressed in the readmes."
+
+---
+### Entry ID: 52d757c0-6145-4f08-b2c4-f53ad0ad0600 - 2025-11-25 09:22
+> "Do not use time-based language. Just make sure all features are in the readmes."
+
+---
+
+### Entry ID: 2f942f80-16b7-4ff2-b172-7d2ba19da7a8 - 2025-11-25 09:27
+> "Check both readmes with code and documentation - see if all is mentioned and all is in line as it should be"
+
+---
