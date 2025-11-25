@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.9] - 2025-11-25
+
+### Changed
+- **Chatmode Enhancements**: Enhanced chatmode definitions with improved guidance for analysis workflows
+  - Added explicit instructions to create timestamped analysis documents (YYYY-MM-DD_Description.md)
+  - Emphasized systematic approach with clear documentation standards
+  - Better organization for chronological analysis tracking
+
+### Fixed
+- **MCP Server Logging**: Fixed MCP server startup to use stderr for diagnostic logs (bundled MCP updated to v2.2.6)
+  - Resolves "SyntaxError: Unexpected token" errors in Claude Desktop and other MCP clients
+  - stdout now reserved exclusively for JSON-RPC protocol messages
+  - Diagnostic logs (config validation, auth, query execution) properly written to stderr
+  - Complies with MCP stdio transport specification
+
 ## [1.2.8] - 2025-11-25
 
 ### Changed
