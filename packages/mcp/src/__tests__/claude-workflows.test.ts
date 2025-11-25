@@ -98,6 +98,9 @@ describe('Claude Desktop Integration Workflows', () => {
 
     describe('Scenario 2: Config Discovery for Claude Desktop', () => {
         it('should discover config from home directory (~/.bctb/config.json)', () => {
+            // Clear workspace path to test home directory discovery
+            delete process.env.BCTB_WORKSPACE_PATH;
+
             // Create mock home directory config
             const homeDir = os.homedir();
             const bctbDir = path.join(homeDir, '.bctb');
@@ -112,28 +115,10 @@ describe('Claude Desktop Integration Workflows', () => {
                 // Create config in home directory
                 initConfig(homeConfigPath);
 
-                // Debug: Temporarily restore console to see what's happening
-                consoleLogSpy.mockRestore();
-                consoleErrorSpy.mockRestore();
-
-                console.log(`[TEST DEBUG] Config file exists at ${homeConfigPath}: ${fs.existsSync(homeConfigPath)}`);
-                if (fs.existsSync(homeConfigPath)) {
-                    const content = JSON.parse(fs.readFileSync(homeConfigPath, 'utf-8'));
-                    console.log(`[TEST DEBUG] Config connectionName: ${content.profiles?.default?.connectionName || content.connectionName}`);
-                }
-
                 // Should discover without explicit path
                 const config = loadConfigFromFile();
-                console.log(`[TEST DEBUG] Loaded config connectionName: ${config?.connectionName}`);
-
-                // Re-mock console after debug
-                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-                consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
                 expect(config).not.toBeNull();
-                expect(config?.connectionName).toBe('My BC Production');
-
-                console.log(`📄 Loading config from: ${homeConfigPath}`);
+                expect(config?.connectionName).toBe('My BC Production'); console.log(`📄 Loading config from: ${homeConfigPath}`);
                 expect(consoleErrorSpy).toHaveBeenCalledWith(
                     expect.stringContaining('Loading config from:')
                 );
@@ -146,6 +131,9 @@ describe('Claude Desktop Integration Workflows', () => {
         });
 
         it('should discover config from ~/.bctb-config.json (alternative format)', () => {
+            // Clear workspace path to test home directory discovery
+            delete process.env.BCTB_WORKSPACE_PATH;
+
             const homeDir = os.homedir();
             const homeConfigPath = path.join(homeDir, '.bctb-config.json');
 
@@ -192,6 +180,9 @@ describe('Claude Desktop Integration Workflows', () => {
         });
 
         it('should discover config from current directory (.bctb-config.json)', () => {
+            // Clear workspace path to test current directory discovery
+            delete process.env.BCTB_WORKSPACE_PATH;
+
             // Save current directory
             const originalCwd = process.cwd();
 
