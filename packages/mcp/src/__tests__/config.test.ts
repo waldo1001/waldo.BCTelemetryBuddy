@@ -371,8 +371,8 @@ describe('Configuration Module', () => {
 
         beforeEach(() => {
             // Create unique test directory per test to avoid conflicts
-            testConfigDir = path.join(os.tmpdir(), `bctb-test-config-${Date.now()}-${Math.random().toString(36).substring(7)}`);
-            fs.mkdirSync(testConfigDir, { recursive: true });
+            // Use mkdtempSync for secure temp directory creation (mode 0o700)
+            testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-test-config-'));
         });
 
         afterEach(() => {
@@ -881,8 +881,8 @@ describe('Configuration Module', () => {
 
         beforeEach(() => {
             // Create unique test directory per test to avoid conflicts
-            testConfigDir = path.join(os.tmpdir(), `bctb-test-init-${Date.now()}-${Math.random().toString(36).substring(7)}`);
-            fs.mkdirSync(testConfigDir, { recursive: true });
+            // Use mkdtempSync for secure temp directory creation (mode 0o700)
+            testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-test-init-'));
         });
 
         afterEach(() => {

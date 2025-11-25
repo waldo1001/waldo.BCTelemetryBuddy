@@ -209,9 +209,11 @@ export class MCPServer {
             }
         });
 
-        // Request logging
+        // Request logging with sanitized path to prevent log injection
         this.app.use((req: Request, res: Response, next: NextFunction) => {
-            console.error(`${req.method} ${req.path}`);
+            // Sanitize path by removing control characters and newlines to prevent log injection
+            const sanitizedPath = req.path.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+            console.error(`${req.method} ${sanitizedPath}`);
             next();
         });
     }
