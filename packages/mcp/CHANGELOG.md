@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.7] - 2025-11-26
+
+### Fixed
+- **Stdout Pollution in stdio Mode**: Fixed remaining console.log calls in config.ts and auth.ts that polluted stdout during stdio initialization, causing "Tool is currently disabled by the user" errors
+  - Added `silent` parameter to `loadConfigFromFile()` to suppress logs during stdio mode startup
+  - Changed diagnostic logs in auth.ts from `console.log()` to `console.error()` for stderr output
+  - Fixes frequent "tools disabled" errors reported in [#63](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/63)
+  - All stdio communication now strictly JSON-RPC on stdout, diagnostics on stderr
+- **Config Discovery Tests**: Fixed Claude Desktop workflow tests by clearing BCTB_WORKSPACE_PATH env var in tests that validate config file discovery
+- **MCP Inspector Testing**: Added documentation in copilot-instructions.md for testing MCP server with MCP Inspector including required environment variables
+
 ## [2.2.6] - 2025-11-25
 
 ### Fixed

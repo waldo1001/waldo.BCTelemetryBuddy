@@ -242,6 +242,28 @@ Apply these software engineering principles to all code:
 - Use JSDoc for public APIs and exported functions
 - Keep comments up-to-date when code changes
 
+**Testing with MCP Inspector:**
+When testing the MCP server without Claude Desktop or VSCode, use the MCP Inspector with manual environment variable configuration:
+
+1. **Install**: `npm install -g @modelcontextprotocol/inspector`
+2. **Set Environment Variables Manually** - The inspector doesn't reliably pass custom env vars through its UI. Provide these values in the inspector's environment configuration:
+   - **Required**:
+     - `BCTB_WORKSPACE_PATH` - Full path to workspace (e.g., `C:\Temp\BCTelemetryBuddy.test`)
+     - `BCTB_TENANT_ID` - Azure tenant ID
+     - `BCTB_APP_INSIGHTS_ID` - Application Insights App ID
+     - `BCTB_AUTH_FLOW` - `azure_cli` (recommended for testing)
+     - `BCTB_KUSTO_CLUSTER_URL` - Kusto cluster URL (required even though code ignores it for validation)
+   - **Optional**:
+     - `BCTB_CACHE_ENABLED` - `true`/`false`
+     - `BCTB_CACHE_TTL_SECONDS` - Cache TTL in seconds (default: `3600`)
+     - `BCTB_QUERIES_FOLDER` - Queries subfolder name (default: `queries`)
+3. **Authenticate First**: Run `az login --tenant <tenant-id>` before starting inspector
+4. **Ensure Workspace Exists**: Create the workspace path and queries folder before testing
+5. **Known Issues**:
+   - ❌ Config file discovery doesn't work reliably in inspector - use environment variables
+   - ❌ Environment variables set in shell may not be passed to spawned MCP process
+   - ✅ Manual entry in inspector UI is most reliable method
+
 ### 11. Never execute git commands
 **CRITICAL RULE**: You MUST NEVER execute git commands without EXPLICIT user request.
 
