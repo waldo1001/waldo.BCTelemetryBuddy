@@ -2425,3 +2425,7 @@ Change instructions an business logic to do this."
 > "Re-check all necessary documentation for the changes we did in this branch, compared to the main branch"
 
 ---
+### Entry ID: d048b838-9251-4b2d-a8af-23a184974d14  2025-11-25 18:49
+> "Perform a minor release. make sure all documentation and changelogs are up-to-date"
+
+---

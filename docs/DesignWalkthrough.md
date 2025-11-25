@@ -1347,3 +1347,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25**  Fixed MCP stdio mode logging that broke JSON-RPC protocol in Claude Desktop (#63). [Entry: f48fe5d1-c316-4e8f-924b-07254c04755e]
   - **Why:** MCP server wrote diagnostic messages to stdout, breaking JSON-RPC parsing in stdio mode clients (Claude Desktop, VSCode). Stdout must contain ONLY JSON-RPC messages, stderr for all diagnostics.
   - **How:** Modified server.ts constructor to accept mode parameter ('stdio'|'http'), added isStdioMode property, wrapped ALL console.error() calls with !this.isStdioMode checks, moved configuration errors to tool response layer instead of startup logging, updated extension.ts preferGlobal default to false for bundled MCP testing.
+
+- **2025-11-25**  Released Extension v1.2.9 and MCP v2.2.6 [Entry: d048b838-9251-4b2d-a8af-23a184974d14]
+  - **Why:** Minor releases with chatmode enhancements and critical stdio logging fix for Claude Desktop
+  - **How:** Bumped versions, updated CHANGELOGs, created tags (v1.2.9 and mcp-v2.2.6), pushed to GitHub
