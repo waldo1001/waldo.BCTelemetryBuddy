@@ -2381,3 +2381,7 @@ Change instructions an business logic to do this."
 > "Create a patch release"
 
 ---
+### Entry ID: 496ef471-d0e3-404c-b0d7-8244f140fa0d  2025-11-25 11:35
+> "So I want the documentation (readme in the extension folder) updated on the extension as well, so I guess you need to push a new update of the extension as well."
+
+---
