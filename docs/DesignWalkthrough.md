@@ -1341,3 +1341,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25**  Updated release workflow to always check for unreleased commits [Entry: 04dae218-70bb-4ef3-bd1b-82b3fd0ba276]
   - **Why:** Ensure no commits are left behind when releasing - all unreleased changes must be included
   - **How:** Added STEP 1 to check git log for both components, made it critical rule #1, auto-detect which component needs release if unspecified
+- **2025-11-25**  Improve code coverage to 98.21% [Entry: ce98b21d-b7bd-4b92-ac7c-e6225af9dde8]
+  - **Why:** Increase test coverage for config.ts validation, profile inheritance, and environment variable expansion
+  - **How:** Added 7 new test cases covering edge cases (workspacePath validation, azure_cli tenantId exemption, profile errors, null handling, \ expansion)
+- **2025-11-25**  Fixed MCP stdio mode logging that broke JSON-RPC protocol in Claude Desktop (#63). [Entry: f48fe5d1-c316-4e8f-924b-07254c04755e]
+  - **Why:** MCP server wrote diagnostic messages to stdout, breaking JSON-RPC parsing in stdio mode clients (Claude Desktop, VSCode). Stdout must contain ONLY JSON-RPC messages, stderr for all diagnostics.
+  - **How:** Modified server.ts constructor to accept mode parameter ('stdio'|'http'), added isStdioMode property, wrapped ALL console.error() calls with !this.isStdioMode checks, moved configuration errors to tool response layer instead of startup logging, updated extension.ts preferGlobal default to false for bundled MCP testing.

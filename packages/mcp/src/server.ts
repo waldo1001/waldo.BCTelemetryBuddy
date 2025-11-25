@@ -79,43 +79,52 @@ export class MCPServer {
     protected usageTelemetry: IUsageTelemetry; // Usage telemetry (tracks MCP usage)
     protected sessionId: string; // Session identifier for this server instance
     protected installationId: string; // Installation identifier from workspace
+    private isStdioMode: boolean; // Track if running in stdio mode to suppress console output
 
-    constructor(config?: MCPConfig) {
+    constructor(config?: MCPConfig, mode?: 'stdio' | 'http') {
         this.app = express();
+        this.isStdioMode = mode === 'stdio';
 
         // Load and validate configuration
-        // Try file-based config first (standalone mode), fall back to env vars (VSCode extension mode)
+        // Priority: 1. Passed config, 2. Config file, 3. Environment variables (VSCode extension)
         if (config) {
             this.config = config;
         } else {
-            // Try file-based config (.bctb-config.json)
             const fileConfig = loadConfigFromFile();
             if (fileConfig) {
+                if (!this.isStdioMode) {
+                    console.error('[Config] Using config file (.bctb-config.json)');
+                }
                 this.config = fileConfig;
             } else {
-                // Fall back to env vars (for VSCode extension or legacy setups)
-                console.warn('[MCP] No config file found, using environment variables');
+                // Fall back to env vars for VSCode extension compatibility
+                if (!this.isStdioMode) {
+                    console.error('[Config] No config file found, using environment variables');
+                }
                 this.config = loadConfig();
             }
         }
         this.configErrors = validateConfig(this.config);
 
-        console.log('=== BC Telemetry Buddy MCP Server ===');
-        console.log(`Connection: ${this.config.connectionName}`);
-        console.log(`Workspace: ${this.config.workspacePath}`);
-        console.log(`App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
-        console.log(`Kusto URL: ${this.config.kustoClusterUrl || '(not set)'}`);
-        console.log(`Auth flow: ${this.config.authFlow}`);
-        console.log(`Cache: ${this.config.cacheEnabled ? `enabled (TTL: ${this.config.cacheTTLSeconds}s)` : 'disabled'}`);
-        console.log(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
-        console.log(`External references: ${this.config.references.length}`);
+        // Only print banner in HTTP mode - stdio mode uses JSON-RPC protocol
+        if (!this.isStdioMode) {
+            console.error('=== BC Telemetry Buddy MCP Server ===');
+            console.error(`Connection: ${this.config.connectionName}`);
+            console.error(`Workspace: ${this.config.workspacePath}`);
+            console.error(`App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
+            console.error(`Kusto URL: ${this.config.kustoClusterUrl || '(not set)'}`);
+            console.error(`Auth flow: ${this.config.authFlow}`);
+            console.error(`Cache: ${this.config.cacheEnabled ? `enabled (TTL: ${this.config.cacheTTLSeconds}s)` : 'disabled'}`);
+            console.error(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
+            console.error(`External references: ${this.config.references.length}`);
 
-        if (this.configErrors.length > 0) {
-            console.log(`⚠️  Configuration incomplete (${this.configErrors.length} issues)`);
-        } else {
-            console.log('✅ Configuration valid');
+            if (this.configErrors.length > 0) {
+                console.error(`⚠️  Configuration incomplete (${this.configErrors.length} issues)`);
+            } else {
+                console.error('✅ Configuration valid');
+            }
+            console.error('=====================================\n');
         }
-        console.log('=====================================\n');
 
         // Generate session ID for this server instance
         this.sessionId = crypto.randomUUID();
@@ -136,7 +145,9 @@ export class MCPServer {
                     maxEventsPerSession: 2000,
                     maxEventsPerMinute: 200
                 });
-                console.log('✓ Usage Telemetry initialized\n');
+                if (!this.isStdioMode) {
+                    console.error('✓ Usage Telemetry initialized\n');
+                }
 
                 // Track server startup with common properties
                 const profileHash = this.config.connectionName ? hashValue(this.config.connectionName).substring(0, 16) : undefined;
@@ -156,12 +167,16 @@ export class MCPServer {
             } else {
                 this.usageTelemetry = new NoOpUsageTelemetry();
                 this.installationId = 'unknown';
-                console.log('⚠️  Usage Telemetry initialization failed\n');
+                if (!this.isStdioMode) {
+                    console.error('⚠️  Usage Telemetry initialization failed\n');
+                }
             }
         } else {
             this.usageTelemetry = new NoOpUsageTelemetry();
             this.installationId = 'unknown';
-            console.log('ℹ️  Usage Telemetry disabled\n');
+            if (!this.isStdioMode) {
+                console.error('ℹ️  Usage Telemetry disabled\n');
+            }
         }
 
         // Initialize services (pass telemetry to KustoService for dependency tracking)
@@ -194,9 +209,11 @@ export class MCPServer {
             }
         });
 
-        // Request logging
+        // Request logging with sanitized path to prevent log injection
         this.app.use((req: Request, res: Response, next: NextFunction) => {
-            console.log(`${req.method} ${req.path}`);
+            // Sanitize path by removing control characters and newlines to prevent log injection
+            const sanitizedPath = req.path.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+            console.error(`${req.method} ${sanitizedPath}`);
             next();
         });
     }
@@ -608,11 +625,6 @@ export class MCPServer {
             // Error response - ensure we have a meaningful message
             const errorMessage = error.message || error.toString() || 'Internal error';
 
-            console.error(`[MCP] RPC Error in ${rpcRequest.method}:`, errorMessage);
-            if (error.stack) {
-                console.error('[MCP] Stack:', error.stack);
-            }
-
             // Track exception with full context
             const errorProps = createCommonProperties(
                 TELEMETRY_EVENTS.MCP.ERROR,
@@ -674,7 +686,6 @@ export class MCPServer {
             const cached = this.cache.get<QueryResult>(kql);
 
             if (cached) {
-                console.log('✓ Returning cached result');
                 return { ...cached, cached: true };
             }
 
@@ -726,8 +737,6 @@ export class MCPServer {
 
             return result;
         } catch (error: any) {
-            console.error('Query execution failed:', error);
-
             return {
                 type: 'error',
                 kql,
@@ -797,8 +806,6 @@ export class MCPServer {
         | take ${limitedMaxResults}
         `.trim();
 
-        console.log(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, maxResults: ${limitedMaxResults}, includeCommonFields: ${includeCommonFields})...`);
-
         // Execute the query
         const result = await this.executeQuery(kql, false, false);
 
@@ -826,7 +833,6 @@ export class MCPServer {
 
         // If includeCommonFields is true, analyze customDimensions fields across events
         if (includeCommonFields && events.length > 0) {
-            console.log('Analyzing common fields across events...');
             response.commonFields = await this.analyzeCommonFields(daysBack, events.map(e => e.eventId));
         }
 
@@ -984,16 +990,12 @@ traces
 traces
 | where timestamp >= ago(10d)
 | where tostring(customDimensions.eventId) == "${eventId}"
-| take ${sampleSize}
-| project customDimensions
+        | take ${sampleSize}
+        | project customDimensions
         `.trim();
 
-        console.log(`Getting schema for event ${eventId} (sample size: ${sampleSize})...`);
-
         // Execute the query
-        const result = await this.executeQuery(kql, false, false);
-
-        if (result.type === 'error') {
+        const result = await this.executeQuery(kql, false, false); if (result.type === 'error') {
             throw new Error(result.summary);
         }
 
@@ -1047,16 +1049,12 @@ traces
 traces
 | where timestamp >= ago(${daysBack}d)
 | where tostring(customDimensions.eventId) == "${eventId}"
-| take ${sampleCount}
-| project timestamp, message, customDimensions
+        | take ${sampleCount}
+        | project timestamp, message, customDimensions
         `.trim();
 
-        console.log(`Getting field samples for event ${eventId} (${sampleCount} samples, ${daysBack} days back)...`);
-
         // Execute the query
-        const result = await this.executeQuery(kql, false, false);
-
-        if (result.type === 'error') {
+        const result = await this.executeQuery(kql, false, false); if (result.type === 'error') {
             throw new Error(result.summary);
         }
 
@@ -1212,8 +1210,6 @@ ${extendStatements}
      * Maps customer/company names to aadTenantId for filtering telemetry
      */
     private async getTenantMapping(daysBack: number = 10, companyNameFilter?: string): Promise<any> {
-        console.log(`Getting tenant mapping (${daysBack} days back, filter: ${companyNameFilter || 'none'})...`);
-
         let kql = `traces
 | where timestamp >= ago(${daysBack}d)
 | where isnotempty(customDimensions.companyName)
@@ -1382,8 +1378,8 @@ ${extendStatements}
         const port = this.config.port;
 
         this.app.listen(port, () => {
-            console.log(`\n✓ MCP Server listening on port ${port}`);
-            console.log(`Ready to receive requests\n`);
+            console.error(`\n✓ MCP Server listening on port ${port}`);
+            console.error(`Ready to receive requests\n`);
         });
 
         // Only authenticate if configuration is complete
@@ -1391,27 +1387,27 @@ ${extendStatements}
             // Authenticate immediately on startup
             // For device_code flow, this triggers the browser login before any queries
             // For client_credentials flow, this validates credentials early
-            console.log('Authenticating...');
+            console.error('Authenticating...');
             try {
                 await this.auth.authenticate();
-                console.log('✓ Authentication successful\n');
+                console.error('✓ Authentication successful\n');
             } catch (error: any) {
                 console.error('❌ Authentication failed:', error.message);
                 console.error('You can retry authentication when running your first query.\n');
             }
         } else {
-            console.log('⚠️  Skipping authentication (configuration incomplete)\n');
+            console.error('⚠️  Skipping authentication (configuration incomplete)\n');
         }
 
         // Graceful shutdown
         process.on('SIGINT', async () => {
-            console.log('\nShutting down gracefully...');
+            console.error('\nShutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         process.on('SIGTERM', async () => {
-            console.log('\nShutting down gracefully...');
+            console.error('\nShutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
@@ -1424,19 +1420,14 @@ ${extendStatements}
         // Console redirection is already done in startup code before constructor
         // to prevent constructor logs from breaking JSON-RPC
 
-        console.log('BC Telemetry Buddy MCP Server starting in stdio mode');
-
         // Only authenticate if configuration is complete
         if (this.configErrors.length === 0) {
             // Authenticate silently (no console output that breaks JSON-RPC)
             try {
                 await this.auth.authenticate();
-                console.log('Authentication successful');
             } catch (error: any) {
-                console.error('Authentication failed:', error.message);
+                // Errors will be returned through tool responses
             }
-        } else {
-            console.log('Skipping authentication (configuration incomplete)');
         }
 
         // Handle JSON-RPC messages from stdin
@@ -1454,28 +1445,28 @@ ${extendStatements}
                 try {
                     const request = JSON.parse(line);
                     const response = await this.handleStdioJSONRPC(request);
-                    process.stdout.write(JSON.stringify(response) + '\n');
+                    // Only send response if not null (notifications don't get responses)
+                    if (response !== null) {
+                        process.stdout.write(JSON.stringify(response) + '\n');
+                    }
                 } catch (error: any) {
-                    console.error('Failed to process request:', error.message);
+                    // Silently ignore malformed requests - they will timeout
                 }
             }
         });
 
         process.stdin.on('end', async () => {
-            console.log('Stdin closed, shutting down');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         // Graceful shutdown
         process.on('SIGINT', async () => {
-            console.log('Shutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         process.on('SIGTERM', async () => {
-            console.log('Shutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
@@ -1486,6 +1477,24 @@ ${extendStatements}
      */
     private async handleStdioJSONRPC(request: any): Promise<any> {
         const { id, method, params } = request;
+
+        // Handle notifications (no id field) - don't send a response
+        if (id === undefined || id === null) {
+            // Notifications like "notifications/initialized" don't expect a response
+            if (method?.startsWith('notifications/')) {
+                // Just acknowledge it silently
+                return null;
+            }
+            // Other methods without id are malformed
+            return {
+                jsonrpc: '2.0',
+                id: null,
+                error: {
+                    code: -32600,
+                    message: 'Invalid Request: missing id field for non-notification method'
+                }
+            };
+        }
 
         try {
             let result: any;
@@ -1998,15 +2007,15 @@ async function checkForUpdates(): Promise<void> {
                     const latestVersion = packageInfo.version;
 
                     if (latestVersion && latestVersion !== VERSION) {
-                        console.log('\n⚠️  ═══════════════════════════════════════════════════════');
-                        console.log('⚠️  MCP UPDATE AVAILABLE');
-                        console.log('⚠️  ═══════════════════════════════════════════════════════');
-                        console.log(`⚠️  Current version: ${VERSION}`);
-                        console.log(`⚠️  Latest version:  ${latestVersion}`);
-                        console.log('⚠️');
-                        console.log('⚠️  Update with: npm install -g bc-telemetry-buddy-mcp@latest');
-                        console.log('⚠️  Or use VSCode command: "BC Telemetry Buddy: Check for MCP Updates"');
-                        console.log('⚠️  ═══════════════════════════════════════════════════════\n');
+                        console.error('\n⚠️  ═══════════════════════════════════════════════════════');
+                        console.error('⚠️  MCP UPDATE AVAILABLE');
+                        console.error('⚠️  ═══════════════════════════════════════════════════════');
+                        console.error(`⚠️  Current version: ${VERSION}`);
+                        console.error(`⚠️  Latest version:  ${latestVersion}`);
+                        console.error('⚠️');
+                        console.error('⚠️  Update with: npm install -g bc-telemetry-buddy-mcp@latest');
+                        console.error('⚠️  Or use VSCode command: "BC Telemetry Buddy: Check for MCP Updates"');
+                        console.error('⚠️  ═══════════════════════════════════════════════════════\n');
                     }
                 } catch (error) {
                     // Silently ignore JSON parse errors
@@ -2033,24 +2042,24 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
             : !process.stdin.isTTY;
 
     // If stdio mode, redirect console output BEFORE creating server instance
+    // This ensures any accidental console.log() calls don't break JSON-RPC protocol
     if (isStdioMode) {
-        const originalLog = console.log;
-        const originalError = console.error;
-
         console.log = (...args: any[]) => {
             process.stderr.write('[MCP] ' + args.join(' ') + '\n');
         };
 
         console.error = (...args: any[]) => {
-            process.stderr.write('[MCP] ERROR: ' + args.join(' ') + '\n');
+            process.stderr.write('[MCP] ' + args.join(' ') + '\n');
         };
     }
 
     try {
-        const server = new MCPServer(config);
+        const server = new MCPServer(config, isStdioMode ? 'stdio' : 'http');
 
         // Check for updates asynchronously (don't await - let it run in background)
-        checkForUpdates().catch(() => { });
+        if (!isStdioMode) {
+            checkForUpdates().catch(() => { });
+        }
 
         if (isStdioMode) {
             await server.startStdio();

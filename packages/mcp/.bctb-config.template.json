@@ -1,0 +1,38 @@
+{
+    "profiles": {
+        "default": {
+            "connectionName": "My BC Production",
+            "authFlow": "azure_cli",
+            "tenantId": "YOUR-TENANT-ID",
+            "applicationInsightsAppId": "YOUR-APP-INSIGHTS-APP-ID",
+            "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID",
+            "workspacePath": "${workspaceFolder}",
+            "queriesFolder": "queries"
+        }
+    },
+    "defaultProfile": "default",
+    "cache": {
+        "enabled": true,
+        "ttlSeconds": 3600
+    },
+    "sanitize": {
+        "removePII": false
+    },
+    "references": [
+        {
+            "name": "Microsoft BC Telemetry Samples",
+            "type": "github",
+            "url": "https://github.com/microsoft/BCTech",
+            "enabled": true
+        }
+    ],
+    "_comments": {
+        "setup": "1. Copy this file to .bctb-config.json in your workspace directory",
+        "tenantId": "Your Azure AD tenant ID - find in Azure Portal > Azure Active Directory > Properties",
+        "applicationInsightsAppId": "Find in Azure Portal > Application Insights > API Access > Application ID",
+        "kustoClusterUrl": "Replace YOUR-SUBSCRIPTION-ID with your Azure subscription ID",
+        "authFlow": "Options: 'azure_cli' (easiest), 'device_code', or 'client_credentials'",
+        "workspacePath": "Use ${workspaceFolder} or absolute path to your workspace directory",
+        "security": "IMPORTANT: Add .bctb-config.json to .gitignore - it contains credentials!"
+    }
+}

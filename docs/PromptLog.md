@@ -2389,3 +2389,39 @@ Change instructions an business logic to do this."
 > "change the instructions so you ALWAYS check if mcp or extension needs to be pushed when a release is requested. Whenever there is ANY commit that is not released yet, you have to push it in a release, when requested."
 
 ---
+### Entry ID: 86180356-580f-474d-ae96-235c84f2a570  2025-11-25 15:27
+> "We need more code coverage"
+
+---
+### Entry ID: ce98b21d-b7bd-4b92-ac7c-e6225af9dde8  2025-11-25 15:27
+> "We need more code coverage"
+
+---
+### Entry ID: f48fe5d1-c316-4e8f-924b-07254c04755e  2025-11-25 18:06
+> "MCP server writing diagnostic messages to stderr in stdio mode, breaking JSON-RPC protocol in Claude Desktop - seeing Failed to parse message warnings"
+
+---
+### Entry ID: f9888913-b1cb-4bd6-a792-390ccee53a7c  2025-11-25 18:06
+> "Changed console.log to console.error in config.ts and server.ts, but still seeing [server stderr] [MCP ERROR] warnings in VSCode MCP output"
+
+---
+### Entry ID: f10e1908-b397-4708-ac68-9a24ad40e561 — 2025-11-25 18:06
+> "Root cause: stdio mode requires SILENT operation - stdout is only for JSON-RPC responses, any stderr output shows up as client-side warnings. Modified server.ts constructor to accept mode parameter, wrapped all console.error() with isStdioMode checks"
+
+---
+### Entry ID: 2f89b923-e78e-4a5b-89d9-0c0a2b93df3d — 2025-11-25 18:06
+> "Rebuilt MCP package (npm run build), copied to extension bundle (npm run copy-mcp), updated extension.ts preferGlobal default to false, rebuilt extension package"
+
+---
+### Entry ID: 5631ff37-ddbf-4e16-93ad-d859dcc865a2  2025-11-25 18:06
+> "Also seems to work - Claude Desktop now working, VSCode MCP infrastructure confirmed clean. All tests passing (213 MCP + 88 extension). Ready to document changes before merge."
+
+---
+### Entry ID: 3f6dc93f-0295-45c4-b538-40f3a5b7b289 — 2025-11-25 18:06
+> "Re-check all necessary documentation for the changes we did in this branch, compared to the main branch"
+
+---
+### Entry ID: 91ef3bd5-b6ee-468c-bea3-2abbd28664a6  2025-11-25 18:06
+> "Re-check all necessary documentation for the changes we did in this branch, compared to the main branch"
+
+---

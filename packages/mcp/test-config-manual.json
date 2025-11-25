@@ -1,0 +1,28 @@
+{
+  "profiles": {
+    "default": {
+      "connectionName": "My BC Production",
+      "authFlow": "azure_cli",
+      "applicationInsightsAppId": "your-app-insights-id",
+      "kustoClusterUrl": "https://ade.applicationinsights.io",
+      "workspacePath": "C:\\_Source\\Community\\waldo.BCTelemetryBuddy\\packages\\mcp",
+      "queriesFolder": "queries"
+    }
+  },
+  "defaultProfile": "default",
+  "cache": {
+    "enabled": true,
+    "ttlSeconds": 3600
+  },
+  "sanitize": {
+    "removePII": false
+  },
+  "references": [
+    {
+      "name": "Microsoft BC Telemetry Samples",
+      "type": "github",
+      "url": "https://github.com/microsoft/BCTech",
+      "enabled": true
+    }
+  ]
+}
