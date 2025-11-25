@@ -146,6 +146,55 @@ describe('Configuration Module', () => {
     });
 
     describe('validateConfig', () => {
+        it('should return error when workspacePath is missing', () => {
+            // Arrange
+            const config: MCPConfig = {
+                connectionName: 'Test',
+                tenantId: 'test-tenant',
+                authFlow: 'device_code',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://api.applicationinsights.io',
+                cacheEnabled: true,
+                cacheTTLSeconds: 3600,
+                removePII: false,
+                port: 52345,
+                workspacePath: '', // Empty workspace path
+                queriesFolder: 'queries',
+                references: []
+            };
+
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            expect(errors).toContain('workspacePath is required - set it in your config file or via BCTB_WORKSPACE_PATH environment variable');
+        });
+
+        it('should not require tenantId when using azure_cli auth flow', () => {
+            // Arrange
+            const config: MCPConfig = {
+                connectionName: 'Test',
+                tenantId: '', // Empty tenantId
+                authFlow: 'azure_cli', // azure_cli doesn't require tenantId
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://api.applicationinsights.io',
+                cacheEnabled: true,
+                cacheTTLSeconds: 3600,
+                removePII: false,
+                port: 52345,
+                workspacePath: '/test/workspace',
+                queriesFolder: 'queries',
+                references: []
+            };
+
+            // Act
+            const errors = validateConfig(config);
+
+            // Assert
+            // Should not have tenantId error since azure_cli doesn't need it
+            expect(errors).not.toContain('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
+        });
+
         it('should validate required fields successfully', () => {
             // Arrange
             const config: MCPConfig = {
@@ -719,8 +768,112 @@ describe('Configuration Module', () => {
             delete process.env.BCTB_WORKSPACE_PATH;
         });
 
-        // Note: Cannot easily test home directory discovery without mocking os.homedir,
-        // which is not configurable. The functionality is covered by manual testing.
+        it('should throw error when parent profile not found in inheritance chain', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    child: {
+                        extends: 'nonexistent-parent',
+                        connectionName: 'Child'
+                    }
+                },
+                defaultProfile: 'child'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act & Assert
+            expect(() => loadConfigFromFile(configPath)).toThrow("Profile 'nonexistent-parent' not found");
+        });
+
+        it('should handle deep merge with null values', () => {
+            // Arrange
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                profiles: {
+                    base: {
+                        authFlow: 'azure_cli',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io',
+                        workspacePath: '/base/workspace',
+                        queriesFolder: 'queries',
+                        customField: null // Null value to test null check in deepMerge
+                    },
+                    child: {
+                        extends: 'base',
+                        connectionName: 'Child',
+                        tenantId: 'child-tenant',
+                        applicationInsightsAppId: 'child-app-id',
+                        customField: { nested: 'value' } // Override null with object
+                    }
+                },
+                defaultProfile: 'child'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded).not.toBeNull();
+            expect(loaded!.connectionName).toBe('Child');
+            expect(loaded!.authFlow).toBe('azure_cli'); // Inherited
+            expect((loaded as any).customField).toEqual({ nested: 'value' }); // Overridden
+        });
+
+        it('should expand ${workspaceFolder} placeholder to BCTB_WORKSPACE_PATH', () => {
+            // Arrange
+            process.env.BCTB_WORKSPACE_PATH = '/my/workspace/path';
+
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                connectionName: 'Test',
+                tenantId: 'test-tenant',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: '${workspaceFolder}/queries', // Use placeholder
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded).not.toBeNull();
+            expect(loaded!.workspacePath).toBe('/my/workspace/path/queries');
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Expanding ${workspaceFolder} to: /my/workspace/path')
+            );
+
+            // Cleanup
+            delete process.env.BCTB_WORKSPACE_PATH;
+        });
+
+        it('should expand ${workspaceFolder} to cwd when BCTB_WORKSPACE_PATH not set', () => {
+            // Arrange
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const expectedPath = process.cwd();
+
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                connectionName: 'Test',
+                tenantId: 'test-tenant',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io',
+                workspacePath: '${workspaceFolder}', // Use placeholder
+                queriesFolder: 'queries'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
+            // Assert
+            expect(loaded).not.toBeNull();
+            expect(loaded!.workspacePath).toBe(expectedPath);
+        });
     });
 
     describe('initConfig', () => {
