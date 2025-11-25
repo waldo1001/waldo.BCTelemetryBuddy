@@ -90,7 +90,7 @@ export class MCPServer {
         if (config) {
             this.config = config;
         } else {
-            const fileConfig = loadConfigFromFile();
+            const fileConfig = loadConfigFromFile(undefined, undefined, this.isStdioMode);
             if (fileConfig) {
                 if (!this.isStdioMode) {
                     console.error('[Config] Using config file (.bctb-config.json)');

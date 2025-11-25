@@ -62,7 +62,7 @@ export class AuthService {
      */
     private async authenticateAzureCLI(): Promise<AuthResult> {
         try {
-            console.log('Using Azure CLI authentication (az account get-access-token)...');
+            console.error('[MCP] Using Azure CLI authentication (az account get-access-token)...');
 
             // Get access token from Azure CLI
             // Use --resource flag to get token for Application Insights API
@@ -87,9 +87,9 @@ export class AuthService {
                 expiresOn: tokenResponse.expiresOn ? new Date(tokenResponse.expiresOn) : undefined
             };
 
-            console.log(`✓ Authenticated via Azure CLI`);
-            console.log(`  Subscription: ${tokenResponse.subscription || 'N/A'}`);
-            console.log(`  Tenant: ${tokenResponse.tenant || 'N/A'}`);
+            console.error(`[MCP] ✓ Authenticated via Azure CLI`);
+            console.error(`[MCP]   Subscription: ${tokenResponse.subscription || 'N/A'}`);
+            console.error(`[MCP]   Tenant: ${tokenResponse.tenant || 'N/A'}`);
 
             return this.authResult;
         } catch (error: any) {

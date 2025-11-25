@@ -157,8 +157,11 @@ export function validateConfig(config: MCPConfig): string[] {
 /**
  * Load config from file with discovery and profile support
  * Returns null if no config file is found (allows fallback to env vars)
+ * @param configPath Optional path to config file
+ * @param profileName Optional profile name to use
+ * @param silent If true, suppress console output (for stdio mode)
  */
-export function loadConfigFromFile(configPath?: string, profileName?: string): MCPConfig | null {
+export function loadConfigFromFile(configPath?: string, profileName?: string, silent: boolean = false): MCPConfig | null {
     let filePath: string | null = null;
 
     // Discovery order (as per refactoring plan):
@@ -212,11 +215,13 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
         return null;
     }
 
-    console.error(`📄 Loading config from: ${filePath}`);
-    console.error(`[Config] BCTB_WORKSPACE_PATH env var = ${process.env.BCTB_WORKSPACE_PATH || '(not set)'}`);
+    if (!silent) {
+        console.error(`📄 Loading config from: ${filePath}`);
+        console.error(`[Config] BCTB_WORKSPACE_PATH env var = ${process.env.BCTB_WORKSPACE_PATH || '(not set)'}`);
+    }
 
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const rawConfig = JSON.parse(fileContent) as ProfiledConfig & Partial<MCPConfig>;
+    const fileContents = fs.readFileSync(filePath, 'utf-8');
+    const rawConfig = JSON.parse(fileContents) as ProfiledConfig & Partial<MCPConfig>;
 
     // Handle multi-profile configs
     if (rawConfig.profiles) {
