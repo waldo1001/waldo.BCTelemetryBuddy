@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.6] - 2025-11-25
+
+### Fixed
+- **stdio Mode Logging**: Fixed MCP server writing diagnostic logs to stdout, which broke JSON-RPC protocol in stdio mode ([#63](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/63))
+  - All server diagnostic logs now use `console.error()` to write to stderr
+  - stdout is reserved exclusively for JSON-RPC messages (parseable JSON)
+  - Fixes `SyntaxError: Unexpected token...` errors in Claude Desktop and other MCP clients
+  - Impact: Server now complies with MCP stdio transport specification
+  - Files changed: `config.ts` (4 calls), `server.ts` (~30 calls)
+  - CLI commands unchanged (still use stdout appropriately for user output)
+
+### Added
+- **Logging Tests**: Added comprehensive test suite for stdio mode logging behavior
+  - `stdio-logging.test.ts`: 5 tests verifying source code uses correct logging methods
+  - `console-redirection.test.ts`: 7 unit tests for console redirection mechanism
+  - All tests pass, code coverage: 92.85% (exceeds 80% target)
+
 ## [2.2.5] - 2025-11-25
 
 ### Changed
