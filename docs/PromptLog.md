@@ -2389,3 +2389,11 @@ Change instructions an business logic to do this."
 > "change the instructions so you ALWAYS check if mcp or extension needs to be pushed when a release is requested. Whenever there is ANY commit that is not released yet, you have to push it in a release, when requested."
 
 ---
+### Entry ID: 86180356-580f-474d-ae96-235c84f2a570  2025-11-25 15:27
+> "We need more code coverage"
+
+---
+### Entry ID: ce98b21d-b7bd-4b92-ac7c-e6225af9dde8  2025-11-25 15:27
+> "We need more code coverage"
+
+---

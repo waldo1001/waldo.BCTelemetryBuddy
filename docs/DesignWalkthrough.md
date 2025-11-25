@@ -1341,3 +1341,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25**  Updated release workflow to always check for unreleased commits [Entry: 04dae218-70bb-4ef3-bd1b-82b3fd0ba276]
   - **Why:** Ensure no commits are left behind when releasing - all unreleased changes must be included
   - **How:** Added STEP 1 to check git log for both components, made it critical rule #1, auto-detect which component needs release if unspecified
+- **2025-11-25**  Improve code coverage to 98.21% [Entry: ce98b21d-b7bd-4b92-ac7c-e6225af9dde8]
+  - **Why:** Increase test coverage for config.ts validation, profile inheritance, and environment variable expansion
+  - **How:** Added 7 new test cases covering edge cases (workspacePath validation, azure_cli tenantId exemption, profile errors, null handling, \ expansion)
