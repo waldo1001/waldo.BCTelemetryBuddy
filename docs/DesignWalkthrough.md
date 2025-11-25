@@ -1328,3 +1328,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25** - Audited and corrected README files against actual codebase [Entry: 2f942f80-16b7-4ff2-b172-7d2ba19da7a8]
   - **Why:** Ensure documentation accurately reflects implemented features, commands, and MCP tools
   - **How:** Verified package.json commands (found 17, added 8 missing), checked MCP tools (confirmed 11 tools), fixed tool name prefixes (removed bctb_), corrected parameter names (sampleCount vs maxEvents), added missing commands (Migrate Settings, Install Chatmodes, profile management, MCP updates, telemetry reset)
+
+- **2025-11-25**  Fixed MCP installation ID storage inconsistency [Entry: 8c95d9e9-44d9-41a1-a34b-aa5c4b2adcc5]
+  - **Why:** MCP was creating workspace files while extension removed them, causing files to reappear
+  - **How:** Changed MCP to store IDs in ~/.bctb/installation-id, migrate workspace files, and always cleanup legacy files

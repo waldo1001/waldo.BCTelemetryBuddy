@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Installation ID Storage**: Installation IDs now stored in user profile (`~/.bctb/installation-id`) instead of workspace
+  - Matches VS Code extension behavior (uses user storage, not workspace)
+  - Migration: Automatically moves existing `.bctb-installation-id` files from workspace to user profile
+  - Cleanup: Always removes workspace `.bctb-installation-id` files on startup
+  - Why: Prevents installation ID files from appearing in customer workspaces/repos
+
 ## [2.2.4] - 2025-11-24
 
 ### Changed

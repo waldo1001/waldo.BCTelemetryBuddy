@@ -9,6 +9,7 @@ import { IUsageTelemetry } from '@bctb/shared';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as os from 'os';
 
 /**
  * Application Insights-based telemetry implementation for MCP
@@ -94,37 +95,100 @@ export class AppInsightsUsageTelemetry implements IUsageTelemetry {
 }
 
 /**
- * Installation ID management for MCP (workspace-specific)
+ * Installation ID management for MCP (user-profile storage)
  */
 
 const INSTALLATION_ID_FILE = '.bctb-installation-id';
+const USER_PROFILE_DIR = '.bctb';
+const USER_PROFILE_ID_FILE = 'installation-id';
 
 /**
- * Get or create installation ID for MCP workspace
- * Returns a stable pseudonymous identifier per workspace
+ * Get the user profile directory for BCTB
+ */
+function getUserProfileDir(): string {
+    const homeDir = os.homedir();
+    return path.join(homeDir, USER_PROFILE_DIR);
+}
+
+/**
+ * Get or create installation ID for MCP
+ * Returns a stable pseudonymous identifier per user (stored in user profile)
+ * 
+ * Migration: If a workspace .bctb-installation-id file exists, it will be
+ * migrated to user profile and removed from the workspace.
  */
 export function getMCPInstallationId(workspacePath: string): string {
-    const idFile = path.join(workspacePath, INSTALLATION_ID_FILE);
+    const profileDir = getUserProfileDir();
+    const profileIdFile = path.join(profileDir, USER_PROFILE_ID_FILE);
 
+    // Check for existing user profile ID first
     try {
-        if (fs.existsSync(idFile)) {
-            return fs.readFileSync(idFile, 'utf8').trim();
+        if (fs.existsSync(profileIdFile)) {
+            const existingId = fs.readFileSync(profileIdFile, 'utf8').trim();
+            if (existingId) {
+                // Cleanup: Always remove workspace file if it exists
+                cleanupWorkspaceIdFile(workspacePath);
+                return existingId;
+            }
         }
     } catch {
+        // Fall through to migration/generation
+    }
+
+    // Migration: Check for legacy workspace file
+    const workspaceIdFile = path.join(workspacePath, INSTALLATION_ID_FILE);
+    try {
+        if (fs.existsSync(workspaceIdFile)) {
+            const workspaceId = fs.readFileSync(workspaceIdFile, 'utf8').trim();
+            if (workspaceId) {
+                // Migrate to user profile
+                ensureDirectoryExists(profileDir);
+                fs.writeFileSync(profileIdFile, workspaceId, 'utf8');
+                // Remove workspace file
+                fs.unlinkSync(workspaceIdFile);
+                return workspaceId;
+            }
+        }
+    } catch (err) {
+        console.error(`Failed to migrate workspace installation ID: ${err}`);
         // Fall through to generate new ID
     }
 
-    // Generate new ID
+    // Generate new ID and store in user profile
     const newId = crypto.randomUUID();
 
     try {
-        fs.writeFileSync(idFile, newId, 'utf8');
+        ensureDirectoryExists(profileDir);
+        fs.writeFileSync(profileIdFile, newId, 'utf8');
     } catch (err) {
         console.error(`Failed to write installation ID file: ${err}`);
         // Continue with in-memory ID
     }
 
     return newId;
+}
+
+/**
+ * Ensure a directory exists, creating it if necessary
+ */
+function ensureDirectoryExists(dirPath: string): void {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+}
+
+/**
+ * Clean up legacy workspace installation ID file
+ */
+function cleanupWorkspaceIdFile(workspacePath: string): void {
+    const workspaceIdFile = path.join(workspacePath, INSTALLATION_ID_FILE);
+    try {
+        if (fs.existsSync(workspaceIdFile)) {
+            fs.unlinkSync(workspaceIdFile);
+        }
+    } catch (err) {
+        // Ignore cleanup errors
+    }
 }
 
 /**

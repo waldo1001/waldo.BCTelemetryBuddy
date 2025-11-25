@@ -567,7 +567,7 @@ The MCP server **collects anonymous usage telemetry** to help improve the tool. 
 ### Privacy & Anonymization
 
 All telemetry data is automatically sanitized:
-- **Installation IDs**: Random UUIDs stored per workspace (`.bctb-installation-id` file)
+- **Installation IDs**: Random UUIDs stored per user in `~/.bctb/installation-id` (not in workspace)
 - **Profile names**: Hashed (first 16 chars of SHA-256) before transmission
 - **No query content**: KQL queries and results are never sent
 - **Error messages**: Sanitized to remove paths, credentials, PII

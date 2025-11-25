@@ -2372,3 +2372,8 @@ Change instructions an business logic to do this."
 > "Check both readmes with code and documentation - see if all is mentioned and all is in line as it should be"
 
 ---
+
+### Entry ID: 8c95d9e9-44d9-41a1-a34b-aa5c4b2adcc5  2025-11-25 11:25
+> "I notice that the .bctb-installation-id file is STILL created in the workspace. While it should be REMOVE from the workspace if it would exist .. . When no id exists, it should be created in the users's profile no? Why does this inconsistency exist?"
+
+---
