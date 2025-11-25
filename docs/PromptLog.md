@@ -2377,3 +2377,7 @@ Change instructions an business logic to do this."
 > "I notice that the .bctb-installation-id file is STILL created in the workspace. While it should be REMOVE from the workspace if it would exist .. . When no id exists, it should be created in the users's profile no? Why does this inconsistency exist?"
 
 ---
+### Entry ID: 9b6265ad-0d8b-4a5a-b7db-ffd1ac62af80  2025-11-25 11:31
+> "Create a patch release"
+
+---
