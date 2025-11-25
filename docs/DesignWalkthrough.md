@@ -1338,3 +1338,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25**  Released Extension v1.2.8 [Entry: 496ef471-d0e3-404c-b0d7-8244f140fa0d]
   - **Why:** Updated README to document installation ID storage in user profile
   - **How:** Updated privacy section in README, bumped version to 1.2.8, updated CHANGELOG, committed, tagged v1.2.8, and pushed
+- **2025-11-25**  Updated release workflow to always check for unreleased commits [Entry: 04dae218-70bb-4ef3-bd1b-82b3fd0ba276]
+  - **Why:** Ensure no commits are left behind when releasing - all unreleased changes must be included
+  - **How:** Added STEP 1 to check git log for both components, made it critical rule #1, auto-detect which component needs release if unspecified

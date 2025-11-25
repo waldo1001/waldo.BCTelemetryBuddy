@@ -2385,3 +2385,7 @@ Change instructions an business logic to do this."
 > "So I want the documentation (readme in the extension folder) updated on the extension as well, so I guess you need to push a new update of the extension as well."
 
 ---
+### Entry ID: 04dae218-70bb-4ef3-bd1b-82b3fd0ba276  2025-11-25 11:39
+> "change the instructions so you ALWAYS check if mcp or extension needs to be pushed when a release is requested. Whenever there is ANY commit that is not released yet, you have to push it in a release, when requested."
+
+---

@@ -305,13 +305,29 @@ When the user says phrases like:
 
 **Your Response Protocol:**
 
-### STEP 1: Determine Component and Bump Type
+### STEP 1: Check for Unreleased Commits
+
+**CRITICAL**: Before asking the user anything, ALWAYS check both components for unreleased commits:
+
+```powershell
+# Check git log for commits since last release tag
+git log --oneline mcp-v$(jq -r .version packages/mcp/package.json)..HEAD -- packages/mcp/
+git log --oneline v$(jq -r .version packages/extension/package.json)..HEAD -- packages/extension/
+```
+
+**If ANY commits exist that are not released yet:**
+- Those commits MUST be included in the release
+- Inform the user: "Found unreleased commits in [component]. These will be included in the release."
+
+### STEP 2: Determine Component and Bump Type
 
 Ask clarifying questions if not specified:
 1. **Which component?** extension or mcp (or both)
 2. **Bump type?** patch (bug fixes), minor (new features), or major (breaking changes)
 
-### STEP 2: Bump Versions and Update CHANGELOGs
+**IMPORTANT**: If user says "release" without specifying component, check BOTH components for unreleased commits and release whichever has unreleased changes.
+
+### STEP 3: Bump Versions and Update CHANGELOGs
 
 **CRITICAL**: First, manually bump the version in package.json and update CHANGELOG.md for the component(s):
 
@@ -334,14 +350,14 @@ Ask clarifying questions if not specified:
 - Patch and minor updates do NOT trigger the release notes page
 - Update `ReleaseNotesProvider.ts` content when doing MAJOR releases to reflect new features
 
-### STEP 3: Ask for Confirmation
+### STEP 4: Ask for Confirmation
 
 After making the version and CHANGELOG changes:
 1. **Show user the changes**: Display what versions were bumped to and what's in the CHANGELOGs
 2. **Ask for confirmation**: "Ready to commit and push the release?"
 3. **WAIT for user to confirm** before proceeding
 
-### STEP 4: Commit and Push (ONLY after user confirmation)
+### STEP 5: Commit and Push (ONLY after user confirmation)
 
 Once user confirms, complete the release by committing and pushing:
 
@@ -357,7 +373,7 @@ git push origin main --tags
 
 This triggers the GitHub Actions workflow for build, test, and publish.
 
-### STEP 5: What Happens Next
+### STEP 6: What Happens Next
 
 After pushing:
 1. ✅ GitHub Actions workflows are triggered automatically
@@ -365,7 +381,7 @@ After pushing:
 3. ✅ Tests execute to validate the release
 4. ✅ Packages are published (Extension to VS Code Marketplace, MCP to NPM)
 
-### STEP 6: Monitor Release
+### STEP 7: Monitor Release
 
 After script completes, inform user:
 ```
@@ -380,14 +396,15 @@ For MCP: https://www.npmjs.com/package/bc-telemetry-buddy-mcp
 ```
 
 **CRITICAL RULES:**
-1. **ALWAYS bump versions manually FIRST** - Edit package.json and CHANGELOG.md before any git operations
-2. **Update ReleaseNotesProvider.ts for MAJOR extension releases** - Content must match new version features
-3. **Wait for user confirmation** - User reviews changes before you commit/push
-4. **Extension tags**: `v0.3.0` (no prefix)
-5. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
-6. **Cannot release both simultaneously** - Different tag formats required
-7. **Use semantic versioning** - patch (X.Y.Z+1), minor (X.Y+1.0), major (X+1.0.0)
-8. **Release notes auto-show on MAJOR only** - Extension shows release notes page only when X changes in X.Y.Z
+1. **ALWAYS check for unreleased commits FIRST** - Check git log for both components before asking user anything
+2. **ALWAYS bump versions manually FIRST** - Edit package.json and CHANGELOG.md before any git operations
+3. **Update ReleaseNotesProvider.ts for MAJOR extension releases** - Content must match new version features
+4. **Wait for user confirmation** - User reviews changes before you commit/push
+5. **Extension tags**: `v0.3.0` (no prefix)
+6. **MCP tags**: `mcp-v1.0.1` (mcp- prefix)
+7. **Cannot release both simultaneously** - Different tag formats required
+8. **Use semantic versioning** - patch (X.Y.Z+1), minor (X.Y+1.0), major (X+1.0.0)
+9. **Release notes auto-show on MAJOR only** - Extension shows release notes page only when X changes in X.Y.Z
 
 **Script Parameters:**
 - `-BumpType`: patch, minor, or major (REQUIRED)
