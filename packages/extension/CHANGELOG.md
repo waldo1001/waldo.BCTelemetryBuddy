@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2025-11-25
+
+### Changed
+- **Documentation**: Updated README privacy section to clarify installation ID storage
+  - Installation IDs stored in VS Code user profile (not workspace)
+  - Matches MCP v2.2.5 behavior for consistent privacy approach
+
 ## [1.2.7] - 2025-11-24
 
 ### Fixed

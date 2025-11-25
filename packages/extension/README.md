@@ -407,7 +407,8 @@ BC Telemetry Buddy collects anonymous usage telemetry to improve the extension. 
 - BC telemetry data you're analyzing
 
 ### Privacy
-- All telemetry is anonymized (hashed session IDs, no user identification)
+- All telemetry is anonymized with random installation IDs (stored in VS Code user profile, not workspace)
+- Installation IDs are per-user, not per-workspace (improves privacy)
 - Data stored in a separate Azure Application Insights resource
 - Used exclusively for product improvement and debugging
 - Follows Microsoft's privacy and data collection practices
