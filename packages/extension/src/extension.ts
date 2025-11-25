@@ -598,7 +598,7 @@ export function activate(context: vscode.ExtensionContext) {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
-            const preferGlobal = mcpConfig.get<boolean>('preferGlobal', true); // Default to global (npm install)
+            const preferGlobal = mcpConfig.get<boolean>('preferGlobal', false); // Default to bundled in development
             // Bundled MCP: Use the MCP server bundled with the extension (mcp/dist/launcher.js)
             // Global MCP: Use globally installed bctb-mcp command from npm (DEFAULT)
             //

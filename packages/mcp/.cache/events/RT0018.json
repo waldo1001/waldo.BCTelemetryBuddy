@@ -1,0 +1,14 @@
+{
+  "data": {
+    "eventId": "RT0018",
+    "category": "Performance",
+    "documentationUrl": "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/telemetry-available-telemetry",
+    "description": "Operation exceeded time threshold (AL method)",
+    "isStandardEvent": true,
+    "source": "microsoft-learn"
+  },
+  "expiresAt": 1764176347272,
+  "_meta": {
+    "createdBy": "waldo's BCTelemetryBuddy (AI-assisted)"
+  }
+}

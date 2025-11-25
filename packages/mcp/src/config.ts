@@ -163,8 +163,8 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
 
     // Discovery order (as per refactoring plan):
     // 1. --config CLI argument
-    // 2. .bctb-config.json in current directory
-    // 3. .bctb-config.json in workspace root (BCTB_WORKSPACE_PATH env var)
+    // 2. .bctb-config.json in workspace root (BCTB_WORKSPACE_PATH env var) - PRIORITY for VSCode extension
+    // 3. .bctb-config.json in current directory
     // 4. ~/.bctb/config.json OR ~/.bctb-config.json in user home directory
 
     // Try each location in order until we find a config file
@@ -172,15 +172,17 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
         filePath = path.resolve(configPath);
     }
 
-    if (!filePath && fs.existsSync('.bctb-config.json')) {
-        filePath = path.resolve('.bctb-config.json');
-    }
-
+    // Check BCTB_WORKSPACE_PATH first (VSCode extension sets this)
     if (!filePath && process.env.BCTB_WORKSPACE_PATH) {
         const workspacePath = path.join(process.env.BCTB_WORKSPACE_PATH, '.bctb-config.json');
         if (fs.existsSync(workspacePath)) {
             filePath = workspacePath;
         }
+    }
+
+    // Then check current directory
+    if (!filePath && fs.existsSync('.bctb-config.json')) {
+        filePath = path.resolve('.bctb-config.json');
     }
 
     if (!filePath) {

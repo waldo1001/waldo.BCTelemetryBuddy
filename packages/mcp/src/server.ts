@@ -79,9 +79,11 @@ export class MCPServer {
     protected usageTelemetry: IUsageTelemetry; // Usage telemetry (tracks MCP usage)
     protected sessionId: string; // Session identifier for this server instance
     protected installationId: string; // Installation identifier from workspace
+    private isStdioMode: boolean; // Track if running in stdio mode to suppress console output
 
-    constructor(config?: MCPConfig) {
+    constructor(config?: MCPConfig, mode?: 'stdio' | 'http') {
         this.app = express();
+        this.isStdioMode = mode === 'stdio';
 
         // Load and validate configuration
         // Priority: 1. Passed config, 2. Config file, 3. Environment variables (VSCode extension)
@@ -90,32 +92,39 @@ export class MCPServer {
         } else {
             const fileConfig = loadConfigFromFile();
             if (fileConfig) {
-                console.error('[Config] Using config file (.bctb-config.json)');
+                if (!this.isStdioMode) {
+                    console.error('[Config] Using config file (.bctb-config.json)');
+                }
                 this.config = fileConfig;
             } else {
                 // Fall back to env vars for VSCode extension compatibility
-                console.error('[Config] No config file found, using environment variables');
+                if (!this.isStdioMode) {
+                    console.error('[Config] No config file found, using environment variables');
+                }
                 this.config = loadConfig();
             }
         }
         this.configErrors = validateConfig(this.config);
 
-        console.error('=== BC Telemetry Buddy MCP Server ===');
-        console.error(`Connection: ${this.config.connectionName}`);
-        console.error(`Workspace: ${this.config.workspacePath}`);
-        console.error(`App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
-        console.error(`Kusto URL: ${this.config.kustoClusterUrl || '(not set)'}`);
-        console.error(`Auth flow: ${this.config.authFlow}`);
-        console.error(`Cache: ${this.config.cacheEnabled ? `enabled (TTL: ${this.config.cacheTTLSeconds}s)` : 'disabled'}`);
-        console.error(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
-        console.error(`External references: ${this.config.references.length}`);
+        // Only print banner in HTTP mode - stdio mode uses JSON-RPC protocol
+        if (!this.isStdioMode) {
+            console.error('=== BC Telemetry Buddy MCP Server ===');
+            console.error(`Connection: ${this.config.connectionName}`);
+            console.error(`Workspace: ${this.config.workspacePath}`);
+            console.error(`App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
+            console.error(`Kusto URL: ${this.config.kustoClusterUrl || '(not set)'}`);
+            console.error(`Auth flow: ${this.config.authFlow}`);
+            console.error(`Cache: ${this.config.cacheEnabled ? `enabled (TTL: ${this.config.cacheTTLSeconds}s)` : 'disabled'}`);
+            console.error(`PII sanitization: ${this.config.removePII ? 'enabled' : 'disabled'}`);
+            console.error(`External references: ${this.config.references.length}`);
 
-        if (this.configErrors.length > 0) {
-            console.error(`⚠️  Configuration incomplete (${this.configErrors.length} issues)`);
-        } else {
-            console.error('✅ Configuration valid');
+            if (this.configErrors.length > 0) {
+                console.error(`⚠️  Configuration incomplete (${this.configErrors.length} issues)`);
+            } else {
+                console.error('✅ Configuration valid');
+            }
+            console.error('=====================================\n');
         }
-        console.error('=====================================\n');
 
         // Generate session ID for this server instance
         this.sessionId = crypto.randomUUID();
@@ -136,7 +145,9 @@ export class MCPServer {
                     maxEventsPerSession: 2000,
                     maxEventsPerMinute: 200
                 });
-                console.error('✓ Usage Telemetry initialized\n');
+                if (!this.isStdioMode) {
+                    console.error('✓ Usage Telemetry initialized\n');
+                }
 
                 // Track server startup with common properties
                 const profileHash = this.config.connectionName ? hashValue(this.config.connectionName).substring(0, 16) : undefined;
@@ -156,12 +167,16 @@ export class MCPServer {
             } else {
                 this.usageTelemetry = new NoOpUsageTelemetry();
                 this.installationId = 'unknown';
-                console.error('⚠️  Usage Telemetry initialization failed\n');
+                if (!this.isStdioMode) {
+                    console.error('⚠️  Usage Telemetry initialization failed\n');
+                }
             }
         } else {
             this.usageTelemetry = new NoOpUsageTelemetry();
             this.installationId = 'unknown';
-            console.error('ℹ️  Usage Telemetry disabled\n');
+            if (!this.isStdioMode) {
+                console.error('ℹ️  Usage Telemetry disabled\n');
+            }
         }
 
         // Initialize services (pass telemetry to KustoService for dependency tracking)
@@ -608,11 +623,6 @@ export class MCPServer {
             // Error response - ensure we have a meaningful message
             const errorMessage = error.message || error.toString() || 'Internal error';
 
-            console.error(`[MCP] RPC Error in ${rpcRequest.method}:`, errorMessage);
-            if (error.stack) {
-                console.error('[MCP] Stack:', error.stack);
-            }
-
             // Track exception with full context
             const errorProps = createCommonProperties(
                 TELEMETRY_EVENTS.MCP.ERROR,
@@ -674,7 +684,6 @@ export class MCPServer {
             const cached = this.cache.get<QueryResult>(kql);
 
             if (cached) {
-                console.error('✓ Returning cached result');
                 return { ...cached, cached: true };
             }
 
@@ -726,8 +735,6 @@ export class MCPServer {
 
             return result;
         } catch (error: any) {
-            console.error('Query execution failed:', error);
-
             return {
                 type: 'error',
                 kql,
@@ -797,8 +804,6 @@ export class MCPServer {
         | take ${limitedMaxResults}
         `.trim();
 
-        console.error(`Getting event catalog (${daysBack} days back, status: ${status}, minCount: ${minCount}, maxResults: ${limitedMaxResults}, includeCommonFields: ${includeCommonFields})...`);
-
         // Execute the query
         const result = await this.executeQuery(kql, false, false);
 
@@ -826,7 +831,6 @@ export class MCPServer {
 
         // If includeCommonFields is true, analyze customDimensions fields across events
         if (includeCommonFields && events.length > 0) {
-            console.error('Analyzing common fields across events...');
             response.commonFields = await this.analyzeCommonFields(daysBack, events.map(e => e.eventId));
         }
 
@@ -984,16 +988,12 @@ traces
 traces
 | where timestamp >= ago(10d)
 | where tostring(customDimensions.eventId) == "${eventId}"
-| take ${sampleSize}
-| project customDimensions
+        | take ${sampleSize}
+        | project customDimensions
         `.trim();
 
-        console.error(`Getting schema for event ${eventId} (sample size: ${sampleSize})...`);
-
         // Execute the query
-        const result = await this.executeQuery(kql, false, false);
-
-        if (result.type === 'error') {
+        const result = await this.executeQuery(kql, false, false); if (result.type === 'error') {
             throw new Error(result.summary);
         }
 
@@ -1047,16 +1047,12 @@ traces
 traces
 | where timestamp >= ago(${daysBack}d)
 | where tostring(customDimensions.eventId) == "${eventId}"
-| take ${sampleCount}
-| project timestamp, message, customDimensions
+        | take ${sampleCount}
+        | project timestamp, message, customDimensions
         `.trim();
 
-        console.error(`Getting field samples for event ${eventId} (${sampleCount} samples, ${daysBack} days back)...`);
-
         // Execute the query
-        const result = await this.executeQuery(kql, false, false);
-
-        if (result.type === 'error') {
+        const result = await this.executeQuery(kql, false, false); if (result.type === 'error') {
             throw new Error(result.summary);
         }
 
@@ -1212,8 +1208,6 @@ ${extendStatements}
      * Maps customer/company names to aadTenantId for filtering telemetry
      */
     private async getTenantMapping(daysBack: number = 10, companyNameFilter?: string): Promise<any> {
-        console.error(`Getting tenant mapping (${daysBack} days back, filter: ${companyNameFilter || 'none'})...`);
-
         let kql = `traces
 | where timestamp >= ago(${daysBack}d)
 | where isnotempty(customDimensions.companyName)
@@ -1424,19 +1418,14 @@ ${extendStatements}
         // Console redirection is already done in startup code before constructor
         // to prevent constructor logs from breaking JSON-RPC
 
-        console.error('BC Telemetry Buddy MCP Server starting in stdio mode');
-
         // Only authenticate if configuration is complete
         if (this.configErrors.length === 0) {
             // Authenticate silently (no console output that breaks JSON-RPC)
             try {
                 await this.auth.authenticate();
-                console.error('Authentication successful');
             } catch (error: any) {
-                console.error('Authentication failed:', error.message);
+                // Errors will be returned through tool responses
             }
-        } else {
-            console.error('Skipping authentication (configuration incomplete)');
         }
 
         // Handle JSON-RPC messages from stdin
@@ -1459,26 +1448,23 @@ ${extendStatements}
                         process.stdout.write(JSON.stringify(response) + '\n');
                     }
                 } catch (error: any) {
-                    console.error('Failed to process request:', error.message);
+                    // Silently ignore malformed requests - they will timeout
                 }
             }
         });
 
         process.stdin.on('end', async () => {
-            console.error('Stdin closed, shutting down');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         // Graceful shutdown
         process.on('SIGINT', async () => {
-            console.error('Shutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
 
         process.on('SIGTERM', async () => {
-            console.error('Shutting down gracefully...');
             await this.usageTelemetry.flush();
             process.exit(0);
         });
@@ -2066,10 +2052,12 @@ export async function startServer(config?: MCPConfig, mode?: 'stdio' | 'http'): 
     }
 
     try {
-        const server = new MCPServer(config);
+        const server = new MCPServer(config, isStdioMode ? 'stdio' : 'http');
 
         // Check for updates asynchronously (don't await - let it run in background)
-        checkForUpdates().catch(() => { });
+        if (!isStdioMode) {
+            checkForUpdates().catch(() => { });
+        }
 
         if (isStdioMode) {
             await server.startStdio();
