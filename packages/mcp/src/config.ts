@@ -60,7 +60,7 @@ import * as os from 'os';
 
 /**
  * Load configuration from environment variables
- * Extension passes workspace settings via env vars when spawning MCP
+ * Used by VSCode extension for backward compatibility
  */
 export function loadConfig(): MCPConfig {
     let workspacePath = process.env.BCTB_WORKSPACE_PATH;
@@ -68,7 +68,7 @@ export function loadConfig(): MCPConfig {
     if (!workspacePath) {
         console.error('\n❌ Configuration Error: BCTB_WORKSPACE_PATH environment variable is required');
         console.error('Set it to your workspace path, e.g.: $env:BCTB_WORKSPACE_PATH="C:\\path\\to\\workspace"');
-        console.error('Or create a .bctb-config.json file - run: bctb-mcp init\n');
+        console.error('Or create a .bctb-config.json file - run: node path/to/cli.js init\n');
         // Use a default workspace path to allow server to start gracefully
         workspacePath = process.cwd();
     }
@@ -198,8 +198,15 @@ export function loadConfigFromFile(configPath?: string, profileName?: string): M
     }
 
     if (!filePath) {
-        // No config file found - return null to allow fallback to env vars
-        console.error('[Config] No config file found in any location');
+        // No config file found - return null (caller should handle error)
+        console.error('\n❌ Configuration Error: No .bctb-config.json file found');
+        console.error(`\nSearched locations:`);
+        if (process.env.BCTB_WORKSPACE_PATH) {
+            console.error(`  - ${path.join(process.env.BCTB_WORKSPACE_PATH, '.bctb-config.json')} (workspace)`);
+        }
+        console.error(`  - ${path.join(os.homedir(), '.bctb', 'config.json')} (home directory)`);
+        console.error(`  - ${path.join(os.homedir(), '.bctb-config.json')} (home directory)`);
+        console.error(`\nTo create a config file, run:\n  node path/to/mcp/dist/cli.js init\n`);
         return null;
     }
 

@@ -84,17 +84,17 @@ export class MCPServer {
         this.app = express();
 
         // Load and validate configuration
-        // Try file-based config first (standalone mode), fall back to env vars (VSCode extension mode)
+        // Priority: 1. Passed config, 2. Config file, 3. Environment variables (VSCode extension)
         if (config) {
             this.config = config;
         } else {
-            // Try file-based config (.bctb-config.json)
             const fileConfig = loadConfigFromFile();
             if (fileConfig) {
+                console.error('[Config] Using config file (.bctb-config.json)');
                 this.config = fileConfig;
             } else {
-                // Fall back to env vars (for VSCode extension or legacy setups)
-                console.warn('[MCP] No config file found, using environment variables');
+                // Fall back to env vars for VSCode extension compatibility
+                console.error('[Config] No config file found, using environment variables');
                 this.config = loadConfig();
             }
         }
@@ -1454,7 +1454,10 @@ ${extendStatements}
                 try {
                     const request = JSON.parse(line);
                     const response = await this.handleStdioJSONRPC(request);
-                    process.stdout.write(JSON.stringify(response) + '\n');
+                    // Only send response if not null (notifications don't get responses)
+                    if (response !== null) {
+                        process.stdout.write(JSON.stringify(response) + '\n');
+                    }
                 } catch (error: any) {
                     console.error('Failed to process request:', error.message);
                 }
@@ -1486,6 +1489,24 @@ ${extendStatements}
      */
     private async handleStdioJSONRPC(request: any): Promise<any> {
         const { id, method, params } = request;
+
+        // Handle notifications (no id field) - don't send a response
+        if (id === undefined || id === null) {
+            // Notifications like "notifications/initialized" don't expect a response
+            if (method?.startsWith('notifications/')) {
+                // Just acknowledge it silently
+                return null;
+            }
+            // Other methods without id are malformed
+            return {
+                jsonrpc: '2.0',
+                id: null,
+                error: {
+                    code: -32600,
+                    message: 'Invalid Request: missing id field for non-notification method'
+                }
+            };
+        }
 
         try {
             let result: any;

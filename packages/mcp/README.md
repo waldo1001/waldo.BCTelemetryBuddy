@@ -39,46 +39,133 @@ bctb-mcp --version
 
 ## Quick Start
 
-### 1. Initialize Configuration
+### Prerequisites
+
+- **Node.js 18+** installed
+- **Application Insights** set up for Business Central telemetry
+- **Azure authentication** configured (see Authentication section below)
+
+### 1. Create a Workspace Directory
+
+Choose a directory where you'll store your telemetry configuration and saved queries:
 
 ```bash
-bctb-mcp init
-# Creates .bctb-config.json with template
+# Example: Create a dedicated workspace
+mkdir C:\MyWorkspace\BCTelemetry
+cd C:\MyWorkspace\BCTelemetry
 ```
 
-### 2. Edit Configuration
+### 2. Create Configuration File
 
-Edit `.bctb-config.json` with your Application Insights details:
+Create a `.bctb-config.json` file in your workspace directory. You can use the template:
 
 ```json
 {
-  "authFlow": "azure_cli",
-  "applicationInsights": {
-    "appId": "your-app-insights-app-id"
+  "profiles": {
+    "default": {
+      "connectionName": "My BC Production",
+      "authFlow": "azure_cli",
+      "tenantId": "YOUR-AZURE-TENANT-ID",
+      "applicationInsightsAppId": "YOUR-APP-INSIGHTS-APP-ID",
+      "kustoClusterUrl": "https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID",
+      "workspacePath": "${workspaceFolder}",
+      "queriesFolder": "queries"
+    }
   },
-  "kusto": {
-    "clusterUrl": "https://ade.applicationinsights.io/subscriptions/your-subscription-id",
-    "database": "your-app-insights-app-id"
-  }
+  "defaultProfile": "default",
+  "cache": {
+    "enabled": true,
+    "ttlSeconds": 3600
+  },
+  "sanitize": {
+    "removePII": false
+  },
+  "references": [
+    {
+      "name": "Microsoft BC Telemetry Samples",
+      "type": "github",
+      "url": "https://github.com/microsoft/BCTech",
+      "enabled": true
+    }
+  ]
 }
 ```
 
-### 3. Test Configuration
+**Finding Your Configuration Values:**
+
+- **tenantId**: Your Azure AD tenant ID (found in Azure Portal → Azure Active Directory → Properties)
+- **applicationInsightsAppId**: Found in Azure Portal → Application Insights → API Access → Application ID
+- **kustoClusterUrl**: `https://ade.applicationinsights.io/subscriptions/YOUR-SUBSCRIPTION-ID`
+  - Get subscription ID from Azure Portal → Subscriptions
+- **workspacePath**: Use `${workspaceFolder}` (auto-replaced) or absolute path to your workspace directory
+
+**Note:** The `.bctb-config.json` file contains credentials and should NOT be committed to source control. Add it to `.gitignore` if using version control.
+
+### 3. Set Up Authentication
+
+The MCP server supports three authentication methods:
+
+#### Option A: Azure CLI (Recommended - Easiest)
 
 ```bash
-bctb-mcp validate
-# Validates config file and tests connection
+# Install Azure CLI if not already installed
+# https://docs.microsoft.com/cli/azure/install-azure-cli
 
-bctb-mcp test-auth
-# Tests authentication flow
+# Login to Azure
+az login
+
+# Set the correct subscription
+az account set --subscription YOUR-SUBSCRIPTION-ID
 ```
 
-### 4. Start Server
+Set `"authFlow": "azure_cli"` in your config.
+
+#### Option B: Device Code Flow
+
+Set `"authFlow": "device_code"` in your config. You'll be prompted to authenticate via browser on first use.
+
+#### Option C: Client Credentials (Service Principal)
+
+1. Create an App Registration in Azure AD
+2. Grant it "Reader" role on your Application Insights resource
+3. Create a client secret
+4. Set in config:
+```json
+{
+  "authFlow": "client_credentials",
+  "tenantId": "YOUR-TENANT-ID",
+  "clientId": "YOUR-CLIENT-ID",
+  "clientSecret": "YOUR-CLIENT-SECRET"
+}
+```
+
+**Security Note:** Never commit client secrets to source control.
+
+### 4. Test Your Configuration
+
+You can test the MCP server locally before configuring Claude Desktop:
 
 ```bash
-bctb-mcp start
-# Starts MCP server in stdio mode (for AI assistants)
+# Navigate to your workspace directory
+cd C:\MyWorkspace\BCTelemetry
+
+# Test with node directly (assuming you built from source)
+node path/to/mcp/dist/launcher.js
+# Or if installed globally:
+# bctb-mcp start
 ```
+
+The server should start and show:
+```
+=== BC Telemetry Buddy MCP Server ===
+Connection: My BC Production
+Workspace: C:\MyWorkspace\BCTelemetry
+App Insights ID: d60a4fe7-...
+✅ Configuration valid
+=====================================
+```
+
+Press Ctrl+C to stop.
 
 ## Usage Scenarios
 
@@ -95,21 +182,57 @@ The [BC Telemetry Buddy VSCode extension](https://marketplace.visualstudio.com/i
 
 ### With Claude Desktop
 
-Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on Mac):
+Add to Claude Desktop config:
+
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`  
+**Mac:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "bc-telemetry-buddy": {
-      "command": "bctb-mcp",
-      "args": ["start"],
+      "command": "node",
+      "args": [
+        "C:\\path\\to\\waldo.BCTelemetryBuddy\\packages\\mcp\\dist\\launcher.js"
+      ],
       "env": {
-        "BCTB_CONFIG": "/path/to/.bctb-config.json"
+        "BCTB_WORKSPACE_PATH": "C:\\MyWorkspace\\BCTelemetry"
       }
     }
   }
 }
 ```
+
+**Important Configuration Notes:**
+
+1. **`command`**: Points to the launcher.js file in the built MCP package
+   - If built from source: Path to your cloned repo's `packages/mcp/dist/launcher.js`
+   - If installed globally: Use `"command": "bctb-mcp"` with `"args": ["start"]`
+
+2. **`BCTB_WORKSPACE_PATH`**: Must point to the directory containing your `.bctb-config.json` file
+   - Use absolute paths (no `~` or relative paths)
+   - Use double backslashes on Windows: `C:\\MyWorkspace\\BCTelemetry`
+
+3. The MCP server will:
+   - Look for `.bctb-config.json` in the workspace path
+   - Create a `queries/` subfolder for saved queries
+   - Cache results in `.bctb/cache/` subfolder
+
+**After Configuration:**
+
+1. Restart Claude Desktop
+2. Start a new conversation
+3. Try: "List available BC telemetry profiles"
+4. The MCP server should respond with your configured profile
+
+**Troubleshooting:**
+
+If Claude Desktop shows connection errors:
+
+1. Check Claude logs: `%APPDATA%\Claude\logs\mcp*.log` (Windows) or `~/Library/Logs/Claude/mcp*.log` (Mac)
+2. Verify `.bctb-config.json` exists in workspace path
+3. Test authentication: Run `az account show` to verify Azure CLI login
+4. Ensure paths use absolute paths with proper escaping
 
 ### With Copilot Studio
 
