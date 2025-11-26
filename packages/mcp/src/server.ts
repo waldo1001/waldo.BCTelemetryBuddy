@@ -361,12 +361,62 @@ export class MCPServer {
                     result = {
                         tools: [
                             {
-                                name: 'query_telemetry',
-                                description: 'Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITE: You MUST call get_event_catalog() FIRST to discover available event IDs, then call get_event_field_samples() to understand field structure BEFORE constructing any KQL query. DO NOT use this tool without completing the discovery flow first.',
+                                name: 'get_event_catalog',
+                                description: '🚨 MANDATORY FIRST STEP: Discover available Business Central telemetry event IDs with descriptions, frequencies, status, and Learn URLs. ALWAYS call this tool BEFORE attempting to write any KQL query. Without calling this first, you will not know which event IDs exist in the telemetry data. Returns top events by occurrence count with status categorization (success/error/too slow). Optionally analyzes common customDimensions fields across events.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string constructed using event IDs from get_event_catalog() and field names from get_event_field_samples()' },
+                                        daysBack: { type: 'number', description: 'Number of days to analyze (default: 10)', default: 10 },
+                                        status: { type: 'string', enum: ['all', 'success', 'error', 'too slow', 'unknown'], description: 'Filter by event status', default: 'all' },
+                                        minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 },
+                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
+                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
+                                    }
+                                }
+                            },
+                            {
+                                name: 'get_event_field_samples',
+                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types, occurrence rates, sample values, and ready-to-use example query. NEVER construct KQL queries without calling this tool first - you WILL get field names wrong. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011) - must be obtained from get_event_catalog() first' },
+                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
+                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
+                                    },
+                                    required: ['eventId']
+                                }
+                            },
+                            {
+                                name: 'get_event_schema',
+                                description: '⚠️ DISCOVERY TOOL: Get schema details (available customDimensions fields) for a specific event ID by sampling recent occurrences. Use this AFTER get_event_catalog() to understand field structure. Alternative to get_event_field_samples() with simpler output.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., AL0000E26) - must be obtained from get_event_catalog() first' },
+                                        sampleSize: { type: 'number', description: 'Number of events to sample', default: 100 }
+                                    },
+                                    required: ['eventId']
+                                }
+                            },
+                            {
+                                name: 'get_tenant_mapping',
+                                description: '⚠️ IMPORTANT: Business Central telemetry uses aadTenantId (NOT company names) for filtering. Call this tool FIRST when user asks about a specific customer/company to map friendly names to tenant IDs. Returns company name → aadTenantId mappings from recent telemetry data.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        daysBack: { type: 'number', description: 'Number of days to look back for mappings (default: 10)', default: 10 },
+                                        companyNameFilter: { type: 'string', description: 'Optional: Filter for specific company name (partial match)' }
+                                    }
+                                }
+                            },
+                            {
+                                name: 'query_telemetry',
+                                description: '⚠️ EXECUTE KQL QUERY - ONLY USE AFTER DISCOVERY TOOLS. Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITES: (1) Call get_event_catalog() to discover event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) If filtering by customer, call get_tenant_mapping() to get tenant IDs. DO NOT guess event IDs or field names - use discovery tools first or queries WILL fail.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        kql: { type: 'string', description: 'KQL query string - MUST use event IDs from get_event_catalog() and field names from get_event_field_samples(). Do not guess.' },
                                         useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
                                     },
@@ -436,45 +486,6 @@ export class MCPServer {
                                     type: 'object',
                                     properties: {}
                                 }
-                            },
-                            {
-                                name: 'get_event_catalog',
-                                description: 'Get a catalog of recent Business Central telemetry event IDs with descriptions, frequencies, and Learn URLs. RECOMMENDED FIRST STEP when exploring telemetry or understanding what events are available. Optionally includes analysis of common fields that appear across multiple events. Results are limited to top events by count to prevent overwhelming responses.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        daysBack: { type: 'number', description: 'Number of days to analyze (default: 10)', default: 10 },
-                                        status: { type: 'string', enum: ['all', 'success', 'error', 'too slow', 'unknown'], description: 'Filter by event status', default: 'all' },
-                                        minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 },
-                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
-                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
-                                    }
-                                }
-                            },
-                            {
-                                name: 'get_event_schema',
-                                description: 'Get the schema (available customDimensions fields) for a specific event ID by sampling recent occurrences. Use this after discovering an event ID to understand what fields are available before building detailed queries.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., AL0000E26)' },
-                                        sampleSize: { type: 'number', description: 'Number of events to sample', default: 100 }
-                                    },
-                                    required: ['eventId']
-                                }
-                            },
-                            {
-                                name: 'get_event_field_samples',
-                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Also provides event category information (Performance, Lifecycle, Security, etc.) dynamically fetched from Microsoft Learn documentation. Returns ready-to-use example query with proper type conversions and documentation links. Use this to understand the exact structure of customDimensions before writing queries.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011)' },
-                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
-                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
-                                    },
-                                    required: ['eventId']
-                                }
                             }
                         ]
                     };
@@ -505,7 +516,7 @@ export class MCPServer {
                     const kqlQuery = rpcRequest.params.kql;
 
                     if (!kqlQuery || kqlQuery.trim() === '') {
-                        throw new Error('kql parameter is required. Use get_event_catalog() to discover events and get_event_field_samples() to understand field structure.');
+                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) Then construct query. DO NOT skip discovery steps.');
                     }
 
                     result = await this.executeQuery(
@@ -1518,12 +1529,62 @@ ${extendStatements}
                     result = {
                         tools: [
                             {
-                                name: 'query_telemetry',
-                                description: 'Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITE: You MUST call get_event_catalog() FIRST to discover available event IDs, then call get_event_field_samples() to understand field structure BEFORE constructing any KQL query. DO NOT use this tool without completing the discovery flow first.',
+                                name: 'get_event_catalog',
+                                description: '🚨 MANDATORY FIRST STEP: Discover available Business Central telemetry event IDs with descriptions, frequencies, status, and Learn URLs. ALWAYS call this tool BEFORE attempting to write any KQL query. Without calling this first, you will not know which event IDs exist in the telemetry data. Returns top events by occurrence count with status categorization (success/error/too slow). Optionally analyzes common customDimensions fields across events.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
-                                        kql: { type: 'string', description: 'KQL query string constructed using event IDs from get_event_catalog() and field names from get_event_field_samples()' },
+                                        daysBack: { type: 'number', description: 'Number of days to analyze (default: 10)', default: 10 },
+                                        status: { type: 'string', enum: ['all', 'success', 'error', 'too slow', 'unknown'], description: 'Filter by event status', default: 'all' },
+                                        minCount: { type: 'number', description: 'Minimum occurrence count to include', default: 1 },
+                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
+                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
+                                    }
+                                }
+                            },
+                            {
+                                name: 'get_event_field_samples',
+                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types, occurrence rates, sample values, and ready-to-use example query. NEVER construct KQL queries without calling this tool first - you WILL get field names wrong. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011) - must be obtained from get_event_catalog() first' },
+                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
+                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
+                                    },
+                                    required: ['eventId']
+                                }
+                            },
+                            {
+                                name: 'get_event_schema',
+                                description: '⚠️ DISCOVERY TOOL: Get schema details (available customDimensions fields) for a specific event ID by sampling recent occurrences. Use this AFTER get_event_catalog() to understand field structure. Alternative to get_event_field_samples() with simpler output.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., AL0000E26) - must be obtained from get_event_catalog() first' },
+                                        sampleSize: { type: 'number', description: 'Number of events to sample', default: 100 }
+                                    },
+                                    required: ['eventId']
+                                }
+                            },
+                            {
+                                name: 'get_tenant_mapping',
+                                description: '⚠️ IMPORTANT: Business Central telemetry uses aadTenantId (NOT company names) for filtering. Call this tool FIRST when user asks about a specific customer/company to map friendly names to tenant IDs. Returns company name → aadTenantId mappings from recent telemetry data.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        daysBack: { type: 'number', description: 'Number of days to look back for mappings (default: 10)', default: 10 },
+                                        companyNameFilter: { type: 'string', description: 'Optional: Filter for specific company name (partial match)' }
+                                    }
+                                }
+                            },
+                            {
+                                name: 'query_telemetry',
+                                description: '⚠️ EXECUTE KQL QUERY - ONLY USE AFTER DISCOVERY TOOLS. Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITES: (1) Call get_event_catalog() to discover event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) If filtering by customer, call get_tenant_mapping() to get tenant IDs. DO NOT guess event IDs or field names - use discovery tools first or queries WILL fail.',
+                                inputSchema: {
+                                    type: 'object',
+                                    properties: {
+                                        kql: { type: 'string', description: 'KQL query string - MUST use event IDs from get_event_catalog() and field names from get_event_field_samples(). Do not guess.' },
                                         useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                                         includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
                                     },
@@ -1592,56 +1653,6 @@ ${extendStatements}
                                 inputSchema: {
                                     type: 'object',
                                     properties: {}
-                                }
-                            },
-                            {
-                                name: 'get_event_catalog',
-                                description: 'Discover available Business Central telemetry event IDs with descriptions, status, and documentation URLs. Optionally includes analysis of common fields that appear across multiple events. Results are limited to top events by count to prevent overwhelming responses.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        daysBack: { type: 'number', description: 'Number of days to look back (default: 10)', default: 10 },
-                                        status: { type: 'string', description: 'Filter by status: all, success, error, too slow, unknown (default: all)', default: 'all' },
-                                        minCount: { type: 'number', description: 'Minimum occurrence count to include (default: 1)', default: 1 },
-                                        maxResults: { type: 'number', description: 'Maximum number of events to return (default: 50, max: 200)', default: 50 },
-                                        includeCommonFields: { type: 'boolean', description: 'Include analysis of common customDimensions fields that appear across multiple events (default: false)', default: false }
-                                    }
-                                }
-                            },
-                            {
-                                name: 'get_event_schema',
-                                description: 'Get schema details for a specific event ID including all customDimensions fields with examples',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0012)' },
-                                        sampleSize: { type: 'number', description: 'Number of samples to analyze (default: 100)', default: 100 }
-                                    },
-                                    required: ['eventId']
-                                }
-                            },
-                            {
-                                name: 'get_event_field_samples',
-                                description: 'RECOMMENDED: Get detailed field analysis from real telemetry events including data types, occurrence rates, and sample values. Also provides event category information (Performance, Lifecycle, Security, etc.) dynamically fetched from Microsoft Learn documentation. Returns ready-to-use example query with proper type conversions and documentation links. Use this to understand the exact structure of customDimensions before writing queries.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        eventId: { type: 'string', description: 'Event ID to analyze (e.g., RT0005, LC0011)' },
-                                        sampleCount: { type: 'number', description: 'Number of events to sample for analysis', default: 10 },
-                                        daysBack: { type: 'number', description: 'How many days back to search for events', default: 30 }
-                                    },
-                                    required: ['eventId']
-                                }
-                            },
-                            {
-                                name: 'get_tenant_mapping',
-                                description: 'IMPORTANT: BC telemetry uses aadTenantId (not company names) for filtering. Use this tool to map company/customer names to tenant IDs before querying. Always call this first when user asks about a specific customer/company.',
-                                inputSchema: {
-                                    type: 'object',
-                                    properties: {
-                                        daysBack: { type: 'number', description: 'Number of days to look back for mappings (default: 10)', default: 10 },
-                                        companyNameFilter: { type: 'string', description: 'Optional: Filter for specific company name (partial match)' }
-                                    }
                                 }
                             },
                             {
@@ -1809,7 +1820,7 @@ ${extendStatements}
                     const kqlQuery3 = params.kql;
 
                     if (!kqlQuery3 || kqlQuery3.trim() === '') {
-                        throw new Error('kql parameter is required. PREREQUISITE: Call get_event_catalog() to discover events and get_event_field_samples() to understand field structure BEFORE constructing queries.');
+                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) Then construct query. DO NOT skip discovery steps.');
                     }
 
                     result = await this.executeQuery(

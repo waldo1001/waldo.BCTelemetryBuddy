@@ -2429,3 +2429,7 @@ Change instructions an business logic to do this."
 > "Perform a minor release. make sure all documentation and changelogs are up-to-date"
 
 ---
+### Entry ID: 74a4895b-2cf7-401c-ba57-11af6e8fefa5 — 2025-11-26 10:25
+> "Strengthen discovery tool descriptions to make them impossible to ignore. Reorder tools list to put discovery tools FIRST, add emoji alerts, and strengthen error messages when query_telemetry is called without proper discovery."
+
+---

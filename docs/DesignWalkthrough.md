@@ -1351,3 +1351,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-25**  Released Extension v1.2.9 and MCP v2.2.6 [Entry: d048b838-9251-4b2d-a8af-23a184974d14]
   - **Why:** Minor releases with chatmode enhancements and critical stdio logging fix for Claude Desktop
   - **How:** Bumped versions, updated CHANGELOGs, created tags (v1.2.9 and mcp-v2.2.6), pushed to GitHub
+- **2025-11-26**  Strengthen discovery tool priority [Entry: 74a4895b-2cf7-401c-ba57-11af6e8fefa5]
+  - **Why:** Agent was skipping discovery tools (get_event_catalog, get_event_field_samples) and relying on workspace context
+  - **How:** Reordered tools list (discovery FIRST), added emoji alerts ( MANDATORY), strengthened descriptions, updated error messages
