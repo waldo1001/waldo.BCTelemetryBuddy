@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.10] - 2025-12-04
+
 ### Fixed
 - **Chat Participant**: Improved tool availability messaging to prevent confusion
   - Added explicit clarification that MCP tools are already available and don't need "activation"

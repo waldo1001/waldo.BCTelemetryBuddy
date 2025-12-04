@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.8] - 2025-12-04
+
+### Changed
+- **Discovery Tool Descriptions**: Enhanced tool descriptions with mandatory workflow steps and clearer guidance
+  - Added 🚨 MANDATORY FIRST STEP markers to `get_event_catalog()` - must be called before writing KQL
+  - Added 🚨 MANDATORY SECOND STEP markers to `get_event_field_samples()` - required for accurate field names
+  - Added ⚠️ IMPORTANT markers to `get_tenant_mapping()` - emphasizes tenant ID vs company name filtering
+  - Added ⚠️ EXECUTE KQL QUERY marker to `query_telemetry()` - only use after discovery tools
+  - Improved parameter descriptions with clearer defaults and examples
+  - Helps prevent common errors like guessing event IDs or using wrong field names
+
 ## [2.2.7] - 2025-11-26
 
 ### Fixed
