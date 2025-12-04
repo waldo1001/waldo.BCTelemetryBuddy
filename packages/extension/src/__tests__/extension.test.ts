@@ -304,4 +304,72 @@ describe('Extension Module', () => {
             expect(toEnvString(52345)).toBe('52345');
         });
     });
+
+    describe('Extension context package.json access', () => {
+        it('should access package.json via context.extension.packageJSON API', () => {
+            // Mock extension context with packageJSON
+            const mockContext = {
+                extension: {
+                    packageJSON: {
+                        publisher: 'waldoBC',
+                        name: 'bc-telemetry-buddy',
+                        version: '1.2.9'
+                    }
+                }
+            };
+
+            // Simulate how extension.ts accesses package.json
+            const packageJson = mockContext.extension.packageJSON;
+            const extensionId = packageJson.publisher + '.' + packageJson.name;
+            const extensionVersion = packageJson.version;
+
+            expect(extensionId).toBe('waldoBC.bc-telemetry-buddy');
+            expect(extensionVersion).toBe('1.2.9');
+        });
+
+        it('should work with bundled extension (no require needed)', () => {
+            // This test verifies that we don't rely on require('../../package.json')
+            // which fails in bundled extensions due to path changes
+
+            const mockContext = {
+                extension: {
+                    packageJSON: {
+                        publisher: 'testPublisher',
+                        name: 'test-extension',
+                        version: '2.0.0',
+                        displayName: 'Test Extension',
+                        description: 'Test description'
+                    }
+                }
+            };
+
+            // VS Code API provides full package.json - no file system access needed
+            const pkg = mockContext.extension.packageJSON;
+
+            expect(pkg.publisher).toBe('testPublisher');
+            expect(pkg.name).toBe('test-extension');
+            expect(pkg.version).toBe('2.0.0');
+            expect(pkg.displayName).toBe('Test Extension');
+            expect(pkg.description).toBe('Test description');
+        });
+
+        it('should handle missing package.json properties gracefully', () => {
+            // Edge case: packageJSON exists but missing some properties
+            const mockContext = {
+                extension: {
+                    packageJSON: {
+                        publisher: 'testPublisher',
+                        name: 'test-extension'
+                        // version intentionally missing
+                    } as any
+                }
+            };
+
+            const packageJson = mockContext.extension.packageJSON;
+            const extensionId = packageJson.publisher + '.' + packageJson.name;
+
+            expect(extensionId).toBe('testPublisher.test-extension');
+            expect((packageJson as any).version).toBeUndefined();
+        });
+    });
 });

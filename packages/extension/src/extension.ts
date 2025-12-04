@@ -359,7 +359,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize Usage Telemetry (tracks extension usage, respects VS Code telemetry settings)
     sessionId = require('crypto').randomUUID(); // Generate session ID once per activation
     try {
-        const packageJson = require('../../package.json');
+        // Use VS Code API to get package.json (works in both dev and bundled scenarios)
+        const packageJson = context.extension.packageJSON;
         const extensionId = packageJson.publisher + '.' + packageJson.name;
         extensionVersion = packageJson.version;
         const connectionString = TELEMETRY_CONNECTION_STRING;

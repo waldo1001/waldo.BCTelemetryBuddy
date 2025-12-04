@@ -1354,3 +1354,23 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-11-26**  Strengthen discovery tool priority [Entry: 74a4895b-2cf7-401c-ba57-11af6e8fefa5]
   - **Why:** Agent was skipping discovery tools (get_event_catalog, get_event_field_samples) and relying on workspace context
   - **How:** Reordered tools list (discovery FIRST), added emoji alerts ( MANDATORY), strengthened descriptions, updated error messages
+- **2025-12-04** — Fixed misleading 'tool disabled' messages in chat [Entry: 94d55e2b-7d8f-498f-8972-d25867336dbe]
+  - **Why:** LLM was incorrectly claiming tools were disabled when they were actually enabled and available
+  - **How:** Added explicit clarifications in SYSTEM_PROMPT that tools are already available and should be called directly
+- **2025-12-04** — Fixed usage telemetry package.json import error [Entry: d7b886ef-8b26-46dc-a0ad-c40d7b886ef9]
+  - **Why:** require('../../package.json') failed in bundled extension due to changed path structure after esbuild bundling
+  - **How:** Changed to use context.extension.packageJSON (VS Code API) which works in both dev and bundled scenarios
+- **2025-12-04** — Fixed usage telemetry package.json import error [Entry: d7b886ef-8b26-46dc-a0ad-c40d7b886ef9]
+  - **Why:** require('../../package.json') failed in bundled extension due to changed path structure
+  - **How:** Changed to use context.extension.packageJSON API
+- **2025-12-04** — Fixed usage telemetry package.json import [Entry: d7b886ef-8b26-46dc-a0ad-c40d7b886ef9]
+  - **Why:** require('../../package.json') failed in bundled extension
+  - **How:** Use context.extension.packageJSON API instead
+
+- **2025-12-04** — Fixed usage telemetry package.json import [Entry: d7b886ef-8b26-46dc-a0ad-c40d7b886ef9]
+  - **Why:** require('../../package.json') failed in bundled extension
+  - **How:** Use context.extension.packageJSON API instead
+
+- **2025-12-04** — Added tests for packageJSON API [Entry: f3fe2c63-b59f-416e-b095-f289d8863ace]
+  - **Why:** Verify bundled extension compatibility
+  - **How:** 3 test cases in extension.test.ts

@@ -2433,3 +2433,11 @@ Change instructions an business logic to do this."
 > "Strengthen discovery tool descriptions to make them impossible to ignore. Reorder tools list to put discovery tools FIRST, add emoji alerts, and strengthen error messages when query_telemetry is called without proper discovery."
 
 ---
+### Entry ID: 94d55e2b-7d8f-498f-8972-d25867336dbe — 2025-12-04 15:05
+> "Chat participant is incorrectly saying tools are disabled when they're actually enabled - fix the misleading 'activating tools' messages"
+
+---
+### Entry ID: de9c667f-cfec-4078-915a-d7b886ef9166 — 2025-12-04 15:07
+> "Usage telemetry initialization failing with 'Cannot find module ../../package.json' error in bundled extension"
+
+---
