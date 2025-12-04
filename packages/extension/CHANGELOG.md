@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Chat Participant**: Improved tool availability messaging to prevent confusion
+  - Added explicit clarification that MCP tools are already available and don't need "activation"
+  - Chat participant now correctly distinguishes between tool availability vs connection/config issues
+  - Prevents misleading messages like "query tool is disabled" when tools are actually enabled
+- **Extension Activation**: Fixed usage telemetry initialization error in bundled extension
+  - Changed from `require('../../package.json')` to `context.extension.packageJSON` API
+  - Resolves "Cannot find module '../../package.json'" error that appeared in bundled extension
+  - Works correctly in both development and production (bundled) scenarios
+
+### Added
+- **Tests**: Added comprehensive test coverage for package.json access patterns
+  - 3 new test cases validating `context.extension.packageJSON` usage
+  - Tests cover normal operation, bundled scenarios, and edge cases with missing properties
+
 ## [1.2.9] - 2025-11-25
 
 ### Changed

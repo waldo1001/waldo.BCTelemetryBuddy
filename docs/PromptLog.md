@@ -2441,3 +2441,7 @@ Change instructions an business logic to do this."
 > "Usage telemetry initialization failing with 'Cannot find module ../../package.json' error in bundled extension"
 
 ---
+### Entry ID: e1cac34d-4ff4-440d-804b-4eaefa5a6a19 — 2025-12-04 15:18
+> "Update CHANGELOG with unreleased bug fixes (tool availability messaging and package.json import)"
+
+---

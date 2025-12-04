@@ -1374,3 +1374,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-12-04** — Added tests for packageJSON API [Entry: f3fe2c63-b59f-416e-b095-f289d8863ace]
   - **Why:** Verify bundled extension compatibility
   - **How:** 3 test cases in extension.test.ts
+
+- **2025-12-04** — Updated extension CHANGELOG [Entry: e1cac34d-4ff4-440d-804b-4eaefa5a6a19]
+  - **Why:** Document unreleased bug fixes for next release
+  - **How:** Added Fixed/Added sections under Unreleased
