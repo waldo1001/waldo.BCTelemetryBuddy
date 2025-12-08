@@ -2445,3 +2445,8 @@ Change instructions an business logic to do this."
 > "Update CHANGELOG with unreleased bug fixes (tool availability messaging and package.json import)"
 
 ---
+
+### Entry ID: 0a4c9bc0-c17d-42e1-89ff-222f0a2336fe — 2025-12-08 15:26
+> "I get a lot that 'I see the telemetry query tool is currently disabled....' - At that time, I looked at the MCP output and saw repeated errors: 'n Failed to create URL.,TypeError: Invalid URL' appearing after successful query executions."
+
+---

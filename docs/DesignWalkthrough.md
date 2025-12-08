@@ -1378,3 +1378,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2025-12-04** — Updated extension CHANGELOG [Entry: e1cac34d-4ff4-440d-804b-4eaefa5a6a19]
   - **Why:** Document unreleased bug fixes for next release
   - **How:** Added Fixed/Added sections under Unreleased
+
+- **2025-12-08** — Fixed empty telemetry connection string causing URL parsing errors
+  - **Why:** Application Insights SDK was attempting to parse empty connection string as URL, causing repeated stderr errors
+  - **How:** Added trim() validation in createMCPUsageTelemetry() to reject empty/whitespace-only connection strings before SDK initialization

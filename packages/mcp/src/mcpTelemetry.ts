@@ -199,7 +199,8 @@ export function createMCPUsageTelemetry(
     workspacePath: string,
     version: string
 ): IUsageTelemetry | null {
-    if (!connectionString) {
+    // Validate connection string is truthy and not empty
+    if (!connectionString || connectionString.trim() === '') {
         return null;
     }
 

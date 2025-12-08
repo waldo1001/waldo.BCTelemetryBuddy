@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Telemetry Initialization Errors**: Fixed "Failed to create URL" errors appearing in MCP stderr logs
+  - Added validation to reject empty or whitespace-only telemetry connection strings before Application Insights SDK initialization
+  - Prevents URL parsing errors when `TELEMETRY_CONNECTION_STRING` is empty in development mode
+  - Added comprehensive tests for telemetry initialization with invalid connection strings
+  - Resolves stderr pollution that could interfere with MCP tool availability detection
+
 ## [2.2.8] - 2025-12-04
 
 ### Changed
