@@ -709,8 +709,8 @@ export class SetupWizardProvider {
   <span class="json-comment">// Friendly name for this connection</span>
   <span class="json-key">"connectionName"</span>: <span class="json-string">"My BC Environment"</span>,
   
-  <span class="json-comment">// Authentication method: azure_cli (recommended), device_code, or client_credentials</span>
-  <span class="json-key">"authFlow"</span>: <span class="json-string">"azure_cli"</span>,
+  <span class="json-comment">// Authentication method: vscode_auth (easiest, recommended), azure_cli, device_code, or client_credentials</span>
+  <span class="json-key">"authFlow"</span>: <span class="json-string">"vscode_auth"</span>,
   
   <span class="json-comment">// Azure AD Tenant ID - Find in Azure Portal > Azure Active Directory > Overview > Tenant ID</span>
   <span class="json-key">"tenantId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
@@ -752,8 +752,8 @@ export class SetupWizardProvider {
       <span class="json-comment">// Friendly name for this profile</span>
       <span class="json-key">"connectionName"</span>: <span class="json-string">"Customer A Production"</span>,
       
-      <span class="json-comment">// Authentication method: azure_cli (recommended), device_code, or client_credentials</span>
-      <span class="json-key">"authFlow"</span>: <span class="json-string">"azure_cli"</span>,
+      <span class="json-comment">// Authentication method: vscode_auth (easiest, recommended), azure_cli, device_code, or client_credentials</span>
+      <span class="json-key">"authFlow"</span>: <span class="json-string">"vscode_auth"</span>,
       
       <span class="json-comment">// Azure AD Tenant ID - Azure Portal > Azure Active Directory > Overview > Tenant ID</span>
       <span class="json-key">"tenantId"</span>: <span class="json-string">"00000000-0000-0000-0000-000000000000"</span>,
@@ -853,19 +853,41 @@ export class SetupWizardProvider {
             <div class="form-group">
                 <label for="authFlow">Authentication Method *</label>
                 <select id="authFlow">
-                    <option value="azure_cli">Azure CLI (Recommended)</option>
+                    <option value="vscode_auth">VS Code (Easiest - Recommended)</option>
+                    <option value="azure_cli">Azure CLI</option>
                     <option value="device_code">Device Code Flow</option>
                     <option value="client_credentials">Client Credentials (Service Principal)</option>
                 </select>
             </div>
 
-            <div id="azureCliInfo" class="links">
-                <h4>✅ Azure CLI (Recommended)</h4>
-                <p>Uses your existing Azure CLI login. Simplest and most secure option.</p>
+            <div id="vscodeAuthInfo" class="links">
+                <h4>✨ VS Code Integrated Authentication (Easiest - Recommended)</h4>
+                <p>Uses VS Code's built-in Microsoft authentication. The simplest and most secure option.</p>
+                <ul>
+                    <li>✅ No installation required - built into VS Code</li>
+                    <li>✅ No credentials to manage</li>
+                    <li>✅ Single sign-on with your Microsoft account</li>
+                    <li>✅ Automatic token refresh</li>
+                    <li>✅ Works immediately - just click authenticate</li>
+                </ul>
+                <p><strong>How it works:</strong></p>
+                <ul>
+                    <li>VS Code prompts you to sign in with your Microsoft account (if not already signed in)</li>
+                    <li>Tokens are managed securely by VS Code</li>
+                    <li>No external tools or CLI installations needed</li>
+                </ul>
+                <p style="margin-top: 15px; padding: 10px; background: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground); border-radius: 3px;">
+                    💡 <strong>Best for:</strong> Individual developers who want the easiest setup with no prerequisites
+                </p>
+            </div>
+
+            <div id="azureCliInfo" class="links" style="display: none;">
+                <h4>⌨️ Azure CLI</h4>
+                <p>Uses your existing Azure CLI login. Good if you already use Azure CLI.</p>
                 <ul>
                     <li>No need to manage credentials in settings</li>
                     <li>Uses your personal Azure account</li>
-                    <li>Best for individual developers</li>
+                    <li>Good for developers who already use Azure CLI</li>
                 </ul>
                 <p><strong>Prerequisites:</strong></p>
                 <ul>
@@ -1147,11 +1169,13 @@ export class SetupWizardProvider {
 
             function updateAuthFields() {
                 const authFlow = document.getElementById('authFlow').value;
+                const vscodeAuthDiv = document.getElementById('vscodeAuthInfo');
                 const azureCliDiv = document.getElementById('azureCliInfo');
                 const deviceCodeDiv = document.getElementById('deviceCodeInfo');
                 const clientCredsDiv = document.getElementById('clientCredentialsInfo');
 
                 // Show only the selected auth method
+                vscodeAuthDiv.style.display = authFlow === 'vscode_auth' ? 'block' : 'none';
                 azureCliDiv.style.display = authFlow === 'azure_cli' ? 'block' : 'none';
                 deviceCodeDiv.style.display = authFlow === 'device_code' ? 'block' : 'none';
                 clientCredsDiv.style.display = authFlow === 'client_credentials' ? 'block' : 'none';

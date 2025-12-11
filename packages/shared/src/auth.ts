@@ -51,6 +51,8 @@ export class AuthService {
             return this.authenticateAzureCLI();
         } else if (this.config.authFlow === 'device_code') {
             return this.authenticateDeviceCode();
+        } else if (this.config.authFlow === 'vscode_auth') {
+            return this.authenticateVSCode();
         } else {
             return this.authenticateClientCredentials();
         }
@@ -195,6 +197,39 @@ export class AuthService {
             return this.authResult;
         } catch (error) {
             console.error('Client credentials authentication failed:', error);
+            this.authResult = { authenticated: false };
+            throw error;
+        }
+    }
+
+    /**
+     * VS Code authentication flow - uses VS Code's built-in Microsoft authentication provider
+     * In MCP context, expects token to be passed via BCTB_ACCESS_TOKEN environment variable
+     */
+    private async authenticateVSCode(): Promise<AuthResult> {
+        try {
+            console.error('[MCP] Using VS Code authentication...');
+
+            // In MCP context, the extension passes the token via environment variable
+            const accessToken = process.env.BCTB_ACCESS_TOKEN;
+            
+            if (!accessToken) {
+                throw new Error('BCTB_ACCESS_TOKEN environment variable not set. The VS Code extension should provide this token.');
+            }
+
+            this.authResult = {
+                authenticated: true,
+                accessToken: accessToken,
+                user: 'VS Code User',
+                // Token expires in ~1 hour, but we let VS Code handle refresh
+                expiresOn: new Date(Date.now() + 3600000)
+            };
+
+            console.error(`[MCP] ✓ Authenticated via VS Code`);
+
+            return this.authResult;
+        } catch (error: any) {
+            console.error('VS Code authentication failed:', error.message);
             this.authResult = { authenticated: false };
             throw error;
         }
