@@ -926,7 +926,13 @@ async function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, worksp
     };
 
     // If using VS Code authentication, get and pass access token
-    if (authFlow === 'vscode_auth' && vscodeAuthService) {
+    if (authFlow === 'vscode_auth') {
+        if (!vscodeAuthService) {
+            const error = 'VS Code authentication service not initialized. Please reload VS Code.';
+            outputChannel.appendLine(`[VSCodeAuth] ❌ ${error}`);
+            throw new Error(error);
+        }
+
         try {
             outputChannel.appendLine('[VSCodeAuth] Getting access token for MCP...');
             const accessToken = await vscodeAuthService.getAccessToken(true);
@@ -934,10 +940,13 @@ async function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, worksp
                 env.BCTB_ACCESS_TOKEN = accessToken;
                 outputChannel.appendLine('[VSCodeAuth] ✓ Access token provided to MCP');
             } else {
-                outputChannel.appendLine('[VSCodeAuth] ⚠️  No access token available');
+                const error = 'Failed to get VS Code authentication token. Please sign in to VS Code (check Accounts menu in bottom-left).';
+                outputChannel.appendLine(`[VSCodeAuth] ❌ ${error}`);
+                throw new Error(error);
             }
         } catch (error: any) {
             outputChannel.appendLine(`[VSCodeAuth] ❌ Failed to get access token: ${error.message}`);
+            throw error;
         }
     }
 

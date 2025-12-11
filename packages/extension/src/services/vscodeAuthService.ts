@@ -59,10 +59,12 @@ export class VSCodeAuthService {
 
     /**
      * Sign out from VS Code authentication
+     * Note: VS Code doesn't have a programmatic sign-out API
+     * @returns false to indicate sign-out must be done manually by the user
      */
-    async signOut(): Promise<void> {
+    async signOut(): Promise<boolean> {
         try {
-            this.outputChannel.appendLine('[VSCodeAuth] Signing out...');
+            this.outputChannel.appendLine('[VSCodeAuth] Sign out requested...');
             
             const session = await vscode.authentication.getSession(
                 'microsoft',
@@ -71,14 +73,17 @@ export class VSCodeAuthService {
             );
 
             if (session) {
-                // Note: VS Code doesn't have a direct sign-out API
+                // VS Code doesn't have a direct sign-out API
                 // The user needs to sign out from the Accounts menu in VS Code
                 vscode.window.showInformationMessage(
                     'To sign out, use the Accounts menu in VS Code (bottom left corner) and select "Sign Out"'
                 );
+                return false; // Indicates manual sign-out is required
             }
+            return true; // No session found, already signed out
         } catch (error: any) {
-            this.outputChannel.appendLine(`[VSCodeAuth] Sign out failed: ${error.message}`);
+            this.outputChannel.appendLine(`[VSCodeAuth] Sign out check failed: ${error.message}`);
+            throw new Error(`Failed to check authentication status: ${error.message}`);
         }
     }
 

@@ -214,7 +214,15 @@ export class AuthService {
             const accessToken = process.env.BCTB_ACCESS_TOKEN;
             
             if (!accessToken) {
-                throw new Error('BCTB_ACCESS_TOKEN environment variable not set. The VS Code extension should provide this token.');
+                const errorMsg = [
+                    'BCTB_ACCESS_TOKEN environment variable not set.',
+                    'Troubleshooting:',
+                    '1. Check that VS Code authentication method is selected in settings',
+                    '2. Verify you are signed in to VS Code (check Accounts menu in bottom-left)',
+                    '3. Try restarting the MCP server or VS Code',
+                    '4. If issues persist, switch to Azure CLI or Device Code authentication'
+                ].join('\n');
+                throw new Error(errorMsg);
             }
 
             this.authResult = {
