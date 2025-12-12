@@ -318,4 +318,86 @@ describe('AuthService', () => {
             expect(authService.getStatus().authenticated).toBe(false);
         });
     });
+
+    describe('VS Code Authentication', () => {
+        it('should authenticate successfully with vscode_auth when token is provided', async () => {
+            // Arrange
+            const vscodeConfig: MCPConfig = {
+                ...mockConfig,
+                authFlow: 'vscode_auth'
+            };
+            const authService = new AuthService(vscodeConfig);
+            const mockToken = 'vscode-test-token';
+            process.env.BCTB_ACCESS_TOKEN = mockToken;
+
+            // Act
+            const result = await authService.authenticate();
+
+            // Assert
+            expect(result.authenticated).toBe(true);
+            expect(result.accessToken).toBe(mockToken);
+            expect(result.user).toBe('VS Code User');
+            expect(result.expiresOn).toBeDefined();
+
+            // Cleanup
+            delete process.env.BCTB_ACCESS_TOKEN;
+        });
+
+        it('should fail when vscode_auth is used but no token is provided', async () => {
+            // Arrange
+            const vscodeConfig: MCPConfig = {
+                ...mockConfig,
+                authFlow: 'vscode_auth'
+            };
+            const authService = new AuthService(vscodeConfig);
+            delete process.env.BCTB_ACCESS_TOKEN;
+
+            // Act & Assert
+            await expect(authService.authenticate()).rejects.toThrow('BCTB_ACCESS_TOKEN environment variable not set');
+            await expect(authService.authenticate()).rejects.toThrow('Troubleshooting');
+        });
+
+        it('should use vscode_auth token for API calls', async () => {
+            // Arrange
+            const vscodeConfig: MCPConfig = {
+                ...mockConfig,
+                authFlow: 'vscode_auth'
+            };
+            const authService = new AuthService(vscodeConfig);
+            const mockToken = 'vscode-access-token';
+            process.env.BCTB_ACCESS_TOKEN = mockToken;
+
+            // Act
+            await authService.authenticate();
+            const token = await authService.getAccessToken();
+
+            // Assert
+            expect(token).toBe(mockToken);
+
+            // Cleanup
+            delete process.env.BCTB_ACCESS_TOKEN;
+        });
+
+        it('should return authenticated status when token is valid', async () => {
+            // Arrange
+            const vscodeConfig: MCPConfig = {
+                ...mockConfig,
+                authFlow: 'vscode_auth'
+            };
+            const authService = new AuthService(vscodeConfig);
+            process.env.BCTB_ACCESS_TOKEN = 'valid-token';
+
+            // Act
+            await authService.authenticate();
+            const status = authService.getStatus();
+
+            // Assert
+            expect(status.authenticated).toBe(true);
+            expect(status.accessToken).toBe('valid-token');
+            expect(status.user).toBe('VS Code User');
+
+            // Cleanup
+            delete process.env.BCTB_ACCESS_TOKEN;
+        });
+    });
 });

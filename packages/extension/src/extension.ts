@@ -14,6 +14,7 @@ import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
 import { ProfileManager } from './services/profileManager';
 import { showFirstRunNotification, startPeriodicUpdateChecks, checkForMCPUpdates } from './services/mcpInstaller';
+import { VSCodeAuthService } from './services/vscodeAuthService';
 import {
     VSCodeUsageTelemetry,
     TelemetryLevelFilter,
@@ -43,6 +44,7 @@ let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let extensionContext: vscode.ExtensionContext;
+let vscodeAuthService: VSCodeAuthService | null = null;
 
 // Common telemetry properties (set once during activation)
 let sessionId: string;
@@ -418,6 +420,14 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine(`⚠️  ProfileStatusBar initialization failed: ${error.message}`);
     }
 
+    // Initialize VS Code authentication service
+    try {
+        vscodeAuthService = new VSCodeAuthService(outputChannel);
+        outputChannel.appendLine('✓ VSCodeAuthService initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  VSCodeAuthService initialization failed: ${error.message}`);
+    }
+
     // Initialize TelemetryService for direct commands (no MCP required)
     try {
         telemetryService = new TelemetryService(outputChannel);
@@ -435,7 +445,7 @@ export function activate(context: vscode.ExtensionContext) {
     mcpClient = new MCPClient(mcpUrl, outputChannel);
 
     // Initialize setup wizard
-    setupWizard = new SetupWizardProvider(context.extensionUri);
+    setupWizard = new SetupWizardProvider(context.extensionUri, outputChannel);
 
     // Initialize profile wizard
     profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel);
@@ -595,7 +605,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register MCP Server Definition Provider for development
     const mcpProvider: vscode.McpServerDefinitionProvider<vscode.McpServerDefinition> = {
-        provideMcpServerDefinitions() {
+        async provideMcpServerDefinitions() {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
@@ -616,6 +626,40 @@ export function activate(context: vscode.ExtensionContext) {
             const mcpEnv: Record<string, string> = {};
             if (workspacePath) {
                 mcpEnv.BCTB_WORKSPACE_PATH = workspacePath;
+            }
+
+            // Check if using VS Code authentication
+            // Read authFlow from .bctb-config.json (not VS Code settings)
+            let authFlow = 'azure_cli'; // default
+            try {
+                if (profileManager && profileManager.hasConfigFile()) {
+                    const currentConfig = profileManager.getCurrentConfig();
+                    authFlow = currentConfig.authFlow || 'azure_cli';
+                } else {
+                    // Fallback to VS Code settings if no config file
+                    authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                }
+            } catch (error: any) {
+                outputChannel.appendLine(`[MCP Provider] ⚠️  Error reading auth flow from config: ${error.message}`);
+                // Fallback to VS Code settings
+                authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+            }
+
+            if (authFlow === 'vscode_auth') {
+                try {
+                    if (vscodeAuthService) {
+                        const accessToken = await vscodeAuthService.getAccessToken(true);
+                        if (accessToken) {
+                            mcpEnv.BCTB_ACCESS_TOKEN = accessToken;
+                        } else {
+                            outputChannel.appendLine('[MCP Provider] ⚠️  Failed to get VS Code authentication token');
+                        }
+                    } else {
+                        outputChannel.appendLine('[MCP Provider] ⚠️  VS Code authentication service not initialized');
+                    }
+                } catch (error: any) {
+                    outputChannel.appendLine(`[MCP Provider] ❌ Error getting VS Code token: ${error.message}`);
+                }
             }
 
             if (useBundled) {
@@ -807,7 +851,7 @@ async function startMCP(): Promise<void> {
     outputChannel.appendLine(`Reading configuration from workspace: ${folderUri?.fsPath || 'none'}`);
 
     // Build environment variables from workspace settings
-    const env = buildMCPEnvironment(config, workspacePath);
+    const env = await buildMCPEnvironment(config, workspacePath);
 
     // CRITICAL: Force HTTP mode for command palette queries
     // The stdio server (for Copilot) is managed separately by VSCode
@@ -885,15 +929,17 @@ async function startMCP(): Promise<void> {
 /**
  * Build environment variables for MCP from workspace settings
  */
-function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePath: string): Record<string, string> {
+async function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePath: string): Promise<Record<string, string>> {
     const tenantId = config.get<string>('mcp.tenantId', '');
     const appInsightsId = config.get<string>('mcp.applicationInsights.appId', '');
     const kustoUrl = config.get<string>('mcp.kusto.clusterUrl', '');
+    const authFlow = config.get<string>('mcp.authFlow', 'device_code');
 
     outputChannel.appendLine(`[Config Debug] Reading from config:`);
     outputChannel.appendLine(`  - mcp.tenantId: ${tenantId || '(empty)'}`);
     outputChannel.appendLine(`  - mcp.applicationInsights.appId: ${appInsightsId || '(empty)'}`);
     outputChannel.appendLine(`  - mcp.kusto.clusterUrl: ${kustoUrl || '(empty)'}`);
+    outputChannel.appendLine(`  - mcp.authFlow: ${authFlow}`);
 
     const env: Record<string, string> = {
         BCTB_WORKSPACE_PATH: workspacePath,
@@ -901,7 +947,7 @@ function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePat
         BCTB_TENANT_ID: tenantId,
         BCTB_CLIENT_ID: config.get<string>('mcp.clientId', ''),
         BCTB_CLIENT_SECRET: config.get<string>('mcp.clientSecret', ''),
-        BCTB_AUTH_FLOW: config.get<string>('mcp.authFlow', 'device_code'),
+        BCTB_AUTH_FLOW: authFlow,
         // MCP expects BCTB_APP_INSIGHTS_ID (no extra "_APP_")
         BCTB_APP_INSIGHTS_ID: appInsightsId,
         // MCP expects BCTB_KUSTO_URL
@@ -912,6 +958,31 @@ function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, workspacePat
         BCTB_REMOVE_PII: config.get<boolean>('mcp.sanitize.removePII', false) ? 'true' : 'false',
         BCTB_QUERIES_FOLDER: config.get<string>('queries.folder', 'queries')
     };
+
+    // If using VS Code authentication, get and pass access token
+    if (authFlow === 'vscode_auth') {
+        if (!vscodeAuthService) {
+            const error = 'VS Code authentication service not initialized. Please reload VS Code.';
+            outputChannel.appendLine(`[VSCodeAuth] ❌ ${error}`);
+            throw new Error(error);
+        }
+
+        try {
+            outputChannel.appendLine('[VSCodeAuth] Getting access token for MCP...');
+            const accessToken = await vscodeAuthService.getAccessToken(true);
+            if (accessToken) {
+                env.BCTB_ACCESS_TOKEN = accessToken;
+                outputChannel.appendLine('[VSCodeAuth] ✓ Access token provided to MCP');
+            } else {
+                const error = 'Failed to get VS Code authentication token. Please sign in to VS Code (check Accounts menu in bottom-left).';
+                outputChannel.appendLine(`[VSCodeAuth] ❌ ${error}`);
+                throw new Error(error);
+            }
+        } catch (error: any) {
+            outputChannel.appendLine(`[VSCodeAuth] ❌ Failed to get access token: ${error.message}`);
+            throw error;
+        }
+    }
 
     // Add references if configured
     const references = config.get<any[]>('mcp.references', []);

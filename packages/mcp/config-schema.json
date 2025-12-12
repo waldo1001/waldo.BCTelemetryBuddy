@@ -28,6 +28,7 @@
         "authFlow": {
             "type": "string",
             "enum": [
+                "vscode_auth",
                 "azure_cli",
                 "device_code",
                 "client_credentials"
@@ -115,6 +116,7 @@
                 "authFlow": {
                     "type": "string",
                     "enum": [
+                        "vscode_auth",
                         "azure_cli",
                         "device_code",
                         "client_credentials"

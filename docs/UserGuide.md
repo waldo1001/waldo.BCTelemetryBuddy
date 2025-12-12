@@ -67,7 +67,7 @@ BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze
 - 👁️ **CodeLens Integration**: Click "▶ Run Query" above queries in `.kql` files
 - 📋 **Rich Results Display**: View formatted tables with row counts and timing
 - 💡 **Smart Caching**: File-based caching with configurable TTL (default 1 hour)
-- 🔐 **Flexible Auth**: Azure CLI (recommended), Device Code, or Client Credentials
+- 🔐 **Flexible Auth**: VS Code (easiest, recommended), Azure CLI, Device Code, or Client Credentials
 - 📊 **Query Search**: Find existing queries by keywords before writing new ones
 - 🤖 **GitHub Copilot Chat**: Use `@bc-telemetry-buddy` participant for natural language queries (requires MCP)
 - 📊 **Event Catalog**: Browse available BC telemetry events via MCP tools
@@ -296,11 +296,37 @@ Workspace 2: C:\Projects\ProjectB\ (with .vscode/settings.json)
 
 ## Authentication
 
-BC Telemetry Buddy supports three authentication methods:
+BC Telemetry Buddy supports four authentication methods:
 
-### Azure CLI (Recommended) ⭐
+### VS Code Integrated (Easiest - Recommended) ✨
 
-**Best for:** Individual developers, interactive use, easiest setup
+**Best for:** All users - simplest setup with zero prerequisites
+
+**How it works:**
+1. Select "VS Code" as your authentication method in the Setup Wizard
+2. VS Code prompts you to sign in with your Microsoft account (if not already signed in)
+3. Tokens are managed automatically by VS Code - no installation or configuration needed
+
+**Benefits:**
+- ✅ **Zero Prerequisites** - No Azure CLI installation or other tools needed
+- ✅ **Built into VS Code** - Uses VS Code's native Microsoft authentication
+- ✅ **Automatic Token Refresh** - VS Code handles token expiration seamlessly
+- ✅ **Single Sign-On** - Uses your existing Microsoft account
+- ✅ **Most Secure** - Credentials never stored in files, managed by VS Code
+- ✅ **Perfect for Beginners** - Just click and authenticate
+
+**To configure:**
+```json
+{
+  "authFlow": "vscode_auth"
+}
+```
+
+**Note:** No additional configuration needed - VS Code handles everything automatically.
+
+### Azure CLI
+
+**Best for:** Users who already have Azure CLI installed and use it regularly
 
 **How it works:**
 1. Ensure you're logged in with Azure CLI: `az login`
@@ -316,7 +342,7 @@ BC Telemetry Buddy supports three authentication methods:
 **To configure:**
 ```json
 {
-  "bctb.mcp.authFlow": "azure_cli"
+  "authFlow": "azure_cli"
 }
 ```
 

@@ -8,7 +8,7 @@ export interface MCPConfig {
     tenantId: string;
     clientId?: string;
     clientSecret?: string;
-    authFlow: 'device_code' | 'client_credentials' | 'azure_cli';
+    authFlow: 'device_code' | 'client_credentials' | 'azure_cli' | 'vscode_auth';
 
     // Application Insights / Kusto
     applicationInsightsAppId: string;
@@ -91,7 +91,7 @@ export interface ProfiledConfig {
     tenantId?: string;
     clientId?: string;
     clientSecret?: string;
-    authFlow?: 'device_code' | 'client_credentials' | 'azure_cli';
+    authFlow?: 'device_code' | 'client_credentials' | 'azure_cli' | 'vscode_auth';
     applicationInsightsAppId?: string;
     kustoClusterUrl?: string;
     cacheEnabled?: boolean;
@@ -127,7 +127,7 @@ export function loadConfig(): MCPConfig {
         tenantId: process.env.BCTB_TENANT_ID || '',
         clientId: process.env.BCTB_CLIENT_ID,
         clientSecret: process.env.BCTB_CLIENT_SECRET,
-        authFlow: (process.env.BCTB_AUTH_FLOW as 'device_code' | 'client_credentials' | 'azure_cli') || 'azure_cli',
+        authFlow: (process.env.BCTB_AUTH_FLOW as 'device_code' | 'client_credentials' | 'azure_cli' | 'vscode_auth') || 'azure_cli',
 
         applicationInsightsAppId: process.env.BCTB_APP_INSIGHTS_ID || '',
         kustoClusterUrl: process.env.BCTB_KUSTO_URL || '',
@@ -247,9 +247,9 @@ export function expandEnvironmentVariables(config: any): any {
 export function validateConfig(config: MCPConfig): string[] {
     const errors: string[] = [];
 
-    // Azure CLI doesn't need tenantId (uses current az login session)
-    if (config.authFlow !== 'azure_cli' && !config.tenantId) {
-        errors.push('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
+    // Azure CLI and VS Code auth don't need tenantId (use current login session)
+    if (config.authFlow !== 'azure_cli' && config.authFlow !== 'vscode_auth' && !config.tenantId) {
+        errors.push('BCTB_TENANT_ID is required (unless using azure_cli or vscode_auth auth flow)');
     }
 
     if (!config.applicationInsightsAppId) {
