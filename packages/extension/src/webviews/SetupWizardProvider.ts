@@ -5,15 +5,24 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 // MCP installer utilities
 import { getMCPStatus, installMCP, isMCPUpdateAvailable } from '../services/mcpInstaller';
+import { VSCodeAuthService } from '../services/vscodeAuthService';
 
 const execAsync = promisify(exec);
 
 export class SetupWizardProvider {
+    private vscodeAuthService?: VSCodeAuthService;
     public static readonly viewType = 'bcTelemetryBuddy.setupWizard';
     private _panel: vscode.WebviewPanel | undefined;
     private _disposables: vscode.Disposable[] = [];
 
-    constructor(private readonly _extensionUri: vscode.Uri) { }
+    constructor(
+        private readonly _extensionUri: vscode.Uri,
+        private readonly _outputChannel?: vscode.OutputChannel
+    ) {
+        if (_outputChannel) {
+            this.vscodeAuthService = new VSCodeAuthService(_outputChannel);
+        }
+    }
 
     public dispose() {
         this._disposables.forEach(d => d.dispose());
@@ -57,6 +66,9 @@ export class SetupWizardProvider {
                         break;
                     case 'validateAuth':
                         await this._validateAuth();
+                        break;
+                    case 'validateVSCodeAuth':
+                        await this._validateVSCodeAuth();
                         break;
                     case 'testConnection':
                         await this._testConnection(message.config);
@@ -228,19 +240,72 @@ export class SetupWizardProvider {
         }
     }
 
-    private async _testConnection(config: { tenantId: string; appInsightsId: string; clusterUrl: string }): Promise<void> {
-        const { promisify } = await import('util');
-        const { exec } = await import('child_process');
-        const execAsync = promisify(exec);
-
+    private async _validateVSCodeAuth(): Promise<void> {
         try {
-            // Get access token from Azure CLI
-            const tokenResult = await execAsync('az account get-access-token --resource https://api.applicationinsights.io');
-            const tokenData = JSON.parse(tokenResult.stdout);
-            const accessToken = tokenData.accessToken;
+            if (!this.vscodeAuthService) {
+                throw new Error('VS Code authentication service not initialized');
+            }
 
-            if (!accessToken) {
-                throw new Error('Failed to get access token from Azure CLI');
+            // Try to get account info (silent check)
+            const accountInfo = await this.vscodeAuthService.getAccountInfo();
+
+            if (accountInfo) {
+                this._panel?.webview.postMessage({
+                    type: 'vscodeAuthValidation',
+                    success: true,
+                    accountLabel: accountInfo.label
+                });
+            } else {
+                // Not signed in, try to sign in
+                const token = await this.vscodeAuthService.getAccessToken(true);
+                if (token) {
+                    const newAccountInfo = await this.vscodeAuthService.getAccountInfo();
+                    this._panel?.webview.postMessage({
+                        type: 'vscodeAuthValidation',
+                        success: true,
+                        accountLabel: newAccountInfo?.label || 'Authenticated'
+                    });
+                } else {
+                    throw new Error('Failed to authenticate with VS Code');
+                }
+            }
+        } catch (error: any) {
+            this._panel?.webview.postMessage({
+                type: 'vscodeAuthValidation',
+                success: false,
+                error: error.message || 'VS Code authentication failed'
+            });
+        }
+    }
+
+    private async _testConnection(config: { tenantId: string; appInsightsId: string; clusterUrl: string; authFlow?: string }): Promise<void> {
+        try {
+            let accessToken: string;
+
+            // Get access token based on authFlow
+            if (config.authFlow === 'vscode_auth') {
+                // Use VS Code authentication
+                if (!this.vscodeAuthService) {
+                    throw new Error('VS Code authentication service not initialized');
+                }
+                const token = await this.vscodeAuthService.getAccessToken(true);
+                if (!token) {
+                    throw new Error('Failed to get access token from VS Code');
+                }
+                accessToken = token;
+            } else {
+                // Default to Azure CLI for backward compatibility and other auth methods
+                const { promisify } = await import('util');
+                const { exec } = await import('child_process');
+                const execAsync = promisify(exec);
+
+                const tokenResult = await execAsync('az account get-access-token --resource https://api.applicationinsights.io');
+                const tokenData = JSON.parse(tokenResult.stdout);
+                accessToken = tokenData.accessToken;
+
+                if (!accessToken) {
+                    throw new Error('Failed to get access token from Azure CLI');
+                }
             }
 
             // Execute test KQL query
@@ -879,6 +944,12 @@ export class SetupWizardProvider {
                 <p style="margin-top: 15px; padding: 10px; background: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground); border-radius: 3px;">
                     💡 <strong>Best for:</strong> Individual developers who want the easiest setup with no prerequisites
                 </p>
+                <button id="btn-validate-vscode-auth">Validate VS Code Authentication</button>
+                <span id="vscodeAuthValidation" class="validation-status"></span>
+                <div id="vscodeAccountDetails" style="display: none; margin-top: 15px; padding: 10px; background: var(--vscode-editor-inactiveSelectionBackground); border-radius: 4px;">
+                    <strong>Signed in as:</strong><br>
+                    <span id="vscodeAccountLabel" style="margin-left: 10px;"></span>
+                </div>
             </div>
 
             <div id="azureCliInfo" class="links" style="display: none;">
@@ -1063,6 +1134,9 @@ export class SetupWizardProvider {
                         break;
                     case 'authValidation':
                         showAuthValidation(message);
+                        break;
+                    case 'vscodeAuthValidation':
+                        showVSCodeAuthValidation(message);
                         break;
                     case 'connectionTest':
                         showConnectionTest(message);
@@ -1270,6 +1344,13 @@ export class SetupWizardProvider {
                 vscode.postMessage({ type: 'validateAuth' });
             }
 
+            function validateVSCodeAuth() {
+                const vscodeAuthValidation = document.getElementById('vscodeAuthValidation');
+                vscodeAuthValidation.className = 'validation-status';
+                vscodeAuthValidation.textContent = '⏳ Validating VS Code authentication...';
+                vscode.postMessage({ type: 'validateVSCodeAuth' });
+            }
+
             function showAuthValidation(message) {
                 const authValidation = document.getElementById('authValidation');
                 const accountDetails = document.getElementById('accountDetails');
@@ -1295,6 +1376,27 @@ export class SetupWizardProvider {
                     // Hide account details on error
                     if (accountDetails) {
                         accountDetails.style.display = 'none';
+                    }
+                }
+            }
+
+            function showVSCodeAuthValidation(message) {
+                const vscodeAuthValidation = document.getElementById('vscodeAuthValidation');
+                const vscodeAccountDetails = document.getElementById('vscodeAccountDetails');
+                const vscodeAccountLabel = document.getElementById('vscodeAccountLabel');
+
+                if (message.success) {
+                    vscodeAuthValidation.className = 'validation-status success';
+                    vscodeAuthValidation.textContent = '\u2713 VS Code authentication validated';
+                    if (vscodeAccountDetails && vscodeAccountLabel) {
+                        vscodeAccountLabel.textContent = message.accountLabel || 'Authenticated';
+                        vscodeAccountDetails.style.display = 'block';
+                    }
+                } else {
+                    vscodeAuthValidation.className = 'validation-status error';
+                    vscodeAuthValidation.textContent = '\u2717 ' + (message.error || 'VS Code authentication failed');
+                    if (vscodeAccountDetails) {
+                        vscodeAccountDetails.style.display = 'none';
                     }
                 }
             }
@@ -1465,9 +1567,18 @@ export class SetupWizardProvider {
                     profileToTest = fullConfig;
                 }
                 
-                if (!profileToTest.tenantId || !profileToTest.applicationInsightsAppId) {
+                // For vscode_auth, tenantId is optional
+                if (!profileToTest.applicationInsightsAppId) {
                     testStatus.className = 'validation-status error';
-                    testStatus.textContent = '\u2717 Missing required fields: tenantId and applicationInsightsAppId';
+                    testStatus.textContent = '\u2717 Missing required field: applicationInsightsAppId';
+                    testResults.style.display = 'none';
+                    return;
+                }
+
+                // Check tenantId only for non-vscode_auth flows
+                if (profileToTest.authFlow !== 'vscode_auth' && !profileToTest.tenantId) {
+                    testStatus.className = 'validation-status error';
+                    testStatus.textContent = '\u2717 Missing required field: tenantId (unless using vscode_auth)';
                     testResults.style.display = 'none';
                     return;
                 }
@@ -1479,9 +1590,10 @@ export class SetupWizardProvider {
                 vscode.postMessage({ 
                     type: 'testConnection', 
                     config: {
-                        tenantId: profileToTest.tenantId,
+                        tenantId: profileToTest.tenantId || '',
                         appInsightsId: profileToTest.applicationInsightsAppId,
-                        clusterUrl: profileToTest.kustoClusterUrl || ''
+                        clusterUrl: profileToTest.kustoClusterUrl || '',
+                        authFlow: profileToTest.authFlow || 'azure_cli'
                     }
                 });
             }
@@ -1624,6 +1736,7 @@ export class SetupWizardProvider {
             document.getElementById('btn-next-3-top').addEventListener('click', goNext);
             document.getElementById('authFlow').addEventListener('change', updateAuthFields);
             document.getElementById('btn-validate-auth').addEventListener('click', validateAuth);
+            document.getElementById('btn-validate-vscode-auth').addEventListener('click', validateVSCodeAuth);
             
             // Step 4 - bottom and top buttons
             document.getElementById('btn-prev-4').addEventListener('click', goPrev);
