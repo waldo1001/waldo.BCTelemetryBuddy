@@ -629,26 +629,32 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             // Check if using VS Code authentication
-            // Read authFlow from .bctb-config.json (not VS Code settings)
+            // Read authFlow and tenantId from .bctb-config.json (not VS Code settings)
             let authFlow = 'azure_cli'; // default
+            let tenantId: string | undefined;
             try {
                 if (profileManager && profileManager.hasConfigFile()) {
                     const currentConfig = profileManager.getCurrentConfig();
                     authFlow = currentConfig.authFlow || 'azure_cli';
+                    tenantId = currentConfig.tenantId;
                 } else {
                     // Fallback to VS Code settings if no config file
                     authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                    tenantId = mcpConfig.get<string>('tenantId');
                 }
             } catch (error: any) {
                 outputChannel.appendLine(`[MCP Provider] ⚠️  Error reading auth flow from config: ${error.message}`);
                 // Fallback to VS Code settings
                 authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                tenantId = mcpConfig.get<string>('tenantId');
             }
 
             if (authFlow === 'vscode_auth') {
                 try {
                     if (vscodeAuthService) {
-                        const accessToken = await vscodeAuthService.getAccessToken(true);
+                        // Pass tenant ID to ensure token is issued for correct tenant
+                        // This is critical for guest users who belong to multiple tenants
+                        const accessToken = await vscodeAuthService.getAccessToken(true, tenantId);
                         if (accessToken) {
                             mcpEnv.BCTB_ACCESS_TOKEN = accessToken;
                         } else {
@@ -969,7 +975,9 @@ async function buildMCPEnvironment(config: vscode.WorkspaceConfiguration, worksp
 
         try {
             outputChannel.appendLine('[VSCodeAuth] Getting access token for MCP...');
-            const accessToken = await vscodeAuthService.getAccessToken(true);
+            // Pass tenant ID to ensure token is issued for correct tenant
+            // This is critical for guest users who belong to multiple tenants
+            const accessToken = await vscodeAuthService.getAccessToken(true, tenantId);
             if (accessToken) {
                 env.BCTB_ACCESS_TOKEN = accessToken;
                 outputChannel.appendLine('[VSCodeAuth] ✓ Access token provided to MCP');
