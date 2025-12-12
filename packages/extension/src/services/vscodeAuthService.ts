@@ -55,7 +55,8 @@ export class VSCodeAuthService {
      * @returns Array of scopes for authentication
      */
     private buildScopes(tenantId?: string): string[] {
-        if (!tenantId) {
+        // Handle undefined, null, empty string, or whitespace-only strings
+        if (!tenantId || tenantId.trim() === '') {
             return VSCodeAuthService.BASE_SCOPES;
         }
 

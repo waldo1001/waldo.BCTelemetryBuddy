@@ -377,5 +377,22 @@ describe('VSCodeAuthService', () => {
             const scopes = call[1];
             expect(scopes).toEqual(['https://api.applicationinsights.io/.default']);
         });
+
+        it('should handle whitespace-only tenant ID by using base scopes', async () => {
+            // Arrange
+            const mockSession = {
+                accessToken: 'token',
+                account: { label: 'user@example.com', id: 'user-id' }
+            };
+            (vscode.authentication.getSession as jest.Mock).mockResolvedValue(mockSession);
+
+            // Act
+            await authService.getAccessToken(true, '   ');
+
+            // Assert - Whitespace-only string should be treated as no tenant
+            const call = (vscode.authentication.getSession as jest.Mock).mock.calls[0];
+            const scopes = call[1];
+            expect(scopes).toEqual(['https://api.applicationinsights.io/.default']);
+        });
     });
 });
