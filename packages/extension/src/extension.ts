@@ -606,6 +606,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Register MCP Server Definition Provider for development
     const mcpProvider: vscode.McpServerDefinitionProvider<vscode.McpServerDefinition> = {
         async provideMcpServerDefinitions() {
+            outputChannel.appendLine('');
+            outputChannel.appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            outputChannel.appendLine('🔧 MCP Server Definition Provider Called');
+            outputChannel.appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
@@ -626,6 +631,7 @@ export function activate(context: vscode.ExtensionContext) {
             const mcpEnv: Record<string, string> = {};
             if (workspacePath) {
                 mcpEnv.BCTB_WORKSPACE_PATH = workspacePath;
+                outputChannel.appendLine(`[MCP Provider] Workspace path: ${workspacePath}`);
             }
 
             // Check if using VS Code authentication
@@ -633,38 +639,61 @@ export function activate(context: vscode.ExtensionContext) {
             let authFlow = 'azure_cli'; // default
             try {
                 if (profileManager && profileManager.hasConfigFile()) {
+                    outputChannel.appendLine('[MCP Provider] Reading config from .bctb-config.json...');
                     const currentConfig = profileManager.getCurrentConfig();
                     authFlow = currentConfig.authFlow || 'azure_cli';
-                    outputChannel.appendLine(`[MCP Provider] Auth flow from config: ${authFlow}`);
+                    outputChannel.appendLine(`[MCP Provider] ✓ Auth flow from config: ${authFlow}`);
+                    outputChannel.appendLine(`[MCP Provider] Config details: tenantId=${currentConfig.tenantId ? '***' : 'none'}, appId=${currentConfig.applicationInsightsAppId ? '***' : 'none'}`);
                 } else {
                     // Fallback to VS Code settings if no config file
+                    outputChannel.appendLine('[MCP Provider] No .bctb-config.json found, using VS Code settings');
                     authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
                     outputChannel.appendLine(`[MCP Provider] Auth flow from VS Code settings: ${authFlow}`);
                 }
             } catch (error: any) {
                 outputChannel.appendLine(`[MCP Provider] ⚠️  Error reading auth flow from config: ${error.message}`);
+                outputChannel.appendLine(`[MCP Provider] Stack: ${error.stack}`);
                 // Fallback to VS Code settings
                 authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                outputChannel.appendLine(`[MCP Provider] Fallback auth flow: ${authFlow}`);
             }
 
             if (authFlow === 'vscode_auth') {
+                outputChannel.appendLine('[MCP Provider] VS Code authentication detected!');
                 try {
                     if (vscodeAuthService) {
                         outputChannel.appendLine('[MCP Provider] Getting VS Code authentication token...');
                         const accessToken = await vscodeAuthService.getAccessToken(true);
                         if (accessToken) {
                             mcpEnv.BCTB_ACCESS_TOKEN = accessToken;
-                            outputChannel.appendLine('[MCP Provider] ✓ VS Code authentication token provided to MCP');
+                            const tokenPreview = accessToken.substring(0, 10) + '...' + accessToken.substring(accessToken.length - 10);
+                            outputChannel.appendLine(`[MCP Provider] ✓ VS Code authentication token provided to MCP (${tokenPreview})`);
+                            outputChannel.appendLine(`[MCP Provider] Token length: ${accessToken.length} characters`);
                         } else {
-                            outputChannel.appendLine('[MCP Provider] ⚠️  Failed to get VS Code authentication token');
+                            outputChannel.appendLine('[MCP Provider] ⚠️  Failed to get VS Code authentication token (returned null/undefined)');
                         }
                     } else {
                         outputChannel.appendLine('[MCP Provider] ⚠️  VS Code authentication service not initialized');
                     }
                 } catch (error: any) {
-                    outputChannel.appendLine(`[MCP Provider] ⚠️  Error getting VS Code token: ${error.message}`);
+                    outputChannel.appendLine(`[MCP Provider] ❌ Error getting VS Code token: ${error.message}`);
+                    outputChannel.appendLine(`[MCP Provider] Stack: ${error.stack}`);
+                }
+            } else {
+                outputChannel.appendLine(`[MCP Provider] Not using VS Code auth (authFlow: ${authFlow})`);
+            }
+
+            // Log all environment variables being passed to MCP
+            outputChannel.appendLine('[MCP Provider] Environment variables for MCP:');
+            for (const [key, value] of Object.entries(mcpEnv)) {
+                if (key === 'BCTB_ACCESS_TOKEN') {
+                    outputChannel.appendLine(`  ${key}: ***${value.substring(value.length - 4)}`);
+                } else {
+                    outputChannel.appendLine(`  ${key}: ${value}`);
                 }
             }
+            outputChannel.appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            outputChannel.appendLine('');
 
             if (useBundled) {
                 // Bundled: Use MCP server bundled with the extension (fallback mode)
