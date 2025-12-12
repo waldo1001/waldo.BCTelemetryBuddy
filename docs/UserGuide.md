@@ -300,7 +300,7 @@ BC Telemetry Buddy supports four authentication methods:
 
 ### VS Code Integrated (Easiest - Recommended) ✨
 
-**Best for:** All users - simplest setup with zero prerequisites
+**Best for:** Users who belong to a single Azure tenant
 
 **How it works:**
 1. Select "VS Code" as your authentication method in the Setup Wizard
@@ -318,21 +318,24 @@ BC Telemetry Buddy supports four authentication methods:
 **To configure:**
 ```json
 {
-  "authFlow": "vscode_auth",
-  "tenantId": "your-tenant-id"
+  "authFlow": "vscode_auth"
 }
 ```
 
 **Note:** No additional configuration needed - VS Code handles everything automatically.
 
-**Important for Guest Users:** If you are a guest user in multiple Azure tenants, make sure to specify the `tenantId` in your configuration. This ensures that authentication tokens are issued for the correct tenant, not your home tenant. The extension automatically uses the tenant ID to request tenant-specific authentication.
+> **⚠️ Important for Guest Users:**
+> 
+> If you are a **guest user** in multiple Azure tenants, VS Code authentication may authenticate against your home tenant instead of the configured tenant. This is a limitation of VS Code's built-in Microsoft authentication provider, which doesn't support tenant-specific authority URLs.
+>
+> **Solution for guest users:** Use **Azure CLI** or **Device Code** authentication instead, both of which support tenant-specific authentication through the authority URL (`https://login.microsoftonline.com/{tenant-id}`).
 
-### Azure CLI
+### Azure CLI (Recommended for Guest Users)
 
-**Best for:** Users who already have Azure CLI installed and use it regularly
+**Best for:** Users who already have Azure CLI installed, and **guest users in multiple tenants**
 
 **How it works:**
-1. Ensure you're logged in with Azure CLI: `az login`
+1. Login with Azure CLI, specifying the tenant: `az login --tenant {tenant-id}`
 2. The MCP server uses your existing Azure CLI credentials automatically
 3. **No additional configuration needed** - just set `authFlow` to `azure_cli`
 
@@ -341,19 +344,30 @@ BC Telemetry Buddy supports four authentication methods:
 - ✅ No device code prompts every time
 - ✅ Uses your existing Azure session
 - ✅ Works for all Azure resources you have access to
+- ✅ **Supports tenant-specific authentication** - perfect for guest users
 
 **To configure:**
 ```json
 {
-  "authFlow": "azure_cli"
+  "authFlow": "azure_cli",
+  "tenantId": "your-tenant-id"
 }
 ```
 
-**Note:** You don't need to specify `tenantId`, `clientId`, or `clientSecret` when using Azure CLI auth.
+**For guest users:**
+```bash
+# Login to the specific tenant you want to query
+az login --tenant 557836c7-47a0-4a3a-af9b-f5af2dacc8b0
 
-### Device Code Flow
+# Verify you're in the correct tenant
+az account show
+```
 
-**Best for:** When Azure CLI is not available, or for explicit browser-based auth
+**Note:** You don't need to specify `clientId` or `clientSecret` when using Azure CLI auth. The `tenantId` is optional but recommended for documentation purposes.
+
+### Device Code Flow (Alternative for Guest Users)
+
+**Best for:** When Azure CLI is not available, or for explicit browser-based auth. Also works for guest users.
 
 **How it works:**
 1. The MCP server initiates device code authentication
@@ -363,7 +377,12 @@ BC Telemetry Buddy supports four authentication methods:
 5. Grant permissions when prompted
 6. Return to VSCode — you're authenticated!
 
-**No Azure app registration required!** But you'll need to authenticate each time the MCP server starts.
+**Benefits:**
+- ✅ No Azure app registration required
+- ✅ **Supports tenant-specific authentication via authority URL**
+- ✅ Works for guest users when `tenantId` is configured
+
+**For guest users:** Device Code flow uses the tenant-specific authority URL (`https://login.microsoftonline.com/{tenant-id}`) automatically when you specify `tenantId` in your configuration.
 
 **To configure:**
 ```json

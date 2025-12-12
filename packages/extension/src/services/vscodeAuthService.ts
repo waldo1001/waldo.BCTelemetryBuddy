@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
  * Uses VS Code's built-in Microsoft authentication provider
  */
 export class VSCodeAuthService {
-    private static readonly BASE_SCOPES = ['https://api.applicationinsights.io/.default'];
+    private static readonly SCOPES = ['https://api.applicationinsights.io/.default'];
     private outputChannel: vscode.OutputChannel;
 
     constructor(outputChannel: vscode.OutputChannel) {
@@ -15,24 +15,16 @@ export class VSCodeAuthService {
     /**
      * Get an access token using VS Code's authentication provider
      * @param createIfNone If true, prompts user to sign in if not authenticated
-     * @param tenantId Optional tenant ID to authenticate against (important for guest users)
      * @returns Access token or undefined if not authenticated
      */
-    async getAccessToken(createIfNone: boolean = true, tenantId?: string): Promise<string | undefined> {
+    async getAccessToken(createIfNone: boolean = true): Promise<string | undefined> {
         try {
-            // Build scopes with tenant hint if provided
-            // For guest users, this ensures the token is issued for the correct tenant
-            const scopes = this.buildScopes(tenantId);
-            
             this.outputChannel.appendLine('[VSCodeAuth] Requesting access token...');
-            if (tenantId) {
-                this.outputChannel.appendLine(`[VSCodeAuth] Using tenant ID: ${tenantId}`);
-            }
 
             // Get authentication session from VS Code's Microsoft authentication provider
             const session = await vscode.authentication.getSession(
                 'microsoft',
-                scopes,
+                VSCodeAuthService.SCOPES,
                 { createIfNone }
             );
 
@@ -50,33 +42,13 @@ export class VSCodeAuthService {
     }
 
     /**
-     * Build authentication scopes with optional tenant hint
-     * @param tenantId Optional tenant ID to include in scopes
-     * @returns Array of scopes for authentication
-     */
-    private buildScopes(tenantId?: string): string[] {
-        // Handle undefined, null, empty string, or whitespace-only strings
-        if (!tenantId || tenantId.trim() === '') {
-            return VSCodeAuthService.BASE_SCOPES;
-        }
-
-        // VS Code's Microsoft authentication provider supports tenant-specific authentication
-        // by including the tenant ID as a scope in the format: "TENANT:<tenant-id>"
-        // This ensures the token is issued for the specified tenant, which is critical
-        // for guest users who belong to multiple tenants
-        return [`TENANT:${tenantId}`, ...VSCodeAuthService.BASE_SCOPES];
-    }
-
-    /**
      * Check if user is currently authenticated
-     * @param tenantId Optional tenant ID to check authentication for specific tenant
      */
-    async isAuthenticated(tenantId?: string): Promise<boolean> {
+    async isAuthenticated(): Promise<boolean> {
         try {
-            const scopes = this.buildScopes(tenantId);
             const session = await vscode.authentication.getSession(
                 'microsoft',
-                scopes,
+                VSCodeAuthService.SCOPES,
                 { createIfNone: false, silent: true }
             );
             return session !== undefined;
@@ -88,17 +60,15 @@ export class VSCodeAuthService {
     /**
      * Sign out from VS Code authentication
      * Note: VS Code doesn't have a programmatic sign-out API
-     * @param tenantId Optional tenant ID to check authentication for specific tenant
      * @returns false to indicate sign-out must be done manually by the user
      */
-    async signOut(tenantId?: string): Promise<boolean> {
+    async signOut(): Promise<boolean> {
         try {
             this.outputChannel.appendLine('[VSCodeAuth] Sign out requested...');
             
-            const scopes = this.buildScopes(tenantId);
             const session = await vscode.authentication.getSession(
                 'microsoft',
-                scopes,
+                VSCodeAuthService.SCOPES,
                 { createIfNone: false, silent: true }
             );
 
@@ -119,14 +89,12 @@ export class VSCodeAuthService {
 
     /**
      * Get account information for the current session
-     * @param tenantId Optional tenant ID to get account info for specific tenant
      */
-    async getAccountInfo(tenantId?: string): Promise<{ label: string; id: string } | undefined> {
+    async getAccountInfo(): Promise<{ label: string; id: string } | undefined> {
         try {
-            const scopes = this.buildScopes(tenantId);
             const session = await vscode.authentication.getSession(
                 'microsoft',
-                scopes,
+                VSCodeAuthService.SCOPES,
                 { createIfNone: false, silent: true }
             );
 

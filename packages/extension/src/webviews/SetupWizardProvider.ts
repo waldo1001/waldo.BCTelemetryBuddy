@@ -288,9 +288,7 @@ export class SetupWizardProvider {
                 if (!this.vscodeAuthService) {
                     throw new Error('VS Code authentication service not initialized');
                 }
-                // Pass tenant ID to ensure token is issued for correct tenant
-                // This is critical for guest users who belong to multiple tenants
-                const token = await this.vscodeAuthService.getAccessToken(true, config.tenantId);
+                const token = await this.vscodeAuthService.getAccessToken(true);
                 if (!token) {
                     throw new Error('Failed to get access token from VS Code');
                 }
