@@ -629,7 +629,24 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             // Check if using VS Code authentication
-            const authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+            // Read authFlow from .bctb-config.json (not VS Code settings)
+            let authFlow = 'azure_cli'; // default
+            try {
+                if (profileManager && profileManager.hasConfigFile()) {
+                    const currentConfig = profileManager.getCurrentConfig();
+                    authFlow = currentConfig.authFlow || 'azure_cli';
+                    outputChannel.appendLine(`[MCP Provider] Auth flow from config: ${authFlow}`);
+                } else {
+                    // Fallback to VS Code settings if no config file
+                    authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                    outputChannel.appendLine(`[MCP Provider] Auth flow from VS Code settings: ${authFlow}`);
+                }
+            } catch (error: any) {
+                outputChannel.appendLine(`[MCP Provider] ⚠️  Error reading auth flow from config: ${error.message}`);
+                // Fallback to VS Code settings
+                authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+            }
+
             if (authFlow === 'vscode_auth') {
                 try {
                     if (vscodeAuthService) {
