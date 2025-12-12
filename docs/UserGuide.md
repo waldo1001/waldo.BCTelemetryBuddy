@@ -318,11 +318,14 @@ BC Telemetry Buddy supports four authentication methods:
 **To configure:**
 ```json
 {
-  "authFlow": "vscode_auth"
+  "authFlow": "vscode_auth",
+  "tenantId": "your-tenant-id"
 }
 ```
 
 **Note:** No additional configuration needed - VS Code handles everything automatically.
+
+**Important for Guest Users:** If you are a guest user in multiple Azure tenants, make sure to specify the `tenantId` in your configuration. This ensures that authentication tokens are issued for the correct tenant, not your home tenant. The extension automatically uses the tenant ID to request tenant-specific authentication.
 
 ### Azure CLI
 
