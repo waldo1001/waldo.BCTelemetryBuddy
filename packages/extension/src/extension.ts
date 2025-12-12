@@ -605,7 +605,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register MCP Server Definition Provider for development
     const mcpProvider: vscode.McpServerDefinitionProvider<vscode.McpServerDefinition> = {
-        provideMcpServerDefinitions() {
+        async provideMcpServerDefinitions() {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
@@ -626,6 +626,27 @@ export function activate(context: vscode.ExtensionContext) {
             const mcpEnv: Record<string, string> = {};
             if (workspacePath) {
                 mcpEnv.BCTB_WORKSPACE_PATH = workspacePath;
+            }
+
+            // Check if using VS Code authentication
+            const authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+            if (authFlow === 'vscode_auth') {
+                try {
+                    if (vscodeAuthService) {
+                        outputChannel.appendLine('[MCP Provider] Getting VS Code authentication token...');
+                        const accessToken = await vscodeAuthService.getAccessToken(true);
+                        if (accessToken) {
+                            mcpEnv.BCTB_ACCESS_TOKEN = accessToken;
+                            outputChannel.appendLine('[MCP Provider] ✓ VS Code authentication token provided to MCP');
+                        } else {
+                            outputChannel.appendLine('[MCP Provider] ⚠️  Failed to get VS Code authentication token');
+                        }
+                    } else {
+                        outputChannel.appendLine('[MCP Provider] ⚠️  VS Code authentication service not initialized');
+                    }
+                } catch (error: any) {
+                    outputChannel.appendLine(`[MCP Provider] ⚠️  Error getting VS Code token: ${error.message}`);
+                }
             }
 
             if (useBundled) {
