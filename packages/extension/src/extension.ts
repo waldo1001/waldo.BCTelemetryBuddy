@@ -630,7 +630,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Check if using VS Code authentication
             // Read authFlow from .bctb-config.json (not VS Code settings)
-            let authFlow = 'azure_cli'; // default
+            let authFlow: string;
             try {
                 if (profileManager && profileManager.hasConfigFile()) {
                     const currentConfig = profileManager.getCurrentConfig();
