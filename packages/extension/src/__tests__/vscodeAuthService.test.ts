@@ -24,7 +24,7 @@ jest.mock('vscode', () => ({
 
 describe('VSCodeAuthService', () => {
     let authService: VSCodeAuthService;
-    let mockOutputChannel: any;
+    let mockOutputChannel: jest.Mocked<vscode.OutputChannel>;
 
     beforeEach(() => {
         // Reset mocks
@@ -34,8 +34,13 @@ describe('VSCodeAuthService', () => {
         mockOutputChannel = {
             appendLine: jest.fn(),
             show: jest.fn(),
-            dispose: jest.fn()
-        };
+            dispose: jest.fn(),
+            name: 'test-channel',
+            append: jest.fn(),
+            clear: jest.fn(),
+            hide: jest.fn(),
+            replace: jest.fn()
+        } as jest.Mocked<vscode.OutputChannel>;
 
         authService = new VSCodeAuthService(mockOutputChannel);
     });
