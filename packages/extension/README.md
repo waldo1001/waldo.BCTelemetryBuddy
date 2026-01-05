@@ -37,9 +37,9 @@ VSCode extension for querying Business Central telemetry with natural language s
 
 The setup wizard automatically appears on first activation and guides you through complete configuration with validation and testing.
 
-### For Existing Users (Upgrading from v0.2.x)
+### For Existing Users (Upgrading from v0.2.x to v1.2.10)
 
-**Your settings will migrate automatically!** On first launch after upgrade:
+**Your settings will migrate automatically!** On first launch of v1.2.10:
 
 1. Extension detects old `bcTelemetryBuddy.*` settings
 2. Shows notification: "Migrate to new configuration format?"

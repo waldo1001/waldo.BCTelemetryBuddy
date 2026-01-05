@@ -219,7 +219,7 @@ MCP Tools exposed to Copilot:
   - Parameters: `kql` (string, optional), `rows` (array, optional)
   - Returns: List of recommendations based on patterns, thresholds, and best practices
 
-### Discovery Tools (NEW in v1.0.0)
+### Discovery Tools
 - `get_event_catalog` — Discover available Business Central telemetry events with frequencies and Learn URLs
   - Parameters: `daysBack` (number, default: 10), `status` ("all" | "success" | "error" | "too slow", default: "all"), `minCount` (number, default: 1), `includeCommonFields` (boolean, default: false)
   - Returns: List of event IDs with descriptions, occurrence counts, status categorization, and Microsoft Learn URLs

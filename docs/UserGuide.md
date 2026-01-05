@@ -2,7 +2,7 @@
 
 Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code with GitHub Copilot and data-driven discovery tools.
 
-## 🆕 What's New since v1.0.0
+## 🆕 What's New in v1.2.10
 
 ### Major Architecture Improvements
 
@@ -57,8 +57,8 @@ See [MIGRATION.md](../MIGRATION.md) for migration details.
 BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze Business Central telemetry data from Application Insights.
 
 **Current Version Status:**
-- **v0.2.24 (Stable)**: Fully functional, recommended for production use
-- **v1.0.0 (Development)**: In progress, 21 tests failing, not ready for release
+- **v1.2.10 (Current)**: Stable release with all features functional
+- **v2.2.9 (MCP)**: Latest MCP server version available on NPM
 
 ### Core Features
 
@@ -77,16 +77,12 @@ BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze
 
 ### Architecture
 
-**vv1.0.0+ (Current):**
-- Extension requires MCP server for all commands
-- MCP bundled with extension
-- Settings in `.vscode/settings.json`
-
-**Future (vv1.0.0 - when released):**
-- Extension can execute queries directly (no MCP for commands)
-- MCP optional, only needed for chat features
-- Configuration in `.bctb-config.json`
-- MCP published as standalone NPM package
+**Current (v1.2.10):**
+- Extension can execute queries directly via built-in TelemetryService (no MCP needed for Command Palette)
+- MCP optional, only required for GitHub Copilot chat features
+- Configuration in `.bctb-config.json` (workspace root)
+- MCP published as standalone NPM package: `bc-telemetry-buddy-mcp@2.2.9`
+- Supports both stdio (Copilot) and HTTP (Command Palette) modes
 
 ---
 
@@ -638,7 +634,7 @@ BC Telemetry Buddy exposes **11 MCP tools** to GitHub Copilot (accessible via al
 | `bctb_get_categories` | Get available event categories (Lifecycle, Performance, Security, Error, Integration, Configuration, Custom) | To understand event categorization and filter by category |
 | `bctb_get_tenant_mapping` | Map company names to Azure tenant IDs and environment names | When you mention a specific customer/company name in your query |
 | **Query Execution** |
-| `bctb_query_telemetry` | Execute KQL queries against telemetry (NL translation removed in v1.0.0 - use discovery tools first) | For every telemetry query (after using discovery tools to understand structure) |
+| `bctb_query_telemetry` | Execute KQL queries against telemetry (use discovery tools first for best results) | For every telemetry query (after using discovery tools to understand structure) |
 | **Query Library** |
 | `bctb_get_saved_queries` | List saved queries (with optional tag filtering) | To find existing patterns before generating new queries |
 | `bctb_search_queries` | Search saved queries by keywords | When your question matches common patterns (errors, slow, login, etc.) |
@@ -1161,9 +1157,9 @@ This allows the extension to be installed globally without causing startup failu
 
 If you're upgrading from BC Telemetry Buddy v0.2.x, this section explains what changed and how to migrate smoothly.
 
-### What Changed in vv1.0.0?
+### What Changed in v1.2.10?
 
-| Aspect | v0.2.x (Old) | vv1.0.0 (New) |
+| Aspect | v0.2.x (Old) | v1.2.10 (New) |
 |--------|-------------|--------------|
 | **MCP Server** | Bundled with extension | Separate optional package |
 | **Direct Commands** | Required MCP running | Built-in TelemetryService |
@@ -1176,7 +1172,7 @@ If you're upgrading from BC Telemetry Buddy v0.2.x, this section explains what c
 
 #### Automatic Migration (Recommended)
 
-When you first launch vv1.0.0 with existing v0.2.x settings:
+When you first launch v1.2.10 with existing v0.2.x settings:
 
 1. **Detection**: Extension detects old `bcTelemetryBuddy.*` settings in `.vscode/settings.json`
 2. **Notification**: Shows prompt: _"Migrate to new configuration format?"_
@@ -1292,13 +1288,13 @@ bctb-mcp --version
 - Verify MCP installed: `bctb-mcp --version` in terminal
 - Check extension detected MCP: Look for "Using globally-installed MCP" in Output
 
-**Q: Can I use both v0.2.x and vv1.0.0 configurations?**
-- No - vv1.0.0 only reads `.bctb-config.json`
+**Q: Can I use both v0.2.x and v1.2.10 configurations?**
+- No - v1.2.10 only reads `.bctb-config.json`
 - Old `bcTelemetryBuddy.*` settings ignored
 - Choose one version and stick with it
 
 **Q: How do I rollback to v0.2.x?**
-- Uninstall vv1.0.0 from Extensions
+- Uninstall v1.2.10 from Extensions
 - Install v0.2.x from Marketplace (may need to download VSIX)
 - Restore `.vscode/settings.json` with old settings
 - Delete `.bctb-config.json` (optional, v0.2.x ignores it)

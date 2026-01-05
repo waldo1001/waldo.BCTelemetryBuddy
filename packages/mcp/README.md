@@ -34,7 +34,7 @@ npm install -g bc-telemetry-buddy-mcp
 
 ```bash
 bctb-mcp --version
-# Should show: 1.0.0
+# Should show: 2.2.9 (or later)
 ```
 
 ## Quick Start
