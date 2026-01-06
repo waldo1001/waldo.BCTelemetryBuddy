@@ -376,7 +376,7 @@ export class MCPServer {
                             },
                             {
                                 name: 'get_event_field_samples',
-                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types, occurrence rates, sample values, and ready-to-use example query. NEVER construct KQL queries without calling this tool first - you WILL get field names wrong. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
+                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are PROBABLY timespans ("hh:mm:ss.fffffff"), NOT milliseconds - ALWAYS use this tool to check sample values and verify the format before writing queries. NEVER assume the format without checking samples first. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {
@@ -1052,6 +1052,34 @@ traces
     }
 
     /**
+     * Detect if a value is a timespan based on format and field name
+     * BC telemetry uses timespan format (dd.hh:mm:ss.fffffff or hh:mm:ss.fffffff), NOT milliseconds
+     */
+    private isTimespanValue(value: any, fieldName: string): boolean {
+        // Check if value matches timespan format: dd.hh:mm:ss.fffffff or hh:mm:ss.fffffff
+        if (typeof value === 'string') {
+            // Timespan patterns: "00:00:01.2340000", "1.12:34:56.7890000", "12:34:56"
+            const timespanPattern = /^(\d+\.)?(\d{1,2}):(\d{2}):(\d{2})(\.(\d+))?$/;
+            if (timespanPattern.test(value)) {
+                return true;
+            }
+        }
+
+        // Check field name patterns that commonly indicate timespan/duration fields
+        const durationFieldPatterns = [
+            /time$/i,           // executionTime, totalTime, serverTime, clientTime, sqlTime
+            /duration/i,        // requestDuration, operationDuration
+            /elapsed/i,         // elapsedTime
+            /latency/i,         // networkLatency
+            /delay/i,           // processingDelay
+            /wait/i,            // waitTime
+            /runtime/i          // queryRuntime
+        ];
+
+        return durationFieldPatterns.some(pattern => pattern.test(fieldName));
+    }
+
+    /**
      * Get event field samples - Enhanced field discovery with data types and occurrence rates
      * Shows actual customDimensions structure from real telemetry events
      */
@@ -1116,11 +1144,19 @@ traces
                 if (value === null || value === undefined || value === '') {
                     stats.nullCount++;
                 } else {
-                    // Detect actual type
-                    const actualType = typeof value === 'number' ? 'number' :
-                        typeof value === 'boolean' ? 'boolean' :
-                            value instanceof Date ? 'datetime' :
-                                'string';
+                    // Detect actual type (including timespan detection)
+                    let actualType: string;
+                    if (this.isTimespanValue(value, key)) {
+                        actualType = 'timespan';
+                    } else if (typeof value === 'number') {
+                        actualType = 'number';
+                    } else if (typeof value === 'boolean') {
+                        actualType = 'boolean';
+                    } else if (value instanceof Date) {
+                        actualType = 'datetime';
+                    } else {
+                        actualType = 'string';
+                    }
                     stats.types.add(actualType);
 
                     // Store up to 3 distinct sample values
@@ -1151,10 +1187,11 @@ traces
         const extendStatements = topFields
             .map(f => {
                 // Use appropriate conversion based on data type
-                const conversion = f.dataType === 'number' ? 'toreal' :
-                    f.dataType === 'boolean' ? 'tobool' :
-                        f.dataType === 'datetime' ? 'todatetime' :
-                            'tostring';
+                const conversion = f.dataType === 'timespan' ? 'totimespan' :
+                    f.dataType === 'number' ? 'toreal' :
+                        f.dataType === 'boolean' ? 'tobool' :
+                            f.dataType === 'datetime' ? 'todatetime' :
+                                'tostring';
                 return `    ${f.fieldName} = ${conversion}(customDimensions.${f.fieldName})`;
             })
             .join(',\n');
@@ -1207,12 +1244,17 @@ ${extendStatements}
                 categoryInfo.isStandardEvent && categoryInfo.documentationUrl
                     ? `📖 Official documentation: ${categoryInfo.documentationUrl}`
                     : `💡 This appears to be a custom event - analyze customDimensions to understand its purpose`,
+                fields.some(f => f.dataType === 'timespan')
+                    ? `⏱️ VERIFIED TIMESPAN: Fields (${fields.filter(f => f.dataType === 'timespan').map(f => f.fieldName).join(', ')}) confirmed as TIMESPANS (format: "hh:mm:ss.fffffff"), NOT milliseconds. Use totimespan() conversion. To convert to milliseconds: toreal(totimespan(fieldName))/10000`
+                    : fields.some(f => /time|duration|elapsed|latency|delay|wait/i.test(f.fieldName) && !/ms$|milliseconds?|inms$|_ms$/i.test(f.fieldName))
+                        ? `⚠️ VERIFY FORMAT: Fields (${fields.filter(f => /time|duration|elapsed|latency|delay|wait/i.test(f.fieldName) && !/ms$|milliseconds?|inms$|_ms$/i.test(f.fieldName)).map(f => f.fieldName).join(', ')}) with duration-like names are PROBABLY timespans ("hh:mm:ss.fffffff"), not milliseconds. Check the sample values above to confirm format before writing queries. If timespans: use totimespan(). To convert to milliseconds: toreal(totimespan(fieldName))/10000`
+                        : '',
                 `Use the exampleQuery above as a starting point for your analysis`,
                 `Fields with 100% occurrence rate are always available`,
                 fields.filter(f => !f.isAlwaysPresent).length > 0
                     ? `${fields.filter(f => !f.isAlwaysPresent).length} optional fields may be null - handle accordingly`
                     : 'All fields are consistently present'
-            ]
+            ].filter(r => r !== '')
         };
     }
 
@@ -1544,7 +1586,7 @@ ${extendStatements}
                             },
                             {
                                 name: 'get_event_field_samples',
-                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types, occurrence rates, sample values, and ready-to-use example query. NEVER construct KQL queries without calling this tool first - you WILL get field names wrong. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
+                                description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are PROBABLY timespans ("hh:mm:ss.fffffff"), NOT milliseconds - ALWAYS use this tool to check sample values and verify the format before writing queries. NEVER assume the format without checking samples first. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
                                 inputSchema: {
                                     type: 'object',
                                     properties: {

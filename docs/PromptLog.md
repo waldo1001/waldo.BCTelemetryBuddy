@@ -2454,3 +2454,15 @@ Change instructions an business logic to do this."
 > "Update all documentation"
 
 ---
+### Entry ID: d12e0429-69eb-4f58-9ab1-e247c68805fc — 2026-01-06 14:33
+> "Add guidance and detection for Business Central telemetry duration fields being timespans (not milliseconds), include KQL conversion formula: toreal(totimespan(fieldName))/10000"
+
+---
+### Entry ID: e64ff159-f155-4b5c-8d8e-907064d73d4a — 2026-01-06 14:36
+> "Update guidance to emphasize VERIFICATION of duration field format using sampling tool rather than making assumptions - duration fields are PROBABLY timespans, not definitely"
+
+---
+### Entry ID: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b — 2026-01-06 14:41
+> "Exclude fields with explicit millisecond indicators (Ms, Milliseconds, InMs, _ms) from timespan detection - if field name indicates milliseconds, it's NOT a timespan"
+
+---
