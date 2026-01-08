@@ -4,12 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  pull-requests: write
+
 jobs:
   label:
     name: Auto-label PR
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     
     steps:
       - name: Checkout code

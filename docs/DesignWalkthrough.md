@@ -1394,3 +1394,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-01-06** — Added millisecond indicator exclusion from timespan detection [Entry: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b]
   - **Why:** Fields explicitly indicating milliseconds (Ms, InMs, Milliseconds, _ms) should NOT be flagged as probable timespans
   - **How:** Added millisecond indicator checks at start of isTimespanValue() function - returns false immediately if field name matches /ms$|milliseconds?|inms$|_ms$/i. Updated recommendation filter to exclude these fields. Added tests for exclusion logic.
+- **2026-01-08**  Fixed PR labeler workflow permissions [Entry: 749c22d6-ea18-4d83-9042-f99aab6c5110]
+  - **Why:** GitHub Actions labeler needed workflow-level write permissions to modify PR labels
+  - **How:** Moved permissions block from job level to workflow level in pr-label.yml
