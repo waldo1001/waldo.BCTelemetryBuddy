@@ -51,6 +51,8 @@ export class AuthService {
             return this.authenticateAzureCLI();
         } else if (this.config.authFlow === 'device_code') {
             return this.authenticateDeviceCode();
+        } else if (this.config.authFlow === 'vscode_auth') {
+            return this.authenticateVSCode();
         } else {
             return this.authenticateClientCredentials();
         }
@@ -201,11 +203,97 @@ export class AuthService {
     }
 
     /**
+     * VS Code authentication flow - uses VS Code's built-in Microsoft authentication provider
+     * In MCP context, expects token to be passed via BCTB_ACCESS_TOKEN environment variable
+     * 
+     * Note: Token refresh is handled by checking expiration and re-authenticating
+     */
+    private async authenticateVSCode(): Promise<AuthResult> {
+        try {
+            console.error('[MCP] Using VS Code authentication...');
+
+            // Check if we have a cached token that's still valid
+            if (this.authResult && this.authResult.authenticated && this.authResult.expiresOn) {
+                const now = new Date();
+                const expiresIn = (this.authResult.expiresOn.getTime() - now.getTime()) / 1000;
+                
+                // If token expires in more than 5 minutes, reuse it
+                if (expiresIn > 300) {
+                    console.error(`[MCP] ✓ Using cached VS Code token (expires in ${Math.floor(expiresIn / 60)} minutes)`);
+                    return this.authResult;
+                }
+                
+                console.error('[MCP] Token expired or expiring soon, fetching new token...');
+            }
+
+            // In MCP context, the extension passes the token via environment variable
+            // The extension should refresh this before spawning MCP if using stdio mode
+            const accessToken = process.env.BCTB_ACCESS_TOKEN;
+            
+            if (!accessToken) {
+                const errorMsg = [
+                    'BCTB_ACCESS_TOKEN environment variable not set.',
+                    '',
+                    'This happens when:',
+                    '- VS Code has not been configured to pass authentication tokens to the MCP',
+                    '- You need to configure the MCP to use the extension for token management',
+                    '',
+                    'Solutions:',
+                    '1. For Copilot Chat: The extension should automatically handle this',
+                    '2. For command palette: Use "BC Telemetry Buddy: Start MCP" command',
+                    '3. Alternative: Switch to Azure CLI authentication (easier for MCP usage)',
+                    '',
+                    'To switch authentication:',
+                    '- Run "BC Telemetry Buddy: Setup Wizard" and select Azure CLI or Device Code',
+                    '- Or manually edit .bctb-config.json to set authFlow: "azure_cli"'
+                ].join('\n');
+                throw new Error(errorMsg);
+            }
+
+            this.authResult = {
+                authenticated: true,
+                accessToken: accessToken,
+                user: 'VS Code User',
+                // Token typically expires in 1 hour
+                expiresOn: new Date(Date.now() + 3600000)
+            };
+
+            console.error(`[MCP] ✓ Authenticated via VS Code`);
+
+            return this.authResult;
+        } catch (error: any) {
+            console.error('VS Code authentication failed:', error.message);
+            this.authResult = { authenticated: false };
+            throw error;
+        }
+    }
+
+    /**
      * Get current access token, refresh if needed
      */
     async getAccessToken(): Promise<string> {
         const status = this.getStatus();
 
+        // For vscode_auth, always re-authenticate to get fresh token if expired
+        if (this.config.authFlow === 'vscode_auth') {
+            // Check if token is expired or expiring soon (within 5 minutes)
+            if (!status.authenticated || !status.accessToken || 
+                (this.authResult?.expiresOn && 
+                 (this.authResult.expiresOn.getTime() - Date.now()) < 300000)) {
+                console.error('[MCP] Token expired or expiring, re-authenticating...');
+                await this.authenticate();
+                const newStatus = this.getStatus();
+
+                if (!newStatus.accessToken) {
+                    throw new Error('Failed to obtain access token from VS Code');
+                }
+
+                return newStatus.accessToken;
+            }
+            return status.accessToken;
+        }
+
+        // For other auth flows, use existing logic
         if (!status.authenticated || !status.accessToken) {
             await this.authenticate();
             const newStatus = this.getStatus();
