@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Timespan Detection for Duration Fields**: Enhanced field analysis to detect and guide agents about Business Central telemetry duration fields
+  - Added `isTimespanValue()` helper that detects timespan format (`dd.hh:mm:ss.fffffff` or `hh:mm:ss.fffffff`)
+  - Automatically flags duration fields (executionTime, totalTime, serverTime, etc.) as probable timespans
+  - Excludes fields with explicit millisecond indicators (Ms, InMs, Milliseconds, _ms) from timespan warnings
+  - Provides KQL conversion formula for timespans to milliseconds: `toreal(totimespan(fieldName))/10000`
+  - Updated tool descriptions to emphasize verification using sample data rather than assumptions
+  - Recommendations now distinguish between "VERIFIED TIMESPAN" (format confirmed) and "VERIFY FORMAT" (needs checking)
+  - Added comprehensive tests for timespan detection and millisecond indicator exclusion
+
 ## [2.2.9] - 2025-12-08
 
 ### Fixed

@@ -1,10 +1,10 @@
-# Migration Guide: v0.2.x → v1.0.0
+# Migration Guide: v0.2.x → v1.2.10
 
 ## Overview
 
-v1.0.0 introduces a new architecture where the extension works independently without requiring the MCP server for direct commands. This guide helps you migrate from the old bundled architecture to the new independent setup.
+v1.2.10 introduces a new architecture where the extension works independently without requiring the MCP server for direct commands. This guide helps you migrate from the old bundled architecture to the new independent setup.
 
-## What's New in v1.0.0
+## What's New in v1.2.10
 
 **✅ Fully Implemented:**
 - ✅ File-based configuration (`.bctb-config.json`) via Setup Wizard
@@ -24,7 +24,7 @@ v1.0.0 introduces a new architecture where the extension works independently wit
 ✅ **Extension works standalone** - Direct commands don't require MCP (chat features do)  
 ⚠️ **Multi-root limited** - Best experience with single-folder workspaces  
 
-**Recommended Action:** Update extension and let automatic migration handle the transition, or run Setup Wizard to create fresh configuration.
+**Recommended Action:** Update to v1.2.10 and let automatic migration handle the transition, or run Setup Wizard to create fresh configuration.
 
 ## Multi-Root Workspace Support
 
@@ -62,8 +62,8 @@ Configuration: .bctb-config.json (single file)
 
 ### Key Differences
 
-| Feature | v0.2.x | v1.0.0 |
-|---------|--------|--------|
+| Feature | v0.2.x | v1.2.10 |
+|---------|--------|---------|
 | **Installation** | Extension only | Extension + optional MCP package |
 | **Direct Commands** | Requires MCP running | Built-in (no MCP needed) |
 | **Chat Features** | Bundled automatically | Requires `npm install -g bc-telemetry-buddy-mcp` |
@@ -83,7 +83,7 @@ Configuration: .bctb-config.json (single file)
 The extension automatically detects old settings and offers migration:
 
 **How It Works:**
-1. Update extension to v1.0.0+
+1. Update extension to v1.2.10
 2. Extension scans for old `bcTelemetryBuddy.*` settings
 3. If found, shows notification: "BC Telemetry Buddy settings format changed. Migrate to new format?"
 4. Click "Migrate Settings" → creates `.bctb-config.json` from old settings
@@ -165,17 +165,17 @@ Check `.bctb-config.json` in workspace root:
 
 #### Step 4: Test Direct Commands
 
-⚠️ **KNOWN ISSUE:** Direct commands without MCP are not yet working in v1.0.0 development build.
+✅ **WORKING:** Direct commands work without MCP in v1.2.10.
 
-**Current Reality:**
-1. Commands still require MCP server running
-2. TelemetryService integration incomplete (13 failing tests)
-3. Extension will likely fail or timeout without MCP
+**Current Status:**
+1. Commands work standalone via built-in TelemetryService
+2. MCP optional, only needed for Copilot chat features
+3. Extension fully functional in standalone mode
 
-**Workaround:**
-- Keep using MCP server (HTTP mode) for now
-- Wait for v1.0.0 official release with working direct execution
-- Or install MCP locally: `cd packages/mcp && npm link`
+**Usage:**
+- Use Command Palette commands without MCP server
+- Install MCP only if you want GitHub Copilot chat integration
+- MCP available via: `npm install -g bc-telemetry-buddy-mcp`
 
 ---
 

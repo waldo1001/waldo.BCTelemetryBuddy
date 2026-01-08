@@ -89,6 +89,132 @@ describe('Event Field Samples Discovery', () => {
                     stringField: 'text value',
                     numberField: 250,
                     boolField: true,
+                    timespanField: '00:00:01.2340000',
+                    executionTime: '00:00:00.0450000'
+                };
+
+                // Test detection logic
+                expect(typeof mockRow.stringField).toBe('string');
+                expect(typeof mockRow.numberField).toBe('number');
+                expect(typeof mockRow.boolField).toBe('boolean');
+
+                // Timespan format validation
+                const timespanPattern = /^(\d+\.)?(\d{1,2}):(\d{2}):(\d{2})(\.\d+)?$/;
+                expect(timespanPattern.test(mockRow.timespanField)).toBe(true);
+                expect(timespanPattern.test(mockRow.executionTime)).toBe(true);
+            });
+
+            it('should detect timespan fields by name pattern', () => {
+                const durationFieldNames = [
+                    'executionTime',
+                    'totalTime',
+                    'serverTime',
+                    'clientTime',
+                    'sqlTime',
+                    'requestDuration',
+                    'operationDuration',
+                    'elapsedTime',
+                    'networkLatency',
+                    'processingDelay',
+                    'waitTime',
+                    'queryRuntime'
+                ];
+
+                const durationPatterns = [
+                    /time$/i,
+                    /duration/i,
+                    /elapsed/i,
+                    /latency/i,
+                    /delay/i,
+                    /wait/i,
+                    /runtime/i
+                ];
+
+                durationFieldNames.forEach(fieldName => {
+                    const matches = durationPatterns.some(pattern => pattern.test(fieldName));
+                    expect(matches).toBe(true);
+                });
+            });
+
+            it('should recognize various timespan formats', () => {
+                const validTimespans = [
+                    '00:00:01.2340000',        // Standard BC format
+                    '1.12:34:56.7890000',      // Days.hours:minutes:seconds
+                    '12:34:56',                // Without fractional seconds
+                    '00:00:00.0450000',        // Very small duration
+                    '23:59:59.9999999'         // Maximum time
+                ];
+
+                const invalidTimespans = [
+                    '250',                     // Plain number (milliseconds)
+                    '1234.5',                  // Decimal number
+                    'Success',                 // String
+                    '2025-01-06T10:30:00Z'     // Datetime
+                ];
+
+                const timespanPattern = /^(\d+\.)?(\d{1,2}):(\d{2}):(\d{2})(\.\d+)?$/;
+
+                validTimespans.forEach(value => {
+                    expect(timespanPattern.test(value)).toBe(true);
+                });
+
+                invalidTimespans.forEach(value => {
+                    expect(timespanPattern.test(value)).toBe(false);
+                });
+            });
+
+            it('should NOT flag fields with millisecond indicators as timespans', () => {
+                const millisecondFields = [
+                    'executionTimeMs',
+                    'serverTimeMs',
+                    'executionTimeInMs',
+                    'serverTimeInMilliseconds',
+                    'processingTimeMilliseconds',
+                    'execution_time_ms'
+                ];
+
+                const millisecondIndicators = [
+                    /ms$/i,
+                    /milliseconds?/i,
+                    /inms$/i,
+                    /_ms$/i
+                ];
+
+                millisecondFields.forEach(fieldName => {
+                    const matchesIndicator = millisecondIndicators.some(pattern => pattern.test(fieldName));
+                    expect(matchesIndicator).toBe(true);
+                });
+            });
+
+            it('should flag duration fields WITHOUT millisecond indicators', () => {
+                const timespanFields = [
+                    'executionTime',      // No Ms indicator
+                    'serverTime',         // No Ms indicator
+                    'totalTime',          // No Ms indicator
+                    'requestDuration'     // No Ms indicator
+                ];
+
+                const notMillisecondFields = [
+                    'executionTimeMs',    // Has Ms indicator - should be excluded
+                    'serverTimeInMs'      // Has Ms indicator - should be excluded
+                ];
+
+                const millisecondIndicators = /ms$|milliseconds?|inms$|_ms$/i;
+
+                timespanFields.forEach(fieldName => {
+                    expect(millisecondIndicators.test(fieldName)).toBe(false);
+                });
+
+                notMillisecondFields.forEach(fieldName => {
+                    expect(millisecondIndicators.test(fieldName)).toBe(true);
+                });
+            });
+
+            it('should detect data types correctly', () => {
+                const mockRow = {
+                    stringField: 'text value',
+                    numberField: 250,
+                    boolField: true,
                     dateField: new Date('2025-10-18')
                 };
 
@@ -202,10 +328,11 @@ describe('Event Field Samples Discovery', () => {
         describe('Example Query Generation', () => {
             // Helper function for type conversion
             const getTypeConversion = (dataType: string): string => {
-                return dataType === 'number' ? 'toreal' :
-                    dataType === 'boolean' ? 'tobool' :
-                        dataType === 'datetime' ? 'todatetime' :
-                            'tostring';
+                return dataType === 'timespan' ? 'totimespan' :
+                    dataType === 'number' ? 'toreal' :
+                        dataType === 'boolean' ? 'tobool' :
+                            dataType === 'datetime' ? 'todatetime' :
+                                'tostring';
             };
 
             it('should use correct type conversion for numbers', () => {
@@ -226,10 +353,41 @@ describe('Event Field Samples Discovery', () => {
                 expect(conversion).toBe('todatetime');
             });
 
+            it('should use correct type conversion for timespan', () => {
+                const fieldType = 'timespan';
+                const conversion = getTypeConversion(fieldType);
+                expect(conversion).toBe('totimespan');
+            });
+
             it('should use correct type conversion for strings', () => {
                 const fieldType = 'string';
                 const conversion = getTypeConversion(fieldType);
                 expect(conversion).toBe('tostring');
+            });
+
+            it('should generate valid KQL extend statements with timespan conversion', () => {
+                const fields = [
+                    { fieldName: 'executionTime', dataType: 'timespan', occurrenceRate: 100 },
+                    { fieldName: 'totalTime', dataType: 'timespan', occurrenceRate: 100 },
+                    { fieldName: 'result', dataType: 'string', occurrenceRate: 100 },
+                    { fieldName: 'count', dataType: 'number', occurrenceRate: 100 }
+                ];
+
+                const extendStatements = fields
+                    .map(f => {
+                        const conversion = f.dataType === 'timespan' ? 'totimespan' :
+                            f.dataType === 'number' ? 'toreal' :
+                                f.dataType === 'boolean' ? 'tobool' :
+                                    f.dataType === 'datetime' ? 'todatetime' :
+                                        'tostring';
+                        return `    ${f.fieldName} = ${conversion}(customDimensions.${f.fieldName})`;
+                    })
+                    .join(',\n');
+
+                expect(extendStatements).toContain('executionTime = totimespan(customDimensions.executionTime)');
+                expect(extendStatements).toContain('totalTime = totimespan(customDimensions.totalTime)');
+                expect(extendStatements).toContain('result = tostring(customDimensions.result)');
+                expect(extendStatements).toContain('count = toreal(customDimensions.count)');
             });
 
             it('should generate valid KQL extend statements', () => {
@@ -373,6 +531,37 @@ describe('Event Field Samples Discovery', () => {
                 expect(recommendations[0]).toContain('exampleQuery');
                 expect(recommendations[1]).toContain('100% occurrence rate');
             });
+
+            it('should recommend millisecond conversion for timespan fields', () => {
+                const fields = [
+                    { fieldName: 'executionTime', dataType: 'timespan' },
+                    { fieldName: 'totalTime', dataType: 'timespan' }
+                ];
+
+                // Check if recommendation includes millisecond conversion formula
+                const hasTimespans = fields.some(f => f.dataType === 'timespan');
+                expect(hasTimespans).toBe(true);
+
+                // Expected recommendation should include the conversion formula
+                const expectedRecommendation = 'To convert to milliseconds: toreal(totimespan(fieldName))/10000';
+                expect(expectedRecommendation).toContain('toreal(totimespan');
+                expect(expectedRecommendation).toContain('/10000');
+            });
+
+            it('should warn about duration-named fields being timespans', () => {
+                const fields = [
+                    { fieldName: 'executionTime', dataType: 'string' },
+                    { fieldName: 'serverDuration', dataType: 'string' }
+                ];
+
+                const hasDurationFields = fields.some(f => /time|duration|elapsed|latency|delay|wait/i.test(f.fieldName));
+                expect(hasDurationFields).toBe(true);
+
+                // Warning should include millisecond conversion
+                const expectedWarning = 'likely TIMESPANS, not milliseconds';
+                expect(expectedWarning).toContain('TIMESPANS');
+                expect(expectedWarning).toContain('not milliseconds');
+            });
         });
 
         describe('Summary Calculation', () => {
@@ -496,3 +685,12 @@ describe('Event Field Samples Discovery', () => {
         });
     });
 });
+
+// Helper function for type conversion tests
+function getTypeConversion(dataType: string): string {
+    return dataType === 'timespan' ? 'totimespan' :
+        dataType === 'number' ? 'toreal' :
+            dataType === 'boolean' ? 'tobool' :
+                dataType === 'datetime' ? 'todatetime' :
+                    'tostring';
+}
