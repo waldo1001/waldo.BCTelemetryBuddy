@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **VS Code Integrated Authentication**: Native Azure authentication using VS Code's built-in Microsoft authentication provider ([#68](https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/68))
+  - New `vscode_auth` authentication flow - **now the default and recommended option**
+  - Zero prerequisites: no Azure CLI installation, no manual tenant configuration
+  - Seamless sign-in using your existing VS Code Microsoft account
+  - Implemented VSCodeAuthService for token management and refresh
+  - Token automatically passed to MCP server via environment variable
+  - Updated Setup Wizard with "VS Code Authentication" option (marked as easiest)
+  - Updated Profile Wizard to support vscode_auth configuration
+  - Added validation button to verify VS Code authentication in wizards
+  - Changed default authFlow from azure_cli to vscode_auth in package.json
+  - Comprehensive test coverage with 383 new test cases for vscodeAuthService
+  - **Limitation**: Not recommended for guest users in external tenants (use Azure CLI or Device Code instead)
+  - **Thanks to [@michvllni](https://github.com/michvllni) for this excellent contribution!** 🙏
+
+### Changed
+- **MCP Provider**: Enhanced token passing to MCP server for Copilot Chat
+  - Made `provideMcpServerDefinitions()` async to retrieve VS Code auth tokens
+  - Reads authFlow from `.bctb-config.json` instead of VS Code settings
+  - Automatically retrieves and passes VS Code auth token when using vscode_auth
+  - Improved error handling with detailed troubleshooting messages
+  - Token lifecycle: extension requests → passed to MCP → cached for 1 hour → auto-refresh
+
+### Fixed
+- **Config Schema**: Added `vscode_auth` to config-schema.json enum to fix linting errors
+- **Tenant Authentication**: Improved tenant-specific authentication for multi-tenant scenarios
+- **Token Caching**: Tokens now cached and reused if valid for >5 minutes to reduce API calls
+
 ## [1.2.10] - 2025-12-04
 
 ### Fixed

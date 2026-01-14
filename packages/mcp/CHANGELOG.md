@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **VS Code Integrated Authentication**: Added native VS Code authentication support for seamless Azure authentication ([#68](https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/68))
+  - New `vscode_auth` authentication flow using VS Code's built-in Microsoft authentication provider
+  - Zero prerequisites - no Azure CLI installation or tenant configuration needed
+  - Token passed from VS Code extension to MCP via `BCTB_ACCESS_TOKEN` environment variable
+  - Automatic token caching and refresh (1-hour cache, auto-refresh on expiry)
+  - Updated AuthService to support vscode_auth flow with comprehensive error handling
+  - Added tenant-specific authentication support for multi-tenant scenarios
+  - Comprehensive test coverage (35 auth tests, all passing)
+  - **Limitation**: VS Code auth doesn't support guest users in external tenants - use Azure CLI or Device Code auth instead
+  - **Thanks to [@michvllni](https://github.com/michvllni) for this excellent contribution!** 🙏
 - **Timespan Detection for Duration Fields**: Enhanced field analysis to detect and guide agents about Business Central telemetry duration fields
   - Added `isTimespanValue()` helper that detects timespan format (`dd.hh:mm:ss.fffffff` or `hh:mm:ss.fffffff`)
   - Automatically flags duration fields (executionTime, totalTime, serverTime, etc.) as probable timespans
