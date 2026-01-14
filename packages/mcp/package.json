@@ -8,6 +8,15 @@
     "bin": {
         "bctb-mcp": "./dist/cli.js"
     },
+    "files": [
+        "dist/**/*.js",
+        "dist/launcher.js",
+        "config-schema.json",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        ".bctb-config.template.json"
+    ],
     "scripts": {
         "build": "npm run build:shared && npm run build:server && npm run build:cli && npm run copy:launcher",
         "build:shared": "cd ../shared && npm run build",
