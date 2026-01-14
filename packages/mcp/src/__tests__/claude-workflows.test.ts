@@ -654,9 +654,9 @@ describe('Claude Desktop Integration Workflows', () => {
         it('should warn when config file not found', () => {
             const nonexistentPath = path.join(tempDir, 'nonexistent.json');
 
-            // When explicit path is provided but doesn't exist, loadConfigFromFile will throw
+            // When explicit path is provided but doesn't exist, loadConfigFromFile returns null
             // This is expected behavior - user specified a path that doesn't exist
-            expect(() => loadConfigFromFile(nonexistentPath)).toThrow();
+            expect(loadConfigFromFile(nonexistentPath)).toBeNull();
 
             // When no path is provided and no config found anywhere, returns null
             // (We can't easily test this without mocking fs, so we test the explicit path case)

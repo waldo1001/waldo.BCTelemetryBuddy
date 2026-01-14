@@ -163,6 +163,7 @@ export function validateConfig(config: MCPConfig): string[] {
  */
 export function loadConfigFromFile(configPath?: string, profileName?: string, silent: boolean = false): MCPConfig | null {
     let filePath: string | null = null;
+    let explicitPathProvided = false;
 
     // Discovery order (as per refactoring plan):
     // 1. --config CLI argument
@@ -172,7 +173,15 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
 
     // Try each location in order until we find a config file
     if (configPath) {
-        filePath = path.resolve(configPath);
+        explicitPathProvided = true;
+        const resolvedPath = path.resolve(configPath);
+        if (fs.existsSync(resolvedPath)) {
+            filePath = resolvedPath;
+        }
+        // If explicit path provided but doesn't exist, don't fallback to other locations
+        if (!filePath) {
+            return null;
+        }
     }
 
     // Check BCTB_WORKSPACE_PATH first (VSCode extension sets this)

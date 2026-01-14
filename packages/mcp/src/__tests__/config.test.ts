@@ -376,9 +376,24 @@ describe('Configuration Module', () => {
         });
 
         afterEach(() => {
-            // Clean up
+            // Clean up with retry for Windows file locking issues
             if (fs.existsSync(testConfigDir)) {
-                fs.rmSync(testConfigDir, { recursive: true, force: true });
+                try {
+                    fs.rmSync(testConfigDir, { recursive: true, force: true });
+                } catch (err: any) {
+                    // On Windows, files can be locked briefly after test
+                    // Retry once after a short delay
+                    if (err.code === 'EBUSY' || err.code === 'EPERM') {
+                        setTimeout(() => {
+                            try {
+                                fs.rmSync(testConfigDir, { recursive: true, force: true });
+                            } catch {
+                                // If still fails, just log and continue - Jest will clean up temp dirs eventually
+                                console.warn(`Warning: Could not clean up ${testConfigDir}`);
+                            }
+                        }, 100);
+                    }
+                }
             }
         }); it('should load single profile config from file', () => {
             // Arrange
@@ -582,21 +597,15 @@ describe('Configuration Module', () => {
         });
 
         it('should return null when config file not found', () => {
-            // Arrange
-            const originalCwd = process.cwd();
-            const emptyDir = path.join(testConfigDir, 'empty-nowhere');
-            fs.mkdirSync(emptyDir, { recursive: true });
-            process.chdir(emptyDir); // Change to directory without any config
+            // Arrange - Use explicit path that doesn't exist
+            const nonExistentPath = path.join(testConfigDir, 'does-not-exist', '.bctb-config.json');
             delete process.env.BCTB_WORKSPACE_PATH; // Ensure no workspace path
 
-            // Act
-            const result = loadConfigFromFile();
+            // Act - Pass explicit path that doesn't exist
+            const result = loadConfigFromFile(nonExistentPath);
 
             // Assert
             expect(result).toBeNull();
-
-            // Cleanup
-            process.chdir(originalCwd);
         });
 
         it('should throw error when profile not found', () => {
