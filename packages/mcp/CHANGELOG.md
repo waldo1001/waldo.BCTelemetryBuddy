@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-01-14
+
+### Fixed
+- **CI Tests**: Added `--forceExit` flag to Jest tests to prevent worker processes from hanging in CI environment
+- **NPM Package**: Excluded test files, source files, and source maps from published package (reduced package size from 49.9 MB to ~5 MB)
+
 ## [2.3.0] - 2026-01-14
 
 ### Added

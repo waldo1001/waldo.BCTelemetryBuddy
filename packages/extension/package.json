@@ -2,7 +2,7 @@
     "name": "bc-telemetry-buddy",
     "displayName": "BC Telemetry Buddy",
     "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "publisher": "waldoBC",
     "license": "MIT",
     "icon": "images/waldo.png",

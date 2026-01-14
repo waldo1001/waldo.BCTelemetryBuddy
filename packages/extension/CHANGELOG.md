@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-01-14
+
+### Changed
+- **MCP Dependency**: Updated bundled MCP to v2.3.1 with CI test improvements and smaller package size
+
 ## [1.3.0] - 2026-01-14
 
 ### Added
