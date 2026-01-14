@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.3] - 2026-01-14
+
+### Fixed
+- **Config Loading**: Fixed `loadConfigFromFile()` to return null when explicit path doesn't exist (instead of falling back to home directory)
+- **Test Reliability**: Improved test cleanup with retry logic for Windows file locking issues
+- **CI**: All 193 MCP tests now pass reliably
+
 ## [2.3.2] - 2026-01-14
 
 ### Changed

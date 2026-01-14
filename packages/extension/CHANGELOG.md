@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-01-14
+
+### Changed
+- **MCP Dependency**: Updated bundled MCP to v2.3.3 with improved config loading and test reliability
+
+### Fixed
+- **Agent Installation**: Fixed incomplete variable renaming in `installAgentsCommand` function (chatmodeDir → agentDir, existingChatmodes → existingAgents)
+- **CI Build**: Resolved TypeScript compilation errors that prevented v1.3.2 from building in CI
+
 ## [1.3.2] - 2026-01-14
 
 ### Changed
