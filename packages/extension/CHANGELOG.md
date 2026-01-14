@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-01-14
+
+### Changed
+- **Agent Terminology**: Renamed "chatmodes" to "agents" throughout for clearer terminology
+  - Command renamed: `bctb.installChatmodes` → `bctb.installAgents`
+  - File path changed: `.github/chatmodes/` → `.github/agents/`
+  - File extension: `.chatmode.md` → `.agent.md`
+  - Interface renamed: `ChatmodeDefinition` → `AgentDefinition`
+  - Updated all documentation references
+- **Mandatory Field Sampling**: Agent definitions now require calling `get_event_field_samples` before query creation to verify data types (prevents timespan vs milliseconds confusion)
+
 ## [1.3.1] - 2026-01-14
 
 ### Changed

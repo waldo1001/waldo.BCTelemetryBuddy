@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.2] - 2026-01-14
+
+### Changed
+- **Agent Documentation**: Terminology change from "chatmodes" to "agents" for clearer communication (GitHub Copilot agent definitions)
+- **Mandatory Field Sampling**: Documentation now emphasizes calling `get_event_field_samples` before creating queries to prevent incorrect datatype assumptions
+
 ## [2.3.1] - 2026-01-14
 
 ### Fixed
