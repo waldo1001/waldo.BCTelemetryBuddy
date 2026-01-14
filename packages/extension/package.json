@@ -160,12 +160,13 @@
                 "bctb.mcp.authFlow": {
                     "type": "string",
                     "enum": [
+                        "vscode_auth",
                         "azure_cli",
                         "device_code",
                         "client_credentials"
                     ],
-                    "default": "azure_cli",
-                    "description": "Authentication flow to use (azure_cli uses 'az login' cached credentials, device_code requires browser login each time, client_credentials uses service principal)",
+                    "default": "vscode_auth",
+                    "description": "Authentication flow to use (vscode_auth uses VS Code's built-in authentication - easiest, azure_cli uses 'az login' cached credentials, device_code requires browser login each time, client_credentials uses service principal)",
                     "scope": "resource"
                 },
                 "bctb.mcp.applicationInsights.appId": {

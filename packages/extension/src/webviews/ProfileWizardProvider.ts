@@ -391,7 +391,8 @@ export class ProfileWizardProvider {
                 <label for="authFlow">Authentication Method *</label>
                 <span class="help-text">How to authenticate with Azure</span>
                 <select id="authFlow" name="authFlow" required>
-                    <option value="azure_cli">Azure CLI (recommended - uses 'az login')</option>
+                    <option value="vscode_auth">VS Code (easiest - recommended)</option>
+                    <option value="azure_cli">Azure CLI (uses 'az login')</option>
                     <option value="device_code">Device Code (browser login)</option>
                     <option value="client_credentials">Service Principal (automated)</option>
                 </select>
@@ -518,7 +519,13 @@ export class ProfileWizardProvider {
                 clientSecretGroup.classList.add('visible');
                 clientIdInput.required = true;
                 clientSecretInput.required = true;
+            } else if (e.target.value === 'device_code') {
+                clientIdGroup.classList.add('visible');
+                clientSecretGroup.classList.remove('visible');
+                clientIdInput.required = false;
+                clientSecretInput.required = false;
             } else {
+                // vscode_auth and azure_cli don't need client credentials
                 clientIdGroup.classList.remove('visible');
                 clientSecretGroup.classList.remove('visible');
                 clientIdInput.required = false;
@@ -625,7 +632,7 @@ export class ProfileWizardProvider {
                     const profile = message.profile;
                     document.getElementById('profileName').value = message.profileName;
                     document.getElementById('connectionName').value = profile.connectionName || '';
-                    document.getElementById('authFlow').value = profile.authFlow || 'azure_cli';
+                    document.getElementById('authFlow').value = profile.authFlow || 'vscode_auth';
                     document.getElementById('tenantId').value = profile.tenantId || '';
                     document.getElementById('applicationInsightsAppId').value = profile.applicationInsightsAppId || '';
                     document.getElementById('kustoClusterUrl').value = profile.kustoClusterUrl || 'https://ade.applicationinsights.io';

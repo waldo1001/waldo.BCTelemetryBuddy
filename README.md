@@ -23,7 +23,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 ## ✨ Features
 
 - **🧙 Setup Wizard**: Guided first-run configuration with Azure resource validation and connection testing
-- **🔐 Flexible Authentication**: Azure CLI (recommended), Device Code, or Client Credentials
+- **🔐 Flexible Authentication**: VS Code (easiest, recommended), Azure CLI, Device Code, or Client Credentials
 - **📊 Event Catalog & Schema Discovery**: Explore what telemetry events exist and their structure before querying
 - **💾 Smart Caching**: File-based caching with configurable TTL (default 1 hour)
 - **� Query Library**: Save queries organized by category; customer-specific queries automatically organized in `Companies/[CompanyName]/` folders
@@ -48,7 +48,7 @@ BC Telemetry Buddy: Setup Wizard
 The 5-step wizard guides you through:
 - **Step 1 - Workspace Check**: Ensures you have a workspace folder open
 - **Step 2 - Azure Configuration**: Enter your tenant ID and Application Insights details
-- **Step 3 - Authentication**: Choose Azure CLI (recommended), Device Code, or Client Credentials
+- **Step 3 - Authentication**: Choose VS Code (easiest, recommended), Azure CLI, Device Code, or Client Credentials
 - **Step 4 - Connection Testing**: Validates settings and tests your connection with a sample query
 - **Step 5 - Complete**: Saves settings and provides quick-start tips
 
