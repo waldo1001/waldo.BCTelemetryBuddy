@@ -1465,72 +1465,72 @@ async function showCacheStatsCommand(): Promise<void> {
  * Creates .github/chatmodes/BCTelemetryBuddy.chatmode.md in workspace
  */
 /**
- * Install multiple chatmodes command
- * Creates .github/chatmodes directory with all available chatmode files
+ * Install multiple agents command
+ * Creates .github/agents directory with all available agent files
  */
-async function installChatmodesCommand(): Promise<void> {
+async function installAgentsCommand(): Promise<void> {
     try {
         const workspacePath = getWorkspacePath();
         if (!workspacePath) {
             throw new Error('No workspace folder open');
         }
 
-        const chatmodeDir = path.join(workspacePath, '.github', 'chatmodes');
+        const agentDir = path.join(workspacePath, '.github', 'agents');
 
-        // Create .github/chatmodes directory if it doesn't exist
-        if (!fs.existsSync(chatmodeDir)) {
-            fs.mkdirSync(chatmodeDir, { recursive: true });
+        // Create .github/agents directory if it doesn't exist
+        if (!fs.existsSync(agentDir)) {
+            fs.mkdirSync(agentDir, { recursive: true });
         }
 
-        // Check which chatmodes already exist
-        const existingChatmodes: string[] = [];
-        const newChatmodes: string[] = [];
+        // Check which agents already exist
+        const existingAgents: string[] = [];
+        const newAgents: string[] = [];
 
-        for (const chatmode of CHATMODE_DEFINITIONS) {
-            const chatmodePath = path.join(chatmodeDir, chatmode.filename);
-            if (fs.existsSync(chatmodePath)) {
-                existingChatmodes.push(chatmode.title);
+        for (const agent of AGENT_DEFINITIONS) {
+            const agentPath = path.join(agentDir, agent.filename);
+            if (fs.existsSync(agentPath)) {
+                existingAgents.push(agent.title);
             } else {
-                newChatmodes.push(chatmode.title);
+                newAgents.push(agent.title);
             }
         }
 
-        // If all chatmodes already exist, show info message
-        if (existingChatmodes.length === CHATMODE_DEFINITIONS.length) {
+        // If all agents already exist, show info message
+        if (existingAgents.length === AGENT_DEFINITIONS.length) {
             const answer = await vscode.window.showInformationMessage(
-                `✅ All BC Telemetry Buddy chatmodes are already installed!\n\nLocation: .github/chatmodes/\n\n${existingChatmodes.map(t => `• ${t}`).join('\n')}`,
+                `✅ All BC Telemetry Buddy agents are already installed!\n\nLocation: .github/agents/\n\n${existingAgents.map(t => `• ${t}`).join('\n')}`,
                 'Open Folder', 'OK'
             );
             if (answer === 'Open Folder') {
-                const uri = vscode.Uri.file(chatmodeDir);
+                const uri = vscode.Uri.file(agentDir);
                 await vscode.commands.executeCommand('revealFileInOS', uri);
             }
             return;
         }
 
-        // Install new chatmodes
+        // Install new agents
         let installedCount = 0;
-        for (const chatmode of CHATMODE_DEFINITIONS) {
-            const chatmodePath = path.join(chatmodeDir, chatmode.filename);
-            if (!fs.existsSync(chatmodePath)) {
-                fs.writeFileSync(chatmodePath, chatmode.content, 'utf-8');
+        for (const agent of AGENT_DEFINITIONS) {
+            const agentPath = path.join(agentDir, agent.filename);
+            if (!fs.existsSync(agentPath)) {
+                fs.writeFileSync(agentPath, agent.content, 'utf-8');
                 installedCount++;
-                outputChannel.appendLine(`✓ Installed: ${chatmode.title} → ${chatmode.filename}`);
+                outputChannel.appendLine(`✓ Installed: ${agent.title} → ${agent.filename}`);
             }
         }
 
         // Show summary message
         const summaryLines: string[] = [];
         if (installedCount > 0) {
-            summaryLines.push(`✅ Installed ${installedCount} chatmode(s):`);
-            newChatmodes.forEach(title => summaryLines.push(`  • ${title}`));
+            summaryLines.push(`✅ Installed ${installedCount} agent(s):`);
+            newAgents.forEach(title => summaryLines.push(`  • ${title}`));
         }
-        if (existingChatmodes.length > 0) {
-            summaryLines.push(`\n⏭️  Already installed (${existingChatmodes.length}):`);
-            existingChatmodes.forEach(title => summaryLines.push(`  • ${title}`));
+        if (existingAgents.length > 0) {
+            summaryLines.push(`\n⏭️  Already installed (${existingAgents.length}):`);
+            existingAgents.forEach(title => summaryLines.push(`  • ${title}`));
         }
-        summaryLines.push(`\nLocation: .github/chatmodes/`);
-        summaryLines.push(`\n💡 Reload VS Code to activate the chatmodes.`);
+        summaryLines.push(`\nLocation: .github/agents/`);
+        summaryLines.push(`\n💡 Reload VS Code to activate the agents.`);
 
         const openFolder = await vscode.window.showInformationMessage(
             summaryLines.join('\n'),
@@ -1538,7 +1538,7 @@ async function installChatmodesCommand(): Promise<void> {
         );
 
         if (openFolder === 'Open Folder') {
-            const uri = vscode.Uri.file(chatmodeDir);
+            const uri = vscode.Uri.file(agentDir);
             await vscode.commands.executeCommand('revealFileInOS', uri);
         } else if (openFolder === 'Reload Window') {
             await vscode.commands.executeCommand('workbench.action.reloadWindow');
