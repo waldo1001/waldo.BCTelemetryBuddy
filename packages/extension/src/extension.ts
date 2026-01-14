@@ -8,7 +8,7 @@ import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
 import { ReleaseNotesProvider } from './webviews/ReleaseNotesProvider';
 import { registerChatParticipant } from './chatParticipant';
-import { CHATMODE_DEFINITIONS } from './chatmodeDefinitions';
+import { AGENT_DEFINITIONS } from './agentDefinitions';
 import { TelemetryService } from './services/telemetryService';
 import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
@@ -574,7 +574,7 @@ export function activate(context: vscode.ExtensionContext) {
         )),
         vscode.commands.registerCommand('bctb.clearCache', withCommandTelemetry('clearCache', () => clearCacheCommand())),
         vscode.commands.registerCommand('bctb.showCacheStats', withCommandTelemetry('showCacheStats', () => showCacheStatsCommand())),
-        vscode.commands.registerCommand('bctb.installChatmodes', withCommandTelemetry('installChatmodes', () => installChatmodesCommand())),
+        vscode.commands.registerCommand('bctb.installAgents', withCommandTelemetry('installAgents', () => installAgentsCommand())),
         vscode.commands.registerCommand('bctb.switchProfile', withCommandTelemetry('switchProfile', () => switchProfileCommand())),
         vscode.commands.registerCommand('bctb.refreshProfileStatusBar', withCommandTelemetry('refreshProfileStatusBar', () => refreshProfileStatusBarCommand())),
         vscode.commands.registerCommand('bctb.createProfile', withCommandTelemetry('createProfile', () => createProfileCommand())),
@@ -1544,10 +1544,10 @@ async function installChatmodesCommand(): Promise<void> {
             await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
 
-        outputChannel.appendLine(`✓ Chatmodes installation complete (${installedCount} new, ${existingChatmodes.length} existing)`);
+        outputChannel.appendLine(`✓ Agents installation complete (${installedCount} new, ${existingAgents.length} existing)`);
     } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to install chatmodes: ${err.message}`);
-        outputChannel.appendLine(`✗ Install chatmodes error: ${err.message}`);
+        vscode.window.showErrorMessage(`Failed to install agents: ${err.message}`);
+        outputChannel.appendLine(`✗ Install agents error: ${err.message}`);
         outputChannel.show();
     }
 }

@@ -32,7 +32,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 - **🗺️ Tenant Mapping**: Map friendly company names to Azure tenant IDs for customer queries
 - **🔒 Privacy-Focused**: Optional PII sanitization, workspace-scoped settings
 - **🤖 Chat Participant**: `@bc-telemetry-buddy` in GitHub Copilot Chat for expert BC telemetry analysis with MCP tool integration
-- **💬 Chatmode**: `#BCTelemetryBuddy` activates expert mode in Copilot Chat with specialized BC telemetry knowledge, KQL patterns, and systematic workflow guidance
+- **💬 Agent**: `#BCTelemetryBuddy` activates expert mode in Copilot Chat with specialized BC telemetry knowledge, KQL patterns, and systematic workflow guidance
 
 ## Quick Start
 
@@ -52,7 +52,7 @@ The 5-step wizard guides you through:
 - **Step 4 - Connection Testing**: Validates settings and tests your connection with a sample query
 - **Step 5 - Complete**: Saves settings and provides quick-start tips
 
-**Optional**: The wizard can also install the chatmode file (`.github/chatmodes/BCTelemetryBuddy.chatmode.md`) for enhanced Copilot Chat integration.
+**Optional**: The wizard can also install the agent file (`.github/agents/BCTelemetryBuddy.agent.md`) for enhanced Copilot Chat integration.
 
 **No manual configuration needed!** The wizard validates everything and saves to `.vscode/settings.json` automatically.
 
@@ -74,16 +74,16 @@ Available slash commands:
 - `/customer` - Customer-specific analysis workflow
 - `/explain` - Explain concepts or provide examples
 
-**With Chatmode** (optional enhanced mode):
+**With Agent** (optional enhanced mode):
 Activate `#BCTelemetryBuddy` in Copilot Chat for expert mode with comprehensive BC telemetry knowledge:
 ```
 #BCTelemetryBuddy show me all errors from last 24 hours
 #BCTelemetryBuddy analyze performance issues for Contoso
 ```
 
-To install chatmode:
+To install agent:
 - **Option 1**: Check the box in Setup Wizard Step 5 (automatic)
-- **Option 2**: Run command `BC Telemetry Buddy: Install Chatmode` (manual)
+- **Option 2**: Run command `BC Telemetry Buddy: Install Agents` (manual)
 - After installation, reload VS Code to activate
 
 **With @workspace** (follows systematic discovery workflow):

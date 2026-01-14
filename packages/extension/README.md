@@ -84,7 +84,7 @@ The setup wizard automatically appears on first activation and guides you throug
 | BC Telemetry Buddy: Run KQL From Document | Execute query from current `.kql` file |
 | BC Telemetry Buddy: Clear Cache | Delete all cached query results for fresh data |
 | BC Telemetry Buddy: Show Cache Statistics | Display cache size, entry count, and expiration info |
-| BC Telemetry Buddy: Install Chatmodes | Install GitHub Copilot chat mode definitions for BC Telemetry analysis |
+| BC Telemetry Buddy: Install Agents | Install GitHub Copilot agent definitions for BC Telemetry analysis |
 | BC Telemetry Buddy: Switch Profile | Switch between configured profiles (multi-profile setups) |
 | BC Telemetry Buddy: Create Profile | Create a new configuration profile |
 | BC Telemetry Buddy: Set Default Profile | Set the default profile for workspace |

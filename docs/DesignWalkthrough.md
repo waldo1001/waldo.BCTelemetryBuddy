@@ -1397,3 +1397,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-01-08**  Fixed PR labeler workflow permissions [Entry: 749c22d6-ea18-4d83-9042-f99aab6c5110]
   - **Why:** GitHub Actions labeler needed workflow-level write permissions to modify PR labels
   - **How:** Moved permissions block from job level to workflow level in pr-label.yml
+
+- **2026-01-14** — Mandatory field sampling and rename chatmodes to agents [Entry: a2f3e1c4-d5b6-7890-abcd-ef1234567890]
+  - **Why:** AI agents were making incorrect assumptions about data types (especially timespans vs milliseconds) without checking actual field samples first, leading to broken queries. Needed clearer terminology - 'agents' better represents GitHub Copilot agent instructions than 'chatmodes'.
+  - **How:** Added MANDATORY get_event_field_samples step to both agent workflows before ANY query creation, emphasized timespan verification for duration fields. Renamed chatmodeDefinitions.ts to agentDefinitions.ts, updated all interfaces/variables (ChatmodeDefinition\u2192AgentDefinition, CHATMODE_DEFINITIONS\u2192AGENT_DEFINITIONS), changed .github/chatmodes to .github/agents folder, updated .chatmode.md to .agent.md file extension, renamed installChatmodes command to installAgents (bctb.installAgents), updated all documentation/READMEs to use 'agent' terminology throughout.

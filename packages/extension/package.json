@@ -89,8 +89,8 @@
                 "title": "BC Telemetry Buddy: Show Cache Statistics"
             },
             {
-                "command": "bctb.installChatmodes",
-                "title": "BC Telemetry Buddy: Install Chatmodes"
+                "command": "bctb.installAgents",
+                "title": "BC Telemetry Buddy: Install Agents"
             },
             {
                 "command": "bctb.switchProfile",

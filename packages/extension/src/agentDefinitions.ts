@@ -1,19 +1,19 @@
 /**
- * Chatmode definitions for BC Telemetry Buddy
- * Each chatmode provides specialized instructions for GitHub Copilot
+ * Agent definitions for BC Telemetry Buddy
+ * Each agent provides specialized instructions for GitHub Copilot
  */
 
-export interface ChatmodeDefinition {
+export interface AgentDefinition {
     filename: string;
     title: string;
     content: string;
 }
 
 /**
- * BC Telemetry Buddy - General telemetry analysis chatmode
+ * BC Telemetry Buddy - General telemetry analysis agent
  */
-const BCTelemetryBuddyChatmode: ChatmodeDefinition = {
-    filename: 'BCTelemetryBuddy.chatmode.md',
+const BCTelemetryBuddyAgent: AgentDefinition = {
+    filename: 'BCTelemetryBuddy.agent.md',
     title: 'BC Telemetry Buddy - General Analysis',
     content: `---
 description: 'Expert assistant for analyzing Business Central telemetry data using KQL, with deep knowledge of BC events and performance optimization.'
@@ -123,19 +123,25 @@ When user mentions a company/customer name OR multiple profiles exist:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. Call mcp_bc_telemetry__get_event_field_samples for specific event IDs
-3. Review the example query and field structure provided
+2. **MANDATORY**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing queries
+3. **CRITICAL**: Verify actual data types from samples (especially duration fields - likely timespans, not milliseconds)
+4. Review the example query and field structure provided
+5. Check for timespan format (hh:mm:ss.fffffff) vs milliseconds in duration fields
 \`\`\`
 
 ### Step 3: Query and Analyze
 \`\`\`
-1. Use mcp_bc_telemetry__get_event_catalog (discovery) → field_samples → event_schema (if complex)
-2. Build tenant‑centric KQL: group by aadTenantId first, then enrich with company names via mapping
-3. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
-4. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
-5. Provide actionable insights and recommendations (performance, contention, failure patterns)
-6. Use mcp_bc_telemetry__get_recommendations to enrich output
-7. Save useful queries with mcp_bc_telemetry__save_query for reuse
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → **MANDATORY: field_samples** → event_schema (if complex)
+2. **ALWAYS call get_event_field_samples BEFORE writing ANY queries** - verify data types, especially:
+   - Duration fields (executionTime, totalTime, etc.) are PROBABLY timespans, not milliseconds
+   - Use samples to confirm format (hh:mm:ss.fffffff = timespan, needs conversion)
+   - String vs numeric fields (use tostring(), toint(), toreal() appropriately)
+3. Build tenant‑centric KQL: group by aadTenantId first, then enrich with company names via mapping
+4. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
+5. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
+6. Provide actionable insights and recommendations (performance, contention, failure patterns)
+7. Use mcp_bc_telemetry__get_recommendations to enrich output
+8. Save useful queries with mcp_bc_telemetry__save_query for reuse
 \`\`\`
 
 ### Tenant vs Company Clarification
@@ -228,7 +234,7 @@ YYYY-MM-DD_Description.md
 - \`Missing_Indexes_Analysis.md\` (all missing indexes)
 - \`README.md\` (executive summary)
 
-**Chatmode files:** Do NOT add dates (these are template/configuration files)
+**Agent files:** Do NOT add dates (these are template/configuration files)
 
 ### Generic Queries
 Save general-purpose queries under:
@@ -387,10 +393,10 @@ Help users understand their Business Central system health, performance, and usa
 };
 
 /**
- * BC Performance Analysis - Specialized chatmode for systematic performance analysis
+ * BC Performance Analysis - Specialized agent for systematic performance analysis
  */
-const BCPerformanceAnalysisChatmode: ChatmodeDefinition = {
-    filename: 'BCTelemetryBuddy.BCPerformanceAnalysis.chatmode.md',
+const BCPerformanceAnalysisAgent: AgentDefinition = {
+    filename: 'BCTelemetryBuddy.BCPerformanceAnalysis.agent.md',
     title: 'BC Performance Analysis - Systematic Performance Analysis',
     content: `---
 description: 'Expert assistant for systematic performance analysis of Business Central systems using telemetry data, specializing in deadlocks, lock timeouts, slow queries, and missing indexes.'
@@ -536,7 +542,13 @@ traces
 
 **NOTE**: RT0028 is the common deadlock event, but **verify with event catalog first**. Some environments may use different event IDs.
 
-**Before writing queries**, call \`mcp_bc_telemetry__get_event_field_samples\` for the deadlock event to understand its structure.
+**MANDATORY FIRST**: Call \`mcp_bc_telemetry__get_event_field_samples\` for the deadlock event to:
+- Understand the exact field structure and names
+- Verify data types (especially duration fields - likely timespans)
+- See sample values to confirm your assumptions
+- Get a ready-to-use example query
+
+**NEVER write queries without checking field samples first** - field names and types vary by BC version.
 
 **Query Pattern:**
 \`\`\`kql
@@ -573,7 +585,13 @@ traces
 - RT0012 (victim) + RT0020 (blocker timeout) - less common
 - Different event IDs entirely
 
-**Before writing queries**, call \`mcp_bc_telemetry__get_event_field_samples\` for BOTH victim and blocker events.
+**MANDATORY FIRST**: Call \`mcp_bc_telemetry__get_event_field_samples\` for BOTH victim and blocker events to:
+- Verify exact field names (snapshotData structure, sessionId fields, etc.)
+- Confirm data types (duration fields are PROBABLY timespans)
+- See actual sample values to understand the data format
+- Get ready-to-use example queries for correlation
+
+**DO NOT guess field names or types** - always verify with samples first.
 
 **CRITICAL**: Analyze BOTH events together to find victim-blocker relationships.
 
@@ -1172,7 +1190,7 @@ YYYY-MM-DD_Description.md
 - \`Missing_Indexes_Analysis.md\` (all missing indexes)
 - \`README.md\` (executive summary)
 
-**Chatmode files:** Do NOT add dates (these are template/configuration files)
+**Agent files:** Do NOT add dates (these are template/configuration files)
 
 ### Customer-Specific Analysis
 \`\`\`
@@ -1270,9 +1288,9 @@ Help users understand not just WHAT is slow, but WHY it's slow, HOW it impacts t
 };
 
 /**
- * All available chatmodes
+ * All available agents
  */
-export const CHATMODE_DEFINITIONS: ChatmodeDefinition[] = [
-    BCTelemetryBuddyChatmode,
-    BCPerformanceAnalysisChatmode
+export const AGENT_DEFINITIONS: AgentDefinition[] = [
+    BCTelemetryBuddyAgent,
+    BCPerformanceAnalysisAgent
 ];

@@ -450,7 +450,7 @@ customEvents
 
 - Main telemetry design: `Instructions/Telemetry-Design-and-Implementation.md`
 - Event catalog: Section 14 in telemetry design doc
-- BC telemetry patterns (for comparison): `chatmodeDefinitions.ts`
+- BC telemetry patterns (for comparison): `agentDefinitions.ts`
 - Configuration: `.vscode/settings.json` for telemetry profiles
 
 ## Quick Start

@@ -12,7 +12,7 @@ module.exports = {
         '!src/extension.ts',  // Requires VSCode environment, use test:integration for E2E tests
         '!src/webviews/SetupWizardProvider.ts',  // Large UI component (838 lines) with complex webview interactions requiring integration testing
         '!src/webviews/ProfileWizardProvider.ts',  // UI component (236 lines) with complex webview interactions requiring integration testing
-        '!src/chatmodeDefinitions.ts',  // Pure data (1031 lines of static chatmode content), no logic to test
+        '!src/agentDefinitions.ts',  // Pure data (1200+ lines of static agent content), no logic to test
         '!src/services/profileManager.ts',  // Profile management service (301 lines) - requires VSCode workspace API integration testing
         '!src/ui/profileStatusBar.ts'  // Status bar UI component (196 lines) - requires VSCode UI API integration testing
     ],

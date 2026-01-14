@@ -2467,3 +2467,7 @@ Change instructions an business logic to do this."
 =======
 ### Entry ID: 749c22d6-ea18-4d83-9042-f99aab6c5110 — 2026-01-08 14:45
 > "Fix GitHub Actions labeler workflow permissions issue - Resource not accessible by integration error"
+### Entry ID: a4a2d36e-0bff-401f-86c8-bffc1dc23cf4 — 2026-01-14 23:10
+> "We need to do more. We need to add to the chatmodes to ALWAYS take field samples before creating the actual queries, to make sure the right assumptions on datatypes are made. In that same process, rename 'chatmodes' to 'agents'"
+
+---
