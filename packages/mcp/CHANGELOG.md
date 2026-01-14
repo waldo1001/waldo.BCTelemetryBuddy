@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-01-14
+
 ### Added
 - **VS Code Integrated Authentication**: Added native VS Code authentication support for seamless Azure authentication ([#68](https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/68))
   - New `vscode_auth` authentication flow using VS Code's built-in Microsoft authentication provider
