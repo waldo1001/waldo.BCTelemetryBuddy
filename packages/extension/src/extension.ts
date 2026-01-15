@@ -629,37 +629,50 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             // Check if using VS Code authentication
+            // Only attempt authentication if we have valid configuration
             // Read authFlow from .bctb-config.json (not VS Code settings)
-            let authFlow: string;
+            let authFlow: string | undefined;
+            let hasValidConfig = false;
+
             try {
                 if (profileManager && profileManager.hasConfigFile()) {
                     const currentConfig = profileManager.getCurrentConfig();
+                    // Verify we have at least basic configuration
+                    hasValidConfig = !!(currentConfig.tenantId && currentConfig.appInsightsAppId);
                     authFlow = currentConfig.authFlow || 'azure_cli';
                 } else {
-                    // Fallback to VS Code settings if no config file
+                    // Check VS Code settings for configuration
+                    const tenantId = mcpConfig.get<string>('tenantId');
+                    const appInsightsId = mcpConfig.get<string>('applicationInsights.appId');
+                    hasValidConfig = !!(tenantId && appInsightsId);
                     authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
                 }
             } catch (error: any) {
                 outputChannel.appendLine(`[MCP Provider] ⚠️  Error reading auth flow from config: ${error.message}`);
-                // Fallback to VS Code settings
-                authFlow = mcpConfig.get<string>('authFlow', 'azure_cli');
+                hasValidConfig = false;
+                authFlow = undefined;
             }
 
-            if (authFlow === 'vscode_auth') {
+            // Only attempt VS Code authentication if we have valid configuration
+            if (hasValidConfig && authFlow === 'vscode_auth') {
                 try {
                     if (vscodeAuthService) {
-                        const accessToken = await vscodeAuthService.getAccessToken(true);
+                        // Check silently if already authenticated, don't prompt during activation
+                        const accessToken = await vscodeAuthService.getAccessToken(false);
                         if (accessToken) {
                             mcpEnv.BCTB_ACCESS_TOKEN = accessToken;
+                            outputChannel.appendLine('[MCP Provider] ✓ Using existing VS Code authentication session');
                         } else {
-                            outputChannel.appendLine('[MCP Provider] ⚠️  Failed to get VS Code authentication token');
+                            outputChannel.appendLine('[MCP Provider] ℹ️  VS Code authentication not available (sign-in required on first use)');
                         }
                     } else {
                         outputChannel.appendLine('[MCP Provider] ⚠️  VS Code authentication service not initialized');
                     }
                 } catch (error: any) {
-                    outputChannel.appendLine(`[MCP Provider] ❌ Error getting VS Code token: ${error.message}`);
+                    outputChannel.appendLine(`[MCP Provider] ❌ Error checking VS Code authentication: ${error.message}`);
                 }
+            } else if (!hasValidConfig && authFlow === 'vscode_auth') {
+                outputChannel.appendLine('[MCP Provider] ℹ️  Skipping authentication - no valid configuration found');
             }
 
             if (useBundled) {

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.4] - 2026-01-15
+
+### Fixed
+- **VS Code Authentication**: Fixed unwanted sign-in prompt on VSCode startup when using `vscode_auth` authentication flow
+  - Changed authentication check from eager (prompt on startup) to lazy (silent check only)
+  - Authentication now only prompts when actually needed (on first query execution)
+  - Added validation to skip authentication entirely when no valid configuration exists
+  - Prevents authentication attempts when tenantId or appInsightsAppId are not configured
+- **Agent Definitions**: Removed redundant tool references from agent definitions
+- **Documentation**: Fixed remaining 'chatmode' references to use correct 'agent' terminology in UserGuide and extension code
+
+### Changed
+- **Chat Participant**: Enhanced system prompt with detailed KQL guidance and best practices for BC telemetry analysis
+  - Added comprehensive KQL syntax rules and common mistakes to avoid
+  - Improved data type handling instructions (timespan vs milliseconds)
+  - Added mandatory field sampling requirement before query creation
+
 ## [1.3.3] - 2026-01-14
 
 ### Changed
