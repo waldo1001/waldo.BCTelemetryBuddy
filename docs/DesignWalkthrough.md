@@ -1404,3 +1404,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-01-15** — Documentation verification - fixed remaining chatmode references [Entry: a55a407c-3d54-451d-92ec-11646d1d839a]
   - **Why:** Ensure all user-facing documentation consistent with agent terminology after v2.3.3 release
   - **How:** Fixed JSDoc comment in extension.ts and UserGuide.md sections still using 'chatmode' instead of 'agent'
+- **2026-01-15** — Fixed VS Code authentication prompts and released v1.3.4 [Entry: 26b8b8bc-a7bc-4860-9f9e-338e4197aab1]
+  - **Why:** Users reported unwanted sign-in prompts on VSCode startup with vscode_auth
+  - **How:** Changed getAccessToken(true) to (false) for silent check, added config validation
+- **2026-01-15** — Fixed VS Code authentication prompts and released v1.3.4 [Entry: 26b8b8bc-a7bc-4860-9f9e-338e4197aab1]
+  - **Why:** Users reported unwanted sign-in prompts on VSCode startup with vscode_auth
+  - **How:** Changed getAccessToken(true) to (false) for silent check, added config validation, bumped version to 1.3.4
