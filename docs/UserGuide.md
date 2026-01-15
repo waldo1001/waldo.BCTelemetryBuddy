@@ -147,7 +147,7 @@ The **Setup Wizard** provides a guided, 5-step process with validation and testi
    - **Step 3 - Authentication**: Choose authentication method (Azure CLI recommended)
    - **Step 4 - Connection Testing**: Wizard validates settings and runs a test query
    - **Step 5 - Complete**: Settings are saved automatically, quick-start tips displayed
-   - **Optional**: Check "Install chatmode" to create `.github/chatmodes/BCTelemetryBuddy.chatmode.md` for enhanced Copilot Chat integration
+   - **Optional**: Check "Install agents" to create `.github/agents/*.agent.md` files for enhanced Copilot Chat integration
 
 **Benefits**: No manual JSON editing, one-click MCP installation, validation before saving, connection testing, clear error messages.
 
@@ -431,7 +431,7 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 | `BC Telemetry Buddy: Start MCP Server` | Start the MCP backend server for chat features |
 | `BC Telemetry Buddy: Run KQL Query` | Execute a KQL query directly (prompts for input) |
 | `BC Telemetry Buddy: Run KQL From Document` | Execute query from current `.kql` file |
-| `BC Telemetry Buddy: Install Chatmodes` | Install chat mode definitions for GitHub Copilot |
+| `BC Telemetry Buddy: Install Agents` | Install agent definitions for GitHub Copilot |
 | `BC Telemetry Buddy: Clear Cache` | Clear cached query results |
 | `BC Telemetry Buddy: Show Cache Statistics` | View cache usage stats |
 | `BC Telemetry Buddy: Switch Profile` | Switch between configured profiles |
@@ -633,9 +633,9 @@ The chat participant automatically distinguishes between:
 - **Information requests** (slash commands, "what is", "explain") → Provides knowledge directly
 - **Data requests** ("show me", "analyze", customer queries) → Executes MCP tools immediately
 
-#### 2. Chatmode: `#BCTelemetryBuddy` (Optional Enhanced Mode)
+#### 2. Agent: `#BCTelemetryBuddy` (Optional Enhanced Mode)
 
-Activate chatmode for comprehensive BC telemetry expert guidance:
+Activate agent for comprehensive BC telemetry expert guidance:
 
 ```
 #BCTelemetryBuddy show me all errors from last 24 hours
@@ -643,17 +643,17 @@ Activate chatmode for comprehensive BC telemetry expert guidance:
 ```
 
 **Installation Options:**
-- **Option 1**: Check "Install chatmode" in Setup Wizard Step 5 (automatic)
-- **Option 2**: Run command `BC Telemetry Buddy: Install Chatmode` from Command Palette (manual)
+- **Option 1**: Check "Install agents" in Setup Wizard Step 5 (automatic)
+- **Option 2**: Run command `BC Telemetry Buddy: Install Agents` from Command Palette (manual)
 
-After installation, reload VS Code to activate. The chatmode file is created at `.github/chatmodes/BCTelemetryBuddy.chatmode.md`.
+After installation, reload VS Code to activate. Agent files are created at `.github/agents/*.agent.md`.
 
-**Chatmode vs Chat Participant:**
+**Agent vs Chat Participant:**
 - **Chat Participant** (`@bc-telemetry-buddy`): Per-message expert assistance, executes MCP tools on demand
-- **Chatmode** (`#BCTelemetryBuddy`): Entire conversation context with expert guidance, KQL patterns, systematic workflow
+- **Agent** (`#BCTelemetryBuddy`): Entire conversation context with expert guidance, KQL patterns, systematic workflow
 
 **Customization:**
-You can edit `.github/chatmodes/BCTelemetryBuddy.chatmode.md` to customize:
+You can edit `.github/agents/*.agent.md` files to customize:
 - YAML frontmatter: description, tools array
 - Markdown content: System instructions, patterns, workflows
 - Reload VS Code after changes

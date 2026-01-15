@@ -1461,8 +1461,8 @@ async function showCacheStatsCommand(): Promise<void> {
 }
 
 /**
- * Command: Install BC Telemetry Buddy chatmode
- * Creates .github/chatmodes/BCTelemetryBuddy.chatmode.md in workspace
+ * Command: Install BC Telemetry Buddy agents
+ * Creates .github/agents/*.agent.md files in workspace for GitHub Copilot integration
  */
 /**
  * Install multiple agents command
