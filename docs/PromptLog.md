@@ -2471,3 +2471,7 @@ Change instructions an business logic to do this."
 > "We need to do more. We need to add to the chatmodes to ALWAYS take field samples before creating the actual queries, to make sure the right assumptions on datatypes are made. In that same process, rename 'chatmodes' to 'agents'"
 
 ---
+### Entry ID: a55a407c-3d54-451d-92ec-11646d1d839a — 2026-01-15 08:27
+> "read all docs and verify is all is still ok"
+
+---
