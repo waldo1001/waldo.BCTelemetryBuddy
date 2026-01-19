@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-01-19
+
+### Fixed
+- **Build Errors**: Fixed TypeScript compilation errors that prevented CI builds from succeeding
+  - Fixed broken template literal syntax in chatParticipant.ts system prompt
+  - Fixed incorrect property reference `appInsightsAppId` → `applicationInsightsAppId` in extension.ts configuration validation
+
 ## [1.3.4] - 2026-01-15
 
 ### Fixed
