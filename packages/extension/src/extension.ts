@@ -638,7 +638,7 @@ export function activate(context: vscode.ExtensionContext) {
                 if (profileManager && profileManager.hasConfigFile()) {
                     const currentConfig = profileManager.getCurrentConfig();
                     // Verify we have at least basic configuration
-                    hasValidConfig = !!(currentConfig.tenantId && currentConfig.appInsightsAppId);
+                    hasValidConfig = !!(currentConfig.tenantId && currentConfig.applicationInsightsAppId);
                     authFlow = currentConfig.authFlow || 'azure_cli';
                 } else {
                     // Check VS Code settings for configuration
