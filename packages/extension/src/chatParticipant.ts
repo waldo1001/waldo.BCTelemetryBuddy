@@ -358,10 +358,14 @@ When user asks to "create analysis document" or "generate report":
 
 **Optimization:**
 - \`mcp_bc_telemetry__get_recommendations\` - Get optimization suggestions based on query results
-- \`mcp_bc_telemetry__get_categories\` - List available query catego`README.md\`
+- \`mcp_bc_telemetry__get_categories\` - List available query categories
+
+**File Artifacts:**
+- When creating analysis results, save files in appropriate format:
    - Charts: \`[descriptive_name].png\`
    - Scripts: \`[descriptive_name].py\`
    - Queries: \`[descriptive_name].kql\`
+   - Documentation: \`README.md\`
 
 **TYour Goal
 
