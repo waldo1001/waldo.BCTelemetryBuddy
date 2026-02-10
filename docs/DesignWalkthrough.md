@@ -1434,3 +1434,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-10**  Released extension v1.3.7 (corrected version bump) [Entry: fe520e7b-96e5-436e-9d38-c529f1c1b450]
   - **Why:** VS Code Marketplace cannot publish same version twice - v1.3.6 was released without implementation code
   - **How:** Bumped to v1.3.7, committed, tagged, and pushed - this release contains all PATH diagnostics improvements
+- **2026-02-10**  Fixed mcpInstaller test timeout [Entry: 23948862-92b7-45f8-9c52-f1be4f40294b]
+  - **Why:** Test timed out because it didn't mock npm config get prefix command and showWarningMessage API
+  - **How:** Added showWarningMessage to vscode mock, mocked npm config get prefix command in failed test
