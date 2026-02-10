@@ -1428,3 +1428,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-10**  Released extension v1.3.6 with PATH diagnostics [Entry: adfeaa41-0f3f-4d70-80c5-8a5f5d5ecdc3]
   - **Why:** Patch release with MCP installation improvements: version fallback, PATH diagnostics, actionable buttons, and clean reinstall
   - **How:** Bumped extension to v1.3.6, updated CHANGELOG, committed, tagged, and pushed to trigger marketplace publish
+- **2026-02-10**  Committed v1.3.6 implementation files [Entry: 10cb5b9c-62d7-4e79-9186-c90f6a34fbc9]
+  - **Why:** Implementation code was missing from initial version bump commit
+  - **How:** Committed mcpInstaller.ts, SetupWizardProvider.ts, tests, and docs with all PATH fixes
