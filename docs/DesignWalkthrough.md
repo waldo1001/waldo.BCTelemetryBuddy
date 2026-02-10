@@ -1410,3 +1410,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-01-15** — Fixed VS Code authentication prompts and released v1.3.4 [Entry: 26b8b8bc-a7bc-4860-9f9e-338e4197aab1]
   - **Why:** Users reported unwanted sign-in prompts on VSCode startup with vscode_auth
   - **How:** Changed getAccessToken(true) to (false) for silent check, added config validation, bumped version to 1.3.4
+- **2026-02-10**  Fixed 'Failed to create URL' error in MCP telemetry tracking [Entry: a24e0430-91ec-42d1-baee-d629b8bcf42c]
+  - **Why:** Application Insights SDK was trying to parse query names as URLs in trackDependency calls, causing stderr warnings that confused Copilot
+  - **How:** Changed trackDependency calls to pass actual API endpoint URL as data parameter, moving query name to properties field

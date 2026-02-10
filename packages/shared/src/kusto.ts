@@ -78,14 +78,15 @@ export class KustoService {
             const durationMs = Date.now() - startTime;
             this.usageTelemetry.trackDependency(
                 'Kusto',
-                safeName,
+                url,  // Use actual URL instead of query name to prevent "Failed to create URL" error
                 durationMs,
                 true,
                 '200',
                 {
                     component: 'shared',
                     correlationId: correlationId || 'unknown',
-                    cacheHit: 'false'
+                    cacheHit: 'false',
+                    queryName: safeName  // Move query name to properties
                 }
             );
 
@@ -100,15 +101,17 @@ export class KustoService {
                 console.error(`Kusto query failed (${status}):`, message);
 
                 // Track failed dependency call
+                const url = `https://api.applicationinsights.io/v1/apps/${this.appInsightsAppId}/query`;
                 this.usageTelemetry.trackDependency(
                     'Kusto',
-                    safeName,
+                    url,  // Use actual URL instead of query name to prevent "Failed to create URL" error
                     durationMs,
                     false,
                     String(status || 'error'),
                     {
                         component: 'shared',
                         correlationId: correlationId || 'unknown',
+                        queryName: safeName,  // Move query name to properties
                         errorCategory: status === 400 ? 'InvalidQuery' :
                             status === 401 || status === 403 ? 'AuthenticationError' :
                                 status === 429 ? 'RateLimitExceeded' : 'Unknown'
@@ -128,15 +131,17 @@ export class KustoService {
             }
 
             // Track failed dependency call for non-axios errors
+            const url = `https://api.applicationinsights.io/v1/apps/${this.appInsightsAppId}/query`;
             this.usageTelemetry.trackDependency(
                 'Kusto',
-                safeName,
+                url,  // Use actual URL instead of query name to prevent "Failed to create URL" error
                 durationMs,
                 false,
                 'error',
                 {
                     component: 'shared',
                     correlationId: correlationId || 'unknown',
+                    queryName: safeName,  // Move query name to properties
                     errorCategory: 'Unknown'
                 }
             );

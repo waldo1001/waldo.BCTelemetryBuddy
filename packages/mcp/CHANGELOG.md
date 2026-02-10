@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.4] - 2026-02-10
+
+### Fixed
+- **Telemetry Tracking**: Fixed "Failed to create URL" error in stderr logs. Application Insights SDK was trying to parse query names as URLs in dependency tracking. Now passes actual API endpoint URL to prevent SDK warnings that confused LLM agents.
+
 ## [2.3.3] - 2026-01-14
 
 ### Fixed

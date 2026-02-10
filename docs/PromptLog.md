@@ -2479,3 +2479,7 @@ Change instructions an business logic to do this."
 > "Fix VS Code authentication prompts on startup and release extension v1.3.4"
 
 ---
+### Entry ID: a24e0430-91ec-42d1-baee-d629b8bcf42c  2026-02-10 12:32
+> "I'm getting this output a lot .. and copilot decides to conclude that the "query_telemetry" tool is disabled... - [MCP] n Failed to create URL.,TypeError: Invalid URL"
+
+---
