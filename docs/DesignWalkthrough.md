@@ -1413,3 +1413,18 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-10**  Fixed 'Failed to create URL' error in MCP telemetry tracking [Entry: a24e0430-91ec-42d1-baee-d629b8bcf42c]
   - **Why:** Application Insights SDK was trying to parse query names as URLs in trackDependency calls, causing stderr warnings that confused Copilot
   - **How:** Changed trackDependency calls to pass actual API endpoint URL as data parameter, moving query name to properties field
+- **2026-02-10**  Fixed setup wizard showing v? for MCP version when not in PATH [Entry: 2b14ede0-1517-4fed-ad45-4fb22da7706d]
+  - **Why:** getMCPVersion() failed when bctb-mcp binary not in PATH, causing setup wizard to show v? instead of actual version
+  - **How:** Added fallback to extract version from 'npm list' output when 'bctb-mcp --version' fails
+- **2026-02-10**  Added actionable buttons for MCP PATH issue [Entry: fc2d3c7f-1d94-421e-8fa7-71acd83047f3]
+  - **Why:** User feedback: Instead of just showing version via fallback, be proactive and help fix the PATH issue
+  - **How:** Added 'Restart VS Code' and 'Reinstall MCP' buttons to PATH warning in setup wizard, with handler for workbench.action.reloadWindow
+- **2026-02-10**  Implemented clean uninstall before MCP reinstall [Entry: 376ee058-0581-4592-8fd8-dda11fb843d4]
+  - **Why:** User feedback: When updating MCP that's already installed, should uninstall first to ensure clean reinstall and PATH setup
+  - **How:** Added uninstallMCP() helper function, modified installMCP() to call uninstall first when update=true and MCP is installed, updated tests
+- **2026-02-10**  Added diagnostics for npm global bin not in PATH [Entry: bef4a76e-45d9-4a8e-b546-e5e375e34b00]
+  - **Why:** User's npm global directory (C:\Users\SDadmin\AppData\Roaming\npm) is not in system PATH, causing bctb-mcp to be unfindable even after install and restart
+  - **How:** Enhanced installMCP() to detect npm prefix, diagnose PATH issue, and provide platform-specific instructions to add npm global bin to PATH permanently
+- **2026-02-10**  Released extension v1.3.6 with PATH diagnostics [Entry: adfeaa41-0f3f-4d70-80c5-8a5f5d5ecdc3]
+  - **Why:** Patch release with MCP installation improvements: version fallback, PATH diagnostics, actionable buttons, and clean reinstall
+  - **How:** Bumped extension to v1.3.6, updated CHANGELOG, committed, tagged, and pushed to trigger marketplace publish

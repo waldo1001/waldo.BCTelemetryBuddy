@@ -41,10 +41,18 @@ export async function isMCPInPath(): Promise<boolean> {
  */
 export async function getMCPVersion(): Promise<string | null> {
     try {
+        // First try the CLI command if MCP is in PATH
         const { stdout } = await exec('bctb-mcp --version');
         return stdout.trim();
     } catch {
-        return null;
+        // Fallback: Extract version from npm list output (works even if not in PATH)
+        try {
+            const { stdout } = await exec('npm list -g bc-telemetry-buddy-mcp --depth=0');
+            const match = stdout.match(/bc-telemetry-buddy-mcp@([\d.]+)/);
+            return match ? match[1] : null;
+        } catch {
+            return null;
+        }
     }
 }
 
@@ -81,18 +89,51 @@ export async function getMCPStatus(): Promise<MCPStatus> {
 }
 
 /**
+ * Uninstall BC Telemetry Buddy MCP globally
+ */
+async function uninstallMCP(outputChannel: vscode.OutputChannel): Promise<void> {
+    outputChannel.appendLine('Removing existing MCP installation...');
+    const command = 'npm uninstall -g bc-telemetry-buddy-mcp';
+    outputChannel.appendLine(`Running: ${command}\n`);
+
+    try {
+        const { stdout, stderr } = await exec(command, {
+            timeout: 60000 // 1 minute timeout
+        });
+
+        if (stdout) {
+            outputChannel.appendLine(stdout);
+        }
+        if (stderr && !stderr.includes('npm WARN')) {
+            outputChannel.appendLine(`stderr: ${stderr}`);
+        }
+        outputChannel.appendLine('✓ Existing installation removed\n');
+    } catch (error: any) {
+        // If uninstall fails, log but continue with install
+        outputChannel.appendLine(`⚠ Warning: Uninstall failed (${error.message}), continuing with install...\n`);
+    }
+}
+
+/**
  * Install or update BC Telemetry Buddy MCP globally
  */
 export async function installMCP(update: boolean = false): Promise<boolean> {
     const outputChannel = vscode.window.createOutputChannel('BC Telemetry Buddy - MCP Installation');
     outputChannel.show();
 
-    // Use 'npm install -g bc-telemetry-buddy-mcp@latest' for both install and update
-    // npm update doesn't always work reliably for global packages
-    const command = 'npm install -g bc-telemetry-buddy-mcp@latest';
-
     const operationType = update ? 'Updating' : 'Installing';
-    outputChannel.appendLine(`${operationType} BC Telemetry Buddy MCP Server...`);
+    outputChannel.appendLine(`${operationType} BC Telemetry Buddy MCP Server...\n`);
+
+    // If updating, uninstall first for a clean reinstall (especially important for PATH issues)
+    if (update) {
+        const isInstalled = await isMCPInstalled();
+        if (isInstalled) {
+            await uninstallMCP(outputChannel);
+        }
+    }
+
+    // Install the latest version
+    const command = 'npm install -g bc-telemetry-buddy-mcp@latest';
     outputChannel.appendLine(`Running: ${command}\n`);
 
     try {
@@ -135,13 +176,56 @@ export async function installMCP(update: boolean = false): Promise<boolean> {
 
             if (!inPath) {
                 outputChannel.appendLine('\n⚠ Warning: bctb-mcp command not found in PATH.');
-                outputChannel.appendLine('You may need to restart VS Code or your terminal.');
-            }
 
-            vscode.window.showInformationMessage(
-                `✓ MCP v${version} ${update ? 'updated' : 'installed'} successfully!`,
-                'Close'
-            );
+                // Diagnose why it's not in PATH
+                try {
+                    const { stdout: npmPrefix } = await exec('npm config get prefix');
+                    const globalBinPath = npmPrefix.trim();
+
+                    outputChannel.appendLine(`\n📍 npm installs global packages to: ${globalBinPath}`);
+                    outputChannel.appendLine(`\n⚠ This directory is not in your PATH environment variable.`);
+                    outputChannel.appendLine(`\nTo fix this permanently:`);
+
+                    if (process.platform === 'win32') {
+                        outputChannel.appendLine(`1. Press Win + X, select "System"`);
+                        outputChannel.appendLine(`2. Click "Advanced system settings" → "Environment Variables"`);
+                        outputChannel.appendLine(`3. Under "User variables", find "Path" and click "Edit"`);
+                        outputChannel.appendLine(`4. Click "New" and add: ${globalBinPath}`);
+                        outputChannel.appendLine(`5. Click OK on all dialogs`);
+                        outputChannel.appendLine(`6. Restart VS Code completely (close all windows)`);
+                    } else {
+                        outputChannel.appendLine(`1. Add this line to your ~/.bashrc or ~/.zshrc:`);
+                        outputChannel.appendLine(`   export PATH="${globalBinPath}:$PATH"`);
+                        outputChannel.appendLine(`2. Restart your terminal or run: source ~/.bashrc`);
+                        outputChannel.appendLine(`3. Restart VS Code`);
+                    }
+
+                    outputChannel.appendLine(`\nAlternatively, you can use MCP features through VS Code without the CLI.`);
+                } catch (error) {
+                    outputChannel.appendLine('Please restart VS Code to update your environment PATH.');
+                }
+
+                // Offer to view instructions or restart
+                const choice = await vscode.window.showWarningMessage(
+                    `✓ MCP v${version} installed, but PATH setup required. See Output for instructions.`,
+                    'View Instructions',
+                    'Restart VS Code',
+                    'Later'
+                );
+
+                if (choice === 'View Instructions') {
+                    outputChannel.show();
+                } else if (choice === 'Restart VS Code') {
+                    await vscode.commands.executeCommand('workbench.action.reloadWindow');
+                }
+            } else {
+                outputChannel.appendLine('✓ MCP command available in PATH.');
+
+                vscode.window.showInformationMessage(
+                    `✓ MCP v${version} ${update ? 'updated' : 'installed'} successfully!`,
+                    'Close'
+                );
+            }
 
             return true;
         } else {

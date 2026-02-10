@@ -85,6 +85,9 @@ export class SetupWizardProvider {
                     case 'installMCP':
                         await this._performMCPInstall(message.update === true);
                         break;
+                    case 'restartVSCode':
+                        await vscode.commands.executeCommand('workbench.action.reloadWindow');
+                        break;
                     case 'manageProfiles':
                         await vscode.commands.executeCommand('bctb.manageProfiles');
                         break;
@@ -731,8 +734,13 @@ export class SetupWizardProvider {
                         <span id="mcpExtraInfo" style="font-size:11px; opacity:0.8;"></span>
                     </div>
                     <div id="mcpError" style="display:none; margin-top:10px; font-size:11px; color: var(--vscode-errorForeground);"></div>
-                    <div id="mcpPathWarning" style="display:none; margin-top:10px; padding:8px; background: var(--vscode-inputValidation-warningBackground); border-radius:3px; font-size:11px;">
-                        ⚠ <strong>MCP installed but not in PATH.</strong> You may need to restart VS Code or your terminal for the CLI command to work.
+                    <div id="mcpPathWarning" style="display:none; margin-top:10px; padding:10px; background: var(--vscode-inputValidation-warningBackground); border-radius:3px; font-size:11px;">
+                        <div style="margin-bottom:8px;">⚠ <strong>MCP installed but not in PATH.</strong> The CLI needs VS Code to restart to update your environment.</div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button id="btn-restart-vscode" class="secondary" style="font-size:11px; padding:4px 10px;">Restart VS Code</button>
+                            <button id="btn-reinstall-mcp" class="secondary" style="font-size:11px; padding:4px 10px;">Reinstall MCP</button>
+                            <span style="opacity:0.8;">or manually restart VS Code</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1259,6 +1267,8 @@ export class SetupWizardProvider {
             const btnInstallMcp = document.getElementById('btn-install-mcp');
             const btnUpdateMcp = document.getElementById('btn-update-mcp');
             const btnRefreshMcp = document.getElementById('btn-refresh-mcp');
+            const btnRestartVscode = document.getElementById('btn-restart-vscode');
+            const btnReinstallMcp = document.getElementById('btn-reinstall-mcp');
             const mcpStatusBadge = document.getElementById('mcpStatusBadge');
             const mcpExtraInfo = document.getElementById('mcpExtraInfo');
             const mcpError = document.getElementById('mcpError');
@@ -1280,6 +1290,17 @@ export class SetupWizardProvider {
                 btnRefreshMcp.addEventListener('click', () => {
                     btnRefreshMcp.disabled = true;
                     vscode.postMessage({ type: 'checkMCP' });
+                });
+            }
+            if (btnRestartVscode) {
+                btnRestartVscode.addEventListener('click', () => {
+                    vscode.postMessage({ type: 'restartVSCode' });
+                });
+            }
+            if (btnReinstallMcp) {
+                btnReinstallMcp.addEventListener('click', () => {
+                    btnReinstallMcp.disabled = true;
+                    vscode.postMessage({ type: 'installMCP', update: true });
                 });
             }
 

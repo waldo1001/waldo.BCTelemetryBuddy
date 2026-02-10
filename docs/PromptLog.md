@@ -2483,3 +2483,23 @@ Change instructions an business logic to do this."
 > "I'm getting this output a lot .. and copilot decides to conclude that the "query_telemetry" tool is disabled... - [MCP] n Failed to create URL.,TypeError: Invalid URL"
 
 ---
+### Entry ID: 2b14ede0-1517-4fed-ad45-4fb22da7706d  2026-02-10 12:53
+> "In the setup wizard, I see:  MCP Server (Model Context Protocol) Installed v? up to date  MCP installed but not in PATH."
+
+---
+### Entry ID: fc2d3c7f-1d94-421e-8fa7-71acd83047f3  2026-02-10 12:58
+> "If you need the fallback, isn't it better to re-install it decently?"
+
+---
+### Entry ID: 376ee058-0581-4592-8fd8-dda11fb843d4  2026-02-10 13:05
+> "When re-installing MCP server, it should first remove it, no? Because it WAS able to find it - so remove first, then install?"
+
+---
+### Entry ID: bef4a76e-45d9-4a8e-b546-e5e375e34b00  2026-02-10 13:17
+> "After the installation, I still get warning about bctb-mcp not in PATH. Even after restart, it's still not in path."
+
+---
+### Entry ID: adfeaa41-0f3f-4d70-80c5-8a5f5d5ecdc3  2026-02-10 16:27
+> "Release this new version as well -> patch -> yes"
+
+---

@@ -155,6 +155,41 @@ describe('mcpInstaller', () => {
             const result = await getMCPVersion();
             expect(result).toBe('1.2.3');
         });
+
+        it('should fallback to npm list when bctb-mcp command is not in PATH', async () => {
+            // Mock the exec calls - first fails (bctb-mcp --version), second succeeds (npm list)
+            let callCount = 0;
+            mockExec.mockImplementation((cmd, callback: any) => {
+                callCount++;
+                if (callCount === 1) {
+                    // First call: bctb-mcp --version fails
+                    callback(new Error('Command not found'), null);
+                } else if (callCount === 2) {
+                    // Second call: npm list succeeds
+                    callback(null, {
+                        stdout: 'bc-telemetry-buddy-mcp@2.1.0\n',
+                        stderr: ''
+                    });
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            const result = await getMCPVersion();
+            expect(result).toBe('2.1.0');
+            expect(mockExec).toHaveBeenCalledWith('bctb-mcp --version', expect.any(Function));
+            expect(mockExec).toHaveBeenCalledWith('npm list -g bc-telemetry-buddy-mcp --depth=0', expect.any(Function));
+        });
+
+        it('should return null when both version checks fail', async () => {
+            // Mock both bctb-mcp --version and npm list to fail
+            mockExec.mockImplementation((cmd, callback: any) => {
+                callback(new Error('Command failed'), null);
+                return {} as childProcess.ChildProcess;
+            });
+
+            const result = await getMCPVersion();
+            expect(result).toBeNull();
+        });
     });
 
     describe('getMCPPath', () => {
@@ -297,7 +332,13 @@ describe('mcpInstaller', () => {
             mockExec.mockImplementation((cmd, options: any, callback: any) => {
                 const cb = typeof options === 'function' ? options : callback;
 
-                if (cmd.includes('npm install -g bc-telemetry-buddy-mcp@latest')) {
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp')) {
+                    // MCP is installed
+                    setTimeout(() => cb(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('npm uninstall -g bc-telemetry-buddy-mcp')) {
+                    // Uninstall succeeds
+                    setTimeout(() => cb(null, { stdout: 'removed 1 package', stderr: '' }), 0);
+                } else if (cmd.includes('npm install -g bc-telemetry-buddy-mcp@latest')) {
                     setTimeout(() => cb(null, { stdout: 'Updated bc-telemetry-buddy-mcp@1.1.0', stderr: '' }), 0);
                 } else if (cmd.includes('--version')) {
                     setTimeout(() => cb(null, { stdout: '1.1.0', stderr: '' }), 0);
@@ -310,6 +351,59 @@ describe('mcpInstaller', () => {
             const result = await installMCP(true);
             expect(result).toBe(true);
             expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(expect.stringContaining('Updating'));
+        });
+
+        it('should uninstall before reinstalling when update=true and MCP is already installed', async () => {
+            const mockOutputChannel = {
+                show: jest.fn(),
+                appendLine: jest.fn(),
+                dispose: jest.fn()
+            };
+            (vscode.window.createOutputChannel as jest.Mock).mockReturnValue(mockOutputChannel);
+            (vscode.window.withProgress as jest.Mock).mockImplementation(async (options, task) => {
+                const progress = { report: jest.fn() };
+                return await task(progress, {} as any);
+            });
+            (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('Close');
+
+            const execCalls: string[] = [];
+            mockExec.mockImplementation((cmd, options: any, callback: any) => {
+                const cb = typeof options === 'function' ? options : callback;
+                execCalls.push(cmd);
+
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp')) {
+                    // MCP is installed
+                    setTimeout(() => cb(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('npm uninstall -g bc-telemetry-buddy-mcp')) {
+                    // Uninstall succeeds
+                    setTimeout(() => cb(null, { stdout: 'removed 1 package', stderr: '' }), 0);
+                } else if (cmd.includes('npm install -g bc-telemetry-buddy-mcp@latest')) {
+                    // Install succeeds
+                    setTimeout(() => cb(null, { stdout: 'Updated bc-telemetry-buddy-mcp@2.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('--version')) {
+                    setTimeout(() => cb(null, { stdout: '2.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('where.exe') || cmd.includes('which')) {
+                    setTimeout(() => cb(null, { stdout: '/usr/local/bin/bctb-mcp', stderr: '' }), 0);
+                }
+                return {} as childProcess.ChildProcess;
+            });
+
+            const result = await installMCP(true);
+
+            expect(result).toBe(true);
+            // Verify uninstall was called before install
+            const uninstallCmd = execCalls.find(cmd => cmd.includes('npm uninstall -g'));
+            const installCmd = execCalls.find(cmd => cmd.includes('npm install -g'));
+            expect(uninstallCmd).toBeDefined();
+            expect(installCmd).toBeDefined();
+
+            // Verify uninstall happened before install
+            const uninstallIndex = execCalls.findIndex(cmd => cmd.includes('npm uninstall'));
+            const installIndex = execCalls.findIndex(cmd => cmd.includes('npm install'));
+            expect(uninstallIndex).toBeGreaterThan(-1);
+            expect(installIndex).toBeGreaterThan(uninstallIndex);
+
+            expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(expect.stringContaining('Removing existing'));
         });
 
         it('should handle installation failure gracefully', async () => {
@@ -616,6 +710,8 @@ describe('mcpInstaller', () => {
 
                 if (cmd.includes('npm list -g bc-telemetry-buddy-mcp --depth=0')) {
                     setTimeout(() => cb(null, { stdout: 'bc-telemetry-buddy-mcp@1.0.0', stderr: '' }), 0);
+                } else if (cmd.includes('npm uninstall -g bc-telemetry-buddy-mcp')) {
+                    setTimeout(() => cb(null, { stdout: 'removed 1 package', stderr: '' }), 0);
                 } else if (cmd.includes('--version')) {
                     setTimeout(() => cb(null, { stdout: '1.0.0', stderr: '' }), 0);
                 } else if (cmd.includes('npm view')) {
