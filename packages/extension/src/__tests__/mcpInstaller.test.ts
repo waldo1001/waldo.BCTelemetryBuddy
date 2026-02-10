@@ -29,6 +29,7 @@ jest.mock('vscode', () => ({
         })),
         showInformationMessage: jest.fn(),
         showErrorMessage: jest.fn(),
+        showWarningMessage: jest.fn(),
         withProgress: jest.fn()
     },
     ProgressLocation: {
@@ -449,13 +450,17 @@ describe('mcpInstaller', () => {
                 const progress = { report: jest.fn() };
                 return await task(progress, {} as any);
             });
-            (vscode.window.showInformationMessage as jest.Mock).mockResolvedValue('Close');
+            (vscode.window.showWarningMessage as jest.Mock).mockResolvedValue('Later');
 
             mockExec.mockImplementation((cmd, options: any, callback: any) => {
                 const cb = typeof options === 'function' ? options : callback;
 
-                if (cmd.includes('npm install -g')) {
+                if (cmd.includes('npm list -g bc-telemetry-buddy-mcp')) {
+                    setTimeout(() => cb(new Error('Not installed'), null), 0);
+                } else if (cmd.includes('npm install -g')) {
                     setTimeout(() => cb(null, { stdout: 'Installed', stderr: '' }), 0);
+                } else if (cmd.includes('npm config get prefix')) {
+                    setTimeout(() => cb(null, { stdout: 'C:\\Users\\test\\AppData\\Roaming\\npm\n', stderr: '' }), 0);
                 } else if (cmd.includes('--version')) {
                     setTimeout(() => cb(null, { stdout: '1.0.0', stderr: '' }), 0);
                 } else if (cmd.includes('where.exe') || cmd.includes('which')) {
@@ -467,6 +472,12 @@ describe('mcpInstaller', () => {
             await installMCP(false);
             expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(
                 expect.stringContaining('not found in PATH')
+            );
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+                expect.stringContaining('PATH setup required'),
+                'View Instructions',
+                'Restart VS Code',
+                'Later'
             );
         });
     });
