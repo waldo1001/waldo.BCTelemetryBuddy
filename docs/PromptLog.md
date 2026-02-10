@@ -2507,3 +2507,7 @@ Change instructions an business logic to do this."
 > "Commit the implementation files now"
 
 ---
+### Entry ID: fe520e7b-96e5-436e-9d38-c529f1c1b450  2026-02-10 16:36
+> "You cannot publish the same version again, so up the version with a patch, and publish again!"
+
+---

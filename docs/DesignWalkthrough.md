@@ -1431,3 +1431,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-10**  Committed v1.3.6 implementation files [Entry: 10cb5b9c-62d7-4e79-9186-c90f6a34fbc9]
   - **Why:** Implementation code was missing from initial version bump commit
   - **How:** Committed mcpInstaller.ts, SetupWizardProvider.ts, tests, and docs with all PATH fixes
+- **2026-02-10**  Released extension v1.3.7 (corrected version bump) [Entry: fe520e7b-96e5-436e-9d38-c529f1c1b450]
+  - **Why:** VS Code Marketplace cannot publish same version twice - v1.3.6 was released without implementation code
+  - **How:** Bumped to v1.3.7, committed, tagged, and pushed - this release contains all PATH diagnostics improvements
