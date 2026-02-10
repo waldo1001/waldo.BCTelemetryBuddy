@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.6] - 2026-02-10
+## [1.3.7] - 2026-02-10
 
 ### Fixed
 - **MCP Installation**: Fixed setup wizard showing "v?" instead of actual version when MCP not in PATH
