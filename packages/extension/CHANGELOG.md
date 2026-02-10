@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-02-10
+
+### Fixed
+- **MCP Installation**: Fixed setup wizard showing "v?" instead of actual version when MCP not in PATH
+  - Added fallback to extract version from `npm list` output when `bctb-mcp --version` fails
+  - Enhanced version detection to work even when CLI command not accessible
+
+### Added
+- **PATH Diagnostics**: Added comprehensive diagnostics when npm global bin directory not in system PATH
+  - Detects npm prefix location and checks if it's in PATH environment variable
+  - Provides platform-specific instructions (Windows/Linux/macOS) to add npm global bin to PATH permanently
+  - Shows step-by-step fix instructions in Output channel
+- **Actionable Buttons**: Added "Restart VS Code" and "Reinstall MCP" buttons to PATH warning in setup wizard
+  - Users can restart VS Code directly from warning message to update environment PATH
+  - Reinstall option performs clean uninstall before reinstall for better PATH setup
+
+### Improved
+- **Clean Reinstall**: MCP updates now uninstall existing installation before reinstalling
+  - Ensures clean reinstall when "Reinstall MCP" or "Update MCP" is triggered
+  - Prevents PATH issues caused by corrupted or partial installations
+  - Logs uninstall process to Output channel for transparency
+
 ## [1.3.5] - 2026-01-19
 
 ### Fixed
