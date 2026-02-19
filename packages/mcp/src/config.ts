@@ -32,6 +32,9 @@ export interface MCPConfig {
 
     // External References
     references: Reference[];
+
+    // Config file path (set by loadConfigFromFile for profile switching)
+    configFilePath?: string;
 }
 
 export interface Reference {
@@ -263,7 +266,8 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
             tenantId: resolvedProfile.tenantId ?? '',
             authFlow: resolvedProfile.authFlow ?? 'azure_cli',
             applicationInsightsAppId: resolvedProfile.applicationInsightsAppId ?? '',
-            kustoClusterUrl: resolvedProfile.kustoClusterUrl ?? ''
+            kustoClusterUrl: resolvedProfile.kustoClusterUrl ?? '',
+            configFilePath: filePath!
         };
 
         return expandEnvironmentVariables(merged);
@@ -284,7 +288,8 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
         port: rawConfig.port ?? 52345,
         workspacePath: rawConfig.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd(),
         queriesFolder: rawConfig.queriesFolder ?? 'queries',
-        references: rawConfig.references ?? []
+        references: rawConfig.references ?? [],
+        configFilePath: filePath!
     };
 
     return expandEnvironmentVariables(singleConfig);
