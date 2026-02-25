@@ -869,4 +869,107 @@ describe('ToolHandlers', () => {
             expect(handlers.detectInitialProfile()).toBeNull();
         });
     });
+
+    // ─── configFilePath fallback (Issue #95 / PR #96 / PR #99) ──────────
+    //     Verifies that ToolHandlers (stdio mode) uses configFilePath
+    //     when the config file lives OUTSIDE workspacePath
+
+    describe('configFilePath — non-default config location (Issue #95)', () => {
+        const originalEnv = process.env;
+        let externalConfigDir: string;
+
+        beforeEach(() => {
+            process.env = { ...originalEnv };
+            externalConfigDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'bctb-th-configpath-'));
+        });
+
+        afterEach(() => {
+            process.env = originalEnv;
+            fs.rmSync(externalConfigDir, { recursive: true, force: true });
+        });
+
+        /** Write a multi-profile config to the external dir with a custom filename */
+        function createExternalConfig(): string {
+            const configPath = path.join(externalConfigDir, 'my-custom-config.json');
+            const config = {
+                defaultProfile: 'Alpha',
+                profiles: {
+                    _base: {
+                        authFlow: 'azure_cli',
+                        kustoClusterUrl: 'https://ade.applicationinsights.io'
+                    },
+                    Alpha: {
+                        extends: '_base',
+                        connectionName: 'Alpha Environment',
+                        applicationInsightsAppId: 'alpha-app-id',
+                        tenantId: 'alpha-tenant'
+                    },
+                    Beta: {
+                        extends: '_base',
+                        connectionName: 'Beta Environment',
+                        applicationInsightsAppId: 'beta-app-id',
+                        tenantId: 'beta-tenant'
+                    }
+                }
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+            return configPath;
+        }
+
+        test('detectInitialProfile uses configFilePath when set', () => {
+            const externalPath = createExternalConfig();
+            const { handlers } = createHandlersWithServices({ configFilePath: externalPath } as any);
+
+            delete process.env.BCTB_PROFILE;
+            const result = handlers.detectInitialProfile();
+            expect(result).toBe('Alpha');
+        });
+
+        test('detectInitialProfile returns null when configFilePath is not set and no file in workspacePath', () => {
+            const { handlers } = createHandlersWithServices();
+            const result = handlers.detectInitialProfile();
+            expect(result).toBeNull();
+        });
+
+        test('listProfiles returns multi-profile mode when configFilePath points outside workspacePath', () => {
+            const externalPath = createExternalConfig();
+            const { handlers } = createHandlersWithServices({ configFilePath: externalPath } as any);
+            const result = handlers.listProfiles();
+
+            expect(result.profileMode).toBe('multi');
+            const allNames = [
+                result.currentProfile.name,
+                ...result.availableProfiles.map((p: any) => p.name)
+            ];
+            expect(allNames).toContain('Alpha');
+            expect(allNames).toContain('Beta');
+            expect(allNames).not.toContain('_base');
+        });
+
+        test('listProfiles falls back to single mode when configFilePath is not set and no file in workspacePath', () => {
+            const { handlers } = createHandlersWithServices();
+            const result = handlers.listProfiles();
+
+            expect(result.profileMode).toBe('single');
+        });
+
+        test('switchProfile succeeds when configFilePath points outside workspacePath', () => {
+            const externalPath = createExternalConfig();
+            process.env.BCTB_WORKSPACE_PATH = externalConfigDir;
+            const { handlers } = createHandlersWithServices({ configFilePath: externalPath } as any);
+
+            const result = handlers.switchProfile('Beta');
+            expect(result.success).toBe(true);
+            expect(result.currentProfile.name).toBe('Beta');
+            expect(result.currentProfile.connectionName).toBe('Beta Environment');
+        });
+
+        test('switchProfile fails when configFilePath is not set and no file in workspacePath', () => {
+            const { handlers } = createHandlersWithServices();
+            const result = handlers.switchProfile('Beta');
+
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('No .bctb-config.json found');
+        });
+    });
 });
