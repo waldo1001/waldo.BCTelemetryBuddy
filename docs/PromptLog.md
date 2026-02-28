@@ -2846,3 +2846,23 @@ Change instructions an business logic to do this."
 > "Document, and patch release, please! + Go. When I ask to do something, why ask me for confirmation? Never do that - put it in your copilot-instructions!"
 
 ---
+### Entry ID: 04d7b71c-d151-49b5-9642-5aab55180bb7 — 2026-02-28 16:30
+> "In the Agent Monitoring Setup Step 5 (Defaults) - the 5 options have no explanation. Add inline help text and link to UserGuide docs."
+
+---
+### Entry ID: 8a877f48-c4cf-493d-8920-96dfbbf3c49a — 2026-02-28 16:34
+> "Add inline help descriptions to the 5 Notification Actions in Agent Monitoring Setup Step 4 (Teams Webhook, Email SMTP, Email Graph, Generic Webhook, Pipeline Trigger). Explain what each is, how to configure it, link to UserGuide."
+
+---
+### Entry ID: db572c81-14c9-4c43-b0ad-8ae09e0c3b7c — 2026-02-28 16:38
+> "Expand the 5 Notification Actions with full HOW-TO setup guides: how to create a Teams webhook, how to set up SMTP with free provider examples (Brevo, SendGrid), how to create an Azure AD App Registration for Graph email, generic webhook examples (Slack, Discord, custom API), and how to find Pipeline ID and create a PAT for Azure DevOps."
+
+---
+### Entry ID: a2ece83b-e55b-4260-97a5-1a55cea5f0e9 — 2026-02-28 16:45
+> "Pipeline secrets table shows too many secrets. Non-sensitive values (tenant ID, app insights, kusto URL, endpoint, deployment) are already in the config file. Slim down pipeline YAML templates, make secrets table dynamic based on LLM provider and configured actions."
+
+---
+### Entry ID: e660b81d-6b8b-42be-b543-a28d7f13db7b — 2026-02-28 16:53
+> "Create a patch release for this, including changelog. Do we have to update documentation after latest change?"
+
+---

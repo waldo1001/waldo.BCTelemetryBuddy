@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2025-06-04
+
+### Improved
+- **Pipeline Templates — Slimmed Secrets**: GitHub Actions and Azure DevOps templates now list only 3 required secrets (`BCTB_CLIENT_ID`, `BCTB_CLIENT_SECRET`, LLM API key) plus commented-out action secrets. Non-sensitive config values (tenant ID, App Insights ID, Kusto URL, LLM endpoint/deployment) are read from `.bctb-config.json` at runtime.
+- **Template READMEs — Split Secrets Tables**: Secrets tables split into "Always Required" and "Only If You Configured These Actions" sections with clear provenance notes
+
 ## [3.1.0] - 2026-02-26
 
 ### Added

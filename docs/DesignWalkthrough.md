@@ -1663,3 +1663,18 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-26** — Extension v3.1.1 patch release + no-confirmation rule [Entry: 5945bcf5-d3a5-4348-b020-2333f7009561]
   - **Why:** Release the Install Agents config-workspace fix; user wants Copilot to act without asking for confirmation.
   - **How:** Bumped extension to 3.1.1, committed/tagged/pushed. Added Rule 0 (never ask for confirmation) to copilot-instructions.md, removed confirmation steps from release workflow.
+- **2026-02-28** — Added inline help descriptions to Agent Defaults wizard step [Entry: 04d7b71c-d151-49b5-9642-5aab55180bb7]
+  - **Why:** The 5 settings in Step 5 (Defaults) had no explanation of what they control or how to configure them.
+  - **How:** Added a .field-help paragraph under each label with a concise explanation and default value. Added a link to the Advanced Agent Configuration section in UserGuide.md. Removed redundant info-box for Tool Scope since the help text now covers it.
+- **2026-02-28** — Added inline help to Notification Actions (Step 4) [Entry: 8a877f48-c4cf-493d-8920-96dfbbf3c49a]
+  - **Why:** The 5 action types had no explanation of what they do or how to obtain the required values.
+  - **How:** Added a .field-help paragraph inside each collapsible section explaining the action, how to get credentials/URLs, and what to write in the agent instruction. Added link to UserGuide Action Types section.
+- **2026-02-28** — Expanded Action Types with full setup guides [Entry: db572c81-14c9-4c43-b0ad-8ae09e0c3b7c]
+  - **Why:** Action Types section in UserGuide only had bare JSON config snippets; users need step-by-step instructions on HOW to obtain webhooks, credentials, and IDs.
+  - **How:** Rewrote the entire Action Types section in UserGuide.md with numbered setup steps, free-tier SMTP examples (Brevo, SendGrid), Azure AD App Registration walkthrough for Graph, Slack/Discord webhook examples, and PAT creation for DevOps. Updated wizard inline help to be concise with deep-links to each section.
+- **2026-02-28** — Slimmed down pipeline secrets and made table dynamic [Entry: a2ece83b-e55b-4260-97a5-1a55cea5f0e9]
+  - **Why:** Pipeline YAML templates and secrets table listed 11 secrets including non-sensitive values already in .bctb-config.json. Users were confused about why they needed so many secrets.
+  - **How:** Removed non-sensitive env vars from GitHub Actions and Azure DevOps YAML (tenant ID, app insights, kusto URL, endpoint, deployment — all in config file). Replaced static 11-row secrets table with dynamic one: always shows auth secrets (CLIENT_ID/SECRET + LLM key based on provider), then conditionally shows action secrets based on Step 4 config. Added explanatory info-boxes.
+- **2026-02-28** — Patch release: extension 3.1.2 / MCP 3.1.1 — pipeline secrets cleanup [Entry: e660b81d-6b8b-42be-b543-a28d7f13db7b]
+  - **Why:** Pipeline templates and docs still listed 11 env vars as secrets when only 3 are truly secrets (rest are in .bctb-config.json). Consistency pass for the wizard inline-help and pipeline cleanup work.
+  - **How:** Updated 5 stale files (UserGuide pipeline YAML, 2 YAML templates, 2 template READMEs) to match the slimmed wizard templates. Bumped extension 3.1.1→3.1.2, MCP 3.1.0→3.1.1 with changelog entries.

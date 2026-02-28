@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2] - 2025-06-04
+
+### Improved
+- **Agent Monitoring Setup Wizard — Inline Help**: All 5 notification action types (Teams Webhook, Email SMTP, Email Graph, Generic Webhook, Azure DevOps Pipeline Trigger) now show concise inline help with deep-links to the User Guide's HOW-TO setup guides
+- **Agent Monitoring Setup Wizard — Defaults Help**: All 5 agent-defaults settings (Max Tool Calls, Max Tokens, Context Window, Resolved Issue TTL, Tool Scope) now show inline explanations with recommended values
+- **Pipeline Secrets — Dynamic & Slimmed**: The CI/CD secrets table in the wizard is now dynamic — shows only the LLM key matching the configured provider, and only action secrets for actions actually configured. Reduced from 11 env vars to 3 required + commented optional, since non-sensitive values are read from `.bctb-config.json`
+- **Pipeline Step Intro**: Step 6 now explains the relationship between config file values and CI/CD secrets
+
 ## [3.1.1] - 2026-02-26
 
 ### Fixed

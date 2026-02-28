@@ -129,7 +129,7 @@ jobs:
   run-agents:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout workspace (includes agent state)
+      - name: Checkout workspace (includes agent state and .bctb-config.json)
         uses: actions/checkout@v4
         with:
           token: \${{ secrets.GITHUB_TOKEN }}
@@ -150,19 +150,17 @@ jobs:
             bctb-mcp agent run-all --once
           fi
         env:
+          # Auth — always required for CI/CD (client_credentials flow)
           BCTB_AUTH_FLOW: client_credentials
-          BCTB_TENANT_ID: \${{ secrets.BCTB_TENANT_ID }}
           BCTB_CLIENT_ID: \${{ secrets.BCTB_CLIENT_ID }}
           BCTB_CLIENT_SECRET: \${{ secrets.BCTB_CLIENT_SECRET }}
-          BCTB_APP_INSIGHTS_ID: \${{ secrets.BCTB_APP_INSIGHTS_ID }}
-          BCTB_KUSTO_CLUSTER_URL: \${{ secrets.BCTB_KUSTO_CLUSTER_URL }}
-          AZURE_OPENAI_ENDPOINT: \${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          # LLM API key — required (the endpoint/deployment are in .bctb-config.json)
           AZURE_OPENAI_KEY: \${{ secrets.AZURE_OPENAI_KEY }}
-          AZURE_OPENAI_DEPLOYMENT: gpt-4o
-          TEAMS_WEBHOOK_URL: \${{ secrets.TEAMS_WEBHOOK_URL }}
-          SMTP_PASSWORD: \${{ secrets.SMTP_PASSWORD }}
-          GRAPH_CLIENT_SECRET: \${{ secrets.GRAPH_CLIENT_SECRET }}
-          DEVOPS_PAT: \${{ secrets.DEVOPS_PAT }}
+          # Action secrets — only add the ones you configured in Step 4
+          # TEAMS_WEBHOOK_URL: \${{ secrets.TEAMS_WEBHOOK_URL }}
+          # SMTP_PASSWORD: \${{ secrets.SMTP_PASSWORD }}
+          # GRAPH_CLIENT_SECRET: \${{ secrets.GRAPH_CLIENT_SECRET }}
+          # DEVOPS_PAT: \${{ secrets.DEVOPS_PAT }}
 
       - name: Commit updated agent state
         run: |
@@ -206,19 +204,17 @@ steps:
   - script: bctb-mcp agent run-all --once
     displayName: "Run all agents"
     env:
+      # Auth — always required for CI/CD (client_credentials flow)
       BCTB_AUTH_FLOW: client_credentials
-      BCTB_TENANT_ID: $(BCTB_TENANT_ID)
       BCTB_CLIENT_ID: $(BCTB_CLIENT_ID)
       BCTB_CLIENT_SECRET: $(BCTB_CLIENT_SECRET)
-      BCTB_APP_INSIGHTS_ID: $(BCTB_APP_INSIGHTS_ID)
-      BCTB_KUSTO_CLUSTER_URL: $(BCTB_KUSTO_CLUSTER_URL)
-      AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+      # LLM API key — required (endpoint/deployment are in .bctb-config.json)
       AZURE_OPENAI_KEY: $(AZURE_OPENAI_KEY)
-      AZURE_OPENAI_DEPLOYMENT: gpt-4o
-      TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
-      SMTP_PASSWORD: $(SMTP_PASSWORD)
-      GRAPH_CLIENT_SECRET: $(GRAPH_CLIENT_SECRET)
-      DEVOPS_PAT: $(DEVOPS_PAT)
+      # Action secrets — only add the ones you configured in Step 4
+      # TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
+      # SMTP_PASSWORD: $(SMTP_PASSWORD)
+      # GRAPH_CLIENT_SECRET: $(GRAPH_CLIENT_SECRET)
+      # DEVOPS_PAT: $(DEVOPS_PAT)
 
   - script: |
       git config user.name "bctb-agent"
@@ -946,6 +942,14 @@ export class AgentMonitoringSetupProvider {
             gap: 2px;
         }
 
+        /* Field help descriptions */
+        .field-help {
+            font-size: 12px;
+            opacity: 0.75;
+            margin: 2px 0 8px 0;
+            line-height: 1.5;
+        }
+
         /* Info/warning boxes */
         .info-box {
             background: var(--vscode-inputValidation-infoBackground, rgba(0,120,212,0.1));
@@ -1216,13 +1220,16 @@ export class AgentMonitoringSetupProvider {
         <!-- ═══ Step 4: Actions Configuration ═══ -->
         <div class="step-content" id="step-4">
             <h2>Notification Actions</h2>
-            <p>Configure where agents send alerts. All actions are optional — expand a section to configure it.</p>
+            <p>Configure where agents send alerts. All actions are optional — expand a section to configure it.
+            See <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#action-types" style="color:var(--vscode-textLink-foreground);">Action Types</a> in the User Guide for step-by-step setup instructions for each action.</p>
 
             <!-- Teams Webhook -->
             <div class="collapsible-header" onclick="toggleCollapsible(this)">
                 📢 Teams Webhook
             </div>
             <div class="collapsible-body">
+                <p class="field-help">Post alert cards to a Microsoft Teams channel. To get a webhook URL: open Teams → pick a channel → <strong>Manage channel</strong> → <strong>Connectors</strong> (or <strong>Workflows</strong> in new Teams) → add <strong>Incoming Webhook</strong> → copy the URL.
+                <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#teams-webhook" style="color:var(--vscode-textLink-foreground);">Detailed setup guide →</a></p>
                 <label for="teams-url">Webhook URL</label>
                 <input type="url" id="teams-url" placeholder="https://your-org.webhook.office.com/...">
                 <div class="btn-row" style="justify-content:flex-start; margin-top:8px;">
@@ -1236,6 +1243,8 @@ export class AgentMonitoringSetupProvider {
                 ✉️ Email (SMTP)
             </div>
             <div class="collapsible-body">
+                <p class="field-help">Send email alerts via any SMTP relay (SendGrid, Mailgun, Brevo, etc.). Free tiers available — e.g. Brevo offers 300 emails/day, SendGrid 100/day. Your provider gives you the host, port, and credentials.
+                <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#email-via-smtp" style="color:var(--vscode-textLink-foreground);">Setup examples for SendGrid & Brevo →</a></p>
                 <label for="smtp-host">SMTP Host</label>
                 <input type="text" id="smtp-host" placeholder="smtp.sendgrid.net">
                 <div style="display:flex;gap:12px;">
@@ -1256,6 +1265,8 @@ export class AgentMonitoringSetupProvider {
                 ✉️ Email (Microsoft Graph)
             </div>
             <div class="collapsible-body">
+                <p class="field-help">Send email using Microsoft Graph API — ideal if your org uses Microsoft 365. Requires an Azure AD App Registration with <strong>Mail.Send</strong> permission. The <em>from</em> address must be a valid mailbox in your tenant.
+                <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#email-via-microsoft-graph" style="color:var(--vscode-textLink-foreground);">Step-by-step App Registration guide →</a></p>
                 <label for="graph-tenant-id">Tenant ID</label>
                 <input type="text" id="graph-tenant-id" placeholder="00000000-0000-0000-0000-000000000000">
                 <label for="graph-client-id">Client ID</label>
@@ -1272,6 +1283,8 @@ export class AgentMonitoringSetupProvider {
                 🔗 Generic Webhook
             </div>
             <div class="collapsible-body">
+                <p class="field-help">Send a JSON payload to any HTTP endpoint — Slack, Discord, PagerDuty, Zapier, Power Automate, or your own API. The agent posts alert details as JSON.
+                <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#generic-webhook-slack-pagerduty-etc" style="color:var(--vscode-textLink-foreground);">Examples for Slack, Discord & custom APIs →</a></p>
                 <label for="webhook-url">URL</label>
                 <input type="url" id="webhook-url" placeholder="https://your-endpoint.com/webhook">
                 <label for="webhook-method">Method</label>
@@ -1285,6 +1298,8 @@ export class AgentMonitoringSetupProvider {
                 🚀 Azure DevOps Pipeline Trigger
             </div>
             <div class="collapsible-body">
+                <p class="field-help">Trigger an Azure DevOps pipeline when the agent detects an issue — for automated remediation or rollback workflows. The PAT needs <strong>Build: Read & execute</strong> scope.
+                <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#azure-devops-pipeline-trigger" style="color:var(--vscode-textLink-foreground);">How to find Pipeline ID & create a PAT →</a></p>
                 <label for="pipeline-org">Organization URL</label>
                 <input type="url" id="pipeline-org" placeholder="https://dev.azure.com/your-org">
                 <label for="pipeline-project">Project</label>
@@ -1306,30 +1321,36 @@ export class AgentMonitoringSetupProvider {
         <!-- ═══ Step 5: Agent Defaults ═══ -->
         <div class="step-content" id="step-5">
             <h2>Agent Defaults</h2>
-            <p>These settings apply to all agents unless overridden per-agent. Defaults work well for most setups.</p>
+            <p>These settings apply to all agents unless overridden per-agent. Defaults work well for most setups.
+            See <a href="https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#advanced-agent-configuration" style="color:var(--vscode-textLink-foreground);">Advanced Agent Configuration</a> in the User Guide for full reference.</p>
 
             <label>Max Tool Calls per Run</label>
+            <p class="field-help">How many MCP tool calls (queries, analyses) the LLM may invoke in a single agent run before the run is aborted. Increase if your agent needs to query many tenants or event types; decrease to limit cost. Default: <strong>20</strong>.</p>
             <div class="slider-row">
                 <input type="range" id="def-max-tools" min="5" max="50" value="20" oninput="updateSliderValue('def-max-tools')">
                 <span class="slider-value" id="def-max-tools-val">20</span>
             </div>
 
             <label>Max Tokens (LLM response)</label>
+            <p class="field-help">Maximum number of tokens the LLM may generate per response. Higher values allow more detailed analysis but cost more. 4096 works well for most agents. Default: <strong>4096</strong>.</p>
             <div class="slider-row">
                 <input type="range" id="def-max-tokens" min="1024" max="8192" step="256" value="4096" oninput="updateSliderValue('def-max-tokens')">
                 <span class="slider-value" id="def-max-tokens-val">4096</span>
             </div>
 
             <label>Context Window (recent runs kept)</label>
+            <p class="field-help">Number of recent run results kept in the agent's state file. The agent uses these to detect trends across runs (e.g., "error rate rising for 3 consecutive checks"). Older runs are compacted into a summary. Default: <strong>5</strong>.</p>
             <div class="slider-row">
                 <input type="range" id="def-context-window" min="3" max="20" value="5" oninput="updateSliderValue('def-context-window')">
                 <span class="slider-value" id="def-context-window-val">5</span>
             </div>
 
             <label for="def-resolved-ttl">Resolved Issue TTL (days)</label>
+            <p class="field-help">How long resolved issues stay in the agent's memory before being pruned. This prevents the agent from re-alerting on issues it already tracked and closed. Default: <strong>30 days</strong>.</p>
             <input type="number" id="def-resolved-ttl" value="30" min="1" max="365" style="width:100px;">
 
             <label>Tool Scope</label>
+            <p class="field-help">Controls which MCP tools the agent is allowed to call. <strong>Read-only</strong> means the agent can only query and analyze telemetry data — it cannot write files. <strong>Full</strong> additionally allows <code>save_query</code> to persist queries to your workspace. Use Read-only unless you specifically want agents to save queries.</p>
             <div style="display:flex;gap:16px;margin-top:4px;">
                 <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
                     <input type="radio" name="def-tool-scope" value="read-only" checked> Read-only <span style="opacity:0.6;">(recommended)</span>
@@ -1337,9 +1358,6 @@ export class AgentMonitoringSetupProvider {
                 <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
                     <input type="radio" name="def-tool-scope" value="full"> Full <span style="opacity:0.6;">(allows save_query)</span>
                 </label>
-            </div>
-            <div class="info-box" style="margin-top:8px;">
-                <strong>Read-only</strong> restricts agents to query and analyze tools only. <strong>Full</strong> also allows saving queries to disk.
             </div>
 
             <div id="defaults-save-result" class="hidden" style="margin-top:12px;"></div>
@@ -1354,6 +1372,7 @@ export class AgentMonitoringSetupProvider {
         <div class="step-content" id="step-6">
             <h2>CI/CD Pipeline</h2>
             <p>Copy a pipeline template to run your agents on a schedule. You can skip this if you prefer to run agents manually.</p>
+            <p class="field-help">The pipeline checks out your repo (which includes <code>.bctb-config.json</code> with all non-sensitive settings), installs the MCP, and runs your agents. You only need to add <strong>actual secrets</strong> (API keys, passwords) to your CI/CD platform — everything else is already in the config file.</p>
 
             <div class="template-grid">
                 <div class="template-card" id="pl-github" onclick="selectPipeline('github-actions')">
@@ -1374,23 +1393,34 @@ export class AgentMonitoringSetupProvider {
 
             <div id="pipeline-secrets" class="hidden">
                 <h3>Required Secrets</h3>
+                <div class="info-box">
+                    <strong>Why so few secrets?</strong> Your <code>.bctb-config.json</code> is checked into the repo and already contains non-sensitive settings (tenant ID, App Insights ID, Kusto URL, LLM endpoint, deployment name, etc.). The pipeline reads those from the config file automatically. You only need to add <em>actual secrets</em> — keys and passwords that must not be in source control.
+                </div>
                 <p>Add these secrets to your <span id="secrets-platform">CI/CD</span> platform:</p>
+
+                <h4 style="margin-top:16px;">Always Required</h4>
                 <table class="secrets-table">
-                    <thead><tr><th>Secret</th><th>Required</th><th>Description</th></tr></thead>
+                    <thead><tr><th>Secret</th><th>Description</th></tr></thead>
                     <tbody>
-                        <tr><td><code>BCTB_TENANT_ID</code></td><td>Yes</td><td>Azure AD tenant ID</td></tr>
-                        <tr><td><code>BCTB_CLIENT_ID</code></td><td>Yes</td><td>App Registration client ID</td></tr>
-                        <tr><td><code>BCTB_CLIENT_SECRET</code></td><td>Yes</td><td>App Registration client secret</td></tr>
-                        <tr><td><code>BCTB_APP_INSIGHTS_ID</code></td><td>Yes</td><td>Application Insights App ID</td></tr>
-                        <tr><td><code>BCTB_KUSTO_CLUSTER_URL</code></td><td>Yes</td><td>Kusto / Log Analytics cluster URL</td></tr>
-                        <tr><td><code>AZURE_OPENAI_ENDPOINT</code></td><td>Yes</td><td>Azure OpenAI endpoint URL</td></tr>
-                        <tr><td><code>AZURE_OPENAI_KEY</code></td><td>Yes</td><td>Azure OpenAI API key</td></tr>
-                        <tr><td><code>TEAMS_WEBHOOK_URL</code></td><td>No</td><td>Teams webhook for notifications</td></tr>
-                        <tr><td><code>SMTP_PASSWORD</code></td><td>No</td><td>SMTP password / API key</td></tr>
-                        <tr><td><code>GRAPH_CLIENT_SECRET</code></td><td>No</td><td>Azure AD client secret for email</td></tr>
-                        <tr><td><code>DEVOPS_PAT</code></td><td>No</td><td>Azure DevOps PAT for pipeline triggers</td></tr>
+                        <tr><td><code>BCTB_CLIENT_ID</code></td><td>App Registration client ID (for <code>client_credentials</code> auth in CI/CD)</td></tr>
+                        <tr><td><code>BCTB_CLIENT_SECRET</code></td><td>App Registration client secret</td></tr>
+                        <tr id="secret-aoai-key"><td><code>AZURE_OPENAI_KEY</code></td><td>Azure OpenAI API key</td></tr>
+                        <tr id="secret-anthropic-key" class="hidden"><td><code>ANTHROPIC_API_KEY</code></td><td>Anthropic API key</td></tr>
                     </tbody>
                 </table>
+
+                <div id="action-secrets-section" class="hidden">
+                    <h4 style="margin-top:16px;">Based on Your Actions (Step 4)</h4>
+                    <table class="secrets-table">
+                        <thead><tr><th>Secret</th><th>Description</th></tr></thead>
+                        <tbody id="action-secrets-tbody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-box" style="margin-top:12px;">
+                    <strong>Not listed here:</strong> <code>BCTB_TENANT_ID</code>, <code>BCTB_APP_INSIGHTS_ID</code>, <code>BCTB_KUSTO_CLUSTER_URL</code>, <code>AZURE_OPENAI_ENDPOINT</code>, <code>AZURE_OPENAI_DEPLOYMENT</code> — these are already in your <code>.bctb-config.json</code> and don't need to be secrets.
+                </div>
             </div>
 
             <div id="pipeline-result" class="hidden" style="margin-top:12px;"></div>
@@ -1875,6 +1905,37 @@ export class AgentMonitoringSetupProvider {
             secretsEl.classList.remove('hidden');
             document.getElementById('secrets-platform').textContent =
                 type === 'github-actions' ? 'GitHub repository settings (Settings → Secrets and variables → Actions)' : 'Azure DevOps variable group (bctb-secrets)';
+
+            // Show correct LLM key based on provider selection in Step 2
+            const provider = document.getElementById('llm-provider').value;
+            document.getElementById('secret-aoai-key').classList.toggle('hidden', provider === 'anthropic');
+            document.getElementById('secret-anthropic-key').classList.toggle('hidden', provider !== 'anthropic');
+
+            // Build action secrets based on what was configured in Step 4
+            const actionSecrets = [];
+            if (document.getElementById('teams-url').value.trim()) {
+                actionSecrets.push({ name: 'TEAMS_WEBHOOK_URL', desc: 'Teams Incoming Webhook URL' });
+            }
+            if (document.getElementById('smtp-host').value.trim()) {
+                actionSecrets.push({ name: 'SMTP_PASSWORD', desc: 'SMTP password or API key' });
+            }
+            if (document.getElementById('graph-client-id').value.trim()) {
+                actionSecrets.push({ name: 'GRAPH_CLIENT_SECRET', desc: 'Azure AD client secret for Graph email' });
+            }
+            if (document.getElementById('pipeline-id').value.trim()) {
+                actionSecrets.push({ name: 'DEVOPS_PAT', desc: 'Azure DevOps Personal Access Token (Build: Read & execute)' });
+            }
+
+            const actionSection = document.getElementById('action-secrets-section');
+            const tbody = document.getElementById('action-secrets-tbody');
+            if (actionSecrets.length > 0) {
+                tbody.innerHTML = actionSecrets.map(s =>
+                    '<tr><td><code>' + s.name + '</code></td><td>' + s.desc + '</td></tr>'
+                ).join('');
+                actionSection.classList.remove('hidden');
+            } else {
+                actionSection.classList.add('hidden');
+            }
         }
 
         function copyPipeline() {

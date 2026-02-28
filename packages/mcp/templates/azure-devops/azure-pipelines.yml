@@ -27,19 +27,17 @@ steps:
   - script: bctb-mcp agent run-all --once
     displayName: "Run all agents"
     env:
+      # Auth — always required for CI/CD (client_credentials flow)
       BCTB_AUTH_FLOW: client_credentials
-      BCTB_TENANT_ID: $(BCTB_TENANT_ID)
       BCTB_CLIENT_ID: $(BCTB_CLIENT_ID)
       BCTB_CLIENT_SECRET: $(BCTB_CLIENT_SECRET)
-      BCTB_APP_INSIGHTS_ID: $(BCTB_APP_INSIGHTS_ID)
-      BCTB_KUSTO_CLUSTER_URL: $(BCTB_KUSTO_CLUSTER_URL)
-      AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+      # LLM API key — required (endpoint/deployment are in .bctb-config.json)
       AZURE_OPENAI_KEY: $(AZURE_OPENAI_KEY)
-      AZURE_OPENAI_DEPLOYMENT: gpt-4o
-      TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
-      SMTP_PASSWORD: $(SMTP_PASSWORD)
-      GRAPH_CLIENT_SECRET: $(GRAPH_CLIENT_SECRET)
-      DEVOPS_PAT: $(DEVOPS_PAT)
+      # Action secrets — uncomment the ones you configured
+      # TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
+      # SMTP_PASSWORD: $(SMTP_PASSWORD)
+      # GRAPH_CLIENT_SECRET: $(GRAPH_CLIENT_SECRET)
+      # DEVOPS_PAT: $(DEVOPS_PAT)
 
   - script: |
       git config user.name "bctb-agent"

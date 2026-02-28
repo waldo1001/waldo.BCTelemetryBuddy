@@ -21,19 +21,24 @@ Runs your BC Telemetry Buddy monitoring agents on an hourly schedule (or on-dema
 ### Step 2: Configure Secrets
 Add these secrets to your GitHub repo settings (Settings → Secrets and variables → Actions):
 
-| Secret Name | Required | Description | How to Obtain |
-|-------------|----------|-------------|---------------|
-| `BCTB_TENANT_ID` | Yes | Azure AD tenant ID | Azure Portal → Azure Active Directory → Overview |
-| `BCTB_CLIENT_ID` | Yes | App Registration client ID | Azure Portal → App Registrations → your app → Overview |
-| `BCTB_CLIENT_SECRET` | Yes | App Registration client secret | Azure Portal → App Registrations → Certificates & secrets |
-| `BCTB_APP_INSIGHTS_ID` | Yes | Application Insights App ID | Azure Portal → App Insights → API Access → Application ID |
-| `BCTB_KUSTO_CLUSTER_URL` | Yes | Kusto/Log Analytics cluster URL | Azure Portal → Log Analytics → Overview |
-| `AZURE_OPENAI_ENDPOINT` | Yes | Azure OpenAI endpoint | Azure Portal → Azure OpenAI → your resource → Keys and Endpoint |
-| `AZURE_OPENAI_KEY` | Yes | Azure OpenAI API key | Same as above |
-| `TEAMS_WEBHOOK_URL` | No | Teams Incoming Webhook for notifications | Teams → Channel → Connectors → Incoming Webhook |
-| `SMTP_PASSWORD` | No | SMTP relay password / API key for email-smtp action | Your SMTP provider (SendGrid, O365, etc.) |
-| `GRAPH_CLIENT_SECRET` | No | Azure AD client secret for email-graph action | Azure Portal → App Registrations → Certificates & secrets (app needs Mail.Send) |
-| `DEVOPS_PAT` | No | Azure DevOps PAT for pipeline triggers | Azure DevOps → User Settings → Personal Access Tokens |
+> **Note:** Non-sensitive values like `BCTB_TENANT_ID`, `BCTB_APP_INSIGHTS_ID`, `BCTB_KUSTO_CLUSTER_URL`, `AZURE_OPENAI_ENDPOINT`, and `AZURE_OPENAI_DEPLOYMENT` are already stored in your `.bctb-config.json` file (which is checked into the repo). You only need to add **actual secrets** here.
+
+**Always Required:**
+
+| Secret Name | Description | How to Obtain |
+|-------------|-------------|---------------|
+| `BCTB_CLIENT_ID` | App Registration client ID | Azure Portal → App Registrations → your app → Overview |
+| `BCTB_CLIENT_SECRET` | App Registration client secret | Azure Portal → App Registrations → Certificates & secrets |
+| `AZURE_OPENAI_KEY` | Azure OpenAI API key (or use `ANTHROPIC_API_KEY` for Claude) | Azure Portal → Azure OpenAI → Keys and Endpoint |
+
+**Only If You Configured These Actions:**
+
+| Secret Name | When Needed | How to Obtain |
+|-------------|------------|---------------|
+| `TEAMS_WEBHOOK_URL` | Teams webhook action | Teams → Channel → Manage channel → Connectors → Incoming Webhook |
+| `SMTP_PASSWORD` | Email (SMTP) action | Your SMTP provider (SendGrid, Brevo, etc.) |
+| `GRAPH_CLIENT_SECRET` | Email (Graph) action | Azure Portal → App Registrations → Certificates & secrets (app needs Mail.Send) |
+| `DEVOPS_PAT` | Pipeline trigger action | Azure DevOps → User Settings → Personal Access Tokens |
 
 ### Step 3: Copy the Pipeline File
 - Copy `telemetry-agent.yml` to `.github/workflows/`

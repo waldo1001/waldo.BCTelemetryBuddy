@@ -1752,12 +1752,12 @@ jobs:
       - run: bctb-mcp agent run-all --once
         env:
           BCTB_AUTH_FLOW: client_credentials
-          BCTB_TENANT_ID: ${{ secrets.BCTB_TENANT_ID }}
           BCTB_CLIENT_ID: ${{ secrets.BCTB_CLIENT_ID }}
           BCTB_CLIENT_SECRET: ${{ secrets.BCTB_CLIENT_SECRET }}
-          BCTB_APP_INSIGHTS_ID: ${{ secrets.BCTB_APP_INSIGHTS_ID }}
-          BCTB_KUSTO_CLUSTER_URL: ${{ secrets.BCTB_KUSTO_CLUSTER_URL }}
           AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          # Uncomment actions you use:
+          # TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          # SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       - name: Commit agent state
         run: |
           git config user.name "bctb-agent"
@@ -1767,19 +1767,36 @@ jobs:
           git push
 ```
 
-See the full template at `templates/github-actions/README.md` for detailed setup instructions including all required secrets.
+> **Note:** Non-sensitive values (tenant ID, App Insights ID, Kusto URL, LLM endpoint/deployment) are read from `.bctb-config.json` in the repo — you don't need them as secrets. Only add actual secrets: `BCTB_CLIENT_ID`, `BCTB_CLIENT_SECRET`, your LLM API key, and any action secrets you configured.
+
+See the full template at `templates/github-actions/README.md` for detailed setup instructions.
 
 #### Azure DevOps
 
-Copy `templates/azure-devops/azure-pipelines.yml` to your repository root. Create a variable group named `bctb-secrets` (Pipelines → Library → Variable groups) with the same variables as the GitHub Actions secrets above.
+Copy `templates/azure-devops/azure-pipelines.yml` to your repository root. Create a variable group named `bctb-secrets` (Pipelines → Library → Variable groups) with the same secrets listed above (`BCTB_CLIENT_ID`, `BCTB_CLIENT_SECRET`, `AZURE_OPENAI_KEY`, plus any action secrets).
 
 See `templates/azure-devops/README.md` for the complete setup guide.
 
 ### Action Types
 
-Agents can take actions when issues are detected. Configure the action in the `agents.actions` section of `.bctb-config.json`:
+Agents can take actions when issues are detected. Configure the action in the `agents.actions` section of `.bctb-config.json`. All actions are optional — configure only the ones you need.
+
+> **Tip:** To tell an agent to use an action, mention it naturally in the agent's `instruction.md`. For example: *"If failures persist for 3 checks, post to Teams"* or *"Send an email to the dev lead."* The agent will call the matching action automatically.
+
+---
 
 #### Teams Webhook
+
+Post rich alert cards to a Microsoft Teams channel.
+
+**How to create a Teams Incoming Webhook:**
+
+1. Open **Microsoft Teams** and navigate to the channel where you want alerts
+2. Click the **⋯** (more options) next to the channel name → **Manage channel**
+3. Go to **Connectors** (classic) or **Workflows** (new Teams):
+   - **Connectors (classic):** Search for **Incoming Webhook** → **Add** → give it a name (e.g. "Telemetry Agent") and optionally upload an icon → **Create** → copy the webhook URL
+   - **Workflows (new Teams):** Click **+ New workflow** → choose **"Post to a channel when a webhook request is received"** → follow the wizard → copy the webhook URL
+4. Paste the URL in the wizard or in your config:
 
 ```json
 "agents": {
@@ -1791,9 +1808,39 @@ Agents can take actions when issues are detected. Configure the action in the `a
 }
 ```
 
+> **Security:** Store the URL in the `TEAMS_WEBHOOK_URL` environment variable (or CI/CD secret) rather than hardcoding it. The `${TEAMS_WEBHOOK_URL}` syntax tells the agent runtime to read from the environment.
+
 In your instruction: `"If failures persist across 3 consecutive checks, post to Teams."`
 
+---
+
 #### Email via SMTP
+
+Send email alerts through any SMTP relay. This works with hosted services like SendGrid, Mailgun, Amazon SES, or your own mail server.
+
+**Example: Free SMTP with Brevo (formerly Sendinblue):**
+
+1. Sign up at [brevo.com](https://www.brevo.com/) (free tier: 300 emails/day)
+2. Go to **Settings** → **SMTP & API** → **SMTP**
+3. Note your credentials:
+   - Host: `smtp-relay.brevo.com`
+   - Port: `587`
+   - Username: your Brevo login email
+   - Password: the SMTP key shown on the page
+4. Store the password as `SMTP_PASSWORD` environment variable
+
+**Example: SendGrid:**
+
+1. Sign up at [sendgrid.com](https://sendgrid.com/) (free tier: 100 emails/day)
+2. Go to **Settings** → **API Keys** → **Create API Key** (select "Restricted Access" → enable "Mail Send")
+3. Note your credentials:
+   - Host: `smtp.sendgrid.net`
+   - Port: `587`
+   - Username: `apikey` (literal string)
+   - Password: the API key you just created
+4. Store the API key as `SMTP_PASSWORD` environment variable
+
+**Configuration:**
 
 ```json
 "agents": {
@@ -1803,39 +1850,79 @@ In your instruction: `"If failures persist across 3 consecutive checks, post to 
       "port": 587,
       "secure": false,
       "auth": { "user": "apikey" },
-      "from": "agent@yourcompany.com",
+      "from": "telemetry-agent@yourcompany.com",
       "defaultTo": ["devlead@yourcompany.com"]
     }
   }
 }
 ```
 
+| Field | Description |
+|-------|-------------|
+| `host` | SMTP server hostname |
+| `port` | `587` (STARTTLS) or `465` (TLS) |
+| `secure` | `true` for port 465 (TLS), `false` for port 587 (STARTTLS) |
+| `auth.user` | SMTP username |
+| `from` | Sender email address (must be verified with your SMTP provider) |
+| `defaultTo` | Array of default recipient addresses |
+
 Set `SMTP_PASSWORD` environment variable. In your instruction: `"Send an email to the dev lead."`
 
+---
+
 #### Email via Microsoft Graph
+
+Send email using the Microsoft Graph API — ideal if your organization uses Microsoft 365 and you want to send from a shared mailbox or service account without SMTP.
+
+**How to set up:**
+
+1. Go to the [Azure Portal](https://portal.azure.com/) → **Azure Active Directory** → **App registrations** → **New registration**
+2. Name it (e.g. "BC Telemetry Agent Email"), set **Supported account types** to "Single tenant", click **Register**
+3. On the app's **Overview** page, copy:
+   - **Application (client) ID** → this is your `clientId`
+   - **Directory (tenant) ID** → this is your `tenantId`
+4. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Application permissions** → search for `Mail.Send` → **Add** → click **Grant admin consent**
+5. Go to **Certificates & secrets** → **New client secret** → set an expiry → **Add** → copy the secret value immediately (you won't see it again)
+6. Store the secret as `GRAPH_CLIENT_SECRET` environment variable
+
+**Important:** The `from` address must be a valid mailbox in your tenant (e.g. a shared mailbox). The App Registration sends *on behalf of* that mailbox.
+
+**Configuration:**
 
 ```json
 "agents": {
   "actions": {
     "email-graph": {
-      "tenantId": "your-tenant-id",
-      "clientId": "your-client-id",
-      "from": "agent@yourcompany.com",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "clientId": "00000000-0000-0000-0000-000000000000",
+      "from": "telemetry-agent@yourcompany.com",
       "defaultTo": ["devlead@yourcompany.com"]
     }
   }
 }
 ```
 
-Set `GRAPH_CLIENT_SECRET` environment variable. App Registration needs `Mail.Send` permission.
+Set `GRAPH_CLIENT_SECRET` environment variable.
+
+---
 
 #### Generic Webhook (Slack, PagerDuty, etc.)
+
+Send a JSON payload to any HTTP endpoint. This is a flexible catch-all for integration with services like Slack, PagerDuty, Discord, Zapier, Power Automate, or your own REST APIs.
+
+The agent will POST a JSON body with the alert details (issue title, severity, affected tenants, etc.) to the URL you configure.
+
+**Example: Slack Incoming Webhook:**
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. Go to **Incoming Webhooks** → toggle **Activate** → **Add New Webhook to Workspace** → pick a channel → **Allow**
+3. Copy the webhook URL
 
 ```json
 "agents": {
   "actions": {
     "generic-webhook": {
-      "url": "https://hooks.slack.com/services/xxx/yyy/zzz",
+      "url": "https://hooks.slack.com/services/T00000/B00000/XXXXXXXXX",
       "method": "POST",
       "headers": { "Content-Type": "application/json" }
     }
@@ -1843,7 +1930,55 @@ Set `GRAPH_CLIENT_SECRET` environment variable. App Registration needs `Mail.Sen
 }
 ```
 
+**Example: Discord Webhook:**
+
+1. Open Discord → **Server Settings** → **Integrations** → **Webhooks** → **New Webhook**
+2. Pick a channel, copy the URL, and append `/slack` to use Slack-compatible format
+
+```json
+"generic-webhook": {
+  "url": "https://discord.com/api/webhooks/1234567890/abcdef/slack",
+  "method": "POST",
+  "headers": { "Content-Type": "application/json" }
+}
+```
+
+**Example: Custom API with auth:**
+
+```json
+"generic-webhook": {
+  "url": "https://your-api.com/alerts",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer your-api-key",
+    "Content-Type": "application/json"
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `url` | The endpoint to call |
+| `method` | `POST` (default) or `PUT` |
+| `headers` | Optional JSON object of HTTP headers (use for auth tokens, content type, etc.) |
+
+---
+
 #### Azure DevOps Pipeline Trigger
+
+Trigger an Azure DevOps pipeline when the agent detects an issue — useful for automated remediation, rollback workflows, or kicking off a diagnostic build.
+
+**How to set up:**
+
+1. In **Azure DevOps**, go to your project → **Pipelines** → open the pipeline you want to trigger
+2. The **Pipeline ID** is the number in the URL: `https://dev.azure.com/org/project/_build?definitionId=42` → ID is `42`
+3. Create a **Personal Access Token (PAT)**:
+   - Click your profile icon (top-right) → **Personal access tokens** → **New Token**
+   - Scope: **Build** → **Read & execute**
+   - Set an expiry and copy the token
+4. Store the PAT as `DEVOPS_PAT` environment variable
+
+**Configuration:**
 
 ```json
 "agents": {
@@ -1858,6 +1993,8 @@ Set `GRAPH_CLIENT_SECRET` environment variable. App Registration needs `Mail.Sen
 ```
 
 Set `DEVOPS_PAT` environment variable.
+
+> **Tip:** The agent passes the issue details as pipeline parameters, so your triggered pipeline can read them and act accordingly (e.g. run diagnostics, create a work item, or initiate a rollback).
 
 ### LLM Provider Configuration
 
