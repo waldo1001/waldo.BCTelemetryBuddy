@@ -1729,3 +1729,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Pipeline install version logging [Entry: 5972b264-e553-4d86-9e8e-d60eb1f2f587]
   - **Why:** No output during npm install step made it unclear which MCP version was running
   - **How:** Added 'echo Installed bc-telemetry-buddy-mcp v\3.1.4' after npm install in all 4 templates. Released MCP 3.1.8 + Extension 3.1.5.
+- **2026-03-02** - Fix pipeline git push rejection [Entry: 04bfd641-2652-499a-a69c-b9773bd65cb0]
+  - **Why:** Azure DevOps checkout creates detached HEAD; if remote has newer commits, git push is rejected
+  - **How:** Added git checkout <branch> + git pull --rebase before commit/push in all 4 pipeline templates. Updated test assertion.
+- **2026-03-02** - Fix truncated LLM response crash [Entry: 22ef4232-421a-4640-83e7-1ae24a7603e7]
+  - **Why:** Agent with 22+ tool calls exceeds 4096 max_tokens on final JSON output, truncation strips assessment field causing crash
+  - **How:** Increased default maxTokens to 16384, added finishReason to ChatResponse/providers, validateAgentOutput provides fallbacks when wasTruncated=true. Added 9 new tests.

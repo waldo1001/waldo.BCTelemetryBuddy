@@ -259,6 +259,12 @@ export class AgentRuntime {
             } else {
                 // LLM is done reasoning — parse final output
                 console.log(`\n── Agent finished reasoning ──`);
+
+                // Detect truncated output
+                if (response.finishReason === 'length') {
+                    console.log(`  ⚠ Response was TRUNCATED (hit max_tokens=${this.config.maxTokens}). Consider increasing maxTokens in config.`);
+                }
+
                 if (response.content) {
                     // Try to extract assessment from the structured output
                     const assessmentMatch = response.content.match(/"assessment"\s*:\s*"([^"]+)"/);
@@ -266,7 +272,7 @@ export class AgentRuntime {
                         console.log(`  📋 Assessment: ${assessmentMatch[1].substring(0, 300)}`);
                     }
                 }
-                const output = parseAgentOutput(response.content);
+                const output = parseAgentOutput(response.content, response.finishReason === 'length');
 
                 // 4. Execute actions
                 const executedActions = await this.actionDispatcher.dispatch(

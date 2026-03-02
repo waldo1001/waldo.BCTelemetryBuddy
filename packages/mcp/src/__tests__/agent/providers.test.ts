@@ -308,6 +308,51 @@ describe('translateResponseFromAnthropic', () => {
         expect(result.content).toBe('');
         expect(result.toolCalls).toBeUndefined();
     });
+
+    it('maps end_turn stop_reason to stop finishReason', () => {
+        const anthropicResp: any = {
+            id: 'msg_7',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'text', text: 'Done.' }],
+            model: 'claude-opus-4-5',
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 50, output_tokens: 10 }
+        };
+
+        const result = translateResponseFromAnthropic(anthropicResp);
+        expect(result.finishReason).toBe('stop');
+    });
+
+    it('maps tool_use stop_reason to tool_calls finishReason', () => {
+        const anthropicResp: any = {
+            id: 'msg_8',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'tool_use', id: 't1', name: 'query_telemetry', input: {} }],
+            model: 'claude-opus-4-5',
+            stop_reason: 'tool_use',
+            usage: { input_tokens: 50, output_tokens: 10 }
+        };
+
+        const result = translateResponseFromAnthropic(anthropicResp);
+        expect(result.finishReason).toBe('tool_calls');
+    });
+
+    it('maps max_tokens stop_reason to length finishReason', () => {
+        const anthropicResp: any = {
+            id: 'msg_9',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'text', text: '{"summary": "truncated...' }],
+            model: 'claude-opus-4-5',
+            stop_reason: 'max_tokens',
+            usage: { input_tokens: 5000, output_tokens: 4096 }
+        };
+
+        const result = translateResponseFromAnthropic(anthropicResp);
+        expect(result.finishReason).toBe('length');
+    });
 });
 
 // ─── createAnthropicProvider (integration with mocked fetch) ─────────────────

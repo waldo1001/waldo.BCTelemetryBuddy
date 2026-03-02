@@ -193,6 +193,12 @@ export function translateResponseFromAnthropic(data: AnthropicResponse): ChatRes
         }
     }
 
+    // Map Anthropic stop_reason to normalized finishReason
+    const finishReason = data.stop_reason === 'end_turn' ? 'stop'
+        : data.stop_reason === 'tool_use' ? 'tool_calls'
+            : data.stop_reason === 'max_tokens' ? 'length'
+                : data.stop_reason || undefined;
+
     return {
         content: textContent,
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
@@ -205,7 +211,8 @@ export function translateResponseFromAnthropic(data: AnthropicResponse): ChatRes
         usage: {
             promptTokens: data.usage?.input_tokens || 0,
             completionTokens: data.usage?.output_tokens || 0
-        }
+        },
+        finishReason
     };
 }
 
@@ -249,7 +256,7 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): LLMPro
 
             const body: AnthropicRequest = {
                 model,
-                max_tokens: options?.maxTokens || 4096,
+                max_tokens: options?.maxTokens || 16384,
                 messages: anthropicMessages
             };
 

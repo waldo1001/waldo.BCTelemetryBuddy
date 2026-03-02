@@ -168,8 +168,12 @@ export function buildAgentPrompt(instruction: string, state: AgentState): string
  * Parse structured JSON output from the LLM's final response.
  * Handles both raw JSON and JSON wrapped in markdown code fences.
  * Includes repair logic for common LLM JSON generation mistakes.
+ *
+ * @param content - Raw LLM response text
+ * @param wasTruncated - If true, the response hit max_tokens and was cut off.
+ *                       Validation will provide fallbacks instead of throwing.
  */
-export function parseAgentOutput(content: string): AgentOutput {
+export function parseAgentOutput(content: string, wasTruncated: boolean = false): AgentOutput {
     if (!content || content.trim() === '') {
         throw new Error('Agent produced empty response');
     }
@@ -190,7 +194,7 @@ export function parseAgentOutput(content: string): AgentOutput {
     try {
         // First try strict parse
         const parsed = tryParseJSON(jsonStr);
-        return validateAgentOutput(parsed);
+        return validateAgentOutput(parsed, wasTruncated);
     } catch (error: any) {
         if (error.message.includes('Missing required field')) {
             throw error;
@@ -294,9 +298,36 @@ function closeTruncatedJSON(json: string): string {
 
 /**
  * Validate that parsed JSON has required AgentOutput fields.
+ * When wasTruncated is true, provides fallbacks for missing fields
+ * instead of throwing, since the response was cut off at max_tokens.
  */
-function validateAgentOutput(parsed: any): AgentOutput {
-    // Validate required fields
+function validateAgentOutput(parsed: any, wasTruncated: boolean = false): AgentOutput {
+    if (wasTruncated) {
+        // Response was truncated — extract what we can, fill in defaults
+        const summary = typeof parsed.summary === 'string' ? parsed.summary : '(truncated — no summary)';
+        const findings = typeof parsed.findings === 'string' ? parsed.findings : '(truncated — no findings)';
+        const assessment = typeof parsed.assessment === 'string' ? parsed.assessment : findings;
+
+        console.log(`  ⚠ Truncated output recovery: summary=${typeof parsed.summary === 'string' ? '✓' : '✗'}, findings=${typeof parsed.findings === 'string' ? '✓' : '✗'}, assessment=${typeof parsed.assessment === 'string' ? '✓' : '✗'}`);
+
+        return {
+            summary,
+            findings,
+            assessment,
+            investigationReport: parsed.investigationReport || findings,
+            activeIssues: parsed.activeIssues || [],
+            resolvedIssues: parsed.resolvedIssues || [],
+            actions: parsed.actions || [],
+            stateChanges: parsed.stateChanges || {
+                issuesCreated: [],
+                issuesUpdated: [],
+                issuesResolved: [],
+                summaryUpdated: true
+            }
+        };
+    }
+
+    // Strict validation for non-truncated responses
     if (typeof parsed.summary !== 'string') {
         throw new Error('Missing required field: summary');
     }

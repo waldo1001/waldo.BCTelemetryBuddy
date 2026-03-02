@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.9] - 2026-03-02
+
+### Fixed
+- **Pipeline Git Push Rejection**: Pipeline commit step now runs `git checkout <branch>` and `git pull --rebase` before committing and pushing, preventing failures when the remote has newer commits (e.g., user pushed between checkout and agent commit).
+- **Truncated LLM Response Crash**: Agent no longer crashes with "Missing required field: assessment" when the LLM's final JSON output is truncated at `max_tokens`. Added `finishReason` detection to `ChatResponse` and graceful fallbacks in `validateAgentOutput`.
+
+### Changed
+- **Default `maxTokens` increased to 16384**: Prevents output truncation for agents with many tool calls whose final JSON response exceeds 4096 tokens.
+
 ## [3.1.8] - 2026-03-02
 
 ### Improved

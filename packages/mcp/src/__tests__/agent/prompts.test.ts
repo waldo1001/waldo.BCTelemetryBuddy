@@ -365,6 +365,50 @@ describe('parseAgentOutput', () => {
                 .toThrow('Missing required field: assessment');
         });
 
+        it('should recover missing assessment from truncated output', () => {
+            // Simulate truncated JSON that lost the assessment field
+            const json = `{
+                "summary": "Issues found in monitoring",
+                "findings": "Error spike detected across 5 tenants"`;
+            // wasTruncated = true — should fallback instead of throwing
+            const result = parseAgentOutput(json, true);
+            expect(result.summary).toBe('Issues found in monitoring');
+            expect(result.findings).toBe('Error spike detected across 5 tenants');
+            // assessment falls back to findings when truncated
+            expect(result.assessment).toBe('Error spike detected across 5 tenants');
+        });
+
+        it('should still throw on missing fields when NOT truncated', () => {
+            const json = `{
+                "summary": "ok",
+                "findings": "none"`;
+            // wasTruncated = false (default) — should throw
+            expect(() => parseAgentOutput(json))
+                .toThrow('Missing required field: assessment');
+        });
+
+        it('should recover with only summary from truncated output', () => {
+            const json = `{"summary": "Monitoring run started"`;
+            const result = parseAgentOutput(json, true);
+            expect(result.summary).toBe('Monitoring run started');
+            expect(result.findings).toBe('(truncated — no findings)');
+            expect(result.assessment).toBe('(truncated — no findings)');
+            expect(result.activeIssues).toEqual([]);
+        });
+
+        it('should preserve existing fields in truncated output', () => {
+            const json = `{
+                "summary": "5 tenants checked",
+                "findings": "DK Tools has 58 slow queries",
+                "assessment": "Critical performance degradation",
+                "activeIssues": [
+                    {"id": "dk-tools-perf", "fingerprint": "fp1", "title": "DK Tools slow", "consecutiveDetections": 3, "trend": "increasing", "counts": [30, 45, 58], "lastSeen": "2026-03-02T06:00:00Z"}`;
+            const result = parseAgentOutput(json, true);
+            expect(result.summary).toBe('5 tenants checked');
+            expect(result.assessment).toBe('Critical performance degradation');
+            expect(result.activeIssues).toHaveLength(1);
+        });
+
         it('should handle multiple trailing commas', () => {
             const json = `{
                 "summary": "ok",

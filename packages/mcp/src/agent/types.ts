@@ -206,6 +206,8 @@ export interface ChatResponse {
         promptTokens: number;
         completionTokens: number;
     };
+    /** Why the LLM stopped generating. 'stop' = normal, 'length' = truncated at max_tokens */
+    finishReason?: 'stop' | 'tool_calls' | 'length' | string;
 }
 
 /**
@@ -223,7 +225,7 @@ export interface LLMProvider {
 export interface AgentRuntimeConfig {
     llmProvider: LLMProvider;
     maxToolCalls: number;           // default: 20
-    maxTokens: number;              // default: 4096
+    maxTokens: number;              // default: 16384
     contextWindowRuns: number;      // default: 5
     toolScope: 'read-only' | 'full';
     retry: RetryConfig;             // LLM call retry settings

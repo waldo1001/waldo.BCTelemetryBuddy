@@ -56,7 +56,9 @@ steps:
   - script: |
       git config user.name "bctb-agent"
       git config user.email "bctb-agent@noreply.github.com"
+      git checkout main || git checkout -b main
+      git pull --rebase origin main || true
       git add agents/ docs/
       git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
-      git push origin HEAD:main
+      git push origin main
     displayName: "Commit agent state"

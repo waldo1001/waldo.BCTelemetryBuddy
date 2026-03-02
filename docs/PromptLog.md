@@ -2942,3 +2942,11 @@ Change instructions an business logic to do this."
 > "Add version echo to pipeline install step so installed MCP version is visible in CI/CD logs."
 
 ---
+### Entry ID: 04bfd641-2652-499a-a69c-b9773bd65cb0 - 2026-03-02 22:19
+> "Fix git push rejection in pipeline commit step — push fails when remote has newer commits (e.g. user pushed in between). Add git checkout + git pull --rebase before commit/push."
+
+---
+### Entry ID: 22ef4232-421a-4640-83e7-1ae24a7603e7 - 2026-03-02 22:31
+> "Fix 'Missing required field: assessment' crash when LLM response is truncated at max_tokens. Three-pronged fix: (1) increase default maxTokens 4096->16384, (2) add finishReason to ChatResponse to detect truncation, (3) make validateAgentOutput resilient with fallbacks instead of throwing when truncated."
+
+---

@@ -666,4 +666,65 @@ describe('AgentRuntime', () => {
             expect(log.runId).toBe(6);
         });
     });
+
+    describe('truncation recovery', () => {
+        it('should recover gracefully when response is truncated', async () => {
+            // Simulate a truncated LLM response (finishReason = 'length')
+            const truncatedResponse: ChatResponse = {
+                content: `{"summary": "Checked 12 tenants", "findings": "DK Tools slow queries at 58"`,
+                toolCalls: undefined,
+                assistantMessage: {
+                    role: 'assistant',
+                    content: `{"summary": "Checked 12 tenants", "findings": "DK Tools slow queries at 58"`
+                },
+                usage: { promptTokens: 5000, completionTokens: 4096 },
+                finishReason: 'length'
+            };
+
+            const llm = createMockLLM([truncatedResponse]);
+            const context = createMockContext();
+            const dispatcher = createMockDispatcher();
+
+            const runtime = new AgentRuntime(
+                { executeToolCall: jest.fn() } as any,
+                context,
+                dispatcher,
+                createConfig(llm)
+            );
+
+            // Should NOT throw — should recover with fallbacks
+            const log = await runtime.run('test-agent');
+            expect(log.findings).toBe('DK Tools slow queries at 58');
+            // assessment falls back to findings when truncated
+            expect(log.assessment).toBe('DK Tools slow queries at 58');
+        });
+
+        it('should still throw on missing fields when NOT truncated', async () => {
+            // Same response but without finishReason = 'length'
+            const badResponse: ChatResponse = {
+                content: `{"summary": "ok", "findings": "none"}`,
+                toolCalls: undefined,
+                assistantMessage: {
+                    role: 'assistant',
+                    content: `{"summary": "ok", "findings": "none"}`
+                },
+                usage: { promptTokens: 100, completionTokens: 50 },
+                finishReason: 'stop'
+            };
+
+            const llm = createMockLLM([badResponse]);
+            const context = createMockContext();
+            const dispatcher = createMockDispatcher();
+
+            const runtime = new AgentRuntime(
+                { executeToolCall: jest.fn() } as any,
+                context,
+                dispatcher,
+                createConfig(llm)
+            );
+
+            await expect(runtime.run('test-agent'))
+                .rejects.toThrow('Missing required field: assessment');
+        });
+    });
 });

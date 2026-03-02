@@ -145,7 +145,8 @@ function createLLMProvider(agentsConfig: AgentConfigSection): LLMProvider {
                 usage: {
                     promptTokens: data.usage?.prompt_tokens || 0,
                     completionTokens: data.usage?.completion_tokens || 0
-                }
+                },
+                finishReason: choice.finish_reason || undefined
             };
         }
     };
@@ -160,7 +161,7 @@ function buildRuntimeConfig(agentsConfig: AgentConfigSection): AgentRuntimeConfi
     return {
         llmProvider,
         maxToolCalls: agentsConfig.defaults?.maxToolCalls ?? 20,
-        maxTokens: agentsConfig.defaults?.maxTokens ?? 4096,
+        maxTokens: agentsConfig.defaults?.maxTokens ?? 16384,
         contextWindowRuns: agentsConfig.defaults?.contextWindowRuns ?? 5,
         toolScope: agentsConfig.defaults?.toolScope ?? 'read-only',
         retry: {
