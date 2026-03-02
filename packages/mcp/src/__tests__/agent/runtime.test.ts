@@ -727,4 +727,36 @@ describe('AgentRuntime', () => {
                 .rejects.toThrow('Missing required field: assessment');
         });
     });
+
+    describe('abbreviated output warning', () => {
+        it('should log warning when output fields are abbreviated', async () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            const abbreviatedOutput: AgentOutput = {
+                ...validAgentOutput,
+                summary: '...',
+                findings: '...',
+                assessment: '...',
+                investigationReport: '...'
+            };
+
+            const llm = createMockLLM([createContentResponse(abbreviatedOutput)]);
+            const context = createMockContext();
+            const dispatcher = createMockDispatcher();
+
+            const runtime = new AgentRuntime(
+                { executeToolCall: jest.fn() } as any,
+                context,
+                dispatcher,
+                createConfig(llm)
+            );
+
+            await runtime.run('test-agent');
+
+            const warningCall = consoleSpy.mock.calls.find(
+                call => typeof call[0] === 'string' && call[0].includes('WARNING: These output fields appear abbreviated')
+            );
+            expect(warningCall).toBeDefined();
+            consoleSpy.mockRestore();
+        });
+    });
 });

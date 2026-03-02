@@ -1735,3 +1735,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** - Fix truncated LLM response crash [Entry: 22ef4232-421a-4640-83e7-1ae24a7603e7]
   - **Why:** Agent with 22+ tool calls exceeds 4096 max_tokens on final JSON output, truncation strips assessment field causing crash
   - **How:** Increased default maxTokens to 16384, added finishReason to ChatResponse/providers, validateAgentOutput provides fallbacks when wasTruncated=true. Added 9 new tests.
+- **2026-03-02** - Fix abbreviated LLM output [Entry: 390fea25-ee3f-4151-8516-42256885e017]
+  - **Why:** LLM outputs '...' as placeholder for assessment/findings/investigationReport after long agent runs, resulting in empty daily docs and no useful pipeline summary
+  - **How:** Added explicit anti-abbreviation rules to system prompt, replaced fragile regex assessment display with parsed output, added abbreviated-field warning to console, improved findings preview in CLI.

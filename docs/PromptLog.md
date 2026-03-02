@@ -2950,3 +2950,7 @@ Change instructions an business logic to do this."
 > "Fix 'Missing required field: assessment' crash when LLM response is truncated at max_tokens. Three-pronged fix: (1) increase default maxTokens 4096->16384, (2) add finishReason to ChatResponse to detect truncation, (3) make validateAgentOutput resilient with fallbacks instead of throwing when truncated."
 
 ---
+### Entry ID: 390fea25-ee3f-4151-8516-42256885e017 - 2026-03-02 22:45
+> "Fix LLM outputting '...' as abbreviated content for assessment/findings/investigationReport. Agent system prompt now forbids ellipsis/placeholder output. Runtime displays parsed assessment instead of fragile regex. Added abbreviated output warning. Improved findings display in CLI."
+
+---

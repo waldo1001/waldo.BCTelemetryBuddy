@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.10] - 2026-03-02
+
+### Fixed
+- **Abbreviated LLM Output**: Agent system prompt now explicitly forbids `...` or ellipsis as output. All fields (summary, findings, assessment, investigationReport) must contain full detailed content. This prevents empty daily investigation docs and useless pipeline summaries after long agent runs.
+- **Assessment Display**: Runtime now displays the parsed assessment (from JSON) instead of using a fragile regex that could fail on multi-line strings or escaped characters.
+
+### Improved
+- **Abbreviated Output Warning**: Runtime logs a warning when any output field is `...` or under 10 characters, making LLM laziness visible in pipeline logs.
+- **Findings Preview**: CLI now shows a clean single-line preview (first 200 chars) of findings instead of dumping raw multi-line content.
+
 ## [3.1.9] - 2026-03-02
 
 ### Fixed

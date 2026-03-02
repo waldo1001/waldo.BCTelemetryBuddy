@@ -115,8 +115,10 @@ The \`investigationReport\` field is a markdown section that will be appended to
 - Do NOT invent data. Only report what you find in real telemetry.
 - Do NOT take actions that are not described in your instruction.
 - Do NOT re-alert for issues that have already been escalated (check actionsTaken in state).
+- Do NOT use "..." or ellipsis as output. EVERY field (summary, findings, assessment, investigationReport) must contain the FULL, detailed content. Abbreviated or placeholder output is a failure.
 - Keep summaries concise — each run's findings should be 1-3 sentences.
 - Use deterministic fingerprints so the same issue is tracked consistently across runs.
+- The investigationReport MUST be a complete, self-contained markdown section (5–20 lines with tables and analysis). It is the primary deliverable of each run.
 
 ## Re-alerting & Cooldown
 

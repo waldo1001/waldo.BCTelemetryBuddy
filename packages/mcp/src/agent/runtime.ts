@@ -265,14 +265,23 @@ export class AgentRuntime {
                     console.log(`  ⚠ Response was TRUNCATED (hit max_tokens=${this.config.maxTokens}). Consider increasing maxTokens in config.`);
                 }
 
-                if (response.content) {
-                    // Try to extract assessment from the structured output
-                    const assessmentMatch = response.content.match(/"assessment"\s*:\s*"([^"]+)"/);
-                    if (assessmentMatch) {
-                        console.log(`  📋 Assessment: ${assessmentMatch[1].substring(0, 300)}`);
-                    }
-                }
                 const output = parseAgentOutput(response.content, response.finishReason === 'length');
+
+                // Display parsed assessment (not regex — handles multi-line and escaped chars)
+                if (output.assessment) {
+                    const preview = output.assessment.replace(/\n/g, ' ').substring(0, 300);
+                    console.log(`  📋 Assessment: ${preview}${output.assessment.length > 300 ? '...' : ''}`);
+                }
+
+                // Warn when output fields look abbreviated
+                const abbreviated = ['summary', 'findings', 'assessment', 'investigationReport']
+                    .filter(f => {
+                        const val = (output as any)[f];
+                        return typeof val === 'string' && (val === '...' || val === '…' || val.length < 10);
+                    });
+                if (abbreviated.length > 0) {
+                    console.log(`  ⚠ WARNING: These output fields appear abbreviated: ${abbreviated.join(', ')}. The LLM may have truncated its own output.`);
+                }
 
                 // 4. Execute actions
                 const executedActions = await this.actionDispatcher.dispatch(
