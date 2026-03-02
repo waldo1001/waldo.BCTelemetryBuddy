@@ -446,8 +446,9 @@ describe('AgentMonitoringSetupProvider', () => {
 
                 const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
                 expect(writtenContent).toContain('include: [master]');
-                expect(writtenContent).toContain('HEAD:master');
-                expect(writtenContent).not.toContain('HEAD:main');
+                expect(writtenContent).toContain('git checkout master');
+                expect(writtenContent).toContain('git push origin master');
+                expect(writtenContent).not.toContain('git push origin main');
             });
 
             it('should use custom variable group name in Azure DevOps template', async () => {

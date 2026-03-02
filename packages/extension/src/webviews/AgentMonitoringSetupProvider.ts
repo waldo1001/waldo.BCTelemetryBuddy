@@ -179,6 +179,7 @@ ${llmKeyLine}
         run: |
           git config user.name "bctb-agent"
           git config user.email "bctb-agent@noreply.github.com"
+          git pull --rebase || true
           git add agents/ docs/
           git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
           git push
@@ -250,9 +251,11 @@ ${llmKeyLine}
   - script: |
       git config user.name "bctb-agent"
       git config user.email "bctb-agent@noreply.github.com"
+      git checkout ${branch} || git checkout -b ${branch}
+      git pull --rebase origin ${branch} || true
       git add agents/ docs/
       git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
-      git push origin HEAD:${branch}
+      git push origin ${branch}
     displayName: "Commit agent state"
 `;
 }

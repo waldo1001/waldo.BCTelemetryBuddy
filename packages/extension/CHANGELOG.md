@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.6] - 2026-03-02
+
+### Fixed
+- **Pipeline Git Push Rejection**: Pipeline templates now run `git checkout <branch>` and `git pull --rebase` before committing and pushing, preventing failures when the remote has newer commits.
+
 ## [3.1.5] - 2026-03-02
 
 ### Improved
