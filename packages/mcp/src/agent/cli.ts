@@ -311,7 +311,12 @@ export function registerAgentCommands(program: Command): void {
                     try {
                         console.log(`─── ${agent.name} ───`);
                         const runLog = await runtime.run(agent.name);
-                        console.log(`  ✓ Run #${runLog.runId} (${(runLog.durationMs / 1000).toFixed(1)}s): ${runLog.findings}`);
+                        console.log(`  ✓ Run #${runLog.runId} completed in ${(runLog.durationMs / 1000).toFixed(1)}s`);
+                        console.log(`    Tool calls: ${runLog.llm.toolCallCount}, Tokens: ${runLog.llm.totalTokens} (${runLog.llm.promptTokens}p + ${runLog.llm.completionTokens}c)`);
+                        console.log(`    Findings: ${runLog.findings}`);
+                        if (runLog.actions.length > 0) {
+                            console.log(`    Actions: ${runLog.actions.map(a => `${a.type}(${a.status})`).join(', ')}`);
+                        }
                         succeeded++;
                     } catch (error: any) {
                         console.error(`  ✗ Failed: ${error.message}`);

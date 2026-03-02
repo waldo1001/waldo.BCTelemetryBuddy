@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-03-02
+
+### Fixed
+- **JSON Repair for Agent Output**: `parseAgentOutput()` now repairs common LLM JSON mistakes (trailing commas, unescaped newlines, truncated output) instead of failing. Three-stage repair: strict parse → fix trailing commas/unescaped chars → close truncated brackets. Logs warning when repair succeeds.
+
+### Improved
+- **Verbose Agent Runtime Logging**: ReAct loop now logs iteration numbers, LLM token usage, reasoning text, tool call names with argument summaries, result previews (row counts for queries), and final assessment — making agent behavior visible in CI/CD pipeline output
+- **KQL Query Logging**: Query success messages now include row count, column count, and duration (e.g., `1 table(s), 42 row(s), 8 column(s) in 1230ms`)
+- **Run-All Agent Output**: Per-agent summary now includes tool call count, token stats, and executed actions
+
 ## [3.1.2] - 2026-03-02
 
 ### Added

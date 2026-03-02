@@ -1693,3 +1693,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Added (Preview) labels to Agent Monitoring [Entry: 003b5132-6878-42c9-8921-72c8bce4b8aa]
   - **Why:** Agent Monitoring is still a preview feature; users should know this from every user-facing surface.
   - **How:** Added (Preview) to: extension command title (package.json), webview panel title, HTML h1 badge, page title, completion message, MCP README feature bullet and section heading (with disclaimer note), UserGuide TOC entry, section heading, and prerequisites heading. Updated tests to match new panel title.
+- **2026-03-02** — Patch release: MCP 3.1.2 + Extension 3.1.3 [Entry: cafb35f3-f265-4f9c-9d40-71d46570176f]
+  - **Why:** Release unreleased changes (dynamic pipeline templates, retry logic, preview labels) as patch versions.
+  - **How:** Bumped MCP 3.1.1->3.1.2 and Extension 3.1.2->3.1.3. Updated both CHANGELOGs with release notes. Committed, tagged (mcp-v3.1.2, v3.1.3), and pushed to trigger CI/CD.

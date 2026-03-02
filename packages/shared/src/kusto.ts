@@ -72,10 +72,11 @@ export class KustoService {
                 }
             );
 
-            console.log(`✓ Query executed successfully, ${response.data.tables.length} table(s) returned`);
-
-            // Track successful dependency call
+            const primaryTable = response.data.tables[0];
+            const rowCount = primaryTable?.rows?.length ?? 0;
+            const colCount = primaryTable?.columns?.length ?? 0;
             const durationMs = Date.now() - startTime;
+            console.log(`✓ Query executed successfully, ${response.data.tables.length} table(s), ${rowCount} row(s), ${colCount} column(s) in ${durationMs}ms`);
             this.usageTelemetry.trackDependency(
                 'Kusto',
                 url,  // Use actual URL instead of query name to prevent "Failed to create URL" error

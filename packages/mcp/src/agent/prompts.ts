@@ -142,6 +142,7 @@ export function buildAgentPrompt(instruction: string, state: AgentState): string
 /**
  * Parse structured JSON output from the LLM's final response.
  * Handles both raw JSON and JSON wrapped in markdown code fences.
+ * Includes repair logic for common LLM JSON generation mistakes.
  */
 export function parseAgentOutput(content: string): AgentOutput {
     if (!content || content.trim() === '') {
@@ -152,47 +153,150 @@ export function parseAgentOutput(content: string): AgentOutput {
     const fenceMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     const rawMatch = content.match(/\{[\s\S]*\}/);
 
-    const jsonStr = fenceMatch?.[1] || rawMatch?.[0];
+    // Also try matching a JSON object that may be truncated (starts with { but no closing })
+    const truncatedMatch = !rawMatch ? content.match(/(\{[\s\S]*)$/) : null;
+
+    const jsonStr = fenceMatch?.[1] || rawMatch?.[0] || truncatedMatch?.[1];
 
     if (!jsonStr) {
         throw new Error('Agent did not produce valid JSON output');
     }
 
     try {
-        const parsed = JSON.parse(jsonStr);
-
-        // Validate required fields
-        if (typeof parsed.summary !== 'string') {
-            throw new Error('Missing required field: summary');
-        }
-        if (typeof parsed.findings !== 'string') {
-            throw new Error('Missing required field: findings');
-        }
-        if (typeof parsed.assessment !== 'string') {
-            throw new Error('Missing required field: assessment');
-        }
-
-        // Provide defaults for optional arrays
-        return {
-            summary: parsed.summary,
-            findings: parsed.findings,
-            assessment: parsed.assessment,
-            activeIssues: parsed.activeIssues || [],
-            resolvedIssues: parsed.resolvedIssues || [],
-            actions: parsed.actions || [],
-            stateChanges: parsed.stateChanges || {
-                issuesCreated: [],
-                issuesUpdated: [],
-                issuesResolved: [],
-                summaryUpdated: true
-            }
-        };
+        // First try strict parse
+        const parsed = tryParseJSON(jsonStr);
+        return validateAgentOutput(parsed);
     } catch (error: any) {
         if (error.message.includes('Missing required field')) {
             throw error;
         }
         throw new Error(`Failed to parse agent JSON output: ${error.message}`);
     }
+}
+
+/**
+ * Try to parse JSON, with repair attempts for common LLM mistakes.
+ * Attempts in order:
+ *   1. Strict JSON.parse
+ *   2. Repair trailing commas, unescaped newlines, etc.
+ *   3. Truncation recovery (close open brackets/braces)
+ */
+function tryParseJSON(jsonStr: string): any {
+    // 1. Try strict parse
+    try {
+        return JSON.parse(jsonStr);
+    } catch { /* continue to repair */ }
+
+    // 2. Try repairing common LLM JSON mistakes
+    let repaired = jsonStr;
+
+    // Remove trailing commas before } or ]
+    repaired = repaired.replace(/,\s*([\]}])/g, '$1');
+
+    // Escape unescaped newlines inside string values
+    // Match strings and replace raw newlines within them
+    repaired = repaired.replace(/"(?:[^"\\]|\\.)*"/g, (match) => {
+        return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+    });
+
+    try {
+        const result = JSON.parse(repaired);
+        console.log('  ⚠ Repaired malformed JSON from LLM (trailing commas / unescaped chars)');
+        return result;
+    } catch { /* continue to truncation recovery */ }
+
+    // 3. Truncation recovery — close open brackets/braces
+    const truncated = closeTruncatedJSON(repaired);
+    try {
+        const result = JSON.parse(truncated);
+        console.log('  ⚠ Recovered truncated JSON from LLM (closed open brackets)');
+        return result;
+    } catch (finalError: any) {
+        throw finalError;
+    }
+}
+
+/**
+ * Attempt to close truncated JSON by balancing brackets and braces.
+ * Handles cases where the LLM's output was cut off mid-response.
+ */
+function closeTruncatedJSON(json: string): string {
+    // Track bracket/brace nesting, respecting strings
+    let inString = false;
+    let escaped = false;
+    const stack: string[] = [];
+
+    for (const ch of json) {
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (ch === '\\' && inString) {
+            escaped = true;
+            continue;
+        }
+        if (ch === '"') {
+            inString = !inString;
+            continue;
+        }
+        if (inString) continue;
+
+        if (ch === '{') stack.push('}');
+        else if (ch === '[') stack.push(']');
+        else if (ch === '}' || ch === ']') {
+            if (stack.length > 0 && stack[stack.length - 1] === ch) {
+                stack.pop();
+            }
+        }
+    }
+
+    // If we're inside a string, close it first
+    if (inString) {
+        json += '"';
+    }
+
+    // Remove any trailing incomplete key-value (e.g., `"key": ` or `"key": "val`)
+    // by trimming back to the last complete value
+    json = json.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
+
+    // Close remaining open brackets
+    while (stack.length > 0) {
+        json += stack.pop();
+    }
+
+    return json;
+}
+
+/**
+ * Validate that parsed JSON has required AgentOutput fields.
+ */
+function validateAgentOutput(parsed: any): AgentOutput {
+    // Validate required fields
+    if (typeof parsed.summary !== 'string') {
+        throw new Error('Missing required field: summary');
+    }
+    if (typeof parsed.findings !== 'string') {
+        throw new Error('Missing required field: findings');
+    }
+    if (typeof parsed.assessment !== 'string') {
+        throw new Error('Missing required field: assessment');
+    }
+
+    // Provide defaults for optional arrays
+    return {
+        summary: parsed.summary,
+        findings: parsed.findings,
+        assessment: parsed.assessment,
+        activeIssues: parsed.activeIssues || [],
+        resolvedIssues: parsed.resolvedIssues || [],
+        actions: parsed.actions || [],
+        stateChanges: parsed.stateChanges || {
+            issuesCreated: [],
+            issuesUpdated: [],
+            issuesResolved: [],
+            summaryUpdated: true
+        }
+    };
 }
 
 /**

@@ -288,6 +288,97 @@ describe('parseAgentOutput', () => {
         expect(result.actions).toHaveLength(1);
         expect(result.actions[0].type).toBe('teams-webhook');
     });
+
+    // ─── JSON repair tests ───────────────────────────────────────────────
+
+    describe('JSON repair', () => {
+        it('should repair trailing commas in arrays', () => {
+            const json = `{
+                "summary": "All clear",
+                "findings": "No issues",
+                "assessment": "Healthy",
+                "activeIssues": [
+                    {"id": "issue-1", "fingerprint": "fp-1", "title": "Test", "consecutiveDetections": 1, "trend": "stable", "counts": [10,], "lastSeen": "2026-01-01T00:00:00Z"},
+                ],
+                "resolvedIssues": [],
+                "actions": []
+            }`;
+            const result = parseAgentOutput(json);
+            expect(result.summary).toBe('All clear');
+            expect(result.activeIssues).toHaveLength(1);
+        });
+
+        it('should repair trailing commas in objects', () => {
+            const json = `{
+                "summary": "All clear",
+                "findings": "No issues",
+                "assessment": "Healthy",
+                "actions": [],
+            }`;
+            const result = parseAgentOutput(json);
+            expect(result.summary).toBe('All clear');
+        });
+
+        it('should handle unescaped newlines in string values', () => {
+            // Simulate LLM putting actual newlines inside JSON string values
+            const json = '{"summary": "Line 1\\nLine 2", "findings": "Found\\nstuff", "assessment": "All\\ngood"}';
+            const result = parseAgentOutput(json);
+            expect(result.summary).toBe('Line 1\nLine 2');
+        });
+
+        it('should recover truncated JSON with missing closing braces', () => {
+            const json = `{
+                "summary": "All clear",
+                "findings": "No issues found in the last 24 hours",
+                "assessment": "System is healthy",
+                "activeIssues": [],
+                "resolvedIssues": [],
+                "actions": []`;
+            // Missing final }
+            const result = parseAgentOutput(json);
+            expect(result.summary).toBe('All clear');
+            expect(result.findings).toBe('No issues found in the last 24 hours');
+        });
+
+        it('should recover truncated JSON with missing closing brackets and braces', () => {
+            const json = `{
+                "summary": "Issues found",
+                "findings": "Error spike detected",
+                "assessment": "Needs attention",
+                "activeIssues": [
+                    {"id": "issue-1", "fingerprint": "fp-1", "title": "Error spike", "consecutiveDetections": 2, "trend": "increasing", "counts": [10, 20], "lastSeen": "2026-01-01T00:00:00Z"}`;
+            // Missing ], }
+            const result = parseAgentOutput(json);
+            expect(result.summary).toBe('Issues found');
+            expect(result.activeIssues).toHaveLength(1);
+        });
+
+        it('should still throw on completely invalid content', () => {
+            expect(() => parseAgentOutput('This has no JSON at all'))
+                .toThrow('Agent did not produce valid JSON output');
+        });
+
+        it('should still throw on missing required fields after repair', () => {
+            const json = `{"summary": "ok", "findings": "none",}`;
+            // Missing assessment — repair fixes comma but validation catches missing field
+            expect(() => parseAgentOutput(json))
+                .toThrow('Missing required field: assessment');
+        });
+
+        it('should handle multiple trailing commas', () => {
+            const json = `{
+                "summary": "ok",
+                "findings": "none",
+                "assessment": "good",
+                "activeIssues": [
+                    {"id": "a", "fingerprint": "f", "title": "t", "consecutiveDetections": 1, "trend": "stable", "counts": [1,2,3,], "lastSeen": "2026-01-01",},
+                    {"id": "b", "fingerprint": "g", "title": "u", "consecutiveDetections": 1, "trend": "stable", "counts": [4,5,], "lastSeen": "2026-01-02",},
+                ],
+            }`;
+            const result = parseAgentOutput(json);
+            expect(result.activeIssues).toHaveLength(2);
+        });
+    });
 });
 
 // ─── filterToolsByScope ──────────────────────────────────────────────────────

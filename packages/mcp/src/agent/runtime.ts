@@ -122,8 +122,11 @@ export class AgentRuntime {
         const toolCallLog: ToolCallEntry[] = [];
         let totalToolCalls = 0;
         let llmStats = { promptTokens: 0, completionTokens: 0 };
+        let iteration = 0;
 
         while (totalToolCalls < this.config.maxToolCalls) {
+            iteration++;
+            console.log(`\n── Iteration ${iteration} (${totalToolCalls}/${this.config.maxToolCalls} tool calls used) ──`);
             const response = await this.chatWithRetry(messages, {
                 tools,
                 maxTokens: this.config.maxTokens
@@ -131,14 +134,34 @@ export class AgentRuntime {
 
             llmStats.promptTokens += response.usage.promptTokens;
             llmStats.completionTokens += response.usage.completionTokens;
+            console.log(`  LLM response: ${response.usage.promptTokens + response.usage.completionTokens} tokens (${response.usage.promptTokens}p + ${response.usage.completionTokens}c)`);
 
             if (response.toolCalls && response.toolCalls.length > 0) {
                 // LLM wants to call tools — add assistant message to conversation
+                // Log any reasoning text the LLM included alongside tool calls
+                if (response.content) {
+                    console.log(`  💭 Reasoning: ${response.content.substring(0, 200)}${response.content.length > 200 ? '...' : ''}`);
+                }
+                console.log(`  🔧 Requesting ${response.toolCalls.length} tool call(s):`);
                 messages.push(response.assistantMessage);
 
                 for (const call of response.toolCalls) {
                     totalToolCalls++;
                     const callStart = Date.now();
+
+                    // Log tool call with arguments summary
+                    const argsSummary = (() => {
+                        try {
+                            const parsed = JSON.parse(call.function.arguments);
+                            const entries = Object.entries(parsed);
+                            if (entries.length === 0) return '';
+                            return entries.map(([k, v]) => {
+                                const val = typeof v === 'string' && v.length > 80 ? v.substring(0, 80) + '...' : v;
+                                return `${k}=${JSON.stringify(val)}`;
+                            }).join(', ');
+                        } catch { return call.function.arguments.substring(0, 100); }
+                    })();
+                    console.log(`     [${totalToolCalls}] ${call.function.name}(${argsSummary})`);
 
                     let resultStr: string;
                     try {
@@ -156,6 +179,23 @@ export class AgentRuntime {
                         });
                     }
 
+                    const callDuration = Date.now() - callStart;
+                    // Log result summary: row count for queries, length for other results
+                    const resultPreview = (() => {
+                        try {
+                            const parsed = JSON.parse(resultStr);
+                            if (parsed.rows && Array.isArray(parsed.rows)) {
+                                return `${parsed.rows.length} row(s), ${parsed.columns?.length || '?'} col(s)`;
+                            }
+                            if (parsed.summary) return parsed.summary;
+                            if (parsed.error) return `ERROR: ${parsed.error}`;
+                            return `${resultStr.length} chars`;
+                        } catch {
+                            return `${resultStr.length} chars`;
+                        }
+                    })();
+                    console.log(`         → ${resultPreview} (${callDuration}ms)`);
+
                     messages.push({
                         role: 'tool',
                         content: resultStr,
@@ -170,11 +210,19 @@ export class AgentRuntime {
                             catch { return {}; }
                         })(),
                         resultSummary: resultStr.substring(0, 500),
-                        durationMs: Date.now() - callStart
+                        durationMs: callDuration
                     });
                 }
             } else {
                 // LLM is done reasoning — parse final output
+                console.log(`\n── Agent finished reasoning ──`);
+                if (response.content) {
+                    // Try to extract assessment from the structured output
+                    const assessmentMatch = response.content.match(/"assessment"\s*:\s*"([^"]+)"/);
+                    if (assessmentMatch) {
+                        console.log(`  📋 Assessment: ${assessmentMatch[1].substring(0, 300)}`);
+                    }
+                }
                 const output = parseAgentOutput(response.content);
 
                 // 4. Execute actions
