@@ -1726,3 +1726,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Release MCP 3.1.7 [Entry: 14f63eb5-f3e8-4769-8d0a-33be509bff90]
   - **Why:** Ship richer Teams notification messages to production
   - **How:** Bumped MCP to 3.1.7, updated CHANGELOG, tagged mcp-v3.1.7, pushed.
+- **2026-03-02** — Pipeline install version logging [Entry: 5972b264-e553-4d86-9e8e-d60eb1f2f587]
+  - **Why:** No output during npm install step made it unclear which MCP version was running
+  - **How:** Added 'echo Installed bc-telemetry-buddy-mcp v\3.1.4' after npm install in all 4 templates. Released MCP 3.1.8 + Extension 3.1.5.

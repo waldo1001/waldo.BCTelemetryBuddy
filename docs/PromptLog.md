@@ -2938,3 +2938,7 @@ Change instructions an business logic to do this."
 > "Pack and ship — release MCP 3.1.7 with richer Teams notification prompt."
 
 ---
+### Entry ID: 5972b264-e553-4d86-9e8e-d60eb1f2f587 — 2026-03-02 22:07
+> "Add version echo to pipeline install step so installed MCP version is visible in CI/CD logs."
+
+---
