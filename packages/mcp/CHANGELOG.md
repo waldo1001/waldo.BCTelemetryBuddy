@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.7] - 2026-03-02
+
+### Improved
+- **Richer Teams Notifications**: System prompt now guides the LLM to write detailed notification messages with markdown tables, attribution, thresholds, and action-required text. Added "Notification Message Guidelines" section and replaced minimal example with a realistic one.
+
 ## [3.1.6] - 2026-03-02
 
 ### Changed
