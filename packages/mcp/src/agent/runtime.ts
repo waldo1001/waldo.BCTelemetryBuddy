@@ -160,7 +160,6 @@ export class AgentRuntime {
 
             llmStats.promptTokens += response.usage.promptTokens;
             llmStats.completionTokens += response.usage.completionTokens;
-            console.log(`  LLM response: ${response.usage.promptTokens + response.usage.completionTokens} tokens (${response.usage.promptTokens}p + ${response.usage.completionTokens}c)`);
 
             if (response.toolCalls && response.toolCalls.length > 0) {
                 // LLM wants to call tools — add assistant message to conversation
@@ -168,7 +167,6 @@ export class AgentRuntime {
                 if (response.content) {
                     console.log(`  💭 Reasoning: ${response.content.substring(0, 200)}${response.content.length > 200 ? '...' : ''}`);
                 }
-                console.log(`  🔧 Requesting ${response.toolCalls.length} tool call(s):`);
                 messages.push(response.assistantMessage);
 
                 for (const call of response.toolCalls) {
@@ -189,8 +187,22 @@ export class AgentRuntime {
                     })();
                     console.log(`     [${totalToolCalls}] ${call.function.name}`);
 
+                    // Extract KQL for query_telemetry calls to show in group
+                    let kqlQuery: string | undefined;
+                    if (call.function.name === 'query_telemetry') {
+                        try {
+                            const parsed = JSON.parse(call.function.arguments);
+                            kqlQuery = parsed.query;
+                        } catch { /* ignore */ }
+                    }
+
                     // Wrap tool execution in a collapsible group (hides internal kusto/auth/cache logs)
                     this.beginGroup(`🔧 [${totalToolCalls}] ${call.function.name}(${argsSummary})`);
+
+                    // Show KQL inside collapsible group
+                    if (kqlQuery) {
+                        console.log(`KQL:\n${kqlQuery}`);
+                    }
 
                     let resultStr: string;
                     try {
@@ -299,7 +311,7 @@ export class AgentRuntime {
                 };
 
                 // 7. Persist
-                this.contextManager.saveRunLog(agentName, runLog);
+                this.contextManager.saveRunLog(agentName, runLog, output.investigationReport);
                 this.contextManager.saveState(agentName, updatedState);
 
                 return runLog;

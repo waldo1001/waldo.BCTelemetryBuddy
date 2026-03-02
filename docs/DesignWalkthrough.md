@@ -1705,3 +1705,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Document Teams tables, CI groups, retry visibility [Entry: b3deabf1-f6ad-4127-80e5-c920dbb199d4]
   - **Why:** User requested documentation of the recent changes
   - **How:** Updated packages/mcp/CHANGELOG.md (Unreleased section), packages/mcp/README.md (new CI/CD Pipeline Output section), docs/UserGuide.md (2 new troubleshooting rows for Teams tables and noisy pipeline output)
+- **2026-03-02** — Release MCP v3.1.4 [Entry: 9cb63473-a2ef-49d0-854b-239d5fa9f6ab]
+  - **Why:** Ship Teams Adaptive Card tables, CI collapsible groups, and retry visibility improvements
+  - **How:** Bumped version to 3.1.4, tagged mcp-v3.1.4, pushed to trigger CI/CD publish to NPM
+- **2026-03-02** — Clean up pipeline output noise [Entry: 144da97d-5501-4e03-b118-261bb46f1876]
+  - **Why:** User doesn't want LLM token stats, KQL endpoint URLs, or tool call count lines cluttering output
+  - **How:** Removed 3 console.log lines from runtime.ts and kusto.ts; added KQL query text display inside collapsible group for query_telemetry tool calls
+- **2026-03-02** — Daily investigation report: tests & fixes [Entry: 1aa6111a-c024-48bf-876f-2ef098b9c498]
+  - **Why:** Complete the daily investigation doc feature by adding tests and fixing TS type issues
+  - **How:** Added 6 tests for appendToDailyReport (create, append, prev-day linking, dir creation, path). Fixed AgentRunLog type to include investigationReportPath. Added investigationReport to 3 test AgentOutput helpers. All 597 tests pass.

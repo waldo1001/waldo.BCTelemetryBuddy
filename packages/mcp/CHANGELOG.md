@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.5] - 2026-03-02
+
+### Added
+- **Daily Investigation Reports**: Agent runtime now generates daily per-agent investigation documents (`docs/YYYY-MM-DD-<agentName>.md`). The LLM writes a self-contained `investigationReport` markdown section as part of its structured output, which is appended to the daily doc on each run. Includes auto-generated headers, previous-day linking, and run-log cross-references.
+
+### Improved
+- **Cleaner Pipeline Output**: Removed noisy "Executing KQL query against:" log from shared Kusto module. KQL query text is now displayed inside CI collapsible groups for `query_telemetry` tool calls only.
+
 ## [3.1.4] - 2026-03-02
 
 ### Improved

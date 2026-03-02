@@ -60,8 +60,6 @@ export class KustoService {
             // The clusterUrl from settings is ignored - we always use the standard API endpoint
             const url = `https://api.applicationinsights.io/v1/apps/${this.appInsightsAppId}/query`;
 
-            console.log(`Executing KQL query against: ${url}`);
-
             const response = await this.client.post<KustoQueryResult>(
                 url,
                 { query: kql },

@@ -97,6 +97,7 @@ const baseOutput: AgentOutput = {
     summary: 'All clear',
     findings: 'No issues.',
     assessment: 'Healthy.',
+    investigationReport: '### Run #1\n\nNo issues found.',
     activeIssues: [],
     resolvedIssues: [],
     actions: [],

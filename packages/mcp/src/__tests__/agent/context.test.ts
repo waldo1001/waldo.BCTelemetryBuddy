@@ -43,6 +43,7 @@ function createTestOutput(overrides?: Partial<AgentOutput>): AgentOutput {
         summary: 'Updated summary after this run.',
         findings: 'Found 5 errors in the last hour.',
         assessment: 'Error rate is increasing.',
+        investigationReport: '### Run #1\n\nError rate is increasing.',
         activeIssues: [],
         resolvedIssues: [],
         actions: [],

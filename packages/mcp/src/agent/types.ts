@@ -115,6 +115,12 @@ export interface AgentRunLog {
     findings: string;
     actions: AgentAction[];
 
+    /** LLM-written markdown investigation report for daily docs */
+    investigationReport?: string;
+
+    /** Relative path to the daily investigation doc (set by saveRunLog) */
+    investigationReportPath?: string;
+
     stateChanges: {
         issuesCreated: string[];
         issuesUpdated: string[];
@@ -129,6 +135,8 @@ export interface AgentOutput {
     summary: string;
     findings: string;
     assessment: string;
+    /** LLM-written markdown investigation report for daily docs */
+    investigationReport: string;
     activeIssues: {
         id: string;
         fingerprint: string;

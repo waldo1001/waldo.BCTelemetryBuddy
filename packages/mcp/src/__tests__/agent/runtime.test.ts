@@ -54,6 +54,7 @@ const validAgentOutput: AgentOutput = {
     summary: 'System is healthy, no issues detected.',
     findings: 'All error rates within normal range.',
     assessment: 'No action required.',
+    investigationReport: '### Run #1\n\nAll error rates within normal range.',
     activeIssues: [],
     resolvedIssues: [],
     actions: [],

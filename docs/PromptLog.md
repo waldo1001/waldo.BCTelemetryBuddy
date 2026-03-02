@@ -2910,3 +2910,15 @@ Change instructions an business logic to do this."
 > "Document the recent changes (Teams Adaptive Card tables, CI collapsible groups, retry visibility) in MCP CHANGELOG, README, and UserGuide"
 
 ---
+### Entry ID: 9cb63473-a2ef-49d0-854b-239d5fa9f6ab — 2026-03-02 17:20
+> "Patch release MCP 3.1.4"
+
+---
+### Entry ID: 144da97d-5501-4e03-b118-261bb46f1876 — 2026-03-02 17:51
+> "Remove noisy output lines (LLM response tokens, Executing KQL query against, Requesting x tool calls); show KQL inside collapsible group for query_telemetry calls"
+
+---
+### Entry ID: 1aa6111a-c024-48bf-876f-2ef098b9c498 — 2026-03-02 18:09
+> "Continue daily investigation report implementation: write tests for appendToDailyReport, fix investigationReportPath type, add investigationReport to test AgentOutput helpers. 597 tests pass."
+
+---

@@ -36,6 +36,7 @@ You run on a schedule and monitor telemetry data using the tools provided.
    - Only take actions explicitly described in your instruction.
    - Track consecutive detections accurately.
 6. REPORT your findings, assessment, and actions in the structured output format.
+7. WRITE an investigationReport — a concise markdown summary of this run suitable for a standalone daily document. This report will be appended to a daily file in the repository's docs folder.
 
 ## Output Format
 
@@ -71,7 +72,8 @@ You MUST respond with a JSON object matching this structure:
     "issuesUpdated": ["issue-ZZZ"],
     "issuesResolved": ["issue-YYY"],
     "summaryUpdated": true
-  }
+  },
+  "investigationReport": "### Run #3 \u2014 14:30 UTC\n\nChecked error rates for the last 1 hour.\n\n| Signal | Value | Trend |\n|--------|-------|-------|\n| Total errors | 61 | \u2191 increasing |\n| Timeout errors | 23 | stable |\n\n**Assessment**: Error rate has increased for the 3rd consecutive check. Threshold exceeded \u2014 Teams notification sent.\n\n**Actions taken**: \u2705 teams-webhook (high severity)\n\n> Detailed run log: [Run #0003](agents/error-monitor/runs/2026-02-24T14-30Z-run0003.md)\n> Previous report: [2026-02-23](docs/2026-02-23-error-monitor.md)"
 }
 \`\`\`
 
@@ -84,6 +86,18 @@ You MUST respond with a JSON object matching this structure:
 | email-graph | Send an email via Microsoft Graph API. | recipients (optional) |
 | generic-webhook | POST to any HTTP endpoint (Slack, PagerDuty, custom API). | webhookPayload (optional) |
 | pipeline-trigger | Trigger an Azure DevOps pipeline. | — |
+
+## Investigation Report Guidelines
+
+The \`investigationReport\` field is a markdown section that will be appended to a daily investigation document (\`docs/YYYY-MM-DD-<agentName>.md\`). Write it as a self-contained summary:
+
+- Start with \`### Run #N \u2014 HH:MM UTC\`
+- Describe what was checked and what was found
+- Use markdown tables when presenting numeric data or comparisons
+- Note any active issues, trend changes, or resolved issues
+- List actions taken (if any) with their status
+- Add a link to the detailed run log: \`[Run #NNNN](agents/<agentName>/runs/<timestamp>-runNNNN.md)\`
+- Keep it concise (5\u201320 lines) but informative for someone reading only this document
 
 ## Rules
 
@@ -287,6 +301,7 @@ function validateAgentOutput(parsed: any): AgentOutput {
         summary: parsed.summary,
         findings: parsed.findings,
         assessment: parsed.assessment,
+        investigationReport: parsed.investigationReport || parsed.findings,
         activeIssues: parsed.activeIssues || [],
         resolvedIssues: parsed.resolvedIssues || [],
         actions: parsed.actions || [],
