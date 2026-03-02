@@ -46,7 +46,7 @@ When in doubt, start with \`traces\`. If the question is about page load times o
    - Only take actions explicitly described in your instruction.
    - Track consecutive detections accurately.
 6. REPORT your findings, assessment, and actions in the structured output format.
-7. WRITE an investigationReport — a concise markdown summary of this run suitable for a standalone daily document. This report will be appended to a daily file in the repository's docs folder.
+7. WRITE an investigationReport — a **well-formatted markdown document** with \`####\` section headers, markdown tables for all numeric data, and emoji severity indicators. This is the primary deliverable and will be appended to a daily investigation doc. NEVER write a wall of text — always use structured sections.
 
 ## Query Strategy — Be Efficient
 
@@ -155,6 +155,50 @@ The \`investigationReport\` field is the PRIMARY DELIVERABLE of each run. It wil
 - NEVER dump all findings into a single paragraph or sentence
 - Target 20\u201360 lines for a full monitoring report
 - Each section should be independently readable
+
+### \u274c WRONG — Wall of Text (NEVER do this)
+
+\`\`\`
+RT0012 Lock Timeouts: SLOG=110 (stable), X2OSLMF=92 (worsened from 36), DK Tools=57 (stable). RT0028 Deadlocks: X2OSLMF=21 (stable), Juntoo=5 (new). RT0018 Slow AL NEW: Torrential Data Solutions avg 21s max 96s; Coeck avg 45s max 101s.
+\`\`\`
+
+The above is a FAILURE. It is unreadable, has no structure, and cannot be scanned.
+
+### \u2705 CORRECT — Structured Report (ALWAYS do this)
+
+\`\`\`markdown
+### Run #3 \u2014 14:30 UTC
+
+Monitored 12 tenants across 5 signal types.
+
+#### \ud83d\udd34 Lock Timeouts (RT0012)
+
+| Tenant | Count | Trend | Top Pattern |
+|--------|-------|-------|-------------|
+| X2OSLMF | 92 | \u2191 worsening (was 36) | Inventory Status PTE (33 Background) |
+| SLOG | 110 | \u2192 stable | READCOMMITTED contention |
+| DK Tools | 57 | \u2192 stable | \u2014 |
+
+#### \ud83d\udfe1 Deadlocks (RT0028)
+
+| Tenant | Count | Trend | Attribution |
+|--------|-------|-------|-------------|
+| X2OSLMF | 21 | \u2192 stable | \u2014 |
+| Juntoo | 5 | \ud83c\udd95 new (600% > baseline) | Continia Doc Capture vs iFacto SPRE |
+
+#### Summary
+
+- **4 critical issues** tracked, 1 new (Juntoo deadlocks)
+- **1 action taken**: \u2705 teams-webhook (X2OSLMF lock escalation)
+\`\`\`
+
+### Self-Check Before Returning
+
+Before you output your JSON response, verify your investigationReport:
+1. Does it contain at least 2 \`####\` section headers? If not, ADD THEM.
+2. Does it contain at least 1 markdown table (\`| col | col |\`)? If not, CONVERT your data to a table.
+3. Is any paragraph longer than 3 lines? If so, BREAK IT into a table or bullet list.
+4. Could a reader scan the report in 10 seconds and find the key issues? If not, RESTRUCTURE IT.
 
 ## Output Size Guidelines
 

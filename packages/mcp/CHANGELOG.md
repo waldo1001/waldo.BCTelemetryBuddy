@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.13] - 2026-03-02
+
+### Improved
+- **Investigation Report Formatting — Negative Example**: System prompt now includes a "❌ WRONG" negative example showing the wall-of-text anti-pattern alongside a "✅ CORRECT" rendered example with proper `####` headers, markdown tables, and emoji indicators. Makes the expected format unmistakable.
+- **Investigation Report — Self-Check**: Added a 4-point self-check checklist that the LLM must verify before returning: section headers present, tables for numeric data, no long paragraphs, scannable in 10 seconds.
+- **Step 7 Instruction Strengthened**: Workflow step 7 now explicitly requires `####` section headers, markdown tables, and emoji severity indicators instead of just "concise markdown summary".
+
 ## [3.1.12] - 2026-03-02
 
 ### Improved
