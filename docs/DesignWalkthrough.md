@@ -1696,3 +1696,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Patch release: MCP 3.1.2 + Extension 3.1.3 [Entry: cafb35f3-f265-4f9c-9d40-71d46570176f]
   - **Why:** Release unreleased changes (dynamic pipeline templates, retry logic, preview labels) as patch versions.
   - **How:** Bumped MCP 3.1.1->3.1.2 and Extension 3.1.2->3.1.3. Updated both CHANGELOGs with release notes. Committed, tagged (mcp-v3.1.2, v3.1.3), and pushed to trigger CI/CD.
+- **2026-03-02** — Patch release MCP 3.1.3 [Entry: ee2b882f-05fa-4679-9918-f0ac425f1032]
+  - **Why:** Release JSON repair and verbose logging fixes to unblock failing pipeline builds.
+  - **How:** Bumped MCP 3.1.2->3.1.3, updated CHANGELOG with JSON repair fix and logging improvements, committed, tagged mcp-v3.1.3, pushed.
