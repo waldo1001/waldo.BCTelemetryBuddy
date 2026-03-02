@@ -1750,3 +1750,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Enforce structured investigationReport formatting (MCP 3.1.13) [Entry: bbd1bacb-fae2-473d-b738-d9dc528a29b6]
   - **Why:** Agent was producing dense wall-of-text paragraphs instead of readable markdown with headers and tables.
   - **How:** Added negative example (WRONG), rendered example (CORRECT), 4-point self-check, and strengthened step 7 instruction in system prompt.
+- **2026-03-03** — Per-run investigation documents with date-time filenames (MCP 3.1.14) [Entry: c38f889c-6fee-48f0-a940-0c62525dc453]
+  - **Why:** User wants each investigation run to produce a separate, chronologically-ordered document instead of appending to a single daily file.
+  - **How:** Replaced appendToDailyReport with createInvestigationReport. New filename format: YYYY-MM-DD-HHmm-<agentName>.md. Header includes date+time. Tests updated (998 total).

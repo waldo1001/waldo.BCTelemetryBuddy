@@ -2970,3 +2970,7 @@ Change instructions an business logic to do this."
 > "Investigation report is a wall of text instead of structured markdown. Enforce formatting with negative example, rendered example, and self-check."
 
 ---
+### Entry ID: c38f889c-6fee-48f0-a940-0c62525dc453 — 2026-03-03 00:00
+> "Always create a new document for each new investigation. Include date and time on the document so that the order of documents make sense."
+
+---
