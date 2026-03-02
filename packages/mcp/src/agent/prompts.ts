@@ -62,8 +62,8 @@ You MUST respond with a JSON object matching this structure:
   "actions": [
     {
       "type": "teams-webhook",
-      "title": "Alert title",
-      "message": "Alert body",
+      "title": "🔴 CRITICAL: 20 Deadlocks in 24h (5× threshold)",
+      "message": "Checked deadlock telemetry (RT0028) for the last 24 hours.\\n\\n| Tenant | App | Count | Top Table |\\n|--------|-----|-------|-----------|\\n| Contoso | Warehouse Ext | 12 | Item Ledger Entry |\\n| Fabrikam | Finance Plus | 8 | G/L Entry |\\n\\n**Total**: 20 deadlocks across 2 tenants (threshold: >4/day).\\n\\n**Attribution**: Warehouse Ext (FindPostingSetup × 5), Finance Plus (FindRecord × 3).\\n\\n**Action required**: Investigate concurrency in both extensions. Check if recent deployment triggered this.",
       "severity": "high"
     }
   ],
@@ -86,6 +86,17 @@ You MUST respond with a JSON object matching this structure:
 | email-graph | Send an email via Microsoft Graph API. | recipients (optional) |
 | generic-webhook | POST to any HTTP endpoint (Slack, PagerDuty, custom API). | webhookPayload (optional) |
 | pipeline-trigger | Trigger an Azure DevOps pipeline. | — |
+
+## Notification Message Guidelines
+
+The \`message\` field in actions is rendered as a rich Adaptive Card. Write it as detailed markdown:
+
+- Include a table when presenting numeric data (tenants, error counts, signals, trends)
+- Add attribution: which app/extension/object is responsible
+- Include thresholds: what was breached and by how much
+- State what action is required or recommended
+- Use markdown formatting: **bold** for emphasis, \\n for line breaks
+- The message should be self-contained — a reader should understand the situation without access to the pipeline log
 
 ## Investigation Report Guidelines
 

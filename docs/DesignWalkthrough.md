@@ -1720,3 +1720,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Pipeline template improvements + dual release [Entry: be428ce8-5fe1-4033-ab01-30bba79e227b]
   - **Why:** Real-world pipeline used trigger:none (agent commits caused re-triggers), daily schedule, and simpler commit pattern
   - **How:** Updated generateAzureDevOpsYaml/generateGitHubActionsYaml + static templates: trigger:none, daily cron (0 6 * * *), git add agents/ docs/, || commit pattern. Updated wizard UI text. Fixed test assertion. Released MCP 3.1.6 (mcp-v3.1.6) + Extension 3.1.4 (v3.1.4).
+- **2026-03-02** — Richer Teams notification messages [Entry: 38181288-9675-4e53-bdee-39b8daf35c75]
+  - **Why:** Pipeline Teams notifications were too brief — just title+severity. LLM wasn't guided to write detailed messages with tables/attribution.
+  - **How:** Updated system prompt: replaced minimal action example with rich example (table, attribution, thresholds). Added 'Notification Message Guidelines' section. docs/ missing was version timing (pipeline ran 3.1.4 before 3.1.5 published).

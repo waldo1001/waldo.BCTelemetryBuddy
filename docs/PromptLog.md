@@ -2930,3 +2930,7 @@ Change instructions an business logic to do this."
 > "Update pipeline templates to match real-world example: trigger:none, daily schedule, git add docs/, simpler commit. Release MCP 3.1.6 + Extension 3.1.4."
 
 ---
+### Entry ID: 38181288-9675-4e53-bdee-39b8daf35c75 — 2026-03-02 21:55
+> "Pipeline build 76682 has no docs/ folder and Teams notification was limited. Diagnose and fix."
+
+---
