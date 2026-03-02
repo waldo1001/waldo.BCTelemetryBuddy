@@ -1,11 +1,8 @@
-trigger:
-  branches:
-    include:
-      - main
+trigger: none
 
 schedules:
-  - cron: "0 * * * *"
-    displayName: "Hourly agent run"
+  - cron: "0 6 * * *"
+    displayName: "Daily agent run"
     branches:
       include: [main]
     always: true
@@ -58,7 +55,7 @@ steps:
   - script: |
       git config user.name "bctb-agent"
       git config user.email "bctb-agent@noreply.github.com"
-      git add agents/
+      git add agents/ docs/
       git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
       git push origin HEAD:main
     displayName: "Commit agent state"

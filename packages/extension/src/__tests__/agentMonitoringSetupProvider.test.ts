@@ -493,14 +493,13 @@ describe('AgentMonitoringSetupProvider', () => {
                 expect(writtenContent).toContain('export PATH=$HOME/.npm-global/bin:$PATH');
             });
 
-            it('should include branch trigger in Azure DevOps template', async () => {
+            it('should use trigger: none in Azure DevOps template', async () => {
                 (fs.existsSync as jest.Mock).mockReturnValue(false);
 
                 await messageHandler({ type: 'copyPipeline', pipelineType: 'azure-devops' });
 
                 const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
-                expect(writtenContent).toContain('trigger:');
-                expect(writtenContent).not.toContain('trigger: none');
+                expect(writtenContent).toContain('trigger: none');
             });
 
             it('should prompt when pipeline file already exists', async () => {

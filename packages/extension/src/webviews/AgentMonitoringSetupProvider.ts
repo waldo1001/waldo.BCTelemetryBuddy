@@ -125,7 +125,7 @@ function generateGitHubActionsYaml(opts: PipelineOptions): string {
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       agent:
@@ -177,13 +177,9 @@ ${llmKeyLine}
         run: |
           git config user.name "bctb-agent"
           git config user.email "bctb-agent@noreply.github.com"
-          git add agents/
-          if git diff --cached --quiet; then
-            echo "No state changes"
-          else
-            git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
-            git push
-          fi
+          git add agents/ docs/
+          git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
+          git push
 `;
 }
 
@@ -199,14 +195,11 @@ function generateAzureDevOpsYaml(opts: PipelineOptions): string {
         ? `  - name: AZURE_OPENAI_KEY\n    value: ''\n  - name: ANTHROPIC_API_KEY\n    value: $(ANTHROPIC_API_KEY)`
         : `  - name: AZURE_OPENAI_KEY\n    value: $(AZURE_OPENAI_KEY)`;
 
-    return `trigger:
-  branches:
-    include:
-      - ${branch}
+    return `trigger: none
 
 schedules:
-  - cron: "0 * * * *"
-    displayName: "Hourly agent run"
+  - cron: "0 6 * * *"
+    displayName: "Daily agent run"
     branches:
       include: [${branch}]
     always: true
@@ -254,7 +247,7 @@ ${llmKeyLine}
   - script: |
       git config user.name "bctb-agent"
       git config user.email "bctb-agent@noreply.github.com"
-      git add agents/
+      git add agents/ docs/
       git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
       git push origin HEAD:${branch}
     displayName: "Commit agent state"
@@ -1419,14 +1412,14 @@ export class AgentMonitoringSetupProvider {
             <div class="template-grid">
                 <div class="template-card" id="pl-github" onclick="selectPipeline('github-actions')">
                     <h4>GitHub Actions</h4>
-                    <p>Cron-based workflow that runs hourly, commits agent state back to the repo.</p>
+                    <p>Cron-based workflow that runs daily, commits agent state back to the repo.</p>
                     <div class="meta">
                         <span>→ .github/workflows/telemetry-agent.yml</span>
                     </div>
                 </div>
                 <div class="template-card" id="pl-azdo" onclick="selectPipeline('azure-devops')">
                     <h4>Azure DevOps</h4>
-                    <p>Scheduled pipeline that runs hourly, commits state via persistent credentials.</p>
+                    <p>Scheduled pipeline that runs daily, commits state via persistent credentials.</p>
                     <div class="meta">
                         <span>→ azure-pipelines-agents.yml</span>
                     </div>

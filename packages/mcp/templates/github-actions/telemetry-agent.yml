@@ -2,7 +2,7 @@ name: Telemetry Monitoring Agents
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       agent:
@@ -55,10 +55,6 @@ jobs:
         run: |
           git config user.name "bctb-agent"
           git config user.email "bctb-agent@noreply.github.com"
-          git add agents/
-          if git diff --cached --quiet; then
-            echo "No state changes"
-          else
-            git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
-            git push
-          fi
+          git add agents/ docs/
+          git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
+          git push

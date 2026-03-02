@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.4] - 2026-03-02
+
+### Changed
+- **Pipeline Templates — `trigger: none`**: Azure DevOps template no longer triggers on branch commits, preventing re-trigger loops from agent state commits
+- **Pipeline Templates — Daily Schedule**: Default schedule changed from hourly to daily at 06:00 UTC for both platforms
+- **Pipeline Templates — Commit `docs/`**: Git commit step now includes `docs/` for daily investigation reports alongside `agents/`
+- **Pipeline Templates — Simpler Commit Step**: GitHub Actions and Azure DevOps commit steps use `||` short-circuit instead of if/else
+- **Wizard UI**: Pipeline card descriptions updated from "hourly" to "daily"
+
 ## [3.1.3] - 2026-03-02
 
 ### Improved
