@@ -2934,3 +2934,7 @@ Change instructions an business logic to do this."
 > "Pipeline build 76682 has no docs/ folder and Teams notification was limited. Diagnose and fix."
 
 ---
+### Entry ID: 14f63eb5-f3e8-4769-8d0a-33be509bff90 — 2026-03-02 22:00
+> "Pack and ship — release MCP 3.1.7 with richer Teams notification prompt."
+
+---

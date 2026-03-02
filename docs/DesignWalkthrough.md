@@ -1723,3 +1723,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Richer Teams notification messages [Entry: 38181288-9675-4e53-bdee-39b8daf35c75]
   - **Why:** Pipeline Teams notifications were too brief — just title+severity. LLM wasn't guided to write detailed messages with tables/attribution.
   - **How:** Updated system prompt: replaced minimal action example with rich example (table, attribution, thresholds). Added 'Notification Message Guidelines' section. docs/ missing was version timing (pipeline ran 3.1.4 before 3.1.5 published).
+- **2026-03-02** — Release MCP 3.1.7 [Entry: 14f63eb5-f3e8-4769-8d0a-33be509bff90]
+  - **Why:** Ship richer Teams notification messages to production
+  - **How:** Bumped MCP to 3.1.7, updated CHANGELOG, tagged mcp-v3.1.7, pushed.
