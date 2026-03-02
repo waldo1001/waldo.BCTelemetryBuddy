@@ -1744,3 +1744,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Read agent template instruction files [Entry: 33574755-e8c5-434e-a287-c28421e76fa0]
   - **Why:** User wanted to understand the instructions each preconfigured agent template provides.
   - **How:** Read all instruction.md and README.md files from packages/mcp/templates/agents/ subdirectories and presented full content.
+- **2026-03-02** — Patch release MCP 3.1.12 + Extension 3.1.7 [Entry: 61f1401d-0d49-43ac-ac4d-4a431eb6fbd7]
+  - **Why:** Release agent efficiency improvements, App Insights table guidance, maxTokens increase, and template query strategy updates.
+  - **How:** Bumped versions, updated CHANGELOGs, committed, tagged (mcp-v3.1.12 + v3.1.7), pushed to origin.
