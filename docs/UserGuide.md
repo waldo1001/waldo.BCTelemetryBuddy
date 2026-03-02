@@ -2074,6 +2074,8 @@ Full `defaults` reference:
 | `Agent exceeded max tool calls` | LLM loop / unclear instruction | Simplify instruction; increase `maxToolCalls` |
 | No findings after first run | Config or App Insights issue | Verify `BCTB_APP_INSIGHTS_ID` is correct; check with `get_event_catalog` |
 | Teams notification not sent | Webhook URL issue or not configured | Check `agents.actions.teams-webhook.url` and `TEAMS_WEBHOOK_URL` env var |
+| Teams shows raw markdown tables | Adaptive Card version < 1.5 | Update to latest MCP version — tables are now converted to native Adaptive Card `Table` elements |
+| Pipeline output too noisy | Internal kusto/auth/cache logs visible | Update to latest MCP version — these are now in collapsible groups in Azure DevOps / GitHub Actions |
 | Agent paused after error | Not applicable — errors don't auto-pause | Check the run log in `agents/<name>/runs/` |
 | Git push fails in pipeline | Branch protection | Ensure pipeline has `contents: write` permission (GitHub) or Contribute on repo (Azure DevOps) |
 

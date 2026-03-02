@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.4] - 2026-03-02
+
+### Improved
+- **Teams Adaptive Card Tables**: Agent notifications now convert markdown tables in the alert message to native Adaptive Card `Table` elements (schema 1.5) with styled headers and grid lines, instead of rendering them as plain text. Non-table text is preserved as `TextBlock` with markdown support.
+- **CI-Aware Collapsible Groups**: Tool call execution in the ReAct loop is now wrapped in collapsible groups — `##[group]`/`##[endgroup]` in Azure DevOps, `::group::`/`::endgroup::` in GitHub Actions. Internal kusto/auth/cache logs are collapsed; tool names, reasoning, and result summaries stay visible at top level.
+- **Retry Visibility**: LLM retry attempts (429/529/503 backoff) are now logged to `stdout` with a 🔄 icon so they appear in the normal pipeline output stream, not hidden in `stderr`.
+
 ## [3.1.3] - 2026-03-02
 
 ### Fixed

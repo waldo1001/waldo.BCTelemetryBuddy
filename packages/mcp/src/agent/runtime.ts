@@ -54,6 +54,32 @@ export class AgentRuntime {
     }
 
     /**
+     * CI-aware collapsible group helpers.
+     * Azure DevOps: ##[group]title / ##[endgroup]
+     * GitHub Actions: ::group::title / ::endgroup::
+     * Other: plain header line
+     */
+    private beginGroup(title: string): void {
+        if (process.env.TF_BUILD) {
+            console.log(`##[group]${title}`);
+        } else if (process.env.GITHUB_ACTIONS) {
+            console.log(`::group::${title}`);
+        } else {
+            console.log(`  ┌─ ${title}`);
+        }
+    }
+
+    private endGroup(): void {
+        if (process.env.TF_BUILD) {
+            console.log('##[endgroup]');
+        } else if (process.env.GITHUB_ACTIONS) {
+            console.log('::endgroup::');
+        } else {
+            console.log('  └─');
+        }
+    }
+
+    /**
      * Call the LLM with retry + exponential backoff for transient errors.
      * Retries on status codes like 429 (rate limit), 529 (overloaded), 503 (unavailable).
      */
@@ -85,7 +111,7 @@ export class AgentRuntime {
                     retry.maxDelayMs
                 );
 
-                console.error(`  ⚠ LLM API error ${statusCode}, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
+                console.log(`  🔄 LLM API error ${statusCode}, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
@@ -161,7 +187,10 @@ export class AgentRuntime {
                             }).join(', ');
                         } catch { return call.function.arguments.substring(0, 100); }
                     })();
-                    console.log(`     [${totalToolCalls}] ${call.function.name}(${argsSummary})`);
+                    console.log(`     [${totalToolCalls}] ${call.function.name}`);
+
+                    // Wrap tool execution in a collapsible group (hides internal kusto/auth/cache logs)
+                    this.beginGroup(`🔧 [${totalToolCalls}] ${call.function.name}(${argsSummary})`);
 
                     let resultStr: string;
                     try {
@@ -178,6 +207,8 @@ export class AgentRuntime {
                             error: error.message || 'Tool execution failed'
                         });
                     }
+
+                    this.endGroup();
 
                     const callDuration = Date.now() - callStart;
                     // Log result summary: row count for queries, length for other results

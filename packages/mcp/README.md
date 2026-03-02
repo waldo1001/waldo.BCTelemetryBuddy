@@ -344,6 +344,15 @@ cp -r node_modules/bc-telemetry-buddy-mcp/templates/agents/performance-monitorin
 bctb-mcp agent run performance-monitoring --once
 ```
 
+### CI/CD Pipeline Output
+
+Agent runs produce structured, CI-friendly output:
+
+- **Top-level visibility**: Iteration numbers, tool names, LLM reasoning, and result summaries (row/column counts, durations) are always visible
+- **Collapsible detail groups**: Internal execution logs (Kusto authentication, cache operations, query URLs) are wrapped in collapsible sections — `##[group]`/`##[endgroup]` in Azure DevOps, `::group::`/`::endgroup::` in GitHub Actions
+- **Retry visibility**: LLM API retries (429/529/503) are shown inline with backoff timing
+- **Teams notifications**: Markdown tables in alert messages are automatically converted to native Adaptive Card `Table` elements for proper rendering in Teams
+
 See the [User Guide](https://github.com/waldo1001/waldo.BCTelemetryBuddy/blob/main/docs/UserGuide.md#agentic-monitoring) for full docs including action types, state management, and troubleshooting.
 
 ## Features

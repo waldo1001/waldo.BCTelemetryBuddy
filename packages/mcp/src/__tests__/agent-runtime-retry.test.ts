@@ -241,7 +241,7 @@ describe('AgentRuntime retry logic', () => {
     });
 
     it('should log retry attempts', async () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
         const chatFn = jest.fn()
             .mockRejectedValueOnce(new Error('Anthropic API error 529: overloaded'))
             .mockResolvedValue(createFinalResponse());
@@ -251,7 +251,7 @@ describe('AgentRuntime retry logic', () => {
 
         await runtime.run('test-agent');
 
-        const retryLogs = consoleErrorSpy.mock.calls.filter(
+        const retryLogs = consoleLogSpy.mock.calls.filter(
             call => typeof call[0] === 'string' && call[0].includes('retrying in')
         );
         expect(retryLogs.length).toBe(1);

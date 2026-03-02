@@ -1699,3 +1699,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Patch release MCP 3.1.3 [Entry: ee2b882f-05fa-4679-9918-f0ac425f1032]
   - **Why:** Release JSON repair and verbose logging fixes to unblock failing pipeline builds.
   - **How:** Bumped MCP 3.1.2->3.1.3, updated CHANGELOG with JSON repair fix and logging improvements, committed, tagged mcp-v3.1.3, pushed.
+- **2026-03-02** — Teams Adaptive Card tables + CI collapsible groups + retry visibility [Entry: 13cd6ba6-2b9a-4a74-ac3a-0a4505709424]
+  - **Why:** Teams TextBlock doesn't render markdown tables; pipeline output too noisy with interleaved kusto/auth logs; retry attempts were hidden in stderr
+  - **How:** Added parseMarkdownToAdaptiveCardBody() to convert MD tables to Adaptive Card Table elements (schema 1.5); wrapped tool execution in beginGroup/endGroup for CI collapsible sections; changed retry log from console.error to console.log with recycle icon
+- **2026-03-02** — Document Teams tables, CI groups, retry visibility [Entry: b3deabf1-f6ad-4127-80e5-c920dbb199d4]
+  - **Why:** User requested documentation of the recent changes
+  - **How:** Updated packages/mcp/CHANGELOG.md (Unreleased section), packages/mcp/README.md (new CI/CD Pipeline Output section), docs/UserGuide.md (2 new troubleshooting rows for Teams tables and noisy pipeline output)

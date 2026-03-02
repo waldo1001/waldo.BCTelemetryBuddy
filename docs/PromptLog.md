@@ -2902,3 +2902,11 @@ Change instructions an business logic to do this."
 > "Patch release, please"
 
 ---
+### Entry ID: 13cd6ba6-2b9a-4a74-ac3a-0a4505709424 — 2026-03-02 17:09
+> "Fix Teams webhook not rendering markdown tables; add CI-aware collapsible groups for pipeline output; make retry attempts visible via console.log"
+
+---
+### Entry ID: b3deabf1-f6ad-4127-80e5-c920dbb199d4 — 2026-03-02 17:17
+> "Document the recent changes (Teams Adaptive Card tables, CI collapsible groups, retry visibility) in MCP CHANGELOG, README, and UserGuide"
+
+---

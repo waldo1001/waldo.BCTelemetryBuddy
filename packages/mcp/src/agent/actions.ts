@@ -18,6 +18,118 @@ import {
     RequestedAction
 } from './types.js';
 
+/**
+ * Parse a markdown message into Adaptive Card body elements.
+ * Converts markdown tables → Adaptive Card Table elements (schema 1.5).
+ * Regular text → TextBlock elements with markdown support.
+ */
+export function parseMarkdownToAdaptiveCardBody(message: string): any[] {
+    const body: any[] = [];
+
+    // Split message into table and non-table segments
+    // Markdown table lines start with | and contain at least one |
+    const lines = message.split('\n');
+    let currentText: string[] = [];
+    let currentTable: string[] = [];
+    let inTable = false;
+
+    const flushText = () => {
+        const text = currentText.join('\n').trim();
+        if (text) {
+            body.push({ type: 'TextBlock', text, wrap: true });
+        }
+        currentText = [];
+    };
+
+    const flushTable = () => {
+        if (currentTable.length < 2) {
+            // Not a real table (need header + separator at minimum)
+            currentText.push(...currentTable);
+            currentTable = [];
+            return;
+        }
+
+        const tableRows = currentTable
+            .filter(line => !line.match(/^\s*\|[-:| ]+\|\s*$/)); // Remove separator rows
+
+        if (tableRows.length === 0) {
+            currentTable = [];
+            return;
+        }
+
+        const parseCells = (row: string) =>
+            row.split('|').map(c => c.trim()).filter((_, i, arr) =>
+                i > 0 && i < arr.length - 1  // Remove empty first/last from leading/trailing |
+            );
+
+        const headerCells = parseCells(tableRows[0]);
+        const colCount = headerCells.length;
+
+        const columns = headerCells.map(() => ({ width: 1 }));
+
+        const rows: any[] = [];
+
+        // Header row
+        rows.push({
+            type: 'TableRow',
+            style: 'accent',
+            cells: headerCells.map(cell => ({
+                type: 'TableCell',
+                items: [{ type: 'TextBlock', text: cell, weight: 'Bolder', wrap: true }]
+            }))
+        });
+
+        // Data rows
+        for (let i = 1; i < tableRows.length; i++) {
+            const cells = parseCells(tableRows[i]);
+            rows.push({
+                type: 'TableRow',
+                cells: Array.from({ length: colCount }, (_, j) => ({
+                    type: 'TableCell',
+                    items: [{ type: 'TextBlock', text: cells[j] || '', wrap: true }]
+                }))
+            });
+        }
+
+        body.push({
+            type: 'Table',
+            gridStyle: 'accent',
+            firstRowAsHeader: true,
+            showGridLines: true,
+            columns,
+            rows
+        });
+
+        currentTable = [];
+    };
+
+    for (const line of lines) {
+        const isTableLine = line.trimStart().startsWith('|') && line.trimEnd().endsWith('|');
+
+        if (isTableLine) {
+            if (!inTable) {
+                flushText();
+                inTable = true;
+            }
+            currentTable.push(line);
+        } else {
+            if (inTable) {
+                flushTable();
+                inTable = false;
+            }
+            currentText.push(line);
+        }
+    }
+
+    // Flush remaining
+    if (inTable) {
+        flushTable();
+    }
+    flushText();
+
+    return body;
+}
+
 export class ActionDispatcher {
     private readonly config: ActionConfig;
 
@@ -101,6 +213,9 @@ export class ActionDispatcher {
         const severityColor = action.severity === 'high' ? 'attention'
             : action.severity === 'medium' ? 'warning' : 'good';
 
+        // Convert message markdown (including tables) to Adaptive Card elements
+        const messageBody = parseMarkdownToAdaptiveCardBody(action.message);
+
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,10 +226,10 @@ export class ActionDispatcher {
                     content: {
                         '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
                         type: 'AdaptiveCard',
-                        version: '1.4',
+                        version: '1.5',
                         body: [
                             { type: 'TextBlock', text: action.title, weight: 'Bolder', size: 'Medium', color: severityColor },
-                            { type: 'TextBlock', text: action.message, wrap: true },
+                            ...messageBody,
                             {
                                 type: 'FactSet', facts: [
                                     { title: 'Severity', value: action.severity },

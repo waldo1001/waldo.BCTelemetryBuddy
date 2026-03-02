@@ -9,7 +9,7 @@
  * - Missing config error handling
  */
 
-import { ActionDispatcher } from '../../agent/actions';
+import { ActionDispatcher, parseMarkdownToAdaptiveCardBody } from '../../agent/actions';
 import { ActionConfig, RequestedAction } from '../../agent/types';
 
 // ─── Mock fetch ──────────────────────────────────────────────────────────────
@@ -535,5 +535,124 @@ describe('ActionDispatcher', () => {
             expect(result[0].status).toBe('failed');
             expect(result[0].details?.error).toContain('Pipeline trigger failed');
         });
+    });
+});
+
+// ─── parseMarkdownToAdaptiveCardBody Tests ───────────────────────────────────
+
+describe('parseMarkdownToAdaptiveCardBody', () => {
+    it('converts plain text to a single TextBlock', () => {
+        const body = parseMarkdownToAdaptiveCardBody('Hello world');
+        expect(body).toEqual([
+            { type: 'TextBlock', text: 'Hello world', wrap: true }
+        ]);
+    });
+
+    it('converts a markdown table to an Adaptive Card Table element', () => {
+        const md = [
+            '| Name | Count |',
+            '|------|-------|',
+            '| Errors | 42 |',
+            '| Warnings | 7 |'
+        ].join('\n');
+
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        expect(body).toHaveLength(1);
+        expect(body[0].type).toBe('Table');
+        expect(body[0].firstRowAsHeader).toBe(true);
+        expect(body[0].showGridLines).toBe(true);
+        expect(body[0].columns).toHaveLength(2);
+        expect(body[0].rows).toHaveLength(3); // header + 2 data rows
+        // header row
+        expect(body[0].rows[0].cells[0].items[0].text).toBe('Name');
+        expect(body[0].rows[0].cells[0].items[0].weight).toBe('Bolder');
+        // data row
+        expect(body[0].rows[1].cells[0].items[0].text).toBe('Errors');
+        expect(body[0].rows[1].cells[1].items[0].text).toBe('42');
+    });
+
+    it('handles text before and after a table', () => {
+        const md = [
+            'Summary of findings:',
+            '',
+            '| Metric | Value |',
+            '|--------|-------|',
+            '| CPU | 95% |',
+            '',
+            'Please investigate immediately.'
+        ].join('\n');
+
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        expect(body).toHaveLength(3);
+        expect(body[0].type).toBe('TextBlock');
+        expect(body[0].text).toContain('Summary');
+        expect(body[1].type).toBe('Table');
+        expect(body[1].rows).toHaveLength(2); // header + 1 data row
+        expect(body[2].type).toBe('TextBlock');
+        expect(body[2].text).toContain('investigate');
+    });
+
+    it('handles multiple tables in one message', () => {
+        const md = [
+            '## Errors',
+            '| Error | Count |',
+            '|-------|-------|',
+            '| Timeout | 5 |',
+            '',
+            '## Warnings',
+            '| Warning | Count |',
+            '|---------|-------|',
+            '| Slow | 12 |'
+        ].join('\n');
+
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        // TextBlock (## Errors), Table, TextBlock (## Warnings), Table
+        const tables = body.filter((b: any) => b.type === 'Table');
+        expect(tables).toHaveLength(2);
+    });
+
+    it('handles a table with uneven columns (pads missing cells)', () => {
+        const md = [
+            '| A | B | C |',
+            '|---|---|---|',
+            '| 1 |',  // missing B and C
+        ].join('\n');
+
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        expect(body[0].type).toBe('Table');
+        expect(body[0].columns).toHaveLength(3);
+        // Data row should have 3 cells, with missing ones empty
+        const dataRow = body[0].rows[1];
+        expect(dataRow.cells).toHaveLength(3);
+        expect(dataRow.cells[0].items[0].text).toBe('1');
+        expect(dataRow.cells[1].items[0].text).toBe('');
+        expect(dataRow.cells[2].items[0].text).toBe('');
+    });
+
+    it('handles message with no tables (pure markdown text)', () => {
+        const md = '**Bold text** and *italic*\n\nSecond paragraph';
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        expect(body).toHaveLength(1);
+        expect(body[0].type).toBe('TextBlock');
+        expect(body[0].text).toContain('Bold text');
+    });
+
+    it('handles empty message', () => {
+        const body = parseMarkdownToAdaptiveCardBody('');
+        expect(body).toHaveLength(0);
+    });
+
+    it('preserves header row styling', () => {
+        const md = [
+            '| Header1 | Header2 |',
+            '|---------|---------|',
+            '| data1   | data2   |'
+        ].join('\n');
+
+        const body = parseMarkdownToAdaptiveCardBody(md);
+        expect(body[0].rows[0].style).toBe('accent');
+        expect(body[0].rows[0].cells[0].items[0].weight).toBe('Bolder');
+        // Data rows should not have Bolder
+        expect(body[0].rows[1].cells[0].items[0].weight).toBeUndefined();
     });
 });
