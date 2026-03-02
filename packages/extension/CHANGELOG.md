@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-03-02
+
+### Improved
+- **Agent Monitoring Setup Wizard — Dynamic Pipeline Generation**: Pipeline YAML is now generated dynamically via `PipelineOptions` interface supporting LLM provider selection (Azure OpenAI / Anthropic), custom branch name, and custom variable group name
+- **Agent Monitoring Setup Wizard — Pipeline Settings UI**: Step 6 now includes fields for branch name and variable group name with sensible defaults
+- **Azure DevOps Pipeline Script**: Updated to use inline `export` pattern for npm prefix/PATH (self-hosted agent compatibility), `BCTB_WORKSPACE_PATH`, and branch-based triggers matching proven production patterns
+
+### Changed
+- **Agent Monitoring marked as Preview**: Command title, wizard panel title, HTML heading, and completion message now include "(Preview)" label to indicate feature maturity
+
 ## [3.1.2] - 2025-06-04
 
 ### Improved
