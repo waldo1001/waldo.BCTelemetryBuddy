@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.14] - 2026-03-02
+
+### Changed
+- **Per-Run Investigation Documents**: Each agent run now creates a separate investigation document (`docs/YYYY-MM-DD-HHmm-<agentName>.md`) instead of appending to a single daily file. Date and time in the filename ensure chronological ordering across runs.
+- **File Header with Timestamp**: Each investigation doc header now includes both date and time (e.g., `Investigation Report — 2026-03-02 14:30 UTC`).
+
+### Deprecated
+- `appendToDailyReport` function — replaced by `createInvestigationReport`. The old function still works but delegates to the new one.
+
 ## [3.1.13] - 2026-03-02
 
 ### Improved

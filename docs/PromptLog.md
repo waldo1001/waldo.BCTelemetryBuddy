@@ -2966,3 +2966,7 @@ Change instructions an business logic to do this."
 > "patch release"
 
 ---
+### Entry ID: bbd1bacb-fae2-473d-b738-d9dc528a29b6 — 2026-03-02 23:52
+> "Investigation report is a wall of text instead of structured markdown. Enforce formatting with negative example, rendered example, and self-check."
+
+---

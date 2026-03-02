@@ -1,12 +1,12 @@
 /**
- * Markdown report generator for agent run logs and daily investigation docs.
+ * Markdown report generator for agent run logs and investigation docs.
  *
  * Two report types:
  * 1. Per-run report: `agents/<name>/runs/<timestamp>-run<NNNN>.md`
  *    - Full audit-trail style report of a single run
- * 2. Daily investigation doc: `docs/YYYY-MM-DD-<agentName>.md`
- *    - Concise summary doc, one per agent per day, appended on each run
- *    - LLM writes the investigationReport content; this module handles file structure
+ * 2. Investigation doc: `docs/YYYY-MM-DD-HHmm-<agentName>.md`
+ *    - One file per investigation run with LLM-written content
+ *    - Each run creates a NEW file (not appended to a daily doc)
  */
 
 import * as fs from 'fs';
@@ -16,15 +16,39 @@ import { AgentRunLog, AgentAction } from './types.js';
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Append a run's investigation report to the daily doc.
- * Creates the file (with header + link to previous day) if it doesn't exist.
- * Returns the relative path from workspace root (e.g., `docs/2026-03-02-error-monitor.md`).
+ * Create a new investigation report file for this run.
+ * Each run gets its own file with date+time in the filename for chronological ordering.
+ * Returns the relative path from workspace root (e.g., `docs/2026-03-02-1430-error-monitor.md`).
  *
  * @param workspacePath     - Root workspace directory
  * @param agentName         - Agent name (used in filename)
  * @param runLog            - The completed run log
  * @param investigationReport - LLM-written markdown content for this run
- * @returns                 - Relative path to the daily doc (from workspace root)
+ * @returns                 - Relative path to the investigation doc (from workspace root)
+ */
+export function createInvestigationReport(
+    workspacePath: string,
+    agentName: string,
+    runLog: AgentRunLog,
+    investigationReport: string
+): string {
+    const dateTimeStr = formatDateTimeForFilename(runLog.timestamp);
+    const fileName = `${dateTimeStr}-${agentName}.md`;
+    const docsDir = path.join(workspacePath, 'docs');
+    const filePath = path.join(docsDir, fileName);
+    const relativePath = `docs/${fileName}`;
+
+    fs.mkdirSync(docsDir, { recursive: true });
+
+    const header = buildInvestigationHeader(agentName, runLog.timestamp);
+    fs.writeFileSync(filePath, header + investigationReport + '\n', 'utf-8');
+
+    return relativePath;
+}
+
+/**
+ * @deprecated Use createInvestigationReport instead. Kept for backward compatibility.
+ * Creates a new investigation report file (no longer appends to a daily doc).
  */
 export function appendToDailyReport(
     workspacePath: string,
@@ -32,61 +56,42 @@ export function appendToDailyReport(
     runLog: AgentRunLog,
     investigationReport: string
 ): string {
-    const dateStr = runLog.timestamp.substring(0, 10); // YYYY-MM-DD
-    const fileName = `${dateStr}-${agentName}.md`;
-    const docsDir = path.join(workspacePath, 'docs');
-    const filePath = path.join(docsDir, fileName);
-    const relativePath = `docs/${fileName}`;
-
-    fs.mkdirSync(docsDir, { recursive: true });
-
-    if (!fs.existsSync(filePath)) {
-        // Create new daily doc with header
-        const header = buildDailyDocHeader(workspacePath, agentName, dateStr);
-        fs.writeFileSync(filePath, header, 'utf-8');
-    }
-
-    // Append separator + investigation report
-    const separator = `\n---\n\n`;
-    fs.appendFileSync(filePath, separator + investigationReport + '\n', 'utf-8');
-
-    return relativePath;
+    return createInvestigationReport(workspacePath, agentName, runLog, investigationReport);
 }
 
 /**
- * Build the header for a new daily investigation doc.
- * Includes a link to the previous day's report if it exists.
+ * Format a timestamp into a filename-safe date-time string: YYYY-MM-DD-HHmm
  */
-function buildDailyDocHeader(
-    workspacePath: string,
-    agentName: string,
-    dateStr: string
-): string {
-    const lines: string[] = [];
+function formatDateTimeForFilename(timestamp: string): string {
+    const date = new Date(timestamp);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}-${hours}${minutes}`;
+}
 
-    lines.push(`# ${agentName} — Investigation Report — ${dateStr}`);
+/**
+ * Build the header for an investigation report file.
+ */
+function buildInvestigationHeader(
+    agentName: string,
+    timestamp: string
+): string {
+    const date = new Date(timestamp);
+    const dateStr = timestamp.substring(0, 10);
+    const timeStr = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')} UTC`;
+
+    const lines: string[] = [];
+    lines.push(`# ${agentName} — Investigation Report — ${dateStr} ${timeStr}`);
     lines.push('');
     lines.push(`> Auto-generated by BC Telemetry Buddy agent runtime.`);
     lines.push('');
-
-    // Link to previous day's report if it exists
-    const prevDate = getPreviousDateStr(dateStr);
-    const prevFileName = `${prevDate}-${agentName}.md`;
-    if (fs.existsSync(path.join(workspacePath, 'docs', prevFileName))) {
-        lines.push(`📋 Previous report: [${prevDate}](${prevFileName})`);
-        lines.push('');
-    }
+    lines.push('---');
+    lines.push('');
 
     return lines.join('\n');
-}
-
-/**
- * Get the previous date string (YYYY-MM-DD) from a given date string.
- */
-function getPreviousDateStr(dateStr: string): string {
-    const date = new Date(dateStr + 'T00:00:00Z');
-    date.setUTCDate(date.getUTCDate() - 1);
-    return date.toISOString().substring(0, 10);
 }
 
 /**

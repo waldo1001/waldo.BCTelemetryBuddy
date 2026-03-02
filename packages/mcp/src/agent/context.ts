@@ -21,7 +21,7 @@ import {
     AgentOutput,
     AgentInfo
 } from './types.js';
-import { generateRunReport, appendToDailyReport } from './report.js';
+import { generateRunReport, createInvestigationReport } from './report.js';
 
 /** Default number of resolved issue days to keep */
 const DEFAULT_RESOLVED_ISSUE_TTL_DAYS = 30;
@@ -169,7 +169,7 @@ export class AgentContextManager {
 
     /**
      * Save a run log file. Run files are append-only audit trails.
-     * Also appends to the daily investigation doc in docs/.
+     * Also creates a per-run investigation doc in docs/.
      */
     saveRunLog(agentName: string, runLog: AgentRunLog, investigationReport?: string): void {
         const runsDir = path.join(this.agentsDir, agentName, 'runs');
@@ -187,15 +187,15 @@ export class AgentContextManager {
         const reportPath = path.join(runsDir, `${timestamp}-run${runIdStr}.md`);
         fs.writeFileSync(reportPath, generateRunReport(runLog), 'utf-8');
 
-        // Append to daily investigation doc
+        // Create per-run investigation doc
         if (investigationReport) {
-            const dailyDocPath = appendToDailyReport(
+            const investigationDocPath = createInvestigationReport(
                 this.workspacePath,
                 agentName,
                 runLog,
                 investigationReport
             );
-            runLog.investigationReportPath = dailyDocPath;
+            runLog.investigationReportPath = investigationDocPath;
             // Re-write JSON with the path included
             fs.writeFileSync(filePath, JSON.stringify(runLog, null, 2), 'utf-8');
         }

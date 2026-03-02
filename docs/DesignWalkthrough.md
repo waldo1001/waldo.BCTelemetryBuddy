@@ -1747,3 +1747,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Patch release MCP 3.1.12 + Extension 3.1.7 [Entry: 61f1401d-0d49-43ac-ac4d-4a431eb6fbd7]
   - **Why:** Release agent efficiency improvements, App Insights table guidance, maxTokens increase, and template query strategy updates.
   - **How:** Bumped versions, updated CHANGELOGs, committed, tagged (mcp-v3.1.12 + v3.1.7), pushed to origin.
+- **2026-03-02** — Enforce structured investigationReport formatting (MCP 3.1.13) [Entry: bbd1bacb-fae2-473d-b738-d9dc528a29b6]
+  - **Why:** Agent was producing dense wall-of-text paragraphs instead of readable markdown with headers and tables.
+  - **How:** Added negative example (WRONG), rendered example (CORRECT), 4-point self-check, and strengthened step 7 instruction in system prompt.

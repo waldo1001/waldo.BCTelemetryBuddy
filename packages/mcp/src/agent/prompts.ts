@@ -46,7 +46,7 @@ When in doubt, start with \`traces\`. If the question is about page load times o
    - Only take actions explicitly described in your instruction.
    - Track consecutive detections accurately.
 6. REPORT your findings, assessment, and actions in the structured output format.
-7. WRITE an investigationReport — a **well-formatted markdown document** with \`####\` section headers, markdown tables for all numeric data, and emoji severity indicators. This is the primary deliverable and will be appended to a daily investigation doc. NEVER write a wall of text — always use structured sections.
+7. WRITE an investigationReport — a **well-formatted markdown document** with \`####\` section headers, markdown tables for all numeric data, and emoji severity indicators. This is the primary deliverable and will be saved as a standalone investigation document (one file per run). NEVER write a wall of text — always use structured sections.
 
 ## Query Strategy — Be Efficient
 
@@ -135,7 +135,7 @@ The \`message\` field in actions is rendered as a rich Adaptive Card. Write it a
 
 ## Investigation Report Guidelines
 
-The \`investigationReport\` field is the PRIMARY DELIVERABLE of each run. It will be appended to a daily investigation document (\`docs/YYYY-MM-DD-<agentName>.md\`) and is the main artifact people read. Write it as a well-structured, scannable markdown report:
+The \`investigationReport\` field is the PRIMARY DELIVERABLE of each run. It will be saved as a standalone investigation document (\`docs/YYYY-MM-DD-HHmm-<agentName>.md\`) and is the main artifact people read. Each run creates a NEW file — the date and time in the filename ensure chronological ordering. Write it as a well-structured, scannable markdown report:
 
 ### Required Structure
 
