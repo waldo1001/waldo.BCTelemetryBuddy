@@ -2866,3 +2866,31 @@ Change instructions an business logic to do this."
 > "Create a patch release for this, including changelog. Do we have to update documentation after latest change?"
 
 ---
+### Entry ID: c7b285da-f653-4988-950d-d7540fcc8ac2 — 2026-03-02 15:33
+> "Add retry with exponential backoff for transient LLM API errors (429, 529, 503) in the agent runtime. Make retry configurable in .bctb-config.json agents.defaults.retry section."
+
+---
+### Entry ID: a27e71d0-6731-4d2c-9acd-6538390743b7 — 2026-03-02 15:49
+> "Analyze if there is anything we need to change on our wizard. I think the pipeline could use a better template that is more in line with mine"
+
+---
+### Entry ID: e8556995-09ad-46c8-b144-f41ba669d2cf — 2026-03-02 15:49
+> "Analyze if there is anything we need to change on our wizard. I think the pipeline could use a better template that is more in line with mine"
+
+---
+### Entry ID: d7ae4381-e8a4-4893-961f-f746cd8100e8 — 2026-03-02 15:49
+> "Analyze if there is anything we need to change on our wizard. I think the pipeline could use a better template that is more in line with mine"
+
+---
+### Entry ID: 97594852-2bcc-4eb4-815d-64b1b0563d13 — 2026-03-02 15:53
+> "Update Azure DevOps pipeline scripts to match working pattern — inline exports, BCTB_WORKSPACE_PATH, branch trigger"
+
+---
+### Entry ID: 1d9ea8b8-1cc1-4d92-ac68-9067b92dd9ed — 2026-03-02 15:58
+> "update changelog"
+
+---
+### Entry ID: 003b5132-6878-42c9-8921-72c8bce4b8aa — 2026-03-02 16:03
+> "Anything Agent Monitoring is actually still just a preview. Add it so that it's clear to the users."
+
+---

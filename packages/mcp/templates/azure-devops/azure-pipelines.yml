@@ -1,4 +1,7 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
 
 schedules:
   - cron: "0 * * * *"
@@ -12,6 +15,13 @@ pool:
 
 variables:
   - group: bctb-secrets
+  - name: BCTB_WORKSPACE_PATH
+    value: "$(Build.SourcesDirectory)"
+  # Uncomment the LLM key matching your provider:
+  - name: AZURE_OPENAI_KEY
+    value: $(AZURE_OPENAI_KEY)
+  # - name: ANTHROPIC_API_KEY
+  #   value: $(ANTHROPIC_API_KEY)
 
 steps:
   - checkout: self
@@ -21,18 +31,24 @@ steps:
     inputs:
       versionSpec: "20.x"
 
-  - script: npm install -g bc-telemetry-buddy-mcp
+  - script: |
+      export npm_config_prefix=$HOME/.npm-global
+      export PATH=$HOME/.npm-global/bin:$PATH
+      npm install -g bc-telemetry-buddy-mcp@latest
     displayName: "Install BCTB MCP"
 
-  - script: bctb-mcp agent run-all --once
+  - script: |
+      export PATH=$HOME/.npm-global/bin:$PATH
+      bctb-mcp agent run-all --once
     displayName: "Run all agents"
     env:
       # Auth — always required for CI/CD (client_credentials flow)
       BCTB_AUTH_FLOW: client_credentials
       BCTB_CLIENT_ID: $(BCTB_CLIENT_ID)
       BCTB_CLIENT_SECRET: $(BCTB_CLIENT_SECRET)
-      # LLM API key — required (endpoint/deployment are in .bctb-config.json)
+      # LLM API key — uncomment the one matching your provider
       AZURE_OPENAI_KEY: $(AZURE_OPENAI_KEY)
+      # ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       # Action secrets — uncomment the ones you configured
       # TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
       # SMTP_PASSWORD: $(SMTP_PASSWORD)

@@ -49,7 +49,7 @@ See [MIGRATION.md](../MIGRATION.md) for migration details.
 12. [Migrating from v0.2.x](#migrating-from-v02x)
 13. [Troubleshooting](#troubleshooting)
 14. [FAQ](#faq)
-15. [Agentic Monitoring](#agentic-monitoring)
+15. [Agentic Monitoring (Preview)](#agentic-monitoring-preview)
 
 ---
 
@@ -1557,7 +1557,9 @@ VSCode will automatically notify you when updates are available. You can also:
 
 ---
 
-## Agentic Monitoring
+## Agentic Monitoring (Preview)
+
+> **Note:** Agentic Monitoring is currently a preview feature. APIs and behavior may change in future releases.
 
 BC Telemetry Buddy MCP includes a built-in agent runtime for **autonomous, scheduled telemetry monitoring**. Agents run via CI/CD pipelines (GitHub Actions, Azure DevOps) or locally, query telemetry with LLM reasoning, track issues across runs, and take actions like sending Teams notifications or triggering pipelines — all without manual intervention.
 
@@ -1579,7 +1581,7 @@ You write a plain-text `instruction.md` describing what to monitor: which events
 | **LLM Provider** | Azure OpenAI (default) or Anthropic/Claude — processes instructions and calls tools |
 | **Actions** | Teams webhook, SMTP email, Graph API email, generic webhook, Azure DevOps pipeline |
 
-### Prerequisites for Agentic Monitoring
+### Prerequisites for Agentic Monitoring (Preview)
 
 In addition to the standard BCTB prerequisites, you need:
 

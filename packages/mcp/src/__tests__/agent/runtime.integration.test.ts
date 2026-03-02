@@ -82,6 +82,13 @@ function createConfig(llm: LLMProvider, overrides?: Partial<AgentRuntimeConfig>)
         maxTokens: 4096,
         contextWindowRuns: 3,
         toolScope: 'read-only',
+        retry: {
+            maxRetries: 3,
+            initialDelayMs: 10,
+            backoffMultiplier: 2,
+            maxDelayMs: 100,
+            retryableStatusCodes: [429, 529, 503]
+        },
         ...overrides
     };
 }

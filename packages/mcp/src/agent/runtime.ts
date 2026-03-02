@@ -29,6 +29,9 @@ import {
     AgentRuntimeConfig,
     AgentRunLog,
     ChatMessage,
+    ChatOptions,
+    ChatResponse,
+    RetryConfig,
     ToolCallEntry
 } from './types.js';
 
@@ -48,6 +51,47 @@ export class AgentRuntime {
         this.contextManager = contextManager;
         this.actionDispatcher = actionDispatcher;
         this.config = config;
+    }
+
+    /**
+     * Call the LLM with retry + exponential backoff for transient errors.
+     * Retries on status codes like 429 (rate limit), 529 (overloaded), 503 (unavailable).
+     */
+    private async chatWithRetry(
+        messages: ChatMessage[],
+        options: ChatOptions
+    ): Promise<ChatResponse> {
+        const retry = this.config.retry;
+        let lastError: Error | undefined;
+
+        for (let attempt = 0; attempt <= retry.maxRetries; attempt++) {
+            try {
+                return await this.config.llmProvider.chat(messages, options);
+            } catch (error: any) {
+                lastError = error;
+
+                // Check if this is a retryable error (extract status code from error message)
+                const statusMatch = error.message?.match(/error (\d{3}):/);
+                const statusCode = statusMatch ? parseInt(statusMatch[1], 10) : 0;
+                const isRetryable = retry.retryableStatusCodes.includes(statusCode);
+
+                if (!isRetryable || attempt >= retry.maxRetries) {
+                    throw error;
+                }
+
+                // Calculate delay with exponential backoff
+                const delay = Math.min(
+                    retry.initialDelayMs * Math.pow(retry.backoffMultiplier, attempt),
+                    retry.maxDelayMs
+                );
+
+                console.error(`  ⚠ LLM API error ${statusCode}, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+
+        // Should not reach here, but just in case
+        throw lastError || new Error('LLM call failed after retries');
     }
 
     /**
@@ -80,7 +124,7 @@ export class AgentRuntime {
         let llmStats = { promptTokens: 0, completionTokens: 0 };
 
         while (totalToolCalls < this.config.maxToolCalls) {
-            const response = await this.config.llmProvider.chat(messages, {
+            const response = await this.chatWithRetry(messages, {
                 tools,
                 maxTokens: this.config.maxTokens
             });

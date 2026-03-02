@@ -218,6 +218,19 @@ export interface AgentRuntimeConfig {
     maxTokens: number;              // default: 4096
     contextWindowRuns: number;      // default: 5
     toolScope: 'read-only' | 'full';
+    retry: RetryConfig;             // LLM call retry settings
+}
+
+/**
+ * Retry configuration for LLM API calls.
+ * Uses exponential backoff: delay = initialDelayMs * (backoffMultiplier ^ attempt)
+ */
+export interface RetryConfig {
+    maxRetries: number;             // default: 3
+    initialDelayMs: number;         // default: 2000 (2s)
+    backoffMultiplier: number;      // default: 2
+    maxDelayMs: number;             // default: 60000 (60s)
+    retryableStatusCodes: number[]; // default: [429, 529, 503]
 }
 
 // ─── Agent Config Section (from .bctb-config.json) ──────────────────────────
@@ -241,6 +254,12 @@ export interface AgentConfigSection {
         contextWindowRuns?: number;
         resolvedIssueTTLDays?: number;
         toolScope?: 'read-only' | 'full';
+        retry?: {
+            maxRetries?: number;
+            initialDelayMs?: number;
+            backoffMultiplier?: number;
+            maxDelayMs?: number;
+        };
     };
     actions?: ActionConfig;
 }

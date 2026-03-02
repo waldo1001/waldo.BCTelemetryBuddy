@@ -160,7 +160,14 @@ function createConfig(llm: LLMProvider): AgentRuntimeConfig {
         maxToolCalls: 20,
         maxTokens: 4096,
         contextWindowRuns: 5,
-        toolScope: 'read-only'
+        toolScope: 'read-only',
+        retry: {
+            maxRetries: 3,
+            initialDelayMs: 10,
+            backoffMultiplier: 2,
+            maxDelayMs: 100,
+            retryableStatusCodes: [429, 529, 503]
+        }
     };
 }
 

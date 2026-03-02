@@ -1678,3 +1678,18 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-02-28** — Patch release: extension 3.1.2 / MCP 3.1.1 — pipeline secrets cleanup [Entry: e660b81d-6b8b-42be-b543-a28d7f13db7b]
   - **Why:** Pipeline templates and docs still listed 11 env vars as secrets when only 3 are truly secrets (rest are in .bctb-config.json). Consistency pass for the wizard inline-help and pipeline cleanup work.
   - **How:** Updated 5 stale files (UserGuide pipeline YAML, 2 YAML templates, 2 template READMEs) to match the slimmed wizard templates. Bumped extension 3.1.1→3.1.2, MCP 3.1.0→3.1.1 with changelog entries.
+- **2026-03-02** — LLM retry with exponential backoff [Entry: c7b285da-f653-4988-950d-d7540fcc8ac2]
+  - **Why:** Anthropic API 529 overloaded errors caused agent runs to fail in CI/CD without recovery — needed automatic retry.
+  - **How:** Added RetryConfig type, chatWithRetry() to AgentRuntime with configurable maxRetries/initialDelayMs/backoffMultiplier/maxDelayMs. Updated config-schema.json, templates, and 11 new tests.
+- **2026-03-02** — Dynamic pipeline templates with provider/branch/vargroup support [Entry: d7ae4381-e8a4-4893-961f-f746cd8100e8]
+  - **Why:** Wizard pipeline YAML was hardcoded with AZURE_OPENAI_KEY, main branch, and bctb-secrets variable group — causing failures for Anthropic users and repos using master.
+  - **How:** Converted static YAML constants to generator functions (generateGitHubActionsYaml/generateAzureDevOpsYaml) accepting PipelineOptions (llmProvider, branchName, variableGroupName). Added UI fields for branch name and variable group. Added @latest to npm install and self-hosted agent comments. 6 new tests, all 961 tests pass.
+- **2026-03-02** — Azure DevOps pipeline scripts match working pattern [Entry: 97594852-2bcc-4eb4-815d-64b1b0563d13]
+  - **Why:** Wizard-generated script steps used single-line commands with commented-out self-hosted hints. User's proven pipeline uses inline export for npm_config_prefix/PATH.
+  - **How:** Updated generateAzureDevOpsYaml and template: install step uses multi-line script with export; run step uses export PATH inline; added BCTB_WORKSPACE_PATH variable; branch trigger instead of none; unused LLM key set to empty. 3 new tests (34 total), build passes.
+- **2026-03-02** — Updated docs/CHANGELOG.md with pipeline template improvements [Entry: 1d9ea8b8-1cc1-4d92-ac68-9067b92dd9ed]
+  - **Why:** User requested changelog update for the wizard pipeline template changes.
+  - **How:** Added entry to docs/CHANGELOG.md summarizing dynamic pipeline generation, inline exports, BCTB_WORKSPACE_PATH, branch trigger, and new tests.
+- **2026-03-02** — Added (Preview) labels to Agent Monitoring [Entry: 003b5132-6878-42c9-8921-72c8bce4b8aa]
+  - **Why:** Agent Monitoring is still a preview feature; users should know this from every user-facing surface.
+  - **How:** Added (Preview) to: extension command title (package.json), webview panel title, HTML h1 badge, page title, completion message, MCP README feature bullet and section heading (with disclaimer note), UserGuide TOC entry, section heading, and prerequisites heading. Updated tests to match new panel title.

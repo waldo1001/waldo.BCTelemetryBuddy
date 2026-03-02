@@ -156,12 +156,20 @@ function createLLMProvider(agentsConfig: AgentConfigSection): LLMProvider {
  */
 function buildRuntimeConfig(agentsConfig: AgentConfigSection): AgentRuntimeConfig {
     const llmProvider = createLLMProvider(agentsConfig);
+    const retryDefaults = agentsConfig.defaults?.retry ?? {};
     return {
         llmProvider,
         maxToolCalls: agentsConfig.defaults?.maxToolCalls ?? 20,
         maxTokens: agentsConfig.defaults?.maxTokens ?? 4096,
         contextWindowRuns: agentsConfig.defaults?.contextWindowRuns ?? 5,
-        toolScope: agentsConfig.defaults?.toolScope ?? 'read-only'
+        toolScope: agentsConfig.defaults?.toolScope ?? 'read-only',
+        retry: {
+            maxRetries: retryDefaults.maxRetries ?? 10,
+            initialDelayMs: retryDefaults.initialDelayMs ?? 2000,
+            backoffMultiplier: retryDefaults.backoffMultiplier ?? 2,
+            maxDelayMs: retryDefaults.maxDelayMs ?? 60000,
+            retryableStatusCodes: [429, 529, 503]
+        }
     };
 }
 

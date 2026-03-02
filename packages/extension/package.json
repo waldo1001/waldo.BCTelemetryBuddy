@@ -131,7 +131,7 @@
             },
             {
                 "command": "bctb.setupAgentMonitoring",
-                "title": "BC Telemetry Buddy: Setup Agent Monitoring",
+                "title": "BC Telemetry Buddy: Setup Agent Monitoring (Preview)",
                 "icon": "$(robot)"
             }
         ],

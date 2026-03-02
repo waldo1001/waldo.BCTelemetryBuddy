@@ -105,7 +105,7 @@ describe('AgentMonitoringSetupProvider', () => {
 
             expect(vscode.window.createWebviewPanel).toHaveBeenCalledWith(
                 'bcTelemetryBuddy.agentMonitoringSetup',
-                'BC Telemetry Buddy - Agent Monitoring Setup',
+                'BC Telemetry Buddy - Agent Monitoring Setup (Preview)',
                 expect.anything(),
                 expect.objectContaining({
                     enableScripts: true,
@@ -385,6 +385,122 @@ describe('AgentMonitoringSetupProvider', () => {
                     expect.stringContaining('bctb-secrets'),
                     'utf-8'
                 );
+            });
+
+            it('should use Anthropic key when llmProvider is anthropic (GitHub Actions)', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({
+                    type: 'copyPipeline',
+                    pipelineType: 'github-actions',
+                    pipelineOptions: { llmProvider: 'anthropic' }
+                });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('ANTHROPIC_API_KEY');
+                expect(writtenContent).not.toContain('AZURE_OPENAI_KEY');
+            });
+
+            it('should use Azure OpenAI key when llmProvider is azure-openai (Azure DevOps)', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({
+                    type: 'copyPipeline',
+                    pipelineType: 'azure-devops',
+                    pipelineOptions: { llmProvider: 'azure-openai' }
+                });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                // env block should have AZURE_OPENAI_KEY and NOT ANTHROPIC_API_KEY
+                const envBlock = writtenContent.split('displayName: "Run all agents"')[1];
+                expect(envBlock).toContain('AZURE_OPENAI_KEY');
+                expect(envBlock).not.toContain('ANTHROPIC_API_KEY');
+            });
+
+            it('should use Anthropic key when llmProvider is anthropic (Azure DevOps)', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({
+                    type: 'copyPipeline',
+                    pipelineType: 'azure-devops',
+                    pipelineOptions: { llmProvider: 'anthropic' }
+                });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                // env block should have ANTHROPIC_API_KEY and NOT AZURE_OPENAI_KEY
+                const envBlock = writtenContent.split('displayName: "Run all agents"')[1];
+                expect(envBlock).toContain('ANTHROPIC_API_KEY');
+                expect(envBlock).not.toContain('AZURE_OPENAI_KEY');
+                // variables section should set AZURE_OPENAI_KEY to empty
+                expect(writtenContent).toContain("value: ''");
+            });
+
+            it('should use custom branch name in Azure DevOps template', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({
+                    type: 'copyPipeline',
+                    pipelineType: 'azure-devops',
+                    pipelineOptions: { branchName: 'master' }
+                });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('include: [master]');
+                expect(writtenContent).toContain('HEAD:master');
+                expect(writtenContent).not.toContain('HEAD:main');
+            });
+
+            it('should use custom variable group name in Azure DevOps template', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({
+                    type: 'copyPipeline',
+                    pipelineType: 'azure-devops',
+                    pipelineOptions: { variableGroupName: 'my-custom-secrets' }
+                });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('group: my-custom-secrets');
+                expect(writtenContent).not.toContain('bctb-secrets');
+            });
+
+            it('should include @latest in npm install command', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({ type: 'copyPipeline', pipelineType: 'azure-devops' });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('bc-telemetry-buddy-mcp@latest');
+            });
+
+            it('should include BCTB_WORKSPACE_PATH in Azure DevOps template', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({ type: 'copyPipeline', pipelineType: 'azure-devops' });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('BCTB_WORKSPACE_PATH');
+                expect(writtenContent).toContain('$(Build.SourcesDirectory)');
+            });
+
+            it('should use inline export for npm install in Azure DevOps template', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({ type: 'copyPipeline', pipelineType: 'azure-devops' });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('export npm_config_prefix=$HOME/.npm-global');
+                expect(writtenContent).toContain('export PATH=$HOME/.npm-global/bin:$PATH');
+            });
+
+            it('should include branch trigger in Azure DevOps template', async () => {
+                (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+                await messageHandler({ type: 'copyPipeline', pipelineType: 'azure-devops' });
+
+                const writtenContent = (fs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+                expect(writtenContent).toContain('trigger:');
+                expect(writtenContent).not.toContain('trigger: none');
             });
 
             it('should prompt when pipeline file already exists', async () => {

@@ -170,6 +170,32 @@
                             ],
                             "description": "Tool access scope for agents. 'read-only' prevents save_query and other write tools.",
                             "default": "read-only"
+                        },
+                        "retry": {
+                            "type": "object",
+                            "description": "Retry configuration for transient LLM API errors (429, 529, 503). Uses exponential backoff.",
+                            "properties": {
+                                "maxRetries": {
+                                    "type": "number",
+                                    "description": "Maximum number of retry attempts before failing.",
+                                    "default": 10
+                                },
+                                "initialDelayMs": {
+                                    "type": "number",
+                                    "description": "Initial delay in milliseconds before the first retry.",
+                                    "default": 2000
+                                },
+                                "backoffMultiplier": {
+                                    "type": "number",
+                                    "description": "Multiplier applied to the delay after each retry attempt.",
+                                    "default": 2
+                                },
+                                "maxDelayMs": {
+                                    "type": "number",
+                                    "description": "Maximum delay in milliseconds between retries (cap).",
+                                    "default": 60000
+                                }
+                            }
                         }
                     }
                 },

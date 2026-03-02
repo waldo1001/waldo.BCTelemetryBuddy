@@ -21,6 +21,8 @@ Runs your BC Telemetry Buddy monitoring agents on an hourly schedule using Azure
 ### Step 2: Configure Variable Group
 Create a variable group named `bctb-secrets` in Azure DevOps (Pipelines → Library → Variable groups):
 
+> **Tip:** You can use an existing variable group — just update the `- group:` name in the pipeline YAML. The wizard lets you configure this.
+
 > **Note:** Non-sensitive values like `BCTB_TENANT_ID`, `BCTB_APP_INSIGHTS_ID`, `BCTB_KUSTO_CLUSTER_URL`, `AZURE_OPENAI_ENDPOINT`, and `AZURE_OPENAI_DEPLOYMENT` are already stored in your `.bctb-config.json` file (which is checked into the repo). You only need to add **actual secrets** to the variable group.
 
 **Always Required:**
@@ -80,6 +82,40 @@ Modify the script step to target a single agent:
 2. Commit the new `agents/new-agent/` folder
 3. The pipeline will pick it up automatically on next run
 
+### Change Default Branch
+If your repo uses `master` instead of `main`, update both places in the YAML:
+- `schedules → branches → include: [master]`
+- `git push origin HEAD:master`
+
+### Use a Self-Hosted Agent
+Replace the `pool:` section and add `npm_config_prefix` to avoid permission errors:
+```yaml
+pool: Your-Pool-Name
+
+# In the install step, add env:
+- script: npm install -g bc-telemetry-buddy-mcp@latest
+  displayName: "Install BCTB MCP"
+  env:
+    npm_config_prefix: $(HOME)/.npm-global
+    PATH: $(HOME)/.npm-global/bin:$(PATH)
+
+# In the run step, also add PATH:
+- script: |
+    export PATH=$HOME/.npm-global/bin:$PATH
+    bctb-mcp agent run-all --once
+  env:
+    PATH: $(HOME)/.npm-global/bin:$(PATH)
+    # ... other env vars
+```
+
+### Use Anthropic (Claude) Instead of Azure OpenAI
+In the `env:` block of the run step, replace `AZURE_OPENAI_KEY` with `ANTHROPIC_API_KEY`:
+```yaml
+env:
+  ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+```
+And add `ANTHROPIC_API_KEY` to your variable group instead of `AZURE_OPENAI_KEY`.
+
 ## Troubleshooting
 
 | Problem | Cause | Fix |
@@ -88,4 +124,7 @@ Modify the script step to target a single agent:
 | "Authentication failed" | Wrong credentials or expired secret | Refresh secrets in the variable group |
 | "Agent exceeded max tool calls" | LLM got stuck in a loop | Check instruction clarity; increase `maxToolCalls` in config |
 | "No state changes" (every run) | Agent finding nothing | Check `BCTB_APP_INSIGHTS_ID` points to correct resource |
+| LLM API error 529 / overloaded | Anthropic API temporarily at capacity | Built-in retry with exponential backoff handles this automatically. Increase `retry.maxRetries` in config if it persists |
+| EACCES on `npm install -g` | Self-hosted agent without root | Use `npm_config_prefix` workaround (see "Use a Self-Hosted Agent" above) |
+| `git push` fails with "src refspec" | Default branch is `master`, not `main` | Change `HEAD:main` to `HEAD:master` in the pipeline (see above) |
 | Git push fails | Branch policies or permissions | Ensure the build service has Contribute permission on the repo |

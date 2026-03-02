@@ -68,6 +68,14 @@ Use the manual trigger (workflow_dispatch) and specify the agent name.
 2. Commit the new `agents/new-agent/` folder
 3. The pipeline will pick it up automatically on next run
 
+### Use Anthropic (Claude) Instead of Azure OpenAI
+In the `env:` block of the run step, replace `AZURE_OPENAI_KEY` with `ANTHROPIC_API_KEY`:
+```yaml
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+And add `ANTHROPIC_API_KEY` to your GitHub secrets instead of `AZURE_OPENAI_KEY`.
+
 ## Troubleshooting
 
 | Problem | Cause | Fix |
@@ -76,4 +84,5 @@ Use the manual trigger (workflow_dispatch) and specify the agent name.
 | "Authentication failed" | Wrong credentials or expired secret | Refresh `BCTB_CLIENT_SECRET` in pipeline secrets |
 | "Agent exceeded max tool calls" | LLM got stuck in a loop | Check instruction clarity; increase `maxToolCalls` in config |
 | "No state changes" (every run) | Agent finding nothing | Check `BCTB_APP_INSIGHTS_ID` points to correct resource |
+| LLM API error 529 / overloaded | Anthropic API temporarily at capacity | Built-in retry with exponential backoff handles this automatically. Increase `retry.maxRetries` in config if it persists |
 | Git push fails | Branch protection or permissions | Ensure pipeline has write access (`contents: write` on GitHub) |

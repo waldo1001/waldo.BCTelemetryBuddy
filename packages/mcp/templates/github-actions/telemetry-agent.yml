@@ -28,7 +28,7 @@ jobs:
           node-version: "20"
 
       - name: Install BC Telemetry Buddy MCP
-        run: npm install -g bc-telemetry-buddy-mcp
+        run: npm install -g bc-telemetry-buddy-mcp@latest
 
       - name: Run agent(s)
         run: |
@@ -42,8 +42,9 @@ jobs:
           BCTB_AUTH_FLOW: client_credentials
           BCTB_CLIENT_ID: ${{ secrets.BCTB_CLIENT_ID }}
           BCTB_CLIENT_SECRET: ${{ secrets.BCTB_CLIENT_SECRET }}
-          # LLM API key — required (endpoint/deployment are in .bctb-config.json)
+          # LLM API key — uncomment the one matching your provider
           AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          # ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Action secrets — uncomment the ones you configured
           # TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
           # SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

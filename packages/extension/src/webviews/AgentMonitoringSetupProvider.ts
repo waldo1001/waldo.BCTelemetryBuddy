@@ -110,7 +110,18 @@ of stable operation.`
 
 // ═══ Pipeline templates (bundled) ═══
 
-const GITHUB_ACTIONS_YAML = `name: Telemetry Monitoring Agents
+interface PipelineOptions {
+    llmProvider: 'azure-openai' | 'anthropic';
+    branchName: string;
+    variableGroupName: string;
+}
+
+function generateGitHubActionsYaml(opts: PipelineOptions): string {
+    const llmKeyLine = opts.llmProvider === 'anthropic'
+        ? `          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}`
+        : `          AZURE_OPENAI_KEY: \${{ secrets.AZURE_OPENAI_KEY }}`;
+
+    return `name: Telemetry Monitoring Agents
 
 on:
   schedule:
@@ -140,7 +151,7 @@ jobs:
           node-version: "20"
 
       - name: Install BC Telemetry Buddy MCP
-        run: npm install -g bc-telemetry-buddy-mcp
+        run: npm install -g bc-telemetry-buddy-mcp@latest
 
       - name: Run agent(s)
         run: |
@@ -155,7 +166,7 @@ jobs:
           BCTB_CLIENT_ID: \${{ secrets.BCTB_CLIENT_ID }}
           BCTB_CLIENT_SECRET: \${{ secrets.BCTB_CLIENT_SECRET }}
           # LLM API key — required (the endpoint/deployment are in .bctb-config.json)
-          AZURE_OPENAI_KEY: \${{ secrets.AZURE_OPENAI_KEY }}
+${llmKeyLine}
           # Action secrets — only add the ones you configured in Step 4
           # TEAMS_WEBHOOK_URL: \${{ secrets.TEAMS_WEBHOOK_URL }}
           # SMTP_PASSWORD: \${{ secrets.SMTP_PASSWORD }}
@@ -174,21 +185,40 @@ jobs:
             git push
           fi
 `;
+}
 
-const AZURE_DEVOPS_YAML = `trigger: none
+function generateAzureDevOpsYaml(opts: PipelineOptions): string {
+    const llmKeyLine = opts.llmProvider === 'anthropic'
+        ? `      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)`
+        : `      AZURE_OPENAI_KEY: $(AZURE_OPENAI_KEY)`;
+    const branch = opts.branchName || 'main';
+    const varGroup = opts.variableGroupName || 'bctb-secrets';
+
+    // Build LLM key variable — set unused provider to empty
+    const llmVarLines = opts.llmProvider === 'anthropic'
+        ? `  - name: AZURE_OPENAI_KEY\n    value: ''\n  - name: ANTHROPIC_API_KEY\n    value: $(ANTHROPIC_API_KEY)`
+        : `  - name: AZURE_OPENAI_KEY\n    value: $(AZURE_OPENAI_KEY)`;
+
+    return `trigger:
+  branches:
+    include:
+      - ${branch}
 
 schedules:
   - cron: "0 * * * *"
     displayName: "Hourly agent run"
     branches:
-      include: [main]
+      include: [${branch}]
     always: true
 
 pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  - group: bctb-secrets
+  - group: ${varGroup}
+  - name: BCTB_WORKSPACE_PATH
+    value: "$(Build.SourcesDirectory)"
+${llmVarLines}
 
 steps:
   - checkout: self
@@ -198,10 +228,15 @@ steps:
     inputs:
       versionSpec: "20.x"
 
-  - script: npm install -g bc-telemetry-buddy-mcp
+  - script: |
+      export npm_config_prefix=$HOME/.npm-global
+      export PATH=$HOME/.npm-global/bin:$PATH
+      npm install -g bc-telemetry-buddy-mcp@latest
     displayName: "Install BCTB MCP"
 
-  - script: bctb-mcp agent run-all --once
+  - script: |
+      export PATH=$HOME/.npm-global/bin:$PATH
+      bctb-mcp agent run-all --once
     displayName: "Run all agents"
     env:
       # Auth — always required for CI/CD (client_credentials flow)
@@ -209,7 +244,7 @@ steps:
       BCTB_CLIENT_ID: $(BCTB_CLIENT_ID)
       BCTB_CLIENT_SECRET: $(BCTB_CLIENT_SECRET)
       # LLM API key — required (endpoint/deployment are in .bctb-config.json)
-      AZURE_OPENAI_KEY: $(AZURE_OPENAI_KEY)
+${llmKeyLine}
       # Action secrets — only add the ones you configured in Step 4
       # TEAMS_WEBHOOK_URL: $(TEAMS_WEBHOOK_URL)
       # SMTP_PASSWORD: $(SMTP_PASSWORD)
@@ -221,9 +256,10 @@ steps:
       git config user.email "bctb-agent@noreply.github.com"
       git add agents/
       git diff --cached --quiet || git commit -m "agent: run $(date -u +%Y-%m-%dT%H:%M)Z"
-      git push origin HEAD:main
+      git push origin HEAD:${branch}
     displayName: "Commit agent state"
 `;
+}
 
 // ═══ Provider class ═══
 
@@ -258,7 +294,7 @@ export class AgentMonitoringSetupProvider {
 
         this._panel = vscode.window.createWebviewPanel(
             AgentMonitoringSetupProvider.viewType,
-            'BC Telemetry Buddy - Agent Monitoring Setup',
+            'BC Telemetry Buddy - Agent Monitoring Setup (Preview)',
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -296,7 +332,7 @@ export class AgentMonitoringSetupProvider {
                         await this._saveDefaultsConfig(message.defaultsConfig);
                         break;
                     case 'copyPipeline':
-                        await this._copyPipeline(message.pipelineType);
+                        await this._copyPipeline(message.pipelineType, message.pipelineOptions);
                         break;
                     case 'runTestAgent':
                         await this._runTestAgent(message.agentName);
@@ -617,7 +653,7 @@ export class AgentMonitoringSetupProvider {
         }
     }
 
-    private async _copyPipeline(pipelineType: string): Promise<void> {
+    private async _copyPipeline(pipelineType: string, pipelineOptions?: Partial<PipelineOptions>): Promise<void> {
         const workspacePath = this._getWorkspacePath();
         if (!workspacePath) {
             this._panel?.webview.postMessage({ type: 'pipelineCopied', success: false, error: 'No workspace open' });
@@ -628,14 +664,20 @@ export class AgentMonitoringSetupProvider {
             let destPath: string;
             let content: string;
 
+            const opts: PipelineOptions = {
+                llmProvider: (pipelineOptions?.llmProvider as PipelineOptions['llmProvider']) || 'azure-openai',
+                branchName: pipelineOptions?.branchName || 'main',
+                variableGroupName: pipelineOptions?.variableGroupName || 'bctb-secrets',
+            };
+
             if (pipelineType === 'github-actions') {
                 const dir = path.join(workspacePath, '.github', 'workflows');
                 if (!fs.existsSync(dir)) { fs.mkdirSync(dir, { recursive: true }); }
                 destPath = path.join(dir, 'telemetry-agent.yml');
-                content = GITHUB_ACTIONS_YAML;
+                content = generateGitHubActionsYaml(opts);
             } else if (pipelineType === 'azure-devops') {
                 destPath = path.join(workspacePath, 'azure-pipelines-agents.yml');
-                content = AZURE_DEVOPS_YAML;
+                content = generateAzureDevOpsYaml(opts);
             } else {
                 this._panel?.webview.postMessage({ type: 'pipelineCopied', success: true, skipped: true });
                 return;
@@ -781,7 +823,7 @@ export class AgentMonitoringSetupProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Monitoring Setup</title>
+    <title>Agent Monitoring Setup (Preview)</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -1104,7 +1146,7 @@ export class AgentMonitoringSetupProvider {
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Agent Monitoring Setup</h1>
+        <h1>🤖 Agent Monitoring Setup <span style="font-size:0.5em; color:var(--vscode-charts-orange); border:1px solid var(--vscode-charts-orange); border-radius:4px; padding:2px 8px; vertical-align:middle;">(Preview)</span></h1>
         <p style="opacity:0.7; margin-top:2px;">Set up autonomous telemetry monitoring agents for Business Central</p>
 
         <!-- Step Navigation -->
@@ -1391,6 +1433,20 @@ export class AgentMonitoringSetupProvider {
                 </div>
             </div>
 
+            <div id="pipeline-settings" class="hidden" style="margin-top:16px;">
+                <h3>Pipeline Settings</h3>
+                <div class="field-group">
+                    <label>Default branch</label>
+                    <input type="text" id="pipeline-branch" value="main" placeholder="main" />
+                    <p class="field-help">Branch used for scheduled triggers and git push (e.g. <code>main</code> or <code>master</code>).</p>
+                </div>
+                <div class="field-group" id="pipeline-vargroup-group">
+                    <label>Variable group name</label>
+                    <input type="text" id="pipeline-vargroup" value="bctb-secrets" placeholder="bctb-secrets" />
+                    <p class="field-help">Azure DevOps variable group containing your secrets. You can use an existing group.</p>
+                </div>
+            </div>
+
             <div id="pipeline-secrets" class="hidden">
                 <h3>Required Secrets</h3>
                 <div class="info-box">
@@ -1460,7 +1516,7 @@ export class AgentMonitoringSetupProvider {
         <!-- ═══ Step 8: Done ═══ -->
         <div class="step-content" id="step-8">
             <h2>✅ Setup Complete</h2>
-            <p>Your agent monitoring is configured and ready to go!</p>
+            <p>Your agent monitoring (preview) is configured and ready to go!</p>
 
             <h3>Summary</h3>
             <ul class="summary-list" id="final-summary"></ul>
@@ -1901,10 +1957,19 @@ export class AgentMonitoringSetupProvider {
             document.getElementById(type === 'github-actions' ? 'pl-github' : 'pl-azdo').classList.add('selected');
             document.getElementById('btn-copy-pipeline').disabled = false;
 
+            // Show pipeline settings
+            const settingsEl = document.getElementById('pipeline-settings');
+            settingsEl.classList.remove('hidden');
+
+            // Variable group is Azure DevOps only
+            document.getElementById('pipeline-vargroup-group').classList.toggle('hidden', type === 'github-actions');
+
+            // Update secrets platform text (use current variable group name for Azure DevOps)
+            const varGroupName = document.getElementById('pipeline-vargroup')?.value || 'bctb-secrets';
             const secretsEl = document.getElementById('pipeline-secrets');
             secretsEl.classList.remove('hidden');
             document.getElementById('secrets-platform').textContent =
-                type === 'github-actions' ? 'GitHub repository settings (Settings → Secrets and variables → Actions)' : 'Azure DevOps variable group (bctb-secrets)';
+                type === 'github-actions' ? 'GitHub repository settings (Settings → Secrets and variables → Actions)' : 'Azure DevOps variable group (' + varGroupName + ')';
 
             // Show correct LLM key based on provider selection in Step 2
             const provider = document.getElementById('llm-provider').value;
@@ -1940,7 +2005,18 @@ export class AgentMonitoringSetupProvider {
 
         function copyPipeline() {
             if (!selectedPipeline) return;
-            vscode.postMessage({ type: 'copyPipeline', pipelineType: selectedPipeline });
+            const provider = document.getElementById('llm-provider').value;
+            const branchName = document.getElementById('pipeline-branch')?.value || 'main';
+            const variableGroupName = document.getElementById('pipeline-vargroup')?.value || 'bctb-secrets';
+            vscode.postMessage({
+                type: 'copyPipeline',
+                pipelineType: selectedPipeline,
+                pipelineOptions: {
+                    llmProvider: provider,
+                    branchName: branchName,
+                    variableGroupName: variableGroupName
+                }
+            });
         }
 
         function handlePipelineCopied(msg) {

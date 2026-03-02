@@ -15,7 +15,7 @@ BC Telemetry Buddy MCP Server is a **standalone NPM package** that enables AI as
 - 🔧 **CLI Interface**: `bctb-mcp` command with init, validate, test-auth, start, and **agent** subcommands
 - 📁 **File-Based Config**: Simple `.bctb-config.json` with schema validation and environment variable substitution
 - 👥 **Multi-Profile Support**: Manage multiple customers/environments in single config file with profile switching
-- 🤖 **Agentic Monitoring**: Autonomous scheduled telemetry monitoring via CI/CD pipelines — LLM-powered reasoning, issue tracking, Teams/email alerts
+- 🤖 **Agentic Monitoring (Preview)**: Autonomous scheduled telemetry monitoring via CI/CD pipelines — LLM-powered reasoning, issue tracking, Teams/email alerts
 - 🔌 **Optional for VSCode**: VSCode extension works standalone; MCP only required for chat participant features
 - 🔄 **Automatic Updates**: Update notifications on startup when newer versions are available on NPM
 - 🧪 **Comprehensive Testing**: 70%+ test coverage with dedicated test suites for Claude Desktop workflows
@@ -264,7 +264,9 @@ bctb-mcp --version
 bctb-mcp --help
 ```
 
-## Agentic Monitoring
+## Agentic Monitoring (Preview)
+
+> **Note:** Agentic Monitoring is currently a preview feature. APIs and behavior may change in future releases.
 
 BC Telemetry Buddy MCP includes a built-in **autonomous agent runtime** for scheduled telemetry monitoring. Agents use an LLM (Azure OpenAI or Anthropic) to query telemetry, reason about findings, track issues across runs, and take action — all without manual intervention.
 
