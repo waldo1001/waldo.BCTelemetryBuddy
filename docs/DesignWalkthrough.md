@@ -1714,3 +1714,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Daily investigation report: tests & fixes [Entry: 1aa6111a-c024-48bf-876f-2ef098b9c498]
   - **Why:** Complete the daily investigation doc feature by adding tests and fixing TS type issues
   - **How:** Added 6 tests for appendToDailyReport (create, append, prev-day linking, dir creation, path). Fixed AgentRunLog type to include investigationReportPath. Added investigationReport to 3 test AgentOutput helpers. All 597 tests pass.
+- **2026-03-02** — Release MCP 3.1.5 [Entry: fb937593-c3b1-4d7d-9416-8635e67f2cc8]
+  - **Why:** Ship daily investigation reports and pipeline output cleanup
+  - **How:** Updated CHANGELOG.md, bumped version to 3.1.5, committed, tagged mcp-v3.1.5, pushed. GitHub Actions CI triggered.
