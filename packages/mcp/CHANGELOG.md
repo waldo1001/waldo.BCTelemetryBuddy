@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.8] - 2026-03-02
+
+### Improved
+- **Install Step Version Logging**: Pipeline templates now echo `✅ Installed bc-telemetry-buddy-mcp v<version>` after npm install, making the installed version visible in CI/CD logs.
+
 ## [3.1.7] - 2026-03-02
 
 ### Improved

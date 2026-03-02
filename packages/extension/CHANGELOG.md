@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.5] - 2026-03-02
+
+### Improved
+- **Install Step Version Logging**: Pipeline templates now echo the installed MCP version after npm install, making it visible in CI/CD build logs.
+
 ## [3.1.4] - 2026-03-02
 
 ### Changed

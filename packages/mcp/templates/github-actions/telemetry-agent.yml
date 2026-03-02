@@ -28,7 +28,9 @@ jobs:
           node-version: "20"
 
       - name: Install BC Telemetry Buddy MCP
-        run: npm install -g bc-telemetry-buddy-mcp@latest
+        run: |
+          npm install -g bc-telemetry-buddy-mcp@latest
+          echo "✅ Installed bc-telemetry-buddy-mcp v$(bctb-mcp --version)"
 
       - name: Run agent(s)
         run: |

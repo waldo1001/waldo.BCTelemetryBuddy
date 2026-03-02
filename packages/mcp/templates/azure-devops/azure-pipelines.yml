@@ -32,6 +32,7 @@ steps:
       export npm_config_prefix=$HOME/.npm-global
       export PATH=$HOME/.npm-global/bin:$PATH
       npm install -g bc-telemetry-buddy-mcp@latest
+      echo "✅ Installed bc-telemetry-buddy-mcp v$(bctb-mcp --version)"
     displayName: "Install BCTB MCP"
 
   - script: |
