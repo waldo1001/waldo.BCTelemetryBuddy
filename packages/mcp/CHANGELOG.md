@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.11] - 2026-03-02
+
+### Improved
+- **Investigation Report Formatting**: System prompt now prescribes a structured report layout with `####` subheadings per signal type, mandatory markdown tables for numeric data, emoji severity indicators, trend arrows, and a summary section. The example report demonstrates a realistic multi-signal scenario instead of a minimal one.
+- **Formatting Quality Warning**: Runtime logs a warning when the `investigationReport` lacks markdown structure (no headers or tables), making poorly formatted output visible in pipeline logs.
+
 ## [3.1.10] - 2026-03-02
 
 ### Fixed

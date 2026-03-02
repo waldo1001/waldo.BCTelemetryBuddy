@@ -73,7 +73,7 @@ You MUST respond with a JSON object matching this structure:
     "issuesResolved": ["issue-YYY"],
     "summaryUpdated": true
   },
-  "investigationReport": "### Run #3 \u2014 14:30 UTC\n\nChecked error rates for the last 1 hour.\n\n| Signal | Value | Trend |\n|--------|-------|-------|\n| Total errors | 61 | \u2191 increasing |\n| Timeout errors | 23 | stable |\n\n**Assessment**: Error rate has increased for the 3rd consecutive check. Threshold exceeded \u2014 Teams notification sent.\n\n**Actions taken**: \u2705 teams-webhook (high severity)\n\n> Detailed run log: [Run #0003](agents/error-monitor/runs/2026-02-24T14-30Z-run0003.md)\n> Previous report: [2026-02-23](docs/2026-02-23-error-monitor.md)"
+  "investigationReport": "### Run #3 \u2014 14:30 UTC\\n\\nMonitored 12 tenants across 5 signal types.\\n\\n#### \ud83d\udd34 Lock Timeouts (RT0012)\\n\\n| Tenant | Count | Trend | Top Pattern |\\n|--------|-------|-------|-------------|\\n| X2OSLMF | 92 | \u2191 worsening (was 36) | Inventory Status PTE (33 Background) |\\n| SLOG | 110 | \u2192 stable | READCOMMITTED contention |\\n| DK Tools | 57 | \u2192 stable | \u2014 |\\n\\n#### \ud83d\udfe1 Deadlocks (RT0028)\\n\\n| Tenant | Count | Trend | Attribution |\\n|--------|-------|-------|-------------|\\n| X2OSLMF | 21 | \u2192 stable | \u2014 |\\n| Juntoo | 5 | \ud83c\udd95 new (600% > baseline) | Continia Doc Capture vs iFacto SPRE |\\n\\n#### \ud83d\udfe0 Slow AL (RT0018)\\n\\n| Tenant | App | Events | Avg (s) | Max (s) |\\n|--------|-----|--------|---------|---------|\\n| Coeck | Datahaven 365 | 1,312 | 45 | 101 |\\n| Torrential | D4D REST Wrapper | 9,028 | 21 | 96 |\\n\\n**Root cause**: Coeck's endpoint dh.coeck.be:471 averaging 35.8s/call (RT0019).\\n\\n#### Summary\\n\\n- **4 critical issues** tracked, 1 new (Juntoo deadlocks)\\n- **1 action taken**: \u2705 teams-webhook (X2OSLMF lock escalation)\\n- **No resolved issues** this run\\n\\n> Run log: [Run #0003](agents/performance-customers/runs/2026-03-02T14-30Z-run0003.md)"
 }
 \`\`\`
 
@@ -100,15 +100,26 @@ The \`message\` field in actions is rendered as a rich Adaptive Card. Write it a
 
 ## Investigation Report Guidelines
 
-The \`investigationReport\` field is a markdown section that will be appended to a daily investigation document (\`docs/YYYY-MM-DD-<agentName>.md\`). Write it as a self-contained summary:
+The \`investigationReport\` field is the PRIMARY DELIVERABLE of each run. It will be appended to a daily investigation document (\`docs/YYYY-MM-DD-<agentName>.md\`) and is the main artifact people read. Write it as a well-structured, scannable markdown report:
 
-- Start with \`### Run #N \u2014 HH:MM UTC\`
-- Describe what was checked and what was found
-- Use markdown tables when presenting numeric data or comparisons
-- Note any active issues, trend changes, or resolved issues
-- List actions taken (if any) with their status
-- Add a link to the detailed run log: \`[Run #NNNN](agents/<agentName>/runs/<timestamp>-runNNNN.md)\`
-- Keep it concise (5\u201320 lines) but informative for someone reading only this document
+### Required Structure
+
+1. **Header**: Start with \`### Run #N \u2014 HH:MM UTC\` followed by a one-line overview
+2. **Signal sections**: Use \`#### \` subheadings per signal type (e.g., \`#### \ud83d\udd34 Lock Timeouts (RT0012)\`). NEVER combine multiple signal types into one paragraph.
+3. **Tables**: Present ALL numeric comparisons in markdown tables. NEVER list metrics inline in prose. Each table must have clear column headers.
+4. **Attribution**: Below each table, note root causes or responsible apps/extensions using **bold** labels.
+5. **Summary section**: End with \`#### Summary\` containing bullet points: issues tracked, new/resolved issues, actions taken.
+6. **Run log link**: End with \`> Run log: [Run #NNNN](agents/<agentName>/runs/<timestamp>-runNNNN.md)\`
+
+### Formatting Rules
+
+- Use emoji severity indicators: \ud83d\udd34 critical, \ud83d\udfe0 warning, \ud83d\udfe1 moderate, \ud83d\udfe2 healthy
+- Use trend arrows in tables: \u2191 worsening, \u2192 stable, \u2193 improving, \ud83c\udd95 new
+- Keep each section focused on ONE signal type
+- Tables should have 3\u20136 columns maximum
+- NEVER dump all findings into a single paragraph or sentence
+- Target 20\u201360 lines for a full monitoring report
+- Each section should be independently readable
 
 ## Rules
 
@@ -118,7 +129,7 @@ The \`investigationReport\` field is a markdown section that will be appended to
 - Do NOT use "..." or ellipsis as output. EVERY field (summary, findings, assessment, investigationReport) must contain the FULL, detailed content. Abbreviated or placeholder output is a failure.
 - Keep summaries concise — each run's findings should be 1-3 sentences.
 - Use deterministic fingerprints so the same issue is tracked consistently across runs.
-- The investigationReport MUST be a complete, self-contained markdown section (5–20 lines with tables and analysis). It is the primary deliverable of each run.
+- The investigationReport MUST be a well-structured markdown document with headers, tables, and sections. It is the primary deliverable of each run. NEVER output a wall of text.
 
 ## Re-alerting & Cooldown
 

@@ -283,6 +283,15 @@ export class AgentRuntime {
                     console.log(`  ⚠ WARNING: These output fields appear abbreviated: ${abbreviated.join(', ')}. The LLM may have truncated its own output.`);
                 }
 
+                // Warn when investigationReport lacks markdown structure
+                if (output.investigationReport && output.investigationReport.length > 50) {
+                    const hasHeaders = /^#{2,4}\s/m.test(output.investigationReport);
+                    const hasTables = /\|.*\|.*\|/m.test(output.investigationReport);
+                    if (!hasHeaders && !hasTables) {
+                        console.log(`  ⚠ WARNING: investigationReport lacks markdown structure (no headers or tables). Report may be a wall of text.`);
+                    }
+                }
+
                 // 4. Execute actions
                 const executedActions = await this.actionDispatcher.dispatch(
                     output.actions,

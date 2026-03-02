@@ -2954,3 +2954,7 @@ Change instructions an business logic to do this."
 > "Fix LLM outputting '...' as abbreviated content for assessment/findings/investigationReport. Agent system prompt now forbids ellipsis/placeholder output. Runtime displays parsed assessment instead of fragile regex. Added abbreviated output warning. Improved findings display in CLI."
 
 ---
+### Entry ID: ace01296-025d-438e-afae-83de6b594279 - 2026-03-02 22:53
+> "Fix investigation report formatting - LLM dumps all findings into one giant paragraph instead of using proper markdown with headers, tables, and sections. Make the prompt much more prescriptive about report structure."
+
+---

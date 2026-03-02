@@ -1738,3 +1738,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** - Fix abbreviated LLM output [Entry: 390fea25-ee3f-4151-8516-42256885e017]
   - **Why:** LLM outputs '...' as placeholder for assessment/findings/investigationReport after long agent runs, resulting in empty daily docs and no useful pipeline summary
   - **How:** Added explicit anti-abbreviation rules to system prompt, replaced fragile regex assessment display with parsed output, added abbreviated-field warning to console, improved findings preview in CLI.
+- **2026-03-02** - Fix investigation report formatting [Entry: ace01296-025d-438e-afae-83de6b594279]
+  - **Why:** LLM outputs investigation report as wall of text instead of structured markdown with headers, tables, and sections
+  - **How:** Replaced minimal example with realistic multi-signal report, prescriptive formatting rules (headers per signal, tables for metrics, emoji indicators, trend arrows), added runtime warning for reports lacking markdown structure.
