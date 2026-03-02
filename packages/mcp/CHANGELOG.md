@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-03-02
+
+### Added
+- **Retry Logic with Exponential Backoff**: LLM API calls now automatically retry on transient errors (HTTP 429, 529, 503) with configurable exponential backoff. Default: 10 retries, 2s initial delay, 2x multiplier, 60s max delay. Configurable via `retry` section in agent config.
+
+### Improved
+- **Dynamic Pipeline Templates**: `generateAzureDevOpsYaml()` and `generateGitHubActionsYaml()` now accept `PipelineOptions` (LLM provider, branch name, variable group name) for customizable CI/CD pipeline generation
+- **Azure DevOps Pipeline Template**: Updated to use inline `export` for npm prefix/PATH (self-hosted agent compatibility), `BCTB_WORKSPACE_PATH`, branch-based triggers, and dual LLM key support (Azure OpenAI / Anthropic)
+- **Template READMEs**: Added sections for custom branch, self-hosted agents, Anthropic usage, and new troubleshooting entries (EACCES, git push)
+
+### Changed
+- **Agentic Monitoring marked as Preview**: All user-facing references now include "(Preview)" label with disclaimer notes in README
+
 ## [3.1.1] - 2025-06-04
 
 ### Improved
