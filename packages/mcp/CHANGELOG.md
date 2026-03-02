@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.12] - 2026-03-02
+
+### Improved
+- **Agent Efficiency — Query Strategy**: System prompt now includes a "Query Strategy — Be Efficient" section with first-run vs subsequent-run guidance, compound query patterns, tool call budget targets (5–15), and anti-pattern warnings. Reduces unnecessary tool calls in agent monitoring runs.
+- **Agent Efficiency — Output Size Guidelines**: System prompt includes a field-level size guideline table to prevent bloated output that wastes LLM tokens.
+- **Application Insights Table Guidance**: System prompt now explains which App Insights tables to query — most BC telemetry is in `traces`, with `pageViews` for page performance — helping agents avoid querying wrong tables.
+- **Preconfigured Agent Templates**: All 4 bundled agent templates (appsource-validation, performance-monitoring, error-rate-monitoring, post-deployment-check) updated with specific Query Strategy sections including compound KQL examples and tool call budgets.
+
+### Changed
+- **Default `maxTokens` increased to 32768**: Increased from 16384 to prevent output truncation in agents with many tool calls. Updated in CLI defaults, Anthropic provider fallback, and type documentation.
+
 ## [3.1.11] - 2026-03-02
 
 ### Improved

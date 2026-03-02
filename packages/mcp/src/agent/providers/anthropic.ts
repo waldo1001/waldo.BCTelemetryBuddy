@@ -256,7 +256,7 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): LLMPro
 
             const body: AnthropicRequest = {
                 model,
-                max_tokens: options?.maxTokens || 16384,
+                max_tokens: options?.maxTokens || 32768,
                 messages: anthropicMessages
             };
 

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.7] - 2026-03-02
+
+### Improved
+- **Chat Participant — Efficiency Tips**: Added efficiency guidance to the `@bc-telemetry-buddy` system prompt, encouraging compound queries and focused outputs.
+- **Chat Participant — Table Guidance**: System prompt now explains which Application Insights tables to query (most BC telemetry is in `traces`, `pageViews` for page performance).
+- **Agent Definitions — Table Guidance**: Copilot agent definitions updated with the same Application Insights table guidance.
+- **Agent Templates — Query Strategy**: All 4 bundled agent monitoring templates in the setup wizard updated with specific Query Strategy sections including compound KQL examples and tool call budgets.
+
 ## [3.1.6] - 2026-03-02
 
 ### Fixed

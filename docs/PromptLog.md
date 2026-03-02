@@ -2958,3 +2958,7 @@ Change instructions an business logic to do this."
 > "Fix investigation report formatting - LLM dumps all findings into one giant paragraph instead of using proper markdown with headers, tables, and sections. Make the prompt much more prescriptive about report structure."
 
 ---
+### Entry ID: 33574755-e8c5-434e-a287-c28421e76fa0 — 2026-03-02 23:21
+> "Read all the instruction.md files from the agent templates directory in the MCP package to understand what instructions each preconfigured agent template provides."
+
+---

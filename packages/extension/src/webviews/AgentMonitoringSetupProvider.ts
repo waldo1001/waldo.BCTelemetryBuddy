@@ -37,8 +37,16 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
         escalation: '3 checks → Teams, 6 checks → Email',
         instruction: `Monitor AppSource validation telemetry for my extensions.
 
-Check for validation failures (RT0005 events with error status),
-categorize by extension name and failure type.
+## Query Strategy
+
+1. **First run**: Call get_event_catalog to discover validation events (RT0005, LC0010, LC0011, LC0020). Then call get_event_field_samples for each.
+2. **Subsequent runs**: Skip discovery — go straight to query_telemetry.
+3. Use ONE compound query combining all validation events with error/failure status.
+4. Target: 2–4 tool calls per run (subsequent runs), 5–7 on first run.
+
+## Thresholds & Escalation
+
+Categorize by extension name and failure type.
 
 If failures persist across 3 consecutive checks, post to the Teams channel.
 If failures persist across 6 consecutive checks, send an email to the dev lead.
@@ -54,16 +62,27 @@ Ignore test tenants (any tenant with "test" or "sandbox" in the company name).`
         escalation: '2 checks → Teams, 5 checks → Email',
         instruction: `Monitor Business Central performance across all tenants.
 
-Track these metrics:
-- Page load times (RT0006 events) — alert if p95 exceeds 5 seconds
-- Report execution times (RT0006, RT0007) — alert if p95 exceeds 30 seconds
-- AL method execution times — alert if any single method consistently exceeds 10 seconds
+## Query Strategy
 
-Compare current hour against previous runs to detect degradation.
+1. **First run**: Call get_event_catalog to discover performance events, then get_event_field_samples for RT0006, RT0007, RT0018.
+2. **Subsequent runs**: Skip discovery — go straight to query_telemetry. You already know the schema.
+3. Use ONE compound query combining all performance signals (RT0006, RT0007, RT0018) with summarize by eventId and tenant.
+4. Only drill into specific tenants if the aggregated query shows anomalies.
+5. Target: 3–5 tool calls per run (subsequent runs), 6–8 on first run.
+
+## Thresholds
+
+- Page load times (RT0006) — alert if p95 exceeds 5 seconds
+- Report execution times (RT0006, RT0007) — alert if p95 exceeds 30 seconds
+- AL method execution times (RT0018) — alert if any single method consistently exceeds 10 seconds
+
+## Escalation
+
+Compare current run against previous runs to detect degradation.
 If performance degrades for 2+ consecutive checks, post to Teams.
 If degradation persists for 5+ checks, send an email to the dev lead.
 
-Group findings by tenant and identify which tenants are most affected.`
+Group findings by tenant and identify which tenants are most affected (top 5).`
     },
     {
         id: 'error-rate-monitoring',
@@ -73,11 +92,21 @@ Group findings by tenant and identify which tenants are most affected.`
         escalation: '1st: log, 2nd: Teams, 3rd: Email',
         instruction: `Monitor overall error rates across Business Central environments.
 
-Check all events with error status. Group by event ID and tenant.
+## Query Strategy
+
+1. **First run**: Call get_event_catalog with status="error" to discover error events. Then call get_event_field_samples for the top 3 most frequent error event types.
+2. **Subsequent runs**: Skip discovery — go straight to query_telemetry.
+3. Use ONE compound query for all error events, summarizing by eventId and tenant. Use \`| take 20\` to focus on the worst offenders.
+4. Run a second query for overall health (success vs error ratio) if needed.
+5. Target: 3–5 tool calls per run (subsequent runs), 6–8 on first run.
+
+## Thresholds
 
 Flag any event type where:
 - Error count in the last hour exceeds 100, OR
-- Error rate increased by more than 200% compared to the typical rate you've seen in previous runs
+- Error rate increased by more than 200% compared to the typical rate from previous runs
+
+## Escalation
 
 For flagged issues:
 - First detection: Log the finding (no action)
@@ -94,10 +123,18 @@ Summarize overall health: percentage of events in error vs success state.`
         escalation: 'Immediate Teams + Email on regression',
         instruction: `Post-deployment monitoring mode.
 
-Compare error rates and performance in the last 2 hours against
-the baseline from your previous runs (before deployment).
+## Query Strategy
+
+1. **First run (post-deployment baseline)**: Call get_event_catalog to discover events. Then use ONE compound query to capture error counts + performance metrics across all signals.
+2. **Subsequent runs**: Skip discovery — go straight to query_telemetry with the same compound query.
+3. Compare results against previous state (stored from prior runs).
+4. Target: 2–4 tool calls per run.
+
+## Thresholds
 
 Flag any metric that has worsened by more than 50% compared to pre-deployment baseline.
+
+## Escalation
 
 If any regression is detected:
 - Immediately post to Teams with specific metrics and comparison

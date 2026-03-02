@@ -1741,3 +1741,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** - Fix investigation report formatting [Entry: ace01296-025d-438e-afae-83de6b594279]
   - **Why:** LLM outputs investigation report as wall of text instead of structured markdown with headers, tables, and sections
   - **How:** Replaced minimal example with realistic multi-signal report, prescriptive formatting rules (headers per signal, tables for metrics, emoji indicators, trend arrows), added runtime warning for reports lacking markdown structure.
+- **2026-03-02** — Read agent template instruction files [Entry: 33574755-e8c5-434e-a287-c28421e76fa0]
+  - **Why:** User wanted to understand the instructions each preconfigured agent template provides.
+  - **How:** Read all instruction.md and README.md files from packages/mcp/templates/agents/ subdirectories and presented full content.

@@ -161,7 +161,7 @@ function buildRuntimeConfig(agentsConfig: AgentConfigSection): AgentRuntimeConfi
     return {
         llmProvider,
         maxToolCalls: agentsConfig.defaults?.maxToolCalls ?? 20,
-        maxTokens: agentsConfig.defaults?.maxTokens ?? 16384,
+        maxTokens: agentsConfig.defaults?.maxTokens ?? 32768,
         contextWindowRuns: agentsConfig.defaults?.contextWindowRuns ?? 5,
         toolScope: agentsConfig.defaults?.toolScope ?? 'read-only',
         retry: {
