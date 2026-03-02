@@ -2926,3 +2926,7 @@ Change instructions an business logic to do this."
 > "Document and release MCP 3.1.5 patch — daily investigation reports + cleaner pipeline output."
 
 ---
+### Entry ID: be428ce8-5fe1-4033-ab01-30bba79e227b — 2026-03-02 20:08
+> "Update pipeline templates to match real-world example: trigger:none, daily schedule, git add docs/, simpler commit. Release MCP 3.1.6 + Extension 3.1.4."
+
+---

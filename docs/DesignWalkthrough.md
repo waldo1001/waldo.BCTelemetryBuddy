@@ -1717,3 +1717,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-02** — Release MCP 3.1.5 [Entry: fb937593-c3b1-4d7d-9416-8635e67f2cc8]
   - **Why:** Ship daily investigation reports and pipeline output cleanup
   - **How:** Updated CHANGELOG.md, bumped version to 3.1.5, committed, tagged mcp-v3.1.5, pushed. GitHub Actions CI triggered.
+- **2026-03-02** — Pipeline template improvements + dual release [Entry: be428ce8-5fe1-4033-ab01-30bba79e227b]
+  - **Why:** Real-world pipeline used trigger:none (agent commits caused re-triggers), daily schedule, and simpler commit pattern
+  - **How:** Updated generateAzureDevOpsYaml/generateGitHubActionsYaml + static templates: trigger:none, daily cron (0 6 * * *), git add agents/ docs/, || commit pattern. Updated wizard UI text. Fixed test assertion. Released MCP 3.1.6 (mcp-v3.1.6) + Extension 3.1.4 (v3.1.4).
