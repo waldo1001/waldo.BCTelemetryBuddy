@@ -173,19 +173,43 @@ export class ToolHandlers {
                 case 'query_telemetry': {
                     const kqlQuery = params.kql;
                     if (!kqlQuery || kqlQuery.trim() === '') {
-                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) for EVERY event ID — this is non-negotiable, do NOT substitute `take 1 | project customDimensions`, (3) Then construct and submit your query.');
+                        throw new Error('❌ QUERY BLOCKED: kql parameter is required.');
                     }
-                    result = await this.executeQuery(
-                        kqlQuery,
-                        params.useContext || false,
-                        params.includeExternal || false
-                    );
-                    // Warn when customDimensions fields are referenced but schema was likely not pre-validated.
-                    // Agents that call get_event_field_samples first will see this and understand the consequences;
-                    // agents that skipped it will see the warning and know to fix their workflow next time.
-                    const customDimFields = this.extractCustomDimensionsFields(kqlQuery);
-                    if (customDimFields.length > 0) {
-                        result.schemaWarning = `⚠️ SCHEMA NOT PRE-VALIDATED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not called first. This is a mandatory step — do NOT use \`take 1 | project customDimensions\` as a substitute, that workaround is explicitly forbidden. Duration fields (e.g. executionTime, totalTime) use TIMESPAN format "hh:mm:ss.fffffff" — NOT milliseconds. If results look wrong or the query errored, call get_event_field_samples(eventId) now and rewrite the query with correct types.`;
+
+                    const usesCustomDimensions = /customDimensions/i.test(kqlQuery);
+
+                    if (usesCustomDimensions) {
+                        const eventIds: string[] = Array.isArray(params.eventIds) ? params.eventIds : [];
+                        if (eventIds.length === 0) {
+                            throw new Error(
+                                '❌ QUERY BLOCKED: Your KQL references customDimensions but no eventIds were provided. ' +
+                                'You need the field schema to write this query correctly — provide the event IDs your query ' +
+                                'filters on (e.g. ["RT0005"]) and the server will automatically fetch field names, types and ' +
+                                'sample values for you. If you do not know the event IDs, call get_event_catalog() first.'
+                            );
+                        }
+                        // Auto-fetch schema for every declared event ID and attach to result so the agent
+                        // has full field awareness: names, types, occurrence rates, sample values.
+                        const schemaValidations: Record<string, any> = {};
+                        for (const eventId of eventIds) {
+                            try {
+                                schemaValidations[eventId] = await this.getEventFieldSamples(eventId, 5, 30);
+                            } catch (e: any) {
+                                schemaValidations[eventId] = { error: e.message };
+                            }
+                        }
+                        result = await this.executeQuery(
+                            kqlQuery,
+                            params.useContext || false,
+                            params.includeExternal || false
+                        );
+                        result.schemaContext = schemaValidations;
+                    } else {
+                        result = await this.executeQuery(
+                            kqlQuery,
+                            params.useContext || false,
+                            params.includeExternal || false
+                        );
                     }
                     break;
                 }

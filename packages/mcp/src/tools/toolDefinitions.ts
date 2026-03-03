@@ -61,7 +61,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'get_event_field_samples',
-        description: '� MANDATORY BEFORE ANY KQL QUERY. Call this tool for every event ID you intend to filter or project on. Never skip this step, even if you believe you already know the field names. Do NOT use `take 1 | project customDimensions` as a substitute — that pattern is explicitly forbidden. Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and a ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are TIMESPAN format ("hh:mm:ss.fffffff") NOT milliseconds — skipping this step is the most common cause of broken queries and wasted tokens. The response includes a nextStep field confirming you are ready to query.',
+        description: 'Discover everything inside an event\'s customDimensions before writing KQL — and you MUST call this before any query that touches customDimensions (the server enforces this). Value: you will not know what fields exist until you call it (events can have 20+ fields you cannot guess), you will not know field types (duration fields like executionTime/totalTime/serverTime are TIMESPAN "hh:mm:ss.fffffff" NOT numbers — getting this wrong silently breaks queries and wastes tokens on retries), you will see occurrence rates to know which fields are always vs. occasionally populated, and you get real sample values to understand the actual content and a ready-to-copy example query. Use this for exploration ("what can I investigate here?"), for type safety ("how do I cast this field?"), and before building any filter or projection on customDimensions. Do NOT substitute `take 1 | project customDimensions` — that workaround is explicitly blocked.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -115,11 +115,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'query_telemetry',
-        description: '⚠️ EXECUTE KQL QUERY - ONLY USE AFTER DISCOVERY TOOLS. CRITICAL PREREQUISITES: (1) Call get_event_catalog() to discover event IDs, (2) Call get_event_field_samples(eventId) for EVERY event ID you will query — this is non-negotiable, (3) If filtering by customer, call get_tenant_mapping() to get tenant IDs. DO NOT guess event IDs or field names — use discovery tools first or queries WILL fail. DO NOT substitute `take 1 | project customDimensions` for get_event_field_samples — this is not an acceptable workaround. TOKEN EFFICIENCY: skipping get_event_field_samples() is the #1 source of wasted tokens — wrong field types (especially TIMESPAN vs number for duration fields) cause failures requiring 3-5x more tokens to fix than calling the discovery tool first.',
+        description: 'Execute a KQL query against Business Central telemetry data. When your KQL references customDimensions, you MUST provide eventIds — the server will block the query otherwise. When eventIds is provided, the server automatically calls get_event_field_samples for each event ID and attaches the full field schema (names, types, sample values) to the response so you can verify field references are correct and self-correct if needed. Queries that do not use customDimensions do not need eventIds. Prerequisites: (1) call get_event_catalog() to discover event IDs, (2) call get_event_field_samples() for every event ID you will filter or project on — skipping this is the #1 cause of broken queries and wasted tokens since field types (especially TIMESPAN duration fields) cannot be guessed correctly.',
         inputSchema: {
             type: 'object',
             properties: {
-                kql: { type: 'string', description: 'KQL query string - MUST use event IDs from get_event_catalog() and field names from get_event_field_samples(). Do not guess.' },
+                kql: { type: 'string', description: 'KQL query string to execute.' },
+                eventIds: { type: 'array', items: { type: 'string' }, description: 'Required when KQL references customDimensions. List every event ID your query filters or projects on (e.g. ["RT0005", "LC0010"]). The server auto-fetches field schemas for each and attaches them to the response.' },
                 useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
                 includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
             },

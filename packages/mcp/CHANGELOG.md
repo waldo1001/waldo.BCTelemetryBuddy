@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.17] - 2026-03-03
+
+### Changed
+- **Conditional server-side enforcement**: `query_telemetry` now detects whether the KQL references `customDimensions`. If it does and no `eventIds` were provided, the query is blocked with a clear error explaining how to fix it. Queries that don't touch `customDimensions` pass through unblocked with no overhead.
+- **Auto-attach schema context**: When `eventIds` are provided, the server automatically calls `get_event_field_samples` for each event ID and attaches the full field schema (names, types, occurrence rates, sample values) to the query result as `schemaContext`.
+- **Combined tone in descriptions**: Both `get_event_field_samples` and `query_telemetry` descriptions now combine value-driven reasoning (what you gain by calling it) with imperative enforcement (the server blocks you if you don't when needed).
+
 ## [3.1.16] - 2026-03-03
 
 ### Changed
