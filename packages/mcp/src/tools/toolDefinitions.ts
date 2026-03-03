@@ -41,7 +41,7 @@ export interface ToolDefinition {
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
     {
         name: 'get_event_catalog',
-        description: '🚨 MANDATORY FIRST STEP: Discover available Business Central telemetry event IDs with descriptions, frequencies, status, and Learn URLs. ALWAYS call this tool BEFORE attempting to write any KQL query. Without calling this first, you will not know which event IDs exist in the telemetry data. Returns top events by occurrence count with status categorization (success/error/too slow). Optionally analyzes common customDimensions fields across events.',
+        description: '🚨 STEP 1 — ALWAYS START HERE. Discover available Business Central telemetry event IDs with descriptions, frequencies, status, and Learn URLs. ALWAYS call this tool BEFORE attempting to write any KQL query. Without calling this first, you will not know which event IDs exist in the telemetry data. Returns top events by occurrence count with status categorization (success/error/too slow). The response includes a requiredNextStep field telling you exactly what to do next — follow it.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -61,7 +61,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'get_event_field_samples',
-        description: '🚨 MANDATORY SECOND STEP: Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are PROBABLY timespans ("hh:mm:ss.fffffff"), NOT milliseconds - ALWAYS use this tool to check sample values and verify the format before writing queries. NEVER assume the format without checking samples first. Also provides event category (Performance/Lifecycle/Security/etc.) from Microsoft Learn docs.',
+        description: '🚨 STEP 2 — CALL FOR EVERY EVENT ID BEFORE QUERYING. Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and a ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are TIMESPAN format ("hh:mm:ss.fffffff") NOT milliseconds — skipping this step is the most common cause of broken queries and wasted tokens. Call this for EACH event ID before calling query_telemetry. The response includes a nextStep field confirming you are ready to query.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -115,7 +115,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'query_telemetry',
-        description: '⚠️ EXECUTE KQL QUERY - ONLY USE AFTER DISCOVERY TOOLS. Execute a KQL query against Business Central telemetry data. CRITICAL PREREQUISITES: (1) Call get_event_catalog() to discover event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) If filtering by customer, call get_tenant_mapping() to get tenant IDs. DO NOT guess event IDs or field names - use discovery tools first or queries WILL fail.',
+        description: '🚨 STEP 3 ONLY — DO NOT CALL WITHOUT STEP 2. Execute a KQL query against Business Central telemetry data. TOKEN EFFICIENCY WARNING: Skipping get_event_field_samples() before this tool is the #1 source of wasted tokens — wrong field types (especially duration fields like executionTime which use TIMESPAN "hh:mm:ss" NOT milliseconds) cause query failures that require 3-5x more tokens to diagnose and fix than calling get_event_field_samples() first. MANDATORY WORKFLOW: (1) Call get_event_catalog() → (2) Call get_event_field_samples(eventId) for EACH event you will query → (3) THEN call this tool. If filtering by company/customer, also call get_tenant_mapping() before this step. The schema check is cheap; fixing broken queries is expensive.',
         inputSchema: {
             type: 'object',
             properties: {

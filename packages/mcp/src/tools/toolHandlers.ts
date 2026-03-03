@@ -180,6 +180,13 @@ export class ToolHandlers {
                         params.useContext || false,
                         params.includeExternal || false
                     );
+                    // Warn when customDimensions fields are referenced but schema was likely not pre-validated.
+                    // Agents that call get_event_field_samples first will see this and understand the consequences;
+                    // agents that skipped it will see the warning and know to fix their workflow next time.
+                    const customDimFields = this.extractCustomDimensionsFields(kqlQuery);
+                    if (customDimFields.length > 0) {
+                        result.schemaWarning = `⚠️ SCHEMA NOT PRE-VALIDATED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not confirmed called first. Duration fields (e.g. executionTime, totalTime) use TIMESPAN format "hh:mm:ss.fffffff" — NOT milliseconds. If results look wrong or the query errored, call get_event_field_samples(eventId) and rewrite with correct types. To suppress this warning, call get_event_field_samples() before query_telemetry.`;
+                    }
                     break;
                 }
 
@@ -432,6 +439,25 @@ export class ToolHandlers {
     }
 
     /**
+     * Extract customDimensions field names referenced in a KQL query.
+     * Used to detect when query_telemetry is called without prior schema validation.
+     */
+    private extractCustomDimensionsFields(kql: string): string[] {
+        const fields = new Set<string>();
+        // Match patterns like: customDimensions.fieldName, customDimensions["fieldName"], tostring(customDimensions.fieldName)
+        const dotPattern = /customDimensions\.([a-zA-Z_][a-zA-Z0-9_]*)/g;
+        const bracketPattern = /customDimensions\[["']([^"']+)["']\]/g;
+        let match: RegExpExecArray | null;
+        while ((match = dotPattern.exec(kql)) !== null) {
+            fields.add(match[1]);
+        }
+        while ((match = bracketPattern.exec(kql)) !== null) {
+            fields.add(match[1]);
+        }
+        return Array.from(fields);
+    }
+
+    /**
      * Get event catalog
      */
     async getEventCatalog(daysBack: number = 10, status: string = 'all', minCount: number = 1, includeCommonFields: boolean = false, maxResults: number = 50): Promise<any> {
@@ -496,6 +522,7 @@ export class ToolHandlers {
             learnUrl: row[4]
         })) || [];
 
+        const topEventIds = events.slice(0, 5).map((e: any) => e.eventId).join(', ');
         const response: any = {
             summary: `Found ${events.length} event IDs in the last ${daysBack} days${events.length >= limitedMaxResults ? ` (limited to top ${limitedMaxResults} by count)` : ''}`,
             daysBack,
@@ -503,7 +530,8 @@ export class ToolHandlers {
             minCount,
             maxResults: limitedMaxResults,
             totalReturned: events.length,
-            events
+            events,
+            requiredNextStep: `⚠️ STEP 2 REQUIRED BEFORE QUERYING: For each event ID you plan to query, call get_event_field_samples(eventId) to get exact field names, types (especially TIMESPAN vs number for duration fields), and sample values. Skipping this step causes wrong field type usage and wastes 3-5x more tokens fixing broken queries. Example: call get_event_field_samples("${events[0]?.eventId || 'RT0005'}") now.`
         };
 
         if (includeCommonFields && events.length > 0) {
@@ -870,6 +898,7 @@ ${extendStatements}
                 optionalFields: fields.filter(f => !f.isAlwaysPresent).length
             },
             exampleQuery,
+            nextStep: `✅ SCHEMA VALIDATED for ${eventId}. You now have exact field names and data types. Proceed to call query_telemetry() with a KQL query built using these fields. Use the exampleQuery above as a starting point and adjust the projection and filters as needed.`,
             recommendations: [
                 categoryInfo.isStandardEvent && categoryInfo.documentationUrl
                     ? `📖 Official documentation: ${categoryInfo.documentationUrl}`
