@@ -1768,3 +1768,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-03** — Patch release mcp-v3.1.18: value-driven + imperative descriptions [Entry: f0bd6b08-b0c8-44e0-a32d-2c529e283307]
   - **Why:** Descriptions should tell agents why calling get_event_field_samples is valuable (field discovery, type safety, sample values) alongside making clear it is mandatory.
   - **How:** Updated description strings only in toolDefinitions.ts for get_event_field_samples and query_telemetry. No handler or schema changes.
+- **2026-03-04** — Released MCP v3.1.19 and Extension v3.1.8 [Entry: edcb8b14-4d87-43ba-8e88-7fedf7bbf99d]
+  - **Why:** User requested commit and push for the value-driven field discovery messaging changes across all touchpoints (toolDefinitions, toolHandlers, chatParticipant).
+  - **How:** Committed 7 changed files, tagged mcp-v3.1.19 and v3.1.8, pushed to origin main with tags.
+- **2026-03-04** — Explained why MCP shows old version in VSCode [Entry: 06b31eaa-d8e0-4766-bdd1-27efec6efa51]
+  - **Why:** User sees v3.1.12 because VSCode runs the bundled MCP from the installed VSIX, not the local build.
+  - **How:** Explained that the extension bundles MCP at mcp/dist/launcher.js — need to wait for CI to publish v3.1.8 or set preferGlobal.
+- **2026-03-04** — Fix: prefer global MCP over bundled [Entry: cbd3dd05-0335-459f-87ed-ea0f36879fab]
+  - **Why:** Extension update checker installs global MCP but launch logic defaulted to bundled copy, so users never got the update they just installed.
+  - **How:** Changed provideMcpServerDefinitions to auto-detect global bctb-mcp in PATH via isMCPInPath(); if found, use global. Bundled is now fallback only when global is not installed.

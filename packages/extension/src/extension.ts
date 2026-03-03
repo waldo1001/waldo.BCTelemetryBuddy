@@ -15,6 +15,7 @@ import { MigrationService } from './services/migrationService';
 import { ProfileStatusBar } from './ui/profileStatusBar';
 import { ProfileManager } from './services/profileManager';
 import { showFirstRunNotification, startPeriodicUpdateChecks, checkForMCPUpdates } from './services/mcpInstaller';
+import { resolveMcpServer } from './services/mcpResolver';
 import { VSCodeAuthService } from './services/vscodeAuthService';
 import { buildMcpEnv } from './services/mcpEnvBuilder';
 import { findConfigWorkspace } from './services/workspaceFinder';
@@ -619,14 +620,9 @@ export function activate(context: vscode.ExtensionContext) {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
             const mcpConfig = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
-            const preferGlobal = mcpConfig.get<boolean>('preferGlobal', false); // Default to bundled in development
-            // Bundled MCP: Use the MCP server bundled with the extension (mcp/dist/launcher.js)
-            // Global MCP: Use globally installed bctb-mcp command from npm (DEFAULT)
-            //
-            // The extension can optionally bundle MCP files as fallback (vscode:prepublish runs copy-mcp)
-            // But we prefer the globally installed version to stay independent
-            const mcpBundledPath = path.join(context.extensionPath, 'mcp', 'dist', 'launcher.js');
-            const useBundled = !preferGlobal && fs.existsSync(mcpBundledPath);
+            const preferGlobal = mcpConfig.get<boolean>('preferGlobal', false);
+            const resolution = await resolveMcpServer(context.extensionPath, preferGlobal);
+            const useBundled = resolution.mode === 'bundled';
 
             // Prepare environment variables for MCP server
             // Pass workspace path so MCP can find .bctb-config.json
@@ -691,21 +687,19 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             if (useBundled) {
-                // Bundled: Use MCP server bundled with the extension (fallback mode)
-                outputChannel.appendLine(`📦 Using bundled MCP server at ${mcpBundledPath}`);
+                // Bundled: Use MCP server bundled with the extension (fallback when global not installed)
+                outputChannel.appendLine(`📦 Using bundled MCP server (global bctb-mcp not found in PATH)`);
                 return [{
                     id: 'bctb',
                     label: 'BC Telemetry Buddy',
                     description: 'Query Business Central telemetry data using KQL',
                     command: 'node',
-                    args: [mcpBundledPath],
+                    args: [resolution.bundledPath!],
                     env: mcpEnv
                 }];
             } else {
-                // Global: Use globally installed bctb-mcp command (DEFAULT)
-                outputChannel.appendLine(preferGlobal
-                    ? '🌍 Using globally installed bctb-mcp (default)'
-                    : '🌍 PreferGlobal enabled: Using globally installed bctb-mcp');
+                // Global: Use globally installed bctb-mcp command (preferred when available)
+                outputChannel.appendLine('🌍 Using globally installed bctb-mcp');
                 return [{
                     id: 'bctb',
                     label: 'BC Telemetry Buddy',

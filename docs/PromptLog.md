@@ -2994,3 +2994,15 @@ Change instructions an business logic to do this."
 > "Patch release: description-only changes combining value-driven reasoning with imperative enforcement for get_event_field_samples and query_telemetry. Released as mcp-v3.1.18 (3.1.17 was taken by accidental push)."
 
 ---
+### Entry ID: edcb8b14-4d87-43ba-8e88-7fedf7bbf99d — 2026-03-04 00:16
+> "commit and push"
+
+---
+### Entry ID: 06b31eaa-d8e0-4766-bdd1-27efec6efa51 — 2026-03-04 00:22
+> "could it be that when I start the mcp in vscode, it still says Buddy MCP Server v3.1.12 starting (stdio mode)"
+
+---
+### Entry ID: cbd3dd05-0335-459f-87ed-ea0f36879fab — 2026-03-04 00:28
+> "How stupid is that. The extension tells me there is a new version of the MCP, it installs it, it checks for it, it confirms it installs - and then when I use it, it gets the bundled old shit?"
+
+---

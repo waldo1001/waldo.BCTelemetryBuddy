@@ -77,10 +77,11 @@ traces
    - Supports filtering by status (success, error, too slow, warning, info)
 
 3. **mcp_bc_telemetry__get_event_field_samples**
-   - **RECOMMENDED**: Use this to understand event structure before querying
-   - Shows actual field names, data types, and sample values from real events
-   - Provides ready-to-use example queries with proper type conversions
-   - Returns event category information from Microsoft Learn
+   - **BEST PRACTICE: Call this BEFORE writing any KQL that touches customDimensions**
+   - BC events have 20+ fields in customDimensions you cannot reliably guess — this shows all of them with actual values
+   - Reveals exact data types: duration fields may be TIMESPAN (hh:mm:ss.fffffff), not milliseconds — wrong type = broken query
+   - Returns sample values from real events so you write correct KQL on the first attempt
+   - Provides a ready-to-use example query with proper type conversions
 
 4. **mcp_bc_telemetry__query_telemetry**
    - Execute KQL queries against BC telemetry data
@@ -140,21 +141,25 @@ When user mentions a company/customer name OR multiple profiles exist:
 ### Step 2: Understand the Events
 Before writing queries about specific events:
 \`\`\`
-1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. **MANDATORY**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing queries
-3. **CRITICAL**: Verify actual data types from samples (especially duration fields - likely timespans, not milliseconds)
-4. Review the example query and field structure provided
-5. Check for timespan format (hh:mm:ss.fffffff) vs milliseconds in duration fields
+1. Call mcp_bc_telemetry__get_event_catalog to see available events — it will tell you the next step
+2. **BEST PRACTICE — DO BEFORE WRITING KQL**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event
+   - You will discover 20+ customDimension fields, their exact data types, and sample values from real data
+   - Duration fields may be TIMESPAN (hh:mm:ss.fffffff), not milliseconds — sampling reveals this before you guess wrong
+   - The tool returns a ready-to-use example query; use it as your starting point
+3. Review the example query and field structure provided by field_samples
+4. Only then write your KQL — shaped by what the discovery tools told you, not by guessing
 \`\`\`
 
 ### Step 3: Query and Analyze
 \`\`\`
-1. Use mcp_bc_telemetry__get_event_catalog (discovery) → **MANDATORY: field_samples** → event_schema (if complex)
-2. **ALWAYS call get_event_field_samples BEFORE writing ANY queries** - verify data types, especially:
-   - Duration fields (executionTime, totalTime, etc.) are PROBABLY timespans, not milliseconds
-   - Use samples to confirm format (hh:mm:ss.fffffff = timespan, needs conversion)
-   - String vs numeric fields (use tostring(), toint(), toreal() appropriately)
-3. Build tenant‑centric KQL: group by aadTenantId first, then enrich with company names via mapping
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
+2. **ALWAYS call get_event_field_samples BEFORE writing KQL** — it tells you:
+   - All 20+ available customDimension fields and their exact names (you cannot reliably guess these)
+   - Exact data types: duration fields (executionTime, totalTime, etc.) are often TIMESPAN, not milliseconds
+   - Sample values from real data so you use correct comparison operators and conversions
+   - A ready-to-use example query — start from this, don't write from scratch
+3. Build your KQL based on what the discovery tools told you — not by guessing field names or types
+4. Build tenant‑centric KQL: group by aadTenantId first, then enrich with company names via mapping
 4. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
 5. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
 6. Provide actionable insights and recommendations (performance, contention, failure patterns)
@@ -667,7 +672,7 @@ Result: Base Application cannot insert → Timeout → User sees error
 
 **Always check event catalog first** to find which slow SQL events exist in your environment.
 
-**Before writing queries**, call \`mcp_bc_telemetry__get_event_field_samples\` to see field names (executionTimeMs vs executionTime, etc.).
+**BEST PRACTICE BEFORE WRITING QUERIES**: Call \`mcp_bc_telemetry__get_event_field_samples\` for this event — field names differ between BC versions (executionTimeMs vs executionTime, etc.) and duration types may be TIMESPAN not milliseconds. Sampling shows you the real field names and types so your query works first time.
 
 **Query Pattern:**
 \`\`\`kql
@@ -714,7 +719,7 @@ traces
 
 **NOTE**: RT0005 is the common "Long running AL execution" event, but **verify with event catalog** as some environments may use different IDs or have custom slow execution events.
 
-**Before writing queries**, call \`mcp_bc_telemetry__get_event_field_samples\` to understand field structure.
+**BEST PRACTICE BEFORE WRITING QUERIES**: Call \`mcp_bc_telemetry__get_event_field_samples\` for this event — it reveals all available fields, their exact types, and sample values from real data. This prevents guessing wrong field names or treating timespans as milliseconds.
 
 **Query Pattern:**
 \`\`\`kql
