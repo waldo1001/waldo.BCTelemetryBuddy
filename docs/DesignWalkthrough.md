@@ -1777,3 +1777,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Fix: prefer global MCP over bundled [Entry: cbd3dd05-0335-459f-87ed-ea0f36879fab]
   - **Why:** Extension update checker installs global MCP but launch logic defaulted to bundled copy, so users never got the update they just installed.
   - **How:** Changed provideMcpServerDefinitions to auto-detect global bctb-mcp in PATH via isMCPInPath(); if found, use global. Bundled is now fallback only when global is not installed.
+- **2026-03-04** — Value-driven field_samples messaging in agent definitions [Entry: b40ae186-e789-41db-a8ce-8f356eb1ca5e]
+  - **Why:** Agent definitions had inconsistent messaging: tool list said RECOMMENDED while workflow steps said MANDATORY, and neither had value reasoning.
+  - **How:** Updated BCTelemetryBuddyAgent tool description + Steps 2/3, and BCPerformanceAnalysisAgent Steps 4/5 with BEST PRACTICE framing and value reasoning (20+ fields, exact types, sample values, ready-to-use query).

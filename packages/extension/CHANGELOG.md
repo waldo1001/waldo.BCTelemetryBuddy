@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.9] - 2026-03-04
+
+### Fixed
+- **MCP launch now prefers globally installed `bctb-mcp` over the bundled copy**: Previously, the extension always used the bundled MCP even after the update checker installed a newer global version. Now, if `bctb-mcp` is found in PATH it is used automatically; the bundled copy is only a fallback for fresh installs with no global version present.
+
+### Refactored
+- **Extracted `mcpResolver.ts`**: MCP server resolution logic moved to a dedicated, fully-tested service (`src/services/mcpResolver.ts`) with 13 unit tests covering all scenarios (preferGlobal override, global in PATH, fallback to bundled, error handling).
+
+### Changed
+- **Agent definitions — value-driven field discovery messaging**: Updated `BCTelemetryBuddyAgent` tool description, Steps 2 and 3 workflow, and `BCPerformanceAnalysisAgent` Steps 4 and 5 with consistent BEST PRACTICE framing: explains *why* calling `get_event_field_samples` matters (20+ fields, exact data types, TIMESPAN vs ms, ready-to-use example query) alongside the imperative guidance.
+
 ## [3.1.8] - 2026-03-04
 
 ### Changed

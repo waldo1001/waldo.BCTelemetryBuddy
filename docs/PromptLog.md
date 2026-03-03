@@ -3006,3 +3006,7 @@ Change instructions an business logic to do this."
 > "How stupid is that. The extension tells me there is a new version of the MCP, it installs it, it checks for it, it confirms it installs - and then when I use it, it gets the bundled old shit?"
 
 ---
+### Entry ID: b40ae186-e789-41db-a8ce-8f356eb1ca5e — 2026-03-04 00:34
+> "our entire get_event_field_samples saga - would it make sense to add the tips also to the agent descriptions?"
+
+---
