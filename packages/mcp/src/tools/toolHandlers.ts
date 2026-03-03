@@ -173,7 +173,7 @@ export class ToolHandlers {
                 case 'query_telemetry': {
                     const kqlQuery = params.kql;
                     if (!kqlQuery || kqlQuery.trim() === '') {
-                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) for EVERY event ID — this is non-negotiable, do NOT substitute `take 1 | project customDimensions`, (3) Then construct and submit your query.');
+                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. Before writing KQL, call get_event_catalog() to discover event IDs, then call get_event_field_samples(eventId) for each event — this reveals all available fields (20+ per event you cannot guess), their exact data types (duration fields are TIMESPAN not numbers), and sample values so you write correct KQL the first time.');
                     }
                     result = await this.executeQuery(
                         kqlQuery,
@@ -185,7 +185,7 @@ export class ToolHandlers {
                     // agents that skipped it will see the warning and know to fix their workflow next time.
                     const customDimFields = this.extractCustomDimensionsFields(kqlQuery);
                     if (customDimFields.length > 0) {
-                        result.schemaWarning = `⚠️ SCHEMA NOT PRE-VALIDATED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not called first. This is a mandatory step — do NOT use \`take 1 | project customDimensions\` as a substitute, that workaround is explicitly forbidden. Duration fields (e.g. executionTime, totalTime) use TIMESPAN format "hh:mm:ss.fffffff" — NOT milliseconds. If results look wrong or the query errored, call get_event_field_samples(eventId) now and rewrite the query with correct types.`;
+                        result.schemaWarning = `⚠️ FIELD TYPES NOT VERIFIED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not called first. Best practice: call get_event_field_samples(eventId) before writing KQL to discover all available fields (events have 20+ you cannot guess), learn exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff" not numbers), and see real sample values. This avoids broken queries and wasted retries. If results look wrong, call get_event_field_samples(eventId) now and rewrite with correct types.`;
                     }
                     break;
                 }
@@ -531,7 +531,7 @@ export class ToolHandlers {
             maxResults: limitedMaxResults,
             totalReturned: events.length,
             events,
-            requiredNextStep: `⚠️ STEP 2 REQUIRED BEFORE QUERYING: For each event ID you plan to query, call get_event_field_samples(eventId) to get exact field names, types (especially TIMESPAN vs number for duration fields), and sample values. Skipping this step causes wrong field type usage and wastes 3-5x more tokens fixing broken queries. Example: call get_event_field_samples("${events[0]?.eventId || 'RT0005'}") now.`
+            requiredNextStep: `BEST PRACTICE — STEP 2 BEFORE WRITING ANY KQL: For each event ID you plan to query, call get_event_field_samples(eventId) to discover all available customDimensions fields (events typically have 20+ fields you cannot guess), their exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff" not numbers — getting this wrong silently breaks queries), and real sample values so you understand what the data actually contains. Understanding the fields and types first means you write correct KQL on the first attempt instead of wasting tokens on retries. Example: call get_event_field_samples("${events[0]?.eventId || 'RT0005'}") now.`
         };
 
         if (includeCommonFields && events.length > 0) {
@@ -664,7 +664,7 @@ traces
         }
 
         recommendations.push(
-            'For event-specific fields, use get_event_field_samples(eventId) to understand the exact structure before writing queries.'
+            'Best practice: call get_event_field_samples(eventId) before writing any KQL that touches customDimensions — it reveals every available field, their exact data types (especially TIMESPAN duration fields), and real sample values so you write correct queries the first time.'
         );
 
         return recommendations;

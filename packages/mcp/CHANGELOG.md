@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.19] - 2026-03-04
+
+### Changed
+- **Value-driven discovery messaging across all response fields**: Updated `requiredNextStep` (catalog response), `schemaWarning` (query response), empty-KQL error message, and recommendations text to explain *why* calling `get_event_field_samples` is valuable (discover 20+ fields, learn exact types, see sample values, write correct KQL on first attempt) alongside the imperative enforcement.
+- **Improved tool descriptions**: `get_event_catalog` now explicitly hints to call `get_event_field_samples` next with value reasoning. `get_event_field_samples` leads with "BEST PRACTICE: call this BEFORE writing KQL". `get_event_schema` nudges toward `get_event_field_samples` for full detail. `query_telemetry` emphasizes informing yourself about fields and types before forming KQL.
+
 ## [3.1.18] - 2026-03-03
 
 ### Changed

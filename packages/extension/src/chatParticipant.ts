@@ -87,10 +87,13 @@ When user mentions a company/customer name:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. **MANDATORY**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing queries
-3. **CRITICAL**: Verify actual data types from samples (especially duration fields - likely timespans, not milliseconds)
-4. Review the example query and field structure provided
-5. Check for timespan format (hh:mm:ss.fffffff) vs milliseconds in duration fields
+2. **BEST PRACTICE**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing KQL
+   - Events typically have 20+ customDimensions fields you cannot guess
+   - This tells you the exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff", NOT numbers)
+   - You get real sample values so you understand what the data actually contains
+   - Understanding the fields and types first means correct KQL on the first attempt
+3. Review the example query and field structure provided
+4. Build your KQL based on what the discovery tools told you, not by guessing
 \`\`\`
 
 ### Step 4: Understand User Intent

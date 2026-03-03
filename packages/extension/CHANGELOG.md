@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.8] - 2026-03-04
+
+### Changed
+- **Chat Participant — Discovery workflow guidance**: Updated Step 3 (Understand the Events) in the system prompt to explain the value of calling `get_event_field_samples` before writing KQL: events have 20+ fields you cannot guess, duration fields are TIMESPAN not numbers, and sample values reveal actual content. Best practice framing instead of just mandatory language.
+
 ## [3.1.7] - 2026-03-02
 
 ### Improved
