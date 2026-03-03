@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.18] - 2026-03-03
+
+### Changed
+- **Improved tool descriptions with value-driven reasoning**: `get_event_field_samples` and `query_telemetry` descriptions now explain *why* calling the tool is valuable (discover 20+ fields you can't guess, learn exact data types, see sample values, get occurrence rates) alongside the existing imperative language (mandatory, never skip, workaround forbidden). Gives agents motivation to comply, not just orders.
+
 ## [3.1.16] - 2026-03-03
 
 ### Changed

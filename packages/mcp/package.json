@@ -1,6 +1,6 @@
 {
     "name": "bc-telemetry-buddy-mcp",
-    "version": "3.1.17",
+    "version": "3.1.18",
     "description": "Model Context Protocol server for Business Central telemetry",
     "type": "commonjs",
     "main": "./dist/server.js",
