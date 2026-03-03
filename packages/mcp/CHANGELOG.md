@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.15] - 2026-03-03
+
+### Changed
+- **Enforced schema discovery before querying**: `get_event_catalog` now returns a `requiredNextStep` field prompting the agent to call `get_event_field_samples()` for each event ID before constructing KQL. `get_event_field_samples` now returns a `nextStep` confirmation field once schema is validated. `query_telemetry` injects a `schemaWarning` into results when `customDimensions` fields are referenced without prior schema validation.
+- **Strengthened tool descriptions**: All three discovery/query tools carry explicit STEP 1 / STEP 2 / STEP 3 labels and token-cost warnings explaining why skipping `get_event_field_samples` wastes tokens (wrong TIMESPAN vs number types cause 3-5× more tokens to fix).
+- **New helper**: `extractCustomDimensionsFields()` in `toolHandlers.ts` detects `customDimensions.field` and `customDimensions["field"]` references in submitted KQL to drive the schema warning.
+
 ## [3.1.14] - 2026-03-02
 
 ### Changed
