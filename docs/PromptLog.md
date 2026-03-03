@@ -2990,3 +2990,7 @@ Change instructions an business logic to do this."
 > "I noticed it's still skipped sometimes. so I made an instructions: [closes take 1 | project customDimensions loophole, mandates get_event_field_samples for every event ID]"
 
 ---
+### Entry ID: f0bd6b08-b0c8-44e0-a32d-2c529e283307 — 2026-03-03 23:58
+> "Patch release: description-only changes combining value-driven reasoning with imperative enforcement for get_event_field_samples and query_telemetry. Released as mcp-v3.1.18 (3.1.17 was taken by accidental push)."
+
+---

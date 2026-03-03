@@ -1765,3 +1765,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-03** — Close get_event_field_samples skip loopholes [Entry: 17577336-d997-49a0-aa80-e0c42fd0d749]
   - **Why:** Agent was bypassing schema discovery via take 1 | project customDimensions workaround and ignoring step labels
   - **How:** Rewrote both tool descriptions with MANDATORY/non-negotiable language; explicitly named and banned the workaround pattern; updated schemaWarning and empty-KQL error in toolHandlers.ts
+- **2026-03-03** — Patch release mcp-v3.1.18: value-driven + imperative descriptions [Entry: f0bd6b08-b0c8-44e0-a32d-2c529e283307]
+  - **Why:** Descriptions should tell agents why calling get_event_field_samples is valuable (field discovery, type safety, sample values) alongside making clear it is mandatory.
+  - **How:** Updated description strings only in toolDefinitions.ts for get_event_field_samples and query_telemetry. No handler or schema changes.
