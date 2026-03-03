@@ -2974,3 +2974,19 @@ Change instructions an business logic to do this."
 > "Always create a new document for each new investigation. Include date and time on the document so that the order of documents make sense."
 
 ---
+### Entry ID: 4971be82-fe74-47cc-9ac1-2805e7530fad — 2026-03-03 22:02
+> "Session planning: validate ChatGPT suggestions, create comprehensive session overview with slide content, demo scripts, questions, expected outcomes, and focus points for 45-min BC Telemetry Buddy presentation"
+
+---
+### Entry ID: c4b8bf9c-44e0-4666-ab35-604cb14db729 — 2026-03-03 22:20
+> "Validate investigation loop against actual code - corrected from 5-node circular loop to 8-step linear flow matching chatParticipant.ts system prompt"
+
+---
+### Entry ID: 3fcc47cd-12ca-4943-894b-a2351a5a8fcc — 2026-03-03 22:50
+> "I see in a lot of cases that the agent is not calling the get_event_field_samples to inspect schema and field types from real data, but goes straight into query_telemetry, and probably figures it out from there. This wastes tokens - what can we do about it?"
+
+---
+### Entry ID: 17577336-d997-49a0-aa80-e0c42fd0d749 — 2026-03-03 23:36
+> "I noticed it's still skipped sometimes. so I made an instructions: [closes take 1 | project customDimensions loophole, mandates get_event_field_samples for every event ID]"
+
+---

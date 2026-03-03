@@ -61,7 +61,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'get_event_field_samples',
-        description: '🚨 STEP 2 — CALL FOR EVERY EVENT ID BEFORE QUERYING. Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and a ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are TIMESPAN format ("hh:mm:ss.fffffff") NOT milliseconds — skipping this step is the most common cause of broken queries and wasted tokens. Call this for EACH event ID before calling query_telemetry. The response includes a nextStep field confirming you are ready to query.',
+        description: '� MANDATORY BEFORE ANY KQL QUERY. Call this tool for every event ID you intend to filter or project on. Never skip this step, even if you believe you already know the field names. Do NOT use `take 1 | project customDimensions` as a substitute — that pattern is explicitly forbidden. Get detailed field analysis from real telemetry events for a specific event ID discovered via get_event_catalog(). Returns field names, data types (including TIMESPAN detection for duration fields), occurrence rates, sample values, and a ready-to-use example query. CRITICAL: BC duration fields (executionTime, totalTime, serverTime, etc.) are TIMESPAN format ("hh:mm:ss.fffffff") NOT milliseconds — skipping this step is the most common cause of broken queries and wasted tokens. The response includes a nextStep field confirming you are ready to query.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -115,7 +115,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'query_telemetry',
-        description: '🚨 STEP 3 ONLY — DO NOT CALL WITHOUT STEP 2. Execute a KQL query against Business Central telemetry data. TOKEN EFFICIENCY WARNING: Skipping get_event_field_samples() before this tool is the #1 source of wasted tokens — wrong field types (especially duration fields like executionTime which use TIMESPAN "hh:mm:ss" NOT milliseconds) cause query failures that require 3-5x more tokens to diagnose and fix than calling get_event_field_samples() first. MANDATORY WORKFLOW: (1) Call get_event_catalog() → (2) Call get_event_field_samples(eventId) for EACH event you will query → (3) THEN call this tool. If filtering by company/customer, also call get_tenant_mapping() before this step. The schema check is cheap; fixing broken queries is expensive.',
+        description: '⚠️ EXECUTE KQL QUERY - ONLY USE AFTER DISCOVERY TOOLS. CRITICAL PREREQUISITES: (1) Call get_event_catalog() to discover event IDs, (2) Call get_event_field_samples(eventId) for EVERY event ID you will query — this is non-negotiable, (3) If filtering by customer, call get_tenant_mapping() to get tenant IDs. DO NOT guess event IDs or field names — use discovery tools first or queries WILL fail. DO NOT substitute `take 1 | project customDimensions` for get_event_field_samples — this is not an acceptable workaround. TOKEN EFFICIENCY: skipping get_event_field_samples() is the #1 source of wasted tokens — wrong field types (especially TIMESPAN vs number for duration fields) cause failures requiring 3-5x more tokens to fix than calling the discovery tool first.',
         inputSchema: {
             type: 'object',
             properties: {

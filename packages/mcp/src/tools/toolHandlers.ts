@@ -173,7 +173,7 @@ export class ToolHandlers {
                 case 'query_telemetry': {
                     const kqlQuery = params.kql;
                     if (!kqlQuery || kqlQuery.trim() === '') {
-                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) to understand field structure, (3) Then construct query. DO NOT skip discovery steps.');
+                        throw new Error('❌ QUERY BLOCKED: kql parameter is required. MANDATORY WORKFLOW: (1) Call get_event_catalog() to discover available event IDs, (2) Call get_event_field_samples(eventId) for EVERY event ID — this is non-negotiable, do NOT substitute `take 1 | project customDimensions`, (3) Then construct and submit your query.');
                     }
                     result = await this.executeQuery(
                         kqlQuery,
@@ -185,7 +185,7 @@ export class ToolHandlers {
                     // agents that skipped it will see the warning and know to fix their workflow next time.
                     const customDimFields = this.extractCustomDimensionsFields(kqlQuery);
                     if (customDimFields.length > 0) {
-                        result.schemaWarning = `⚠️ SCHEMA NOT PRE-VALIDATED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not confirmed called first. Duration fields (e.g. executionTime, totalTime) use TIMESPAN format "hh:mm:ss.fffffff" — NOT milliseconds. If results look wrong or the query errored, call get_event_field_samples(eventId) and rewrite with correct types. To suppress this warning, call get_event_field_samples() before query_telemetry.`;
+                        result.schemaWarning = `⚠️ SCHEMA NOT PRE-VALIDATED: This query references customDimensions fields (${customDimFields.slice(0, 5).join(', ')}${customDimFields.length > 5 ? `, ...+${customDimFields.length - 5} more` : ''}) but get_event_field_samples() was not called first. This is a mandatory step — do NOT use \`take 1 | project customDimensions\` as a substitute, that workaround is explicitly forbidden. Duration fields (e.g. executionTime, totalTime) use TIMESPAN format "hh:mm:ss.fffffff" — NOT milliseconds. If results look wrong or the query errored, call get_event_field_samples(eventId) now and rewrite the query with correct types.`;
                     }
                     break;
                 }

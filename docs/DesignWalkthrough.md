@@ -1753,3 +1753,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-03** — Per-run investigation documents with date-time filenames (MCP 3.1.14) [Entry: c38f889c-6fee-48f0-a940-0c62525dc453]
   - **Why:** User wants each investigation run to produce a separate, chronologically-ordered document instead of appending to a single daily file.
   - **How:** Replaced appendToDailyReport with createInvestigationReport. New filename format: YYYY-MM-DD-HHmm-<agentName>.md. Header includes date+time. Tests updated (998 total).
+- **2026-03-03** — Created Session-BeyondKQL.md presentation guide [Entry: 4971be82-fe74-47cc-9ac1-2805e7530fad]
+  - **Why:** Comprehensive session planning document for 45-min live-demo-heavy presentation on BC Telemetry Buddy for BC developers/ISVs
+  - **How:** Created docs/Session-BeyondKQL.md with 9-block session structure, 8 slides, 4 demo scripts with exact prompts/tool sequences/expected outcomes, preparation checklist, risk mitigation, and visual suggestions
+- **2026-03-03** — Corrected investigation flow in Session-BeyondKQL.md [Entry: c4b8bf9c-44e0-4666-ab35-604cb14db729]
+  - **Why:** Original 5-node circular loop didn't match the actual code in chatParticipant.ts which defines a 7-step sequential workflow
+  - **How:** Updated Slide 3 to 8-step linear flow (Understand question, Which customer, Find events, Dig into events, Build KQL, Execute, Make sense, Report back), matching system prompt and tool calling sequence
+- **2026-03-03** — Enforce get_event_field_samples before query_telemetry [Entry: 3fcc47cd-12ca-4943-894b-a2351a5a8fcc]
+  - **Why:** Agents were skipping the schema-check step and going straight to query_telemetry, wasting tokens on broken queries
+  - **How:** Strengthened tool descriptions with step numbers and token-cost warnings; added requiredNextStep to catalog response; added schemaWarning to query response when customDimensions fields detected; added nextStep confirmation to field samples response
+- **2026-03-03** — Close get_event_field_samples skip loopholes [Entry: 17577336-d997-49a0-aa80-e0c42fd0d749]
+  - **Why:** Agent was bypassing schema discovery via take 1 | project customDimensions workaround and ignoring step labels
+  - **How:** Rewrote both tool descriptions with MANDATORY/non-negotiable language; explicitly named and banned the workaround pattern; updated schemaWarning and empty-KQL error in toolHandlers.ts
