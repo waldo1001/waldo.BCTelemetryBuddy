@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.16] - 2026-03-03
+
+### Changed
+- **Closed `take 1 | project customDimensions` loophole**: Both `get_event_field_samples` and `query_telemetry` tool descriptions now explicitly name and ban this workaround pattern. The `schemaWarning` injected into query results and the empty-KQL error message also reference the ban.
+- **Strengthened mandatory language**: `get_event_field_samples` description now leads with "🔴 MANDATORY BEFORE ANY KQL QUERY" and "Never skip this step, even if you believe you already know the field names." `query_telemetry` uses "this is non-negotiable" for the prerequisite step.
+
 ## [3.1.15] - 2026-03-03
 
 ### Changed
