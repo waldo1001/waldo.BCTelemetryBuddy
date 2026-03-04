@@ -18,6 +18,7 @@ jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
         McpServer: jest.fn().mockImplementation(() => ({
             server: {},
             registerTool: jest.fn(),
+            registerPrompt: jest.fn(),
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn().mockResolvedValue(undefined)
         }))
@@ -148,8 +149,10 @@ describe('MCP SDK Server', () => {
             expect(McpServer).toHaveBeenCalledWith(
                 expect.objectContaining({ name: 'BC Telemetry Buddy' }),
                 expect.objectContaining({
+                    instructions: expect.any(String),
                     capabilities: expect.objectContaining({
-                        tools: { listChanged: true }
+                        tools: { listChanged: true },
+                        prompts: { listChanged: true }
                     })
                 })
             );
@@ -313,6 +316,10 @@ describe('MCP SDK Server', () => {
             // Check capabilities declaration
             expect(source).toContain('listChanged: true');
             expect(source).toContain("logging: {}");
+            // Check server instructions are included
+            expect(source).toContain('instructions: SERVER_INSTRUCTIONS');
+            // Check prompts capability
+            expect(source).toContain('prompts:');
         });
     });
 

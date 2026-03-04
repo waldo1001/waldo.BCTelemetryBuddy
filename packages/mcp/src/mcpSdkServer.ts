@@ -19,6 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { loadConfig, loadConfigFromFile, validateConfig, MCPConfig } from './config.js';
 import { TOOL_DEFINITIONS } from './tools/toolDefinitions.js';
+import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInstructions.js';
 import { ToolHandlers, initializeServices } from './tools/toolHandlers.js';
 import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -107,13 +108,36 @@ export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
             version: VERSION
         },
         {
+            instructions: SERVER_INSTRUCTIONS,
             capabilities: {
                 tools: {
+                    listChanged: true
+                },
+                prompts: {
                     listChanged: true
                 },
                 logging: {}
             }
         }
+    );
+
+    // Register the workflow guidance prompt — discoverable by any MCP client
+    server.registerPrompt(
+        'bc-telemetry-workflow',
+        {
+            description: 'Mandatory tool-call workflow for BC Telemetry Buddy. Invoke this FIRST to understand the correct sequence of tool calls for querying Business Central telemetry data. Explains which tools to call, in what order, and which patterns are forbidden.'
+        },
+        async () => ({
+            messages: [
+                {
+                    role: 'user' as const,
+                    content: {
+                        type: 'text' as const,
+                        text: WORKFLOW_PROMPT_CONTENT
+                    }
+                }
+            ]
+        })
     );
 
     // Register all tools from the single source of truth

@@ -1783,3 +1783,33 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Released Extension v3.1.9 [Entry: db88ff5c-e7a6-46b2-9115-cc39cf7da7a9]
   - **Why:** User requested patch release for MCP resolver fix (prefer global over bundled) and value-driven agent definition messaging.
   - **How:** Bumped extension 3.1.8 to 3.1.9, updated CHANGELOG, tagged v3.1.9 and pushed.
+- **2026-03-04** — Update MCP SDK server tests for prompts and instructions [Entry: 4e9587d8-955a-4696-a674-726879e319f3]
+  - **Why:** Tests need to verify new registerPrompt, instructions, and prompts capability support in McpServer.
+  - **How:** Added registerPrompt to mock, updated constructor assertion, and added capabilities test assertions.
+- **2026-03-04** — Run MCP build and test suite [Entry: bdd5f373-fa29-4d6d-b068-ba33d49d9d1a]
+  - **Why:** User requested build/test execution and status report.
+  - **How:** Ran npm run build (success) and npm run test (626/627 passed, 1 failure in mcp-sdk-server.test.ts).
+- **2026-03-04** - Fix McpServer constructor assertion in test [Entry: b3d5b786-3708-4808-9b6f-4626bd32d63a]
+  - **Why:** instructions belongs in the options (second) argument, not the server info (first) argument.
+  - **How:** Moved instructions assertion from first arg to second arg alongside capabilities in mcp-sdk-server.test.ts.
+- **2026-03-04** - Run MCP test suite and report results [Entry: c7263e8a-c287-4d10-a0cb-4629f3ecbe7f]
+  - **Why:** User requested test execution and status report.
+  - **How:** Ran npm run test in packages/mcp; all 627 tests in 23 suites passed.
+- **2026-03-04** - Run MCP test suite and report results [Entry: 8b5a894a-6a26-44af-ad8f-439bf80ffbf0]
+  - **Why:** User requested test execution and full status report.
+  - **How:** Ran npm run test in packages/mcp; all 627 tests in 23 suites passed (12.429s).
+- **2026-03-04** — Updated mcp-sdk-server.test.ts for server instructions [Entry: 6ec69d3c-048d-4814-bcc2-e420533856c1]
+  - **Why:** Existing test mocks and assertions needed updating to account for new instructions field, prompts capability, and registerPrompt mock in the McpServer constructor.
+  - **How:** Added registerPrompt to mock, moved instructions assertion to options object, added prompts capability check and source verification for instructions/prompts.
+- **2026-03-04** — Deployment safety assessment [Entry: 9189525d-bb24-4708-a4cc-c979cceb6862]
+  - **Why:** User asked whether the current uncommitted changes are safe to deploy.
+  - **How:** Analyzed all 7 changed files — confirmed all production changes are additive (instructions, prompts capability, description text), zero breaking risk, 609 tests passing.
+- **2026-03-04** - Soften FORBIDDEN language to UNNECESSARY for take 1 pattern [Entry: 22222bbe-76ad-495b-8314-4ab19f24ee98]
+  - **Why:** The manual take 1 | project customDimensions pattern is redundant rather than harmful; get_event_field_samples does it better. Softer language better reflects the intent.
+  - **How:** Updated serverInstructions.ts (2 changes), toolDefinitions.ts (1 change), and server-instructions.test.ts (1 test update) to use UNNECESSARY framing instead of FORBIDDEN.
+- **2026-03-04** - Ran MCP test suite - all 627 tests pass [Entry: aa6ed0a5-3d05-4ee6-9c17-cf6bb9508ff4]
+  - **Why:** User requested a full test run to verify current state of the MCP package.
+  - **How:** Executed npm run test in packages/mcp. Result: 23 suites, 627 tests, all passing in 12.7s.
+- **2026-03-04** — Softened take-1 forbidden to unnecessary [Entry: a30dcc21-0629-4e38-9d2c-04a299b718e9]
+  - **Why:** User felt banning take 1 | project customDimensions was too strong; get_event_field_samples already does take 20 internally with richer output, so it should be positioned as the preferred alternative, not a prohibition.
+  - **How:** Changed FORBIDDEN to UNNECESSARY in serverInstructions.ts (both SERVER_INSTRUCTIONS and WORKFLOW_PROMPT_CONTENT), toolDefinitions.ts query_telemetry description, and updated test expectations. 627 tests pass.

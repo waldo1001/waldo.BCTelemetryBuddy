@@ -3014,3 +3014,43 @@ Change instructions an business logic to do this."
 > "patch release"
 
 ---
+### Entry ID: 4e9587d8-955a-4696-a674-726879e319f3 — 2026-03-04 08:00
+> "Edit mcp-sdk-server.test.ts with 3 changes: add registerPrompt to McpServer mock, update constructor assertion to include instructions and prompts capability, and update SDK capabilities test with instructions and prompts checks."
+
+---
+### Entry ID: bdd5f373-fa29-4d6d-b068-ba33d49d9d1a — 2026-03-04 08:01
+> "Run npm build and npm test in packages/mcp, report results."
+
+---
+### Entry ID: b3d5b786-3708-4808-9b6f-4626bd32d63a - 2026-03-04 08:02
+> "Fix mcp-sdk-server.test.ts: move instructions assertion from first arg to second arg (options object) of McpServer constructor."
+
+---
+### Entry ID: c7263e8a-c287-4d10-a0cb-4629f3ecbe7f - 2026-03-04 08:02
+> "Run MCP test suite (npm run test) and report results: all 627 tests in 23 suites passed."
+
+---
+### Entry ID: 8b5a894a-6a26-44af-ad8f-439bf80ffbf0 - 2026-03-04 08:03
+> "Run MCP test suite (npm run test) and report complete results: all 627 tests in 23 suites passed, 12.429s."
+
+---
+### Entry ID: 6ec69d3c-048d-4814-bcc2-e420533856c1 — 2026-03-04 08:05
+> "YOU need to do all edits - apply the 3 documented edits to mcp-sdk-server.test.ts (registerPrompt mock, constructor assertion with instructions/prompts, capabilities source test)"
+
+---
+### Entry ID: 9189525d-bb24-4708-a4cc-c979cceb6862 — 2026-03-04 08:08
+> "How safe is it to deploy all current changes?"
+
+---
+### Entry ID: 22222bbe-76ad-495b-8314-4ab19f24ee98 - 2026-03-04 08:14
+> "Soften FORBIDDEN language around take 1 | project customDimensions - position get_event_field_samples as strongly preferred alternative rather than banning the manual pattern outright"
+
+---
+### Entry ID: aa6ed0a5-3d05-4ee6-9c17-cf6bb9508ff4 - 2026-03-04 08:15
+> "Run npm run test in packages/mcp and report back the full test results (pass/fail count, any failures with error messages)"
+
+---
+### Entry ID: a30dcc21-0629-4e38-9d2c-04a299b718e9 — 2026-03-04 08:15
+> "FORBIDDEN: Never use take 1 | project customDimensions - I find it too strong to forbid that pattern - we just need to make sure that get_event_field_samples is equally efficient (also does take 1, for example), and used BEFORE it would revert into the pattern."
+
+---
