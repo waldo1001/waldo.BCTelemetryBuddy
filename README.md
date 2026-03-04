@@ -229,6 +229,12 @@ We welcome contributions! Please:
 
 See [.github/copilot-instructions.md](.github/copilot-instructions.md) for detailed development guidelines and workflow instructions.
 
+## Supporting Development
+
+BC Telemetry Buddy is free and open source (MIT). If you use it as part of paid work — client engagements, monitoring services, or commercial BC consulting — consider sponsoring to keep it growing.
+
+→ **[Sponsor on GitHub](https://github.com/sponsors/waldo1001)** · See [BUDDY-PASS.md](BUDDY-PASS.md) for details.
+
 ## License
 
 MIT

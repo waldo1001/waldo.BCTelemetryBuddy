@@ -424,6 +424,12 @@ When VS Code telemetry is disabled, BC Telemetry Buddy collects **no usage data*
 
 For more details, see [Telemetry Design Documentation](../../Instructions/Telemetry-Design-and-Implementation.md).
 
+## Supporting Development
+
+BC Telemetry Buddy is free and open source (MIT). If you use it as part of paid work — client engagements, monitoring services, or commercial BC consulting — consider sponsoring to keep it growing.
+
+→ **[Sponsor on GitHub](https://github.com/sponsors/waldo1001)**
+
 ## License
 
 MIT

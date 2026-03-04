@@ -1825,3 +1825,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** - Percentile-based significant events in catalog response [Entry: 037c62fa-ce0d-4a70-b7f6-7fd82337e654]
   - **Why:** User wants agents to investigate events covering 90% of volume rather than an arbitrary top-N, so the investigation scope scales with the data distribution.
   - **How:** Added percentile logic in getEventCatalog (deduplicate by eventId, compute cumulative %, stop at 90th percentile), exposed significantEvents + updated requiredNextStep to list them. Updated serverInstructions to reference 90% coverage. Added 4 new tests (631 total).
+- **2026-03-04** — Added FUNDING.yml, BUDDY-PASS.md, sponsor sections in READMEs [Entry: 085bdbaa-9148-499f-9f5d-048486346971]
+  - **Why:** Keep MIT license but add goodwill/moral sponsorship model for commercial users; replace aborted AGPL dual-license approach
+  - **How:** Created .github/FUNDING.yml (GitHub Sponsors button), BUDDY-PASS.md explaining the fair-deal framing, added Supporting Development table to root and extension READMEs
