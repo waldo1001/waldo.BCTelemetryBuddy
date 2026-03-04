@@ -1780,3 +1780,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Value-driven field_samples messaging in agent definitions [Entry: b40ae186-e789-41db-a8ce-8f356eb1ca5e]
   - **Why:** Agent definitions had inconsistent messaging: tool list said RECOMMENDED while workflow steps said MANDATORY, and neither had value reasoning.
   - **How:** Updated BCTelemetryBuddyAgent tool description + Steps 2/3, and BCPerformanceAnalysisAgent Steps 4/5 with BEST PRACTICE framing and value reasoning (20+ fields, exact types, sample values, ready-to-use query).
+- **2026-03-04** — Released Extension v3.1.9 [Entry: db88ff5c-e7a6-46b2-9115-cc39cf7da7a9]
+  - **Why:** User requested patch release for MCP resolver fix (prefer global over bundled) and value-driven agent definition messaging.
+  - **How:** Bumped extension 3.1.8 to 3.1.9, updated CHANGELOG, tagged v3.1.9 and pushed.
