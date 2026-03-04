@@ -522,16 +522,47 @@ export class ToolHandlers {
             learnUrl: row[4]
         })) || [];
 
-        const topEventIds = events.slice(0, 5).map((e: any) => e.eventId).join(', ');
+        // Deduplicate by eventId, summing counts, to compute percentile coverage
+        const eventCountMap = new Map<string, number>();
+        for (const e of events) {
+            eventCountMap.set(e.eventId, (eventCountMap.get(e.eventId) || 0) + e.count);
+        }
+        const deduplicatedEvents = Array.from(eventCountMap.entries())
+            .map(([eventId, count]) => ({ eventId, count }))
+            .sort((a, b) => b.count - a.count);
+
+        const totalCount = deduplicatedEvents.reduce((sum, e) => sum + e.count, 0);
+
+        // Find events covering the 90th percentile of total volume
+        let runningCount = 0;
+        const significantEvents: { eventId: string; count: number; pct: number }[] = [];
+        for (const e of deduplicatedEvents) {
+            runningCount += e.count;
+            const pct = Math.round((e.count / totalCount) * 1000) / 10;
+            significantEvents.push({ eventId: e.eventId, count: e.count, pct });
+            if (runningCount / totalCount >= 0.9) break;
+        }
+
+        const significantList = significantEvents
+            .map(e => `${e.eventId} (${e.pct}%)`)
+            .join(', ');
+        const coveragePct = totalCount > 0
+            ? Math.round((runningCount / totalCount) * 1000) / 10
+            : 0;
+
         const response: any = {
-            summary: `Found ${events.length} event IDs in the last ${daysBack} days${events.length >= limitedMaxResults ? ` (limited to top ${limitedMaxResults} by count)` : ''}`,
+            summary: `Found ${events.length} event rows (${deduplicatedEvents.length} unique event IDs) in the last ${daysBack} days${events.length >= limitedMaxResults ? ` (limited to top ${limitedMaxResults} by count)` : ''}`,
             daysBack,
             statusFilter: status,
             minCount,
             maxResults: limitedMaxResults,
             totalReturned: events.length,
+            uniqueEventIds: deduplicatedEvents.length,
             events,
-            requiredNextStep: `BEST PRACTICE — STEP 2 BEFORE WRITING ANY KQL: For each event ID you plan to query, call get_event_field_samples(eventId) to discover all available customDimensions fields (events typically have 20+ fields you cannot guess), their exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff" not numbers — getting this wrong silently breaks queries), and real sample values so you understand what the data actually contains. Understanding the fields and types first means you write correct KQL on the first attempt instead of wasting tokens on retries. Example: call get_event_field_samples("${events[0]?.eventId || 'RT0005'}") now.`
+            significantEvents,
+            requiredNextStep: significantEvents.length > 0
+                ? `STEP 2 — INVESTIGATE THE SIGNIFICANT EVENTS: These ${significantEvents.length} event IDs cover ${coveragePct}% of total volume: ${significantList}. Call get_event_field_samples(eventId) for EACH of these before writing ANY KQL — this reveals all customDimensions fields (20+ per event), exact data types (duration fields are TIMESPAN not numbers), and sample values so you write correct queries on the first attempt.`
+                : `STEP 2 — Call get_event_field_samples(eventId) for each event ID you plan to query before writing any KQL.`
         };
 
         if (includeCommonFields && events.length > 0) {

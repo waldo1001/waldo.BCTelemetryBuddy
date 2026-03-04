@@ -572,6 +572,20 @@ describe('ToolHandlers', () => {
             expect(result.events).toHaveLength(2);
             expect(result.events[0]).toHaveProperty('eventId', 'RT0005');
             expect(result).toHaveProperty('daysBack', 10);
+            // Percentile-based significant events
+            expect(result).toHaveProperty('uniqueEventIds', 2);
+            expect(result).toHaveProperty('significantEvents');
+            expect(result.significantEvents.length).toBeGreaterThan(0);
+            // RT0005 has 100 out of 150 total = 66.7%, so it alone covers >50% but we need 90%
+            // RT0005 (66.7%) + RT0012 (33.3%) = 100%, both should be significant
+            expect(result.significantEvents).toHaveLength(2);
+            expect(result.significantEvents[0].eventId).toBe('RT0005');
+            expect(result.significantEvents[0].pct).toBeCloseTo(66.7, 0);
+            expect(result.significantEvents[1].eventId).toBe('RT0012');
+            // requiredNextStep should list both events
+            expect(result.requiredNextStep).toContain('RT0005');
+            expect(result.requiredNextStep).toContain('RT0012');
+            expect(result.requiredNextStep).toContain('100%');
         });
 
         test('limits maxResults to 200', async () => {
@@ -614,6 +628,83 @@ describe('ToolHandlers', () => {
 
             const result = await handlers.getEventCatalog(10, 'all', 1, true, 50);
             expect(result).toHaveProperty('commonFields');
+        });
+
+        test('calculates percentile coverage — top events cover 90%', async () => {
+            const { handlers } = createHandlersWithServices();
+
+            // Simulate realistic scenario: one dominant event + many small ones
+            jest.spyOn(handlers, 'executeQuery').mockResolvedValue({
+                type: 'table', kql: '', summary: 'OK',
+                columns: ['eventId', 'shortMessage', 'status', 'count', 'LearnUrl'],
+                rows: [
+                    ['RT0006', 'Report rendering failed', 'error', 105000, 'url1'],
+                    ['RT0001', 'Authorization failed', 'error', 21000, 'url2'],
+                    ['RT0030', 'Error dialog shown', 'error', 12000, 'url3'],
+                    ['RT0031', 'Permission error', 'error', 900, 'url4'],
+                    ['RT0002', 'Auth failed on company', 'error', 700, 'url5'],
+                    ['RT0012', 'Database lock timeout', 'error', 120, 'url6'],
+                    ['AL0000JRG', 'Job queue error', 'error', 30, 'url7'],
+                ],
+                cached: false
+            });
+
+            const result = await handlers.getEventCatalog(10, 'error', 1, false, 50);
+
+            // Total: 139,750. 90% = 125,775
+            // RT0006: 105,000 (75.1%) — cumulative 75.1%
+            // RT0001:  21,000 (15.0%) — cumulative 90.2% → threshold hit
+            expect(result.significantEvents).toHaveLength(2);
+            expect(result.significantEvents[0].eventId).toBe('RT0006');
+            expect(result.significantEvents[1].eventId).toBe('RT0001');
+            expect(result.requiredNextStep).toContain('RT0006');
+            expect(result.requiredNextStep).toContain('RT0001');
+            // Should NOT mention RT0030 (it's below the 90th percentile threshold)
+            expect(result.significantEvents.map((e: any) => e.eventId)).not.toContain('RT0030');
+        });
+
+        test('deduplicates events by eventId when computing percentile', async () => {
+            const { handlers } = createHandlersWithServices();
+
+            // Same eventId appears multiple times with different shortMessages
+            jest.spyOn(handlers, 'executeQuery').mockResolvedValue({
+                type: 'table', kql: '', summary: 'OK',
+                columns: ['eventId', 'shortMessage', 'status', 'count', 'LearnUrl'],
+                rows: [
+                    ['LC0156', 'App update v1.0', 'success', 500, 'url1'],
+                    ['LC0156', 'App update v2.0', 'success', 300, 'url1'],
+                    ['LC0156', 'App update v3.0', 'success', 200, 'url1'],
+                    ['RT0005', 'Report rendered', 'success', 50, 'url2'],
+                ],
+                cached: false
+            });
+
+            const result = await handlers.getEventCatalog();
+
+            // Raw events are still 4 rows, but unique = 2
+            expect(result.events).toHaveLength(4);
+            expect(result.uniqueEventIds).toBe(2);
+            // LC0156 deduplicated: 500+300+200=1000 out of 1050 total = 95.2%
+            expect(result.significantEvents).toHaveLength(1);
+            expect(result.significantEvents[0].eventId).toBe('LC0156');
+            expect(result.significantEvents[0].count).toBe(1000);
+        });
+
+        test('handles empty events gracefully', async () => {
+            const { handlers } = createHandlersWithServices();
+
+            jest.spyOn(handlers, 'executeQuery').mockResolvedValue({
+                type: 'table', kql: '', summary: 'OK',
+                columns: ['eventId', 'shortMessage', 'status', 'count', 'LearnUrl'],
+                rows: [],
+                cached: false
+            });
+
+            const result = await handlers.getEventCatalog();
+
+            expect(result.uniqueEventIds).toBe(0);
+            expect(result.significantEvents).toHaveLength(0);
+            expect(result.requiredNextStep).toContain('get_event_field_samples');
         });
     });
 

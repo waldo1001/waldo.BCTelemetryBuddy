@@ -28,9 +28,11 @@ You MUST follow this sequence when building KQL queries. Skipping steps produces
 Call \`get_event_catalog\` FIRST to discover which event IDs exist in the telemetry data.
 - Without this, you cannot know which events are available.
 - Use filters (status, minCount) to narrow results.
+- The response includes a \`significantEvents\` list: events covering 90% of total volume. Investigate ALL of these, not just the first one.
 
 ### Step 2: Understand Event Fields (MANDATORY before ANY KQL)
-Call \`get_event_field_samples\` for EVERY event ID you plan to query.
+Call \`get_event_field_samples\` for EVERY significant event ID from Step 1.
+- The catalog response lists events that cover 90% of total volume — call \`get_event_field_samples\` for ALL of them, not just the first one.
 - BC events have 20+ fields in customDimensions — you CANNOT guess them.
 - This reveals exact data types: duration fields (executionTime, totalTime, serverTime) are TIMESPAN ("hh:mm:ss.fffffff"), NOT numbers. Getting this wrong silently breaks queries.
 - Returns real sample values so you write correct KQL on the first attempt.

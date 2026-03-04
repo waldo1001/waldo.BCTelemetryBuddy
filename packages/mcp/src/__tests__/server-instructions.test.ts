@@ -142,6 +142,12 @@ describe('Server Instructions', () => {
             expect(SERVER_INSTRUCTIONS).toContain('FIRST');
         });
 
+        test('guides agents to investigate all significant events from percentile coverage', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('significantEvents');
+            expect(SERVER_INSTRUCTIONS).toContain('90% of total volume');
+            expect(SERVER_INSTRUCTIONS).toContain('not just the first one');
+        });
+
         test('contains forbidden patterns section', () => {
             expect(SERVER_INSTRUCTIONS).toContain('FORBIDDEN Patterns');
             expect(SERVER_INSTRUCTIONS).toContain('take 1 | project customDimensions');

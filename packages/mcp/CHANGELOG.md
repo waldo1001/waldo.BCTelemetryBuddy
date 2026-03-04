@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-03-04
+
+### Changed
+- **Percentile-based significant events**: `get_event_catalog` now identifies events covering the 90th percentile of total volume (instead of pointing to a single event). The response includes a `significantEvents` array with per-event percentage contribution and `uniqueEventIds` count. Events are deduplicated by eventId (summing counts across different shortMessage variants) before computing percentiles, eliminating duplicate noise (e.g., LC0156 appearing 10 times with different version strings).
+- **Improved `requiredNextStep` guidance**: Now lists all significant event IDs with their percentage contribution, telling agents to call `get_event_field_samples` for each — ensuring broad investigation that scales with the data distribution rather than cherry-picking one event.
+- **Updated server instructions**: Steps 1 and 2 now reference the `significantEvents` list and 90% volume threshold, explicitly guiding agents to investigate all significant events, not just the first one.
+
 ## [3.2.0] - 2026-03-04
 
 ### Added

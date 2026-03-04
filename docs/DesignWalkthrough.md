@@ -1813,3 +1813,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Softened take-1 forbidden to unnecessary [Entry: a30dcc21-0629-4e38-9d2c-04a299b718e9]
   - **Why:** User felt banning take 1 | project customDimensions was too strong; get_event_field_samples already does take 20 internally with richer output, so it should be positioned as the preferred alternative, not a prohibition.
   - **How:** Changed FORBIDDEN to UNNECESSARY in serverInstructions.ts (both SERVER_INSTRUCTIONS and WORKFLOW_PROMPT_CONTENT), toolDefinitions.ts query_telemetry description, and updated test expectations. 627 tests pass.
+- **2026-03-04** — Released MCP v3.2.0 (minor) [Entry: d756d769-a132-4dbb-8a38-2596f9e4aa53]
+  - **Why:** User requested minor release for the new server instructions, workflow prompt, and softened take-1 guidance.
+  - **How:** Bumped MCP 3.1.19 to 3.2.0, updated CHANGELOG with Added/Changed sections, committed, tagged mcp-v3.2.0, pushed to trigger CI/CD.
+- **2026-03-04** — Diagnosed narrow error event focus [Entry: 9470b98d-234f-401b-a621-5e7c71d2dbe0]
+  - **Why:** User noticed agent only investigates RT0030 when asking about errors, missing other error-related events.
+  - **How:** Traced the issue to get_event_catalog's status filter — agent passes status='error' which narrows to hardcoded event list + keyword matching, causing it to miss error events classified differently. Recommended improving both classification and instructions.
+- **2026-03-04** — Analyzed catalog output for false positives and noise [Entry: 77ad7d37-eab2-4456-80e0-b7bfc127b140]
+  - **Why:** User shared real get_event_catalog output showing false positive errors, LC0156 duplication, and agent still narrowing to RT0030.
+  - **How:** Identified 3 root causes: (1) keyword matching catches 'without error' and 'Feature Error Messages', (2) LC0156 duplicates dominate list, (3) instructions don't guide broad investigation.
+- **2026-03-04** - Percentile-based significant events in catalog response [Entry: 037c62fa-ce0d-4a70-b7f6-7fd82337e654]
+  - **Why:** User wants agents to investigate events covering 90% of volume rather than an arbitrary top-N, so the investigation scope scales with the data distribution.
+  - **How:** Added percentile logic in getEventCatalog (deduplicate by eventId, compute cumulative %, stop at 90th percentile), exposed significantEvents + updated requiredNextStep to list them. Updated serverInstructions to reference 90% coverage. Added 4 new tests (631 total).

@@ -3054,3 +3054,19 @@ Change instructions an business logic to do this."
 > "FORBIDDEN: Never use take 1 | project customDimensions - I find it too strong to forbid that pattern - we just need to make sure that get_event_field_samples is equally efficient (also does take 1, for example), and used BEFORE it would revert into the pattern."
 
 ---
+### Entry ID: d756d769-a132-4dbb-8a38-2596f9e4aa53 — 2026-03-04 08:25
+> "perform a minor release"
+
+---
+### Entry ID: 9470b98d-234f-401b-a621-5e7c71d2dbe0 — 2026-03-04 09:02
+> "When I ask 'What kind of errors are happening for customer Defrancq?' it only focuses on RT0030, while there are quite some events that report errors. Why does it do that?"
+
+---
+### Entry ID: 77ad7d37-eab2-4456-80e0-b7bfc127b140 — 2026-03-04 09:03
+> "User shared full get_event_catalog output with status=error (50 events). Shows false positives (ALADLSE-005 'Export completed without error', AL0000LH4/LH8/LH9 feature flags), duplicate noise (LC0156 x10 with different versions), and agent still only focuses on RT0030 despite 50 events."
+
+---
+### Entry ID: 037c62fa-ce0d-4a70-b7f6-7fd82337e654 - 2026-03-04 09:12
+> "I would not go for top x, but for some percentile"
+
+---
