@@ -1828,3 +1828,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Added FUNDING.yml, BUDDY-PASS.md, sponsor sections in READMEs [Entry: 085bdbaa-9148-499f-9f5d-048486346971]
   - **Why:** Keep MIT license but add goodwill/moral sponsorship model for commercial users; replace aborted AGPL dual-license approach
   - **How:** Created .github/FUNDING.yml (GitHub Sponsors button), BUDDY-PASS.md explaining the fair-deal framing, added Supporting Development table to root and extension READMEs
+- **2026-03-04** — Investigated build 76741 'fetch failed' timeout in Iteration 8 [Entry: b85081ac-3426-4223-832e-a4355ab95c59]
+  - **Why:** Agent monitoring pipeline failed; root cause needed for fix.
+  - **How:** Used az pipelines + Invoke-RestMethod to fetch ADO build timeline and logs; confirmed 300s LLM API timeout in Iteration 8 reasoning step.
+- **2026-03-04** — Add LLM request timeout with AbortController + retry [Entry: 0e331677-5acb-4e68-bb8b-23a7d5a4e8e1]
+  - **Why:** Build 76741 failed because the LLM API fetch hung for 300s (hard gateway limit); needed a clean 240s timeout + retry before the wall is hit.
+  - **How:** Added timeoutMs to RetryConfig/ChatOptions; anthropic.ts wraps fetch with AbortController; chatWithRetry detects 'timed out after' errors as retryable; default 240s; 4 new tests added (635 passing).

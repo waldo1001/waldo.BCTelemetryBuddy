@@ -88,6 +88,7 @@ function createDefaultRetryConfig(overrides?: Partial<RetryConfig>): RetryConfig
         backoffMultiplier: 2,
         maxDelayMs: 100,            // Capped low for tests
         retryableStatusCodes: [429, 529, 503],
+        timeoutMs: 5000,            // 5s for tests (real default: 240s)
         ...overrides
     };
 }
@@ -267,6 +268,64 @@ describe('AgentRuntime retry logic', () => {
         const runtime = new AgentRuntime(mockToolHandlers, mockContextManager, mockActionDispatcher, config);
 
         await expect(runtime.run('test-agent')).rejects.toThrow('Anthropic API error 529');
+        expect(chatFn).toHaveBeenCalledTimes(1);
+    });
+
+    // ─── Timeout retry tests ─────────────────────────────────────────────────
+
+    it('should retry on LLM request timeout and succeed', async () => {
+        const chatFn = jest.fn()
+            .mockRejectedValueOnce(new Error('LLM request timed out after 5000ms'))
+            .mockResolvedValue(createFinalResponse());
+
+        const config = createRuntimeConfig(chatFn);
+        const runtime = new AgentRuntime(mockToolHandlers, mockContextManager, mockActionDispatcher, config);
+
+        const runLog = await runtime.run('test-agent');
+
+        expect(chatFn).toHaveBeenCalledTimes(2);
+        expect(runLog.findings).toBe('No issues found');
+    });
+
+    it('should throw after exhausting all timeout retries', async () => {
+        const chatFn = jest.fn()
+            .mockRejectedValue(new Error('LLM request timed out after 5000ms'));
+
+        const config = createRuntimeConfig(chatFn, { maxRetries: 2 });
+        const runtime = new AgentRuntime(mockToolHandlers, mockContextManager, mockActionDispatcher, config);
+
+        await expect(runtime.run('test-agent')).rejects.toThrow('LLM request timed out after 5000ms');
+        // 1 initial + 2 retries = 3 calls
+        expect(chatFn).toHaveBeenCalledTimes(3);
+    });
+
+    it('should log timeout-specific message on timeout retry', async () => {
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        const chatFn = jest.fn()
+            .mockRejectedValueOnce(new Error('LLM request timed out after 5000ms'))
+            .mockResolvedValue(createFinalResponse());
+
+        const config = createRuntimeConfig(chatFn);
+        const runtime = new AgentRuntime(mockToolHandlers, mockContextManager, mockActionDispatcher, config);
+
+        await runtime.run('test-agent');
+
+        const timeoutLogs = consoleLogSpy.mock.calls.filter(
+            call => typeof call[0] === 'string' && call[0].includes('timeout after')
+        );
+        expect(timeoutLogs.length).toBe(1);
+        expect(timeoutLogs[0][0]).toContain('LLM API timeout after');
+        expect(timeoutLogs[0][0]).toContain('retrying in');
+    });
+
+    it('should NOT retry on generic network errors (not timeout)', async () => {
+        const chatFn = jest.fn()
+            .mockRejectedValue(new Error('fetch failed'));
+
+        const config = createRuntimeConfig(chatFn);
+        const runtime = new AgentRuntime(mockToolHandlers, mockContextManager, mockActionDispatcher, config);
+
+        await expect(runtime.run('test-agent')).rejects.toThrow('fetch failed');
         expect(chatFn).toHaveBeenCalledTimes(1);
     });
 });

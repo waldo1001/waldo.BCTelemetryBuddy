@@ -92,14 +92,20 @@ export class AgentRuntime {
 
         for (let attempt = 0; attempt <= retry.maxRetries; attempt++) {
             try {
-                return await this.config.llmProvider.chat(messages, options);
+                return await this.config.llmProvider.chat(messages, {
+                    ...options,
+                    timeoutMs: retry.timeoutMs
+                });
             } catch (error: any) {
                 lastError = error;
 
-                // Check if this is a retryable error (extract status code from error message)
+                // Timeout errors (thrown by the provider's AbortController) are always retryable.
+                const isTimeout = typeof error.message === 'string' && error.message.includes('timed out after');
+
+                // HTTP status code errors — only retry on known transient codes.
                 const statusMatch = error.message?.match(/error (\d{3}):/);
                 const statusCode = statusMatch ? parseInt(statusMatch[1], 10) : 0;
-                const isRetryable = retry.retryableStatusCodes.includes(statusCode);
+                const isRetryable = isTimeout || retry.retryableStatusCodes.includes(statusCode);
 
                 if (!isRetryable || attempt >= retry.maxRetries) {
                     throw error;
@@ -111,7 +117,11 @@ export class AgentRuntime {
                     retry.maxDelayMs
                 );
 
-                console.log(`  🔄 LLM API error ${statusCode}, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
+                if (isTimeout) {
+                    console.log(`  ⏱ LLM API timeout after ${(retry.timeoutMs / 1000).toFixed(0)}s, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
+                } else {
+                    console.log(`  🔄 LLM API error ${statusCode}, retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${retry.maxRetries})...`);
+                }
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }

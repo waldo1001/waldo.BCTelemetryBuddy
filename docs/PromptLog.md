@@ -3074,3 +3074,11 @@ Change instructions an business logic to do this."
 > "Start implementation - add FUNDING.yml, BUDDY-PASS.md, and Supporting Development sections to READMEs (MIT license kept, goodwill sponsorship model)"
 
 ---
+### Entry ID: b85081ac-3426-4223-832e-a4355ab95c59 — 2026-03-04 11:57
+> "Agent monitoring failed with error in the 'run all agents' step. Use AzureCLI to investigate the error. (Build 76741 - fetch failed after Iteration 8)"
+
+---
+### Entry ID: 0e331677-5acb-4e68-bb8b-23a7d5a4e8e1 — 2026-03-04 12:16
+> "If a timeout occurs, would we be able to kill the API request, and fire a new one (retry) and have some kind of retry count, similar as what we already have for claude?"
+
+---

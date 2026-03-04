@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.2] - 2026-03-04
+
+### Fixed
+- **LLM API timeout + retry**: Agent API calls (`chatWithRetry`) now abort after 240 seconds via `AbortController` instead of hanging until the 300s hard gateway kill seen in build 76741. Timed-out requests are automatically retried using the existing retry/backoff loop (up to `maxRetries`, default 10). Configurable via `agents.defaults.retry.timeoutMs` in `.bctb-config.json`. The `timeoutMs` field was added to `RetryConfig` and `ChatOptions` (provider-level). Only the Anthropic provider is affected (the only current implementation).
+
 ## [3.2.1] - 2026-03-04
 
 ### Changed

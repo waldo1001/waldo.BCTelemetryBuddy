@@ -268,15 +268,39 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): LLMPro
                 body.tools = translateToolsToAnthropic(options.tools);
             }
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': anthropicVersion
-                },
-                body: JSON.stringify(body)
-            });
+            // Set up an AbortController so we can cancel the request on timeout.
+            // This lets chatWithRetry retry rather than waiting for a hard gateway kill.
+            const timeoutMs = options?.timeoutMs;
+            const abortController = new AbortController();
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+            if (timeoutMs) {
+                timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+            }
+
+            let response: Response;
+            try {
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': anthropicVersion
+                    },
+                    body: JSON.stringify(body),
+                    signal: abortController.signal
+                });
+            } catch (fetchError: any) {
+                // AbortError means our timeout fired — throw a labelled error so
+                // chatWithRetry can identify it and schedule a retry.
+                if (abortController.signal.aborted) {
+                    throw new Error(`LLM request timed out after ${timeoutMs}ms`);
+                }
+                throw fetchError;
+            } finally {
+                if (timeoutId !== undefined) {
+                    clearTimeout(timeoutId);
+                }
+            }
 
             if (!response.ok) {
                 const errorText = await response.text();

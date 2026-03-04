@@ -169,7 +169,8 @@ function buildRuntimeConfig(agentsConfig: AgentConfigSection): AgentRuntimeConfi
             initialDelayMs: retryDefaults.initialDelayMs ?? 2000,
             backoffMultiplier: retryDefaults.backoffMultiplier ?? 2,
             maxDelayMs: retryDefaults.maxDelayMs ?? 60000,
-            retryableStatusCodes: [429, 529, 503]
+            retryableStatusCodes: [429, 529, 503],
+            timeoutMs: retryDefaults.timeoutMs ?? 240000
         }
     };
 }

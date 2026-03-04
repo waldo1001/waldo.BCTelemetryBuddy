@@ -167,7 +167,8 @@ function createConfig(llm: LLMProvider): AgentRuntimeConfig {
             initialDelayMs: 10,
             backoffMultiplier: 2,
             maxDelayMs: 100,
-            retryableStatusCodes: [429, 529, 503]
+            retryableStatusCodes: [429, 529, 503],
+            timeoutMs: 5000
         }
     };
 }

@@ -187,6 +187,8 @@ export interface ToolCall {
 export interface ChatOptions {
     tools?: OpenAIToolDef[];
     maxTokens?: number;
+    /** Per-request timeout in ms. If the LLM doesn't respond within this time the request is aborted. */
+    timeoutMs?: number;
 }
 
 export interface OpenAIToolDef {
@@ -241,6 +243,12 @@ export interface RetryConfig {
     backoffMultiplier: number;      // default: 2
     maxDelayMs: number;             // default: 60000 (60s)
     retryableStatusCodes: number[]; // default: [429, 529, 503]
+    /**
+     * Per-request timeout in ms before the fetch is aborted and a retry attempted.
+     * Set below the API gateway hard limit (typically 300s) so we get a clean retry
+     * rather than a hard process kill. Default: 240000 (240s).
+     */
+    timeoutMs: number;              // default: 240000 (240s)
 }
 
 // ─── Agent Config Section (from .bctb-config.json) ──────────────────────────
@@ -269,6 +277,7 @@ export interface AgentConfigSection {
             initialDelayMs?: number;
             backoffMultiplier?: number;
             maxDelayMs?: number;
+            timeoutMs?: number;
         };
     };
     actions?: ActionConfig;
