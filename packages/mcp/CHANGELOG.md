@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-03-04
+
+### Added
+- **MCP server-level instructions**: Added `instructions` field to the MCP `initialize` response — the standard MCP protocol mechanism for guiding any connected agent (GitHub Copilot, Claude Desktop, Cursor, etc.) on the correct tool-call workflow. Contains the mandatory 5-step sequence, forbidden patterns, multi-profile guidance, Application Insights table reference, and efficiency tips.
+- **MCP workflow prompt**: Registered `bc-telemetry-workflow` prompt via `prompts/list` and `prompts/get` — a discoverable pull-based resource that agents can invoke to get concise workflow guidance.
+- **Server instructions module** (`serverInstructions.ts`): New single-source-of-truth module exporting `SERVER_INSTRUCTIONS` and `WORKFLOW_PROMPT_CONTENT`, separated from tool definitions (SRP).
+- **23 new tests**: Comprehensive test coverage for server instructions content, workflow prompt content, and `createSdkServer` integration (instructions in constructor, prompts capability, prompt registration, callback format).
+
+### Changed
+- **Softened `take 1 | project customDimensions` guidance**: Changed from "FORBIDDEN" to "UNNECESSARY" — `get_event_field_samples` already samples 20 rows internally with richer output (field types, occurrence rates, ready-to-use query), so the manual pattern is redundant rather than banned.
+- **Strengthened `query_telemetry` tool description**: Now explicitly lists mandatory prerequisites in order and forbidden patterns directly in the tool description, ensuring agents see the guidance even without server instructions.
+- **Added `prompts` capability**: MCP server now declares `prompts: { listChanged: true }` alongside existing `tools` and `logging` capabilities.
+
 ## [3.1.19] - 2026-03-04
 
 ### Changed
