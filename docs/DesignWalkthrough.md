@@ -1834,3 +1834,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-04** — Add LLM request timeout with AbortController + retry [Entry: 0e331677-5acb-4e68-bb8b-23a7d5a4e8e1]
   - **Why:** Build 76741 failed because the LLM API fetch hung for 300s (hard gateway limit); needed a clean 240s timeout + retry before the wall is hit.
   - **How:** Added timeoutMs to RetryConfig/ChatOptions; anthropic.ts wraps fetch with AbortController; chatWithRetry detects 'timed out after' errors as retryable; default 240s; 4 new tests added (635 passing).
+- **2026-03-05** — Fix LLM ellipsis placeholder in JSON repair [Entry: 4f58c5a4-92de-4002-98f1-c646e9dcf98a]
+  - **Why:** Agent pipeline failed when LLM (under timeout stress) output literal ... / [...] / {...} as JSON placeholders, which JSON.parse rejects with Unexpected token dot.
+  - **How:** Added regex replacements in tryParseJSON (prompts.ts) to replace [...]->[], {...}->{}, ': ...'->'null' before other repair steps; added 15 tests in agent-prompts-parse.test.ts.

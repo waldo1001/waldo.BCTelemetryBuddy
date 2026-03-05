@@ -326,6 +326,16 @@ function tryParseJSON(jsonStr: string): any {
     // 2. Try repairing common LLM JSON mistakes
     let repaired = jsonStr;
 
+    // Replace ellipsis placeholders used by LLMs under stress (e.g. after timeouts):
+    //   "field": [...]  →  "field": []
+    //   "field": {...}  →  "field": {}
+    //   "field": ...    →  "field": null
+    // These must be done outside string values only, so operate before string-escaping.
+    repaired = repaired.replace(/\[\s*\.\.\.\s*\]/g, '[]');
+    repaired = repaired.replace(/\{\s*\.\.\.\s*\}/g, '{}');
+    // Colon followed by bare "..." (not inside a string) → null
+    repaired = repaired.replace(/:\s*\.\.\./g, ': null');
+
     // Remove trailing commas before } or ]
     repaired = repaired.replace(/,\s*([\]}])/g, '$1');
 
@@ -337,7 +347,7 @@ function tryParseJSON(jsonStr: string): any {
 
     try {
         const result = JSON.parse(repaired);
-        console.log('  ⚠ Repaired malformed JSON from LLM (trailing commas / unescaped chars)');
+        console.log('  ⚠ Repaired malformed JSON from LLM (trailing commas / unescaped chars / ellipsis placeholders)');
         return result;
     } catch { /* continue to truncation recovery */ }
 

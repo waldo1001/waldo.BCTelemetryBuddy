@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.3] - 2026-03-05
+
+### Fixed
+- **Agent JSON ellipsis repair**: `tryParseJSON` now replaces literal `[...]`, `{...}`, and `: ...` placeholders that LLMs produce under timeout stress before attempting `JSON.parse`. Previously these caused a pipeline-breaking `Unexpected token '.'` error and lost the agent's full analysis output. The placeholders are replaced with `[]`, `{}`, and `null` respectively, allowing the rest of the output (summary, findings, assessment) to be recovered normally.
+
 ## [3.2.2] - 2026-03-04
 
 ### Fixed

@@ -3082,3 +3082,7 @@ Change instructions an business logic to do this."
 > "If a timeout occurs, would we be able to kill the API request, and fire a new one (retry) and have some kind of retry count, similar as what we already have for claude?"
 
 ---
+### Entry ID: 4f58c5a4-92de-4002-98f1-c646e9dcf98a — 2026-03-05 23:43
+> "The agent failed in a pipeline. Failed to parse agent JSON output: Unexpected token dot, Issues [...] a... is not valid JSON"
+
+---
