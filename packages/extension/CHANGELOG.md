@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.10] - 2026-03-06
+
+### Added
+- **Marketplace funding field**: Added `"funding"` field pointing to `https://github.com/sponsors/waldo1001`. VS Code Marketplace now surfaces the sponsor link on the extension page.
+- **GitHub Sponsors awareness**: Added `BUDDY-PASS.md` and updated README with sponsorship information for users who derive business value from the extension.
+
 ## [3.1.9] - 2026-03-04
 
 ### Fixed
