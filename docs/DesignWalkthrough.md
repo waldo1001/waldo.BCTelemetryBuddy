@@ -1837,3 +1837,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-05** — Fix LLM ellipsis placeholder in JSON repair [Entry: 4f58c5a4-92de-4002-98f1-c646e9dcf98a]
   - **Why:** Agent pipeline failed when LLM (under timeout stress) output literal ... / [...] / {...} as JSON placeholders, which JSON.parse rejects with Unexpected token dot.
   - **How:** Added regex replacements in tryParseJSON (prompts.ts) to replace [...]->[], {...}->{}, ': ...'->'null' before other repair steps; added 15 tests in agent-prompts-parse.test.ts.
+- **2026-03-06** — Added sponsorship Phase 1 (funding fields) and Phases 2+3 instruction file [Entry: 30e242d7-7ded-49d3-bd3b-c9002678c784]
+  - **Why:** Surface GitHub Sponsors link in VS Code Marketplace, npm, and GitHub repo header; provide a roadmap for further sponsor touchpoints.
+  - **How:** Added unding field to packages/extension/package.json and packages/mcp/package.json; created Instructions/5. Sponsorship/Phases2and3.md with step-by-step guide for Phases 2 (passive UI) and 3 (one-time milestone notification).

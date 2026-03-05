@@ -33,6 +33,10 @@
         "url": "https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues"
     },
     "homepage": "https://github.com/waldo1001/waldo.BCTelemetryBuddy#readme",
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/waldo1001"
+    },
     "contributes": {
         "chatParticipants": [
             {

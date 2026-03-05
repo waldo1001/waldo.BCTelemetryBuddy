@@ -2,6 +2,10 @@
     "name": "bc-telemetry-buddy-mcp",
     "version": "3.2.3",
     "description": "Model Context Protocol server for Business Central telemetry",
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/waldo1001"
+    },
     "type": "commonjs",
     "main": "./dist/server.js",
     "types": "./dist/server.d.ts",
