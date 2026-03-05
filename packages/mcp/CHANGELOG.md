@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.4] - 2026-03-06
+
+### Added
+- **npm funding field**: Added `"funding"` field pointing to `https://github.com/sponsors/waldo1001`. npm now shows a "Fund" button on the package page.
+
 ## [3.2.3] - 2026-03-05
 
 ### Fixed
