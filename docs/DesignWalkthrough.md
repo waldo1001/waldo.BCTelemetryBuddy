@@ -1840,3 +1840,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-06** — Added sponsorship Phase 1 (funding fields) and Phases 2+3 instruction file [Entry: 30e242d7-7ded-49d3-bd3b-c9002678c784]
   - **Why:** Surface GitHub Sponsors link in VS Code Marketplace, npm, and GitHub repo header; provide a roadmap for further sponsor touchpoints.
   - **How:** Added unding field to packages/extension/package.json and packages/mcp/package.json; created Instructions/5. Sponsorship/Phases2and3.md with step-by-step guide for Phases 2 (passive UI) and 3 (one-time milestone notification).
+- **2026-03-29** — Fix time-sensitive test bug in context.test.ts [Entry: bd1b5b1b-df06-43b3-983b-dcf284c87f0f]
+  - **Why:** PR #106 from DmitryKatson failing CI due to hardcoded lastSeen date (2026-02-24) exceeding the 30-day TTL, causing resolved issues to be pruned before test assertions.
+  - **How:** Changed fixed date to dynamic relative date (yesterday via new Date()) — same pattern used in the adjacent pruning test.
