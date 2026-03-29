@@ -3115,3 +3115,7 @@ Change instructions an business logic to do this."
 > "User asked about Microsoft email re: Application Insights API key retirement on 31 March 2026 — how much of a problem is it for BC Telemetry Buddy?"
 
 ---
+### Entry ID: 5f833ce0-f4e6-4011-8d58-a0e25b217d2f — 2026-03-29 22:09
+> "MCP first$ — release MCP as patch"
+
+---

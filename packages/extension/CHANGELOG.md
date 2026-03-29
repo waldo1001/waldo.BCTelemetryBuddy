@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.11] - 2026-03-30
+
+### Added
+- **Question coaching and answer validation**: Enhanced prompts with question coaching guidance and answer validation to improve agent response quality.
+
 ## [3.1.10] - 2026-03-06
 
 ### Added

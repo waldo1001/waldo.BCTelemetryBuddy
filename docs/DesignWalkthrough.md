@@ -1859,3 +1859,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-29** — Analyzed API key retirement impact [Entry: 51da74e0-e8db-4fdc-881b-5ebace77acfe]
   - **Why:** User received Microsoft email about App Insights API key retirement on 31 March 2026.
   - **How:** Confirmed BC Telemetry Buddy uses Entra ID bearer tokens (MSAL/Azure CLI) exclusively — zero impact.
+- **2026-03-29** — Release MCP v3.2.5 patch [Entry: 5f833ce0-f4e6-4011-8d58-a0e25b217d2f]
+  - **Why:** Unreleased commits for question coaching/answer validation and CI test fix needed publishing.
+  - **How:** Bumped version 3.2.4→3.2.5, updated CHANGELOG.md, committed, tagged mcp-v3.2.5, pushed to trigger GitHub Actions.
