@@ -1840,3 +1840,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-06** — Added sponsorship Phase 1 (funding fields) and Phases 2+3 instruction file [Entry: 30e242d7-7ded-49d3-bd3b-c9002678c784]
   - **Why:** Surface GitHub Sponsors link in VS Code Marketplace, npm, and GitHub repo header; provide a roadmap for further sponsor touchpoints.
   - **How:** Added unding field to packages/extension/package.json and packages/mcp/package.json; created Instructions/5. Sponsorship/Phases2and3.md with step-by-step guide for Phases 2 (passive UI) and 3 (one-time milestone notification).
+- **2026-03-29** — Add Question Coaching & Answer Validation [Entry: 7f3a2c8e-91d4-4b5f-a6e3-8c1d9f4b2e7a]
+  - **Why:** Blog post insight — BCTB is great at answering but needs to help users ask better questions and validate AI output critically
+  - **How:** Added question refinement prompts (rephrase vague questions, suggest investigation paths) and answer validation prompts (state assumptions, flag limitations, suggest follow-ups) to system prompt, server instructions, and agent definitions

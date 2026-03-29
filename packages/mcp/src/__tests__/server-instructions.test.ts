@@ -182,6 +182,19 @@ describe('Server Instructions', () => {
             expect(SERVER_INSTRUCTIONS).toContain('Efficiency Tips');
             expect(SERVER_INSTRUCTIONS).toContain('summarize count()');
         });
+
+        test('includes question coaching section', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('Question Coaching');
+            expect(SERVER_INSTRUCTIONS).toContain('Rephrase first');
+            expect(SERVER_INSTRUCTIONS).toContain('Suggest investigation paths');
+        });
+
+        test('includes answer validation guidance', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('State assumptions');
+            expect(SERVER_INSTRUCTIONS).toContain('Flag limitations');
+            expect(SERVER_INSTRUCTIONS).toContain('Suggest verification');
+            expect(SERVER_INSTRUCTIONS).toContain('Propose follow-up questions');
+        });
     });
 
     describe('WORKFLOW_PROMPT_CONTENT', () => {
@@ -201,6 +214,13 @@ describe('Server Instructions', () => {
 
         test('marks get_event_field_samples as mandatory', () => {
             expect(WORKFLOW_PROMPT_CONTENT).toContain('MANDATORY before KQL');
+        });
+
+        test('contains coaching and validation rules', () => {
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('COACHING');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('VALIDATION');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('investigation paths');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('assumptions');
         });
     });
 

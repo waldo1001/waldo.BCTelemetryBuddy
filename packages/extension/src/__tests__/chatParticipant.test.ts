@@ -180,6 +180,55 @@ describe('Chat Participant', () => {
             );
         });
 
+        it('should include question coaching in system prompt', async () => {
+            const mockModel = {
+                id: 'gpt-4o',
+                name: 'GPT-4o',
+                sendRequest: jest.fn().mockResolvedValue({
+                    stream: (async function* () {
+                        yield new (vscode.LanguageModelTextPart as any)('Test response');
+                    })()
+                })
+            };
+
+            mockRequest.model = mockModel;
+
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            const messages = mockModel.sendRequest.mock.calls[0][0];
+            const systemPrompt = messages[0].content;
+
+            // Question Coaching (Step 4a)
+            expect(systemPrompt).toContain('Question Coaching');
+            expect(systemPrompt).toContain('Rephrase the question');
+            expect(systemPrompt).toContain('Suggest investigation paths');
+        });
+
+        it('should include answer validation in system prompt', async () => {
+            const mockModel = {
+                id: 'gpt-4o',
+                name: 'GPT-4o',
+                sendRequest: jest.fn().mockResolvedValue({
+                    stream: (async function* () {
+                        yield new (vscode.LanguageModelTextPart as any)('Test response');
+                    })()
+                })
+            };
+
+            mockRequest.model = mockModel;
+
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            const messages = mockModel.sendRequest.mock.calls[0][0];
+            const systemPrompt = messages[0].content;
+
+            // Challenge & Validate (Step 6a)
+            expect(systemPrompt).toContain('Challenge Your Own Output');
+            expect(systemPrompt).toContain('State your assumptions');
+            expect(systemPrompt).toContain('Flag limitations honestly');
+            expect(systemPrompt).toContain('Propose follow-up questions');
+        });
+
         it('should call language model with system prompt and user query', async () => {
             const mockModel = {
                 id: 'gpt-4o',

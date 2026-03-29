@@ -87,6 +87,23 @@ Start with \`traces\` unless the question is specifically about page load perfor
 - Multi-dimensional aggregation: \`summarize count() by eventId, aadTenantId\`
 - Top-N filtering: \`top 10 by count_\`
 - Fewer, smarter queries beat many granular ones.
+
+## Question Coaching & Answer Validation
+
+**The quality of the question determines the quality of the answer.** AI scales thinking — good AND bad.
+
+### When the user's question is vague (e.g., "any problems?", "is it slow?", "what's going on?"):
+1. **Rephrase first** — Tell the user what you understood and how you'll investigate before executing.
+2. **Suggest investigation paths** — Use \`get_event_catalog\` results to offer 2-3 specific angles (errors, performance, usage patterns).
+3. **Let the user choose** — Don't assume which direction to take; present options.
+
+### After presenting results:
+1. **State assumptions** — Time range, event scope, tenant selection, what was NOT investigated.
+2. **Flag limitations** — Sample size, data coverage gaps, events not included.
+3. **Suggest verification** — How the user can double-check your conclusions against what they know.
+4. **Propose follow-up questions** — 2-3 deeper questions that build on the findings.
+
+**Why**: Users tend to accept AI output at face value because it looks structured and confident. Stating assumptions and suggesting verification builds critical thinking skills and prevents acting on flawed analysis.
 `;
 
 /**
@@ -103,4 +120,7 @@ export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call 
 
 UNNECESSARY: Do not use "take 1 | project customDimensions" — get_event_field_samples already does this (samples 20 rows) and returns richer results including field types, occurrence rates, and a ready-to-use query.
 FORBIDDEN: Never guess field names or treat duration fields as numbers (they are TIMESPAN).
-FORBIDDEN: Never filter by companyName — use aadTenantId from get_tenant_mapping.`;
+FORBIDDEN: Never filter by companyName — use aadTenantId from get_tenant_mapping.
+
+COACHING: For vague questions, rephrase into a specific question and suggest 2-3 investigation paths before executing.
+VALIDATION: After every analysis, state your assumptions, flag limitations, and suggest follow-up questions to go deeper.`;
