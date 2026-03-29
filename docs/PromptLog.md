@@ -3094,3 +3094,7 @@ Change instructions an business logic to do this."
 > "Add question coaching and answer validation to BCTB prompts — help users ask better questions (rephrase vague input, suggest investigation paths) and be more critical of AI output (state assumptions, flag limitations, suggest verification steps)"
 
 ---
+### Entry ID: bd1b5b1b-df06-43b3-983b-dcf284c87f0f — 2026-03-29 22:47
+> "This PR is failing: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/23702041951/job/69089038341?pr=106 - PR from DmitryKatson failing CI; how can I help?"
+
+---

@@ -1843,3 +1843,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-29** — Add Question Coaching & Answer Validation [Entry: 7f3a2c8e-91d4-4b5f-a6e3-8c1d9f4b2e7a]
   - **Why:** Blog post insight — BCTB is great at answering but needs to help users ask better questions and validate AI output critically
   - **How:** Added question refinement prompts (rephrase vague questions, suggest investigation paths) and answer validation prompts (state assumptions, flag limitations, suggest follow-ups) to system prompt, server instructions, and agent definitions
+- **2026-03-29** — Fix time-sensitive test bug in context.test.ts [Entry: bd1b5b1b-df06-43b3-983b-dcf284c87f0f]
+  - **Why:** PR #106 from DmitryKatson failing CI due to hardcoded lastSeen date (2026-02-24) exceeding the 30-day TTL, causing resolved issues to be pruned before test assertions.
+  - **How:** Changed fixed date to dynamic relative date (yesterday via new Date()) — same pattern used in the adjacent pruning test.
