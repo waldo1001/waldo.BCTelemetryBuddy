@@ -1849,3 +1849,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-29** — Fix pr-label workflow for fork PRs [Entry: ba78bf0e-44a2-46be-ba17-7f321ba5ea19]
   - **Why:** Auto-label PR job fails on external fork PRs because pull_request trigger gives read-only GITHUB_TOKEN, blocking write access to add labels.
   - **How:** Changed trigger from pull_request to pull_request_target in pr-label.yml, which runs in base repo context and retains write permissions.
+
+- **2026-03-29** — Added PR #106 community contribution to changelog [Entry: c1aec57a-5e37-4274-ba3c-f053c68fcef7]
+  - **Why:** PR #106 from DmitryKatson was merged; acknowledge community contribution in changelog.
+  - **How:** Prepended entry to docs/CHANGELOG.md Recent entries section covering coaching/validation prompts, CI fix, and pr-label fix.
