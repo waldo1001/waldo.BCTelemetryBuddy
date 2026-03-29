@@ -3107,3 +3107,11 @@ Change instructions an business logic to do this."
 > "The PR is merged. Add to changelog and thank Dmitry! (I meant: in the changelog)"
 
 ---
+### Entry ID: a053b65f-c2a2-4f9d-be1c-a665fa579965 — 2026-03-29 23:56
+> "User asked about Microsoft email re: Application Insights API key retirement on 31 March 2026 — how much of a problem is it for BC Telemetry Buddy?"
+
+---
+### Entry ID: 51da74e0-e8db-4fdc-881b-5ebace77acfe — 2026-03-29 23:56
+> "User asked about Microsoft email re: Application Insights API key retirement on 31 March 2026 — how much of a problem is it for BC Telemetry Buddy?"
+
+---
