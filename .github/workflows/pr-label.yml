@@ -1,7 +1,7 @@
 name: PR Auto-Label
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -11,11 +11,11 @@ jobs:
   label:
     name: Auto-label PR
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Label based on files changed
         uses: actions/labeler@v5
         with:

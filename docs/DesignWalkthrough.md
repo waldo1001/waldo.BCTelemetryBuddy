@@ -1843,3 +1843,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-29** — Fix time-sensitive test bug in context.test.ts [Entry: bd1b5b1b-df06-43b3-983b-dcf284c87f0f]
   - **Why:** PR #106 from DmitryKatson failing CI due to hardcoded lastSeen date (2026-02-24) exceeding the 30-day TTL, causing resolved issues to be pruned before test assertions.
   - **How:** Changed fixed date to dynamic relative date (yesterday via new Date()) — same pattern used in the adjacent pruning test.
+- **2026-03-29** — Fix pr-label workflow for fork PRs [Entry: ba78bf0e-44a2-46be-ba17-7f321ba5ea19]
+  - **Why:** Auto-label PR job fails on external fork PRs because pull_request trigger gives read-only GITHUB_TOKEN, blocking write access to add labels.
+  - **How:** Changed trigger from pull_request to pull_request_target in pr-label.yml, which runs in base repo context and retains write permissions.
