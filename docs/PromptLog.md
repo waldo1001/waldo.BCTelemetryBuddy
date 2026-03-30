@@ -3119,3 +3119,11 @@ Change instructions an business logic to do this."
 > "MCP first$ — release MCP as patch"
 
 ---
+### Entry ID: b6a4b92c-0032-477f-b417-66239bcd6269 — 2026-03-29 22:11
+> "No extension? — release extension as patch too"
+
+---
+### Entry ID: 7a3c91e2-f4d8-4b2a-a1c5-8e6f3d9b0a47 — 2026-03-30 14:15
+> "Develop this agent as a decent agent with skills, for the shit we do in this extension. To know what we do in this extension - analyze! I want to force a test-driven approach: design (like plan-mode), develop tests, see if tests fail (scaffold if necessary), develop, see if test succeed, document. Develop skills, agents and subagents according to all we already did. Look into docs to get inspiration. Also look into designwalkthrough and promptlog to see how this project has come to be."
+
+---

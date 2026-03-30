@@ -1862,3 +1862,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-29** — Release MCP v3.2.5 patch [Entry: 5f833ce0-f4e6-4011-8d58-a0e25b217d2f]
   - **Why:** Unreleased commits for question coaching/answer validation and CI test fix needed publishing.
   - **How:** Bumped version 3.2.4→3.2.5, updated CHANGELOG.md, committed, tagged mcp-v3.2.5, pushed to trigger GitHub Actions.
+- **2026-03-29** — Release Extension v3.1.11 patch [Entry: b6a4b92c-0032-477f-b417-66239bcd6269]
+  - **Why:** Unreleased commit for question coaching/answer validation needed publishing.
+  - **How:** Bumped version 3.1.10→3.1.11, updated CHANGELOG.md, committed, tagged v3.1.11, pushed to trigger GitHub Actions.
+- **2026-03-30** — Created BCTB.TDD agent and tdd-workflow skill [Entry: 7a3c91e2-f4d8-4b2a-a1c5-8e6f3d9b0a47]
+  - **Why:** Enforce test-driven development workflow (design → test → fail → implement → pass → document) across all code changes in the monorepo.
+  - **How:** Created `.github/agents/BCTB.TDD.agent.md` with strict 6-phase TDD enforcement, and `.github/skills/tdd-workflow/SKILL.md` with project-specific test patterns, mocking recipes, coverage thresholds, and checklists for MCP tools, extension services, and shared library development.
