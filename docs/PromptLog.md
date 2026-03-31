@@ -3127,3 +3127,18 @@ Change instructions an business logic to do this."
 > "Develop this agent as a decent agent with skills, for the shit we do in this extension. To know what we do in this extension - analyze! I want to force a test-driven approach: design (like plan-mode), develop tests, see if tests fail (scaffold if necessary), develop, see if test succeed, document. Develop skills, agents and subagents according to all we already did. Look into docs to get inspiration. Also look into designwalkthrough and promptlog to see how this project has come to be."
 
 ---
+
+### Entry ID: 38b7d375-fd3c-49b6-b7c6-69c096925023 — 2026-03-31 15:25
+> "Fix Issue #104: Config detection broken after wizard save. hasWorkspaceSettings() only checked settings.json, telemetryService never reloaded, Open Settings opened wrong file."
+
+---
+
+### Entry ID: 711c3906-68fe-4854-a9e1-156c31182fd8 — 2026-03-31 15:53
+> "Fix Issue #104: Config detection broken after wizard save."
+
+---
+
+### Entry ID: 506665c6-f27a-40a9-b794-d3dbc4c83696 — 2026-03-31 16:13
+> "Add diagnostic logging for config detection and a Show Diagnostics command so users can share debug output when reporting issues."
+
+---

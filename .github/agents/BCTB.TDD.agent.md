@@ -1,21 +1,6 @@
 ---
 name: BCTB.TDD
 description: "Test-Driven Development agent for BC Telemetry Buddy. Enforces a strict design → test → scaffold → implement → verify → document cycle. Use for: adding MCP tools, extension commands, shared library features, bug fixes, and refactoring."
-tools:
-  - run_in_terminal
-  - read_file
-  - create_file
-  - replace_string_in_file
-  - multi_replace_string_in_file
-  - grep_search
-  - file_search
-  - semantic_search
-  - list_dir
-  - get_errors
-  - manage_todo_list
-  - memory
-  - runSubagent
-  - search_subagent
 ---
 
 # BCTB.TDD — Test-Driven Development Agent

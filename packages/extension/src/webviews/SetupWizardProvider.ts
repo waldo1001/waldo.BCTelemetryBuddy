@@ -380,6 +380,9 @@ export class SetupWizardProvider {
 
             console.log('Saved config to .bctb-config.json:', config);
 
+            // Notify extension to reload configuration
+            await vscode.commands.executeCommand('bctb.reloadConfig');
+
             this._panel?.webview.postMessage({
                 type: 'configSaved',
                 success: true,

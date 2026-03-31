@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.12] - 2026-03-31
+
+### Fixed
+- **Config detection after wizard save (Issue #104)**: `hasWorkspaceSettings()` now checks `.bctb-config.json` in all workspace folders before falling back to legacy `settings.json` keys. Previously, the wizard would save config but the extension still reported "not configured".
+- **Auto-reload config after wizard save**: Added `bctb.reloadConfig` command and a `FileSystemWatcher` for `.bctb-config.json`. The wizard now triggers a config reload after saving, so TelemetryService picks up the new config immediately without requiring a restart.
+- **"Open Settings" opened wrong file**: The "not configured" prompt in Start MCP now launches the Setup Wizard instead of opening `settings.json`.
+
+### Added
+- **Show Diagnostics command**: New "BC Telemetry Buddy: Show Diagnostics" command in the Command Palette. Generates a full diagnostic report (extension version, workspace config state, TelemetryService status, MCP health, profiles) with one-click copy-to-clipboard for easy bug reporting.
+- **Verbose config detection logging**: `hasWorkspaceSettings()` now logs each folder checked and the result to the Output panel, making config issues easier to diagnose.
+
 ## [3.1.11] - 2026-03-30
 
 ### Added

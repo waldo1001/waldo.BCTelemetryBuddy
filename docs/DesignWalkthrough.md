@@ -1868,3 +1868,15 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-30** — Created BCTB.TDD agent and tdd-workflow skill [Entry: 7a3c91e2-f4d8-4b2a-a1c5-8e6f3d9b0a47]
   - **Why:** Enforce test-driven development workflow (design → test → fail → implement → pass → document) across all code changes in the monorepo.
   - **How:** Created `.github/agents/BCTB.TDD.agent.md` with strict 6-phase TDD enforcement, and `.github/skills/tdd-workflow/SKILL.md` with project-specific test patterns, mocking recipes, coverage thresholds, and checklists for MCP tools, extension services, and shared library development.
+
+- **2026-03-31** — Fix Issue #104: Config detection and reload [Entry: 38b7d375-fd3c-49b6-b7c6-69c096925023]
+  - **Why:** Wizard saves to .bctb-config.json but hasWorkspaceSettings() only read settings.json; telemetryService never reloaded after wizard save; Open Settings opened wrong file
+  - **How:** hasWorkspaceSettings() now checks .bctb-config.json first; added bctb.reloadConfig command + FileSystemWatcher; wizard fires reload after save; Open Settings replaced with Run Setup Wizard
+
+- **2026-03-31** — Fix Issue #104: Config detection and reload [Entry: 711c3906-68fe-4854-a9e1-156c31182fd8]
+  - **Why:** Wizard saves to .bctb-config.json but hasWorkspaceSettings() only read settings.json; telemetryService never reloaded; Open Settings opened wrong file
+  - **How:** hasWorkspaceSettings() checks .bctb-config.json first; added bctb.reloadConfig command + FileSystemWatcher; wizard fires reload after save; Open Settings replaced with Run Setup Wizard
+
+- **2026-03-31** — Add diagnostic logging and Show Diagnostics command [Entry: 506665c6-f27a-40a9-b794-d3dbc4c83696]
+  - **Why:** Users reporting config issues (like #104) have no way to share diagnostic output
+  - **How:** Added verbose logging to hasWorkspaceSettings(); added bctb.showDiagnostics command that dumps full config state, TelemetryService status, MCP health, and profile info with copy-to-clipboard
