@@ -1880,3 +1880,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-31** — Add diagnostic logging and Show Diagnostics command [Entry: 506665c6-f27a-40a9-b794-d3dbc4c83696]
   - **Why:** Users reporting config issues (like #104) have no way to share diagnostic output
   - **How:** Added verbose logging to hasWorkspaceSettings(); added bctb.showDiagnostics command that dumps full config state, TelemetryService status, MCP health, and profile info with copy-to-clipboard
+
+- **2026-03-31** — Release extension v3.1.12 [Entry: 68200fd2-2ddd-407d-b362-1ed5ef3a05a8]
+  - **Why:** Ship Issue #104 fix (config detection + reload + diagnostics) to users
+  - **How:** Bumped version to 3.1.12, updated CHANGELOG, committed with "fixes #104", tagged v3.1.12, pushed to main

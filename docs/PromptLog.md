@@ -3142,3 +3142,8 @@ Change instructions an business logic to do this."
 > "Add diagnostic logging for config detection and a Show Diagnostics command so users can share debug output when reporting issues."
 
 ---
+
+### Entry ID: 68200fd2-2ddd-407d-b362-1ed5ef3a05a8 — 2026-03-31 16:18
+> "Patch release v3.1.12 for extension — fixes #104, adds diagnostics command. Commit logged in issue."
+
+---
