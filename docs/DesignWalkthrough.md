@@ -1933,3 +1933,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-05** — Fix DEP0169 warning in cli.ts via process.emit patch [Entry: 4b7a334f-7be0-4a63-a7d3-0850aacb799b]
   - **Why:** proxy-from-env v1.1.0 (used by axios latest) calls url.parse() on first HTTP request; upgrading proxy-from-env to v2.x breaks axios API
   - **How:** added process.emit intercept in cli.ts after imports to filter DEP0169 before it reaches Node stderr
+- **2026-04-05** — Unified AI instructions to single source of truth [Entry: 5b7a9cc9-3c68-40e7-989e-932675357c48]
+  - **Why:** Keep one instruction set that both GitHub Copilot and Claude Code follow, with TDD as the default for all code changes.
+  - **How:** Extended copilot-instructions.md with Mandatory Skills + Default TDD Workflow + Architecture Reference; created AGENTS.md as Claude Code entry point; slimmed CLAUDE.md to thin pointer + build commands; deleted .github/agents/BCTB.TDD.agent.md.
+- **2026-04-05** — Added get_knowledge as Step 2 in 6-step workflow [Entry: 8bd8f1e4-79c9-41f2-b70d-b7c6e1983cf1]
+  - **Why:** KB lookup after event discovery gives proven KQL patterns before field sampling, so agents leverage existing knowledge first.
+  - **How:** Updated SERVER_INSTRUCTIONS (merged standalone KB section into Step 2, renumbered to 6 steps), WORKFLOW_PROMPT_CONTENT (6-step list), chatParticipant.ts SYSTEM_PROMPT (5 locations), agentDefinitions.ts (4 locations incl. perf agent Step 1b), server-instructions test (6-step name + get_knowledge assertion).

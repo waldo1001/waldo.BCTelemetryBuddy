@@ -455,7 +455,124 @@ You:
 
 ---
 
+## Mandatory Skills (all AI agents)
+
+**BEFORE making any code change**, load and follow the TDD skill:
+
+```
+.github/skills/tdd-workflow/SKILL.md
+```
+
+This file contains the full TDD methodology, mocking patterns, coverage thresholds, and development checklists for this project. It is mandatory — not optional.
+
+Also use any other skills under `.github/skills/` that match the type of work being done.
+
+---
+
+## Default TDD Workflow — Apply to ALL code changes in this repo
+
+Every code change follows a strict 6-phase cycle. This is not an opt-in mode — it is the default way we work.
+
+### Phase 1 — DESIGN (present to user, wait for approval)
+```
+DESIGN: <feature name>
+
+WHAT: <one-line description>
+WHY: <user need>
+WHERE: <packages and files affected>
+
+INTERFACE:
+  - <function/class signatures>
+  - <tool schema if MCP tool>
+
+TEST STRATEGY:
+  - <what to test>
+  - <what to mock>
+  - <edge cases>
+
+Approve this design? (I'll write tests next)
+```
+
+### Phase 2 — WRITE TESTS
+- Create test files in the appropriate `__tests__/` directory
+- Follow the mocking patterns from `.github/skills/tdd-workflow/SKILL.md`
+- Cover happy path, error paths, and edge cases
+- Use `describe`/`it` blocks matching the interface from Phase 1
+
+### Phase 3 — VERIFY TESTS FAIL
+- Run: `cd packages/<pkg> && npx jest --no-coverage <test-file>`
+- If tests fail for the **right reason** (missing impl) → proceed
+- If tests fail for the **wrong reason** (import error, syntax) → fix the test
+- If scaffolding needed (empty stubs) → create minimal stubs so tests compile
+
+### Phase 4 — IMPLEMENT
+- Write the minimum code to make tests pass
+- SOLID principles, dependency injection, functions < 20 lines
+
+### Phase 5 — VERIFY TESTS PASS
+- Run: `cd packages/<pkg> && npm run test:coverage`
+- ALL tests must pass; coverage must meet thresholds (70% statements/lines, 60% branches)
+- If tests fail → fix implementation, NOT tests
+- Run `npm run build` from root to verify compilation
+
+### Phase 6 — DOCUMENT
+- Append to `docs/PromptLog.md` and `docs/DesignWalkthrough.md` (per Rule 2 above)
+- Update component `CHANGELOG.md` if needed
+- Update `docs/UserGuide.md` if user-facing behavior changed
+- Tell user: "Changes ready — please review and commit when ready."
+
+### TDD Behavioral Rules
+
+1. **NEVER write implementation code first** — always tests first
+2. **NEVER skip the design phase** — present a plan before writing any code
+3. **NEVER mark something as done without running tests**
+4. **ALWAYS use `manage_todo_list`** with the 6 phases as todo items
+5. **Run tests in terminal** — never assume tests pass without running them
+6. **Show test output** to the user at each verify step
+7. **If a test reveals a bug** in existing code, fix the bug (not the test)
+8. **Keep functions small** — extract helpers when a function exceeds 20 lines
+
+---
+
+## Project Architecture Reference
+
+```
+packages/
+  shared/      Core services (auth, kusto, cache, queries, sanitize, eventLookup)
+               Consumed by MCP and extension via @bctb/shared
+  mcp/         MCP server (stdio transport + HTTP)
+               tools/toolDefinitions.ts — tool schemas
+               tools/toolHandlers.ts   — business logic
+  extension/   VSCode extension
+               services/   — telemetryService, migrationService, etc.
+               webviews/   — SetupWizard, ProfileWizard, etc.
+```
+
+**Test file locations:**
+```
+packages/shared/src/__tests__/
+packages/mcp/src/__tests__/
+packages/extension/src/__tests__/
+```
+
+**Test commands:**
+```bash
+npm test                           # All packages
+cd packages/mcp && npm test        # MCP only
+cd packages/extension && npm test  # Extension only
+cd packages/shared && npm test     # Shared only
+```
+
+**What NOT to test** (no test host available):
+- VSCode UI components requiring a full extension host (`extension.ts`, `SetupWizardProvider.ts`)
+- Pure data files (`agentDefinitions.ts`)
+- Auto-generated files (`version.ts`, `telemetryConfig.generated.ts`)
+- CLI entry points (`cli.ts`, `server.ts`)
+
+---
+
 ## Notes for maintainers
-- This file is read by GitHub Copilot at the start of each session.
+- This file is read by GitHub Copilot at the start of each session and is the **single source of truth** for all AI agents working in this repo (Copilot, Claude Code, etc.).
+- `AGENTS.md` (root) and `CLAUDE.md` (root) both delegate to this file.
 - Keep it concise and actionable.
-- Update this file if the logging format or workflow changes.
+- Update this file if the logging format, workflow, or TDD rules change.

@@ -198,8 +198,9 @@ describe('Server Instructions', () => {
     });
 
     describe('WORKFLOW_PROMPT_CONTENT', () => {
-        test('contains the 5-step workflow', () => {
+        test('contains the 6-step workflow', () => {
             expect(WORKFLOW_PROMPT_CONTENT).toContain('get_event_catalog');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('get_knowledge');
             expect(WORKFLOW_PROMPT_CONTENT).toContain('get_event_field_samples');
             expect(WORKFLOW_PROMPT_CONTENT).toContain('get_tenant_mapping');
             expect(WORKFLOW_PROMPT_CONTENT).toContain('query_telemetry');

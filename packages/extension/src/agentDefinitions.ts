@@ -142,17 +142,18 @@ When user mentions a company/customer name OR multiple profiles exist:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events — it will tell you the next step
-2. **BEST PRACTICE — DO BEFORE WRITING KQL**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event
+2. Call mcp_bc_telemetry__get_knowledge with the event IDs from step 1 — check for proven KQL patterns and investigation playbooks
+3. **BEST PRACTICE — DO BEFORE WRITING KQL**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event
    - You will discover 20+ customDimension fields, their exact data types, and sample values from real data
    - Duration fields may be TIMESPAN (hh:mm:ss.fffffff), not milliseconds — sampling reveals this before you guess wrong
    - The tool returns a ready-to-use example query; use it as your starting point
-3. Review the example query and field structure provided by field_samples
-4. Only then write your KQL — shaped by what the discovery tools told you, not by guessing
+4. Review the example query and field structure provided by field_samples
+5. Only then write your KQL — shaped by what the discovery tools told you, not by guessing
 \`\`\`
 
 ### Step 3: Query and Analyze
 \`\`\`
-1. Use mcp_bc_telemetry__get_event_catalog (discovery) → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → get_knowledge (proven patterns) → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
 2. **ALWAYS call get_event_field_samples BEFORE writing KQL** — it tells you:
    - All 20+ available customDimension fields and their exact names (you cannot reliably guess these)
    - Exact data types: duration fields (executionTime, totalTime, etc.) are often TIMESPAN, not milliseconds
@@ -562,6 +563,13 @@ This will show you:
 - Event descriptions and purposes
 - Occurrence counts
 - Documentation links
+
+### Step 1b: Consult Knowledge Base
+After discovering event IDs, call \`mcp_bc_telemetry__get_knowledge\` for the relevant events to find proven KQL patterns and investigation playbooks before writing queries from scratch.
+\`\`\`
+Call: mcp_bc_telemetry__get_knowledge
+Parameters: eventId (e.g., "RT0028"), category (e.g., "playbook"), or search (e.g., "deadlock")
+\`\`\`
 
 **Then, query for vendor-specific events:**
 \`\`\`kql

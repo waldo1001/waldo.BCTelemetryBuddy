@@ -30,25 +30,34 @@ Call \`get_event_catalog\` FIRST to discover which event IDs exist in the teleme
 - Use filters (status, minCount) to narrow results.
 - The response includes a \`significantEvents\` list: events covering 90% of total volume. Investigate ALL of these, not just the first one.
 
-### Step 2: Understand Event Fields (MANDATORY before ANY KQL)
+### Step 2: Consult Knowledge Base
+Call \`get_knowledge\` with the event IDs discovered in Step 1 to check for proven KQL patterns before writing from scratch.
+- \`get_knowledge({ eventId: "RT0006" })\` — find patterns related to a specific event
+- \`get_knowledge({ category: "playbook" })\` — find investigation playbooks
+- \`get_knowledge({ search: "deadlock" })\` — free-text search
+- KB articles are starting points, not the full picture — always follow with Step 3 to catch new fields not yet covered by the article.
+- Local workspace articles take precedence over community articles.
+
+### Step 3: Understand Event Fields (MANDATORY before ANY KQL)
 Call \`get_event_field_samples\` for EVERY significant event ID from Step 1.
 - The catalog response lists events that cover 90% of total volume — call \`get_event_field_samples\` for ALL of them, not just the first one.
 - BC events have 20+ fields in customDimensions — you CANNOT guess them.
 - This reveals exact data types: duration fields (executionTime, totalTime, serverTime) are TIMESPAN ("hh:mm:ss.fffffff"), NOT numbers. Getting this wrong silently breaks queries.
 - Returns real sample values so you write correct KQL on the first attempt.
 - Returns a ready-to-use example query — use it as your starting point.
+- If \`get_event_field_samples\` reveals fields not mentioned in a KB article, note them for the user.
 
-### Step 3: Map Tenants (when filtering by customer)
+### Step 4: Map Tenants (when filtering by customer)
 Call \`get_tenant_mapping\` when the user mentions a customer or company name.
 - BC telemetry uses aadTenantId (GUIDs) for filtering, NOT company names.
 - ALWAYS filter KQL by aadTenantId, NEVER by companyName.
 
-### Step 4: Write and Execute KQL
-Call \`query_telemetry\` with KQL that is shaped by what Steps 1-3 told you.
+### Step 5: Write and Execute KQL
+Call \`query_telemetry\` with KQL that is shaped by what Steps 1-4 told you.
 - Use field names, data types, and patterns from get_event_field_samples.
 - Do NOT guess field names or types.
 
-### Step 5: Save Useful Queries
+### Step 6: Save Useful Queries
 Call \`save_query\` to persist successful queries for future reuse.
 
 ## FORBIDDEN Patterns
@@ -88,25 +97,6 @@ Start with \`traces\` unless the question is specifically about page load perfor
 - Top-N filtering: \`top 10 by count_\`
 - Fewer, smarter queries beat many granular ones.
 
-## Knowledge Base
-
-Before writing KQL from scratch, call \`get_knowledge\` to check for proven patterns:
-- \`get_knowledge({ eventId: "RT0006" })\` — find patterns related to a specific event
-- \`get_knowledge({ category: "playbook" })\` — find investigation playbooks
-- \`get_knowledge({ search: "deadlock" })\` — free-text search
-
-The Knowledge Base has two layers:
-- **Local** (your workspace) — your team's custom patterns, always available
-- **Community** (curated) — proven patterns maintained by the BC community
-
-Local articles are returned first and take precedence. If you find a useful pattern, use it as a starting point rather than writing KQL from scratch.
-
-**IMPORTANT: KB articles are starting points, not the full picture.**
-- ALWAYS call \`get_event_field_samples\` for the relevant event IDs, even when a KB article exists. New BC versions may add fields not yet covered by the article.
-- Compare the fields returned by \`get_event_field_samples\` with those used in the KB article's KQL. If you discover new fields that could improve the query or analysis, use them.
-- If \`get_event_field_samples\` reveals fields not mentioned in the KB article, inform the user: "Note: the field [fieldName] is available in your telemetry data for [eventId] but not yet covered in the KB article. You may want to update the article."
-- Never limit your analysis to only the fields mentioned in a KB article.
-
 ## Question Coaching & Answer Validation
 
 **The quality of the question determines the quality of the answer.** AI scales thinking — good AND bad.
@@ -132,10 +122,11 @@ Local articles are returned first and take precedence. If you find a useful patt
 export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call workflow:
 
 1. **get_event_catalog** → Discover available events (ALWAYS FIRST)
-2. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
-3. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
-4. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)
-5. **save_query** → Persist useful queries for reuse
+2. **get_knowledge(eventId)** → Check knowledge base for proven patterns (BEFORE writing KQL)
+3. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
+4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
+5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)
+6. **save_query** → Persist useful queries for reuse
 
 UNNECESSARY: Do not use "take 1 | project customDimensions" — get_event_field_samples already does this (samples 20 rows) and returns richer results including field types, occurrence rates, and a ready-to-use query.
 FORBIDDEN: Never guess field names or treat duration fields as numbers (they are TIMESPAN).

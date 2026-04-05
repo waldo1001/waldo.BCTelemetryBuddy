@@ -3212,3 +3212,11 @@ Change instructions an business logic to do this."
 > "Trace and fix the url.parse() DEP0169 warning: trace-deprecation showed it was proxy-from-env inside axios"
 
 ---
+### Entry ID: 5b7a9cc9-3c68-40e7-989e-932675357c48 — 2026-04-05 14:52
+> "I want to be able to work with github copilot and claude. On top of that, I want the github copilot agent bcpt.tdd to be the general instructions for anything I do in this repo. Move the instructions from the agent to AGENTS.md, point claude.md to agents.md so we only have to maintain one instructionset, and make sure both will always use the skills under the .github folder."
+
+---
+### Entry ID: 8bd8f1e4-79c9-41f2-b70d-b7c6e1983cf1 — 2026-04-05 14:56
+> "Implement get_knowledge as Step 1b in the tool-call workflow (between get_event_catalog and get_event_field_samples), updating serverInstructions.ts, WORKFLOW_PROMPT_CONTENT, chatParticipant.ts, agentDefinitions.ts, and server-instructions test (including bc-telemetry-workflow MCP prompt)."
+
+---
