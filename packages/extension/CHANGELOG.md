@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.2] - 2026-04-06
+
+### Fixed
+- **Knowledge Base webview interactions**: All buttons, filters, and article links were silently dead due to a Content Security Policy (CSP) violation — `script-src 'nonce-...'` blocks inline `onclick`/`oninput`/`onchange` handlers. Rewired static controls with `addEventListener` and dynamic article rows with event delegation via `data-action` attributes.
+- **Community articles open in browser**: Clicking a community article now opens it in the browser at its GitHub URL. Previously it attempted to show a modal using a cache file that may not exist, silently doing nothing.
+- **Refresh downloads from GitHub**: The Refresh button now triggers a real GitHub fetch via `KnowledgeBaseService`, shows "Downloading…" status, and disables the button until complete. Previously it only re-read the local disk cache.
+- **Category → directory mapping**: Fixed URL construction for community article links (`query-pattern` → `query-patterns` etc.) using an explicit map instead of a fragile regex.
+
+### Added
+- **Knowledge Base Provider tests**: 17 unit tests covering `_loadKbConfig`, `_handleOpenArticle` (all four category mappings, URL construction, local file lookup), and `_refreshFromGitHub` (download notification, error resilience, ordering).
+
 ## [3.2.1] - 2026-04-05
 
 ### Fixed

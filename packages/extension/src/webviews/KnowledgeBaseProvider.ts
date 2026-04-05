@@ -12,6 +12,17 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
+
+const DEFAULT_KB_SOURCE = 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base';
+
+// Frontmatter category values (singular) → GitHub/local directory names (plural)
+const KB_CATEGORY_DIRS: Record<string, string> = {
+    'query-pattern':        'query-patterns',
+    'event-interpretation': 'event-interpretations',
+    'playbook':             'playbooks',
+    'vendor-pattern':       'vendor-patterns',
+};
 
 interface KBArticleInfo {
     id: string;
@@ -64,26 +75,30 @@ export class KnowledgeBaseProvider {
             }
         );
 
-        this._panel.webview.html = this._getHtml();
+        // Load data up-front and embed in HTML so the page renders immediately
+        // without depending on a message-passing handshake.
+        const initialData = this._loadArticleData();
+        this._panel.webview.html = this._getHtml(initialData);
 
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
-                switch (message.type) {
-                    case 'ready':
-                        await this._sendArticles();
-                        break;
-                    case 'toggleExclude':
-                        await this._handleToggleExclude(message.id, message.excluded);
-                        break;
-                    case 'excludeAll':
-                        await this._handleExcludeAll(message.exclude);
-                        break;
-                    case 'openArticle':
-                        await this._handleOpenArticle(message.id, message.source);
-                        break;
-                    case 'refresh':
-                        await this._sendArticles();
-                        break;
+                try {
+                    switch (message.type) {
+                        case 'toggleExclude':
+                            await this._handleToggleExclude(message.id, message.excluded);
+                            break;
+                        case 'excludeAll':
+                            await this._handleExcludeAll(message.exclude);
+                            break;
+                        case 'openArticle':
+                            await this._handleOpenArticle(message.id, message.source, message.category);
+                            break;
+                        case 'refresh':
+                            await this._refreshFromGitHub();
+                            break;
+                    }
+                } catch (err: any) {
+                    this._outputChannel.appendLine(`[KB] Error handling message '${message.type}': ${err.message}`);
                 }
             },
             null,
@@ -112,10 +127,7 @@ export class KnowledgeBaseProvider {
 
     private _loadExcludeList(workspacePath: string): string[] {
         try {
-            const configPath = this._getConfigPath(workspacePath);
-            if (!fs.existsSync(configPath)) return [];
-            const raw = fs.readFileSync(configPath, 'utf-8');
-            const config = JSON.parse(raw);
+            const config = JSON.parse(fs.readFileSync(this._getConfigPath(workspacePath), 'utf-8'));
             return config?.knowledgeBase?.exclude ?? [];
         } catch {
             return [];
@@ -124,10 +136,7 @@ export class KnowledgeBaseProvider {
 
     private _loadKbEnabled(workspacePath: string): boolean {
         try {
-            const configPath = this._getConfigPath(workspacePath);
-            if (!fs.existsSync(configPath)) return true;
-            const raw = fs.readFileSync(configPath, 'utf-8');
-            const config = JSON.parse(raw);
+            const config = JSON.parse(fs.readFileSync(this._getConfigPath(workspacePath), 'utf-8'));
             return config?.knowledgeBase?.enabled !== false;
         } catch {
             return true;
@@ -137,11 +146,7 @@ export class KnowledgeBaseProvider {
     private _saveExcludeList(workspacePath: string, excludes: string[]): void {
         const configPath = this._getConfigPath(workspacePath);
         let config: any = {};
-        try {
-            if (fs.existsSync(configPath)) {
-                config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-            }
-        } catch { /* start fresh */ }
+        try { config = JSON.parse(fs.readFileSync(configPath, 'utf-8')); } catch { /* start fresh */ }
 
         if (!config.knowledgeBase) config.knowledgeBase = {};
         config.knowledgeBase.exclude = excludes;
@@ -151,7 +156,6 @@ export class KnowledgeBaseProvider {
     private _loadCommunityArticles(workspacePath: string): KBArticleInfo[] {
         try {
             const cachePath = path.join(workspacePath, '.vscode', '.bctb', 'kb-cache', 'community-articles.json');
-            if (!fs.existsSync(cachePath)) return [];
             const raw = fs.readFileSync(cachePath, 'utf-8');
             const articles = JSON.parse(raw) as any[];
             return articles.map(a => ({
@@ -169,9 +173,7 @@ export class KnowledgeBaseProvider {
     }
 
     private _loadLocalArticles(workspacePath: string): KBArticleInfo[] {
-        const kbDir = path.join(workspacePath, '.vscode', '.bctb', 'knowledge');
-        if (!fs.existsSync(kbDir)) return [];
-        return this._scanDir(kbDir);
+        return this._scanDir(path.join(workspacePath, '.vscode', '.bctb', 'knowledge'));
     }
 
     private _scanDir(dirPath: string): KBArticleInfo[] {
@@ -208,25 +210,69 @@ export class KnowledgeBaseProvider {
         }
     }
 
-    private async _sendArticles() {
+    private _loadArticleData(): { community: KBArticleInfo[]; local: KBArticleInfo[]; excludeCount: number; kbEnabled: boolean; noWorkspace: boolean } {
         const workspacePath = this._getWorkspacePath();
         if (!workspacePath) {
-            this._panel?.webview.postMessage({ type: 'noWorkspace' });
-            return;
+            return { community: [], local: [], excludeCount: 0, kbEnabled: true, noWorkspace: true };
         }
-
         const excludes = this._loadExcludeList(workspacePath);
         const kbEnabled = this._loadKbEnabled(workspacePath);
         const community = this._loadCommunityArticles(workspacePath).map(a => ({ ...a, excluded: excludes.includes(a.id) }));
         const local = this._loadLocalArticles(workspacePath);
+        return { community, local, excludeCount: excludes.length, kbEnabled, noWorkspace: false };
+    }
 
+    private async _sendArticles() {
+        const data = this._loadArticleData();
+        if (data.noWorkspace) {
+            this._outputChannel.appendLine('[KB] No workspace path, cannot load articles');
+            this._panel?.webview.postMessage({ type: 'noWorkspace' });
+            return;
+        }
+        this._outputChannel.appendLine(`[KB] Sending ${data.community.length} community, ${data.local.length} local articles to webview`);
         this._panel?.webview.postMessage({
             type: 'articles',
-            community,
-            local,
-            excludeCount: excludes.length,
-            kbEnabled,
+            community: data.community,
+            local: data.local,
+            excludeCount: data.excludeCount,
+            kbEnabled: data.kbEnabled,
         });
+    }
+
+    private _loadKbConfig(workspacePath: string): KBConfig {
+        try {
+            const config = JSON.parse(fs.readFileSync(this._getConfigPath(workspacePath), 'utf-8'));
+            if (config?.knowledgeBase) {
+                return {
+                    enabled: config.knowledgeBase.enabled !== false,
+                    source: config.knowledgeBase.source ?? DEFAULT_KB_SOURCE,
+                    exclude: config.knowledgeBase.exclude ?? [],
+                    autoRefresh: config.knowledgeBase.autoRefresh ?? true,
+                    cacheOnly: false,
+                    githubToken: config.knowledgeBase.githubToken,
+                };
+            }
+        } catch { /* use defaults */ }
+        return { enabled: true, source: DEFAULT_KB_SOURCE, exclude: [], autoRefresh: true, cacheOnly: false };
+    }
+
+    private async _refreshFromGitHub() {
+        const workspacePath = this._getWorkspacePath();
+        if (!workspacePath) return;
+
+        this._panel?.webview.postMessage({ type: 'downloading' });
+        this._outputChannel.appendLine('[KB] Refreshing community articles from GitHub…');
+
+        try {
+            const kbConfig = this._loadKbConfig(workspacePath);
+            const service = new KnowledgeBaseService(workspacePath, kbConfig);
+            await service.loadAll(); // fetches from GitHub and writes cache
+            this._outputChannel.appendLine('[KB] Community articles refreshed from GitHub');
+        } catch (err: any) {
+            this._outputChannel.appendLine(`[KB] GitHub refresh failed: ${err.message}`);
+        }
+
+        await this._sendArticles();
     }
 
     private async _handleToggleExclude(id: string, excluded: boolean) {
@@ -255,11 +301,7 @@ export class KnowledgeBaseProvider {
         try {
             const configPath = this._getConfigPath(workspacePath);
             let config: any = {};
-            try {
-                if (fs.existsSync(configPath)) {
-                    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-                }
-            } catch { /* start fresh */ }
+            try { config = JSON.parse(fs.readFileSync(configPath, 'utf-8')); } catch { /* start fresh */ }
 
             if (!config.knowledgeBase) config.knowledgeBase = {};
             config.knowledgeBase.enabled = !exclude;
@@ -272,14 +314,13 @@ export class KnowledgeBaseProvider {
         }
     }
 
-    private async _handleOpenArticle(id: string, source: 'community' | 'local') {
+    private async _handleOpenArticle(id: string, source: 'community' | 'local', category?: string) {
         const workspacePath = this._getWorkspacePath();
         if (!workspacePath) return;
 
         // For local articles, open the file directly
         if (source === 'local') {
-            const categories = ['query-pattern', 'event-interpretation', 'playbook', 'vendor-pattern'];
-            for (const cat of categories) {
+            for (const cat of Object.keys(KB_CATEGORY_DIRS)) {
                 const filePath = path.join(workspacePath, '.vscode', '.bctb', 'knowledge', cat, `${id}.md`);
                 if (fs.existsSync(filePath)) {
                     await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(filePath));
@@ -288,24 +329,28 @@ export class KnowledgeBaseProvider {
             }
         }
 
-        // For community articles, show content from cache in preview
+        // For community articles, open in browser at the GitHub source URL
         if (source === 'community') {
             try {
-                const cachePath = path.join(workspacePath, '.vscode', '.bctb', 'kb-cache', 'community-articles.json');
-                if (!fs.existsSync(cachePath)) return;
-                const articles = JSON.parse(fs.readFileSync(cachePath, 'utf-8')) as any[];
-                const article = articles.find(a => a.id === id);
-                if (!article) return;
-                this._panel?.webview.postMessage({ type: 'articleContent', article });
-            } catch { /* ignore */ }
+                const kbConfig = this._loadKbConfig(workspacePath);
+                const blobBase = kbConfig.source.replace('/tree/', '/blob/');
+                const dirName = KB_CATEGORY_DIRS[category ?? ''] ?? category ?? '';
+                const url = `${blobBase}/${dirName}/${id}.md`;
+                await vscode.env.openExternal(vscode.Uri.parse(url));
+            } catch (err: any) {
+                this._outputChannel.appendLine(`[KB] Failed to open article in browser: ${err.message}`);
+            }
         }
     }
 
-    private _getHtml(): string {
+    private _getHtml(initialData: ReturnType<KnowledgeBaseProvider['_loadArticleData']>): string {
+        const safeJson = (v: unknown) => JSON.stringify(v).replace(/<\//g, '<\\/');
+        const nonce = [...Array(32)].map(() => Math.floor(Math.random() * 36).toString(36)).join('');
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Base</title>
     <style>
@@ -430,49 +475,88 @@ export class KnowledgeBaseProvider {
     </style>
 </head>
 <body>
-    <h1>$(book) Knowledge Base</h1>
+    <h1>Knowledge Base</h1>
     <p class="subtitle">Community and local KB articles loaded by the MCP server at startup.</p>
 
     <div class="toolbar">
-        <input type="text" id="searchInput" placeholder="Search title / tag / event ID..." oninput="filterArticles()">
-        <select id="categoryFilter" onchange="filterArticles()">
+        <input type="text" id="searchInput" placeholder="Search title / tag / event ID...">
+        <select id="categoryFilter">
             <option value="">All categories</option>
             <option value="query-pattern">Query Patterns</option>
             <option value="event-interpretation">Event Interpretations</option>
             <option value="playbook">Playbooks</option>
             <option value="vendor-pattern">Vendor Patterns</option>
         </select>
-        <select id="sourceFilter" onchange="filterArticles()">
+        <select id="sourceFilter">
             <option value="">All sources</option>
             <option value="community">Community</option>
             <option value="local">Local</option>
         </select>
-        <button onclick="refresh()">↻ Refresh</button>
-        <button id="excludeAllBtn" onclick="toggleExcludeAll()" title="Disable entire community KB (sets enabled: false in config)">Disable Community KB</button>
+        <button id="refreshBtn">↻ Refresh</button>
+        <button id="excludeAllBtn" title="Disable entire community KB (sets enabled: false in config)">Disable Community KB</button>
     </div>
 
     <div id="stats" class="stats-bar">Loading…</div>
     <div id="content"></div>
 
-    <!-- Article preview modal -->
-    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-        <div class="modal">
-            <button class="close-btn" onclick="closeModal()">✕</button>
-            <h2 id="modalTitle"></h2>
-            <div id="modalMeta" class="article-meta" style="margin-bottom:12px"></div>
-            <pre id="modalContent"></pre>
-        </div>
-    </div>
-
-    <script>
+    <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
-        let allCommunity = [];
-        let allLocal = [];
-        let kbEnabled = true;
+        let allCommunity = ${safeJson(initialData.community)};
+        let allLocal = ${safeJson(initialData.local)};
+        let kbEnabled = ${safeJson(initialData.kbEnabled)};
+
+        // Wire up static controls via addEventListener (inline onclick blocked by CSP nonce policy)
+        document.getElementById('searchInput').addEventListener('input', filterArticles);
+        document.getElementById('categoryFilter').addEventListener('change', filterArticles);
+        document.getElementById('sourceFilter').addEventListener('change', filterArticles);
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            vscode.postMessage({ type: 'refresh' });
+        });
+        document.getElementById('excludeAllBtn').addEventListener('click', function() {
+            vscode.postMessage({ type: 'excludeAll', exclude: kbEnabled });
+        });
+
+        // Event delegation for dynamically rendered article rows
+        document.getElementById('content').addEventListener('click', function(event) {
+            const target = event.target;
+            const toggleEl = target.closest('[data-action="toggleExclude"]');
+            if (toggleEl) {
+                event.stopPropagation();
+                vscode.postMessage({
+                    type: 'toggleExclude',
+                    id: toggleEl.dataset.id,
+                    excluded: toggleEl.dataset.excluded !== 'true',
+                });
+                return;
+            }
+            const openEl = target.closest('[data-action="openArticle"]');
+            if (openEl) {
+                vscode.postMessage({
+                    type: 'openArticle',
+                    id: openEl.dataset.id,
+                    source: openEl.dataset.source,
+                    category: openEl.dataset.category,
+                });
+            }
+        });
+
+        // Render initial data immediately — no message handshake needed
+        if (${initialData.noWorkspace}) {
+            document.getElementById('content').innerHTML = '<p class="empty">No workspace open. Open a folder to use the Knowledge Base.</p>';
+            document.getElementById('stats').textContent = '';
+        } else {
+            renderStats(allCommunity.length, allLocal.length, ${safeJson(initialData.excludeCount)});
+            updateExcludeAllBtn();
+            filterArticles();
+        }
 
         window.addEventListener('message', event => {
             const msg = event.data;
             switch (msg.type) {
+                case 'downloading':
+                    document.getElementById('stats').textContent = 'Downloading community articles from GitHub…';
+                    document.getElementById('refreshBtn').disabled = true;
+                    break;
                 case 'articles':
                     allCommunity = msg.community;
                     allLocal = msg.local;
@@ -480,34 +564,25 @@ export class KnowledgeBaseProvider {
                     renderStats(msg.community.length, msg.local.length, msg.excludeCount);
                     updateExcludeAllBtn();
                     filterArticles();
+                    document.getElementById('refreshBtn').disabled = false;
                     break;
                 case 'noWorkspace':
                     document.getElementById('content').innerHTML = '<p class="empty">No workspace open. Open a folder to use the Knowledge Base.</p>';
                     document.getElementById('stats').textContent = '';
                     break;
-                case 'excludeUpdated':
-                    // Update in-memory state
+                case 'excludeUpdated': {
                     const a = allCommunity.find(x => x.id === msg.id);
-                    if (a) a.excluded = msg.excluded;
+                    if (a) { a.excluded = msg.excluded; }
                     filterArticles();
                     renderStats(allCommunity.length, allLocal.length, msg.total);
                     break;
+                }
                 case 'kbEnabledChanged':
                     kbEnabled = msg.enabled;
                     updateExcludeAllBtn();
                     break;
-                case 'articleContent':
-                    showModal(msg.article);
-                    break;
             }
         });
-
-        vscode.postMessage({ type: 'ready' });
-
-        function refresh() {
-            document.getElementById('stats').textContent = 'Refreshing…';
-            vscode.postMessage({ type: 'refresh' });
-        }
 
         function renderStats(community, local, excluded) {
             document.getElementById('stats').textContent =
@@ -522,10 +597,6 @@ export class KnowledgeBaseProvider {
                     ? 'Disable entire community KB (sets enabled: false in config)'
                     : 'Re-enable community KB (sets enabled: true in config)';
             }
-        }
-
-        function toggleExcludeAll() {
-            vscode.postMessage({ type: 'excludeAll', exclude: kbEnabled });
         }
 
         function filterArticles() {
@@ -545,34 +616,23 @@ export class KnowledgeBaseProvider {
                 return true;
             };
 
-            const community = allCommunity.filter(filterFn);
-            const local = allLocal.filter(filterFn);
-            renderArticles(community, local);
+            renderArticles(allCommunity.filter(filterFn), allLocal.filter(filterFn));
         }
 
         function renderArticles(community, local) {
-            let html = '';
-
             if (community.length === 0 && local.length === 0) {
-                html = '<p class="empty">No articles match your filter.</p>';
-                document.getElementById('content').innerHTML = html;
+                document.getElementById('content').innerHTML = '<p class="empty">No articles match your filter.</p>';
                 return;
             }
-
+            let html = '';
             if (community.length > 0) {
                 html += '<div class="section-header">Community (' + community.length + ')</div>';
-                for (const a of community) {
-                    html += renderRow(a);
-                }
+                for (const a of community) { html += renderRow(a); }
             }
-
             if (local.length > 0) {
                 html += '<div class="section-header">Local (' + local.length + ')</div>';
-                for (const a of local) {
-                    html += renderRow(a);
-                }
+                for (const a of local) { html += renderRow(a); }
             }
-
             document.getElementById('content').innerHTML = html;
         }
 
@@ -582,12 +642,16 @@ export class KnowledgeBaseProvider {
             const badgeClass = a.source === 'local' ? 'badge-local' : 'badge-community';
             const checkIcon = a.source === 'community' ? (excluded ? '☐' : '☑') : '';
             const checkTitle = a.source === 'community' ? (excluded ? 'Click to include' : 'Click to exclude') : '';
+            // data-action attributes used by delegated click handler (inline onclick blocked by CSP)
             return '<div class="article-row' + (excluded ? ' excluded' : '') + '">' +
                 (a.source === 'community'
-                    ? '<span title="' + checkTitle + '" style="font-size:1.2em;cursor:pointer;flex-shrink:0;margin-top:1px" onclick="toggleExclude(event,\\'' + escAttr(a.id) + '\\',' + excluded + ')">' + checkIcon + '</span>'
+                    ? '<span title="' + escHtml(checkTitle) + '" style="font-size:1.2em;cursor:pointer;flex-shrink:0;margin-top:1px"' +
+                      ' data-action="toggleExclude" data-id="' + escAttr(a.id) + '" data-excluded="' + excluded + '">' + checkIcon + '</span>'
                     : '<span style="width:1.2em;flex-shrink:0"></span>') +
                 '<div class="article-info">' +
-                '<div class="article-title link" onclick="openArticle(\\'' + escAttr(a.id) + '\\',\\'' + a.source + '\\')">' + escHtml(a.title) + '</div>' +
+                '<div class="article-title link"' +
+                ' data-action="openArticle" data-id="' + escAttr(a.id) + '" data-source="' + a.source + '" data-category="' + escAttr(a.category) + '">' +
+                escHtml(a.title) + '</div>' +
                 '<div class="article-meta">' + escHtml(a.category) + (tagsHtml ? '&nbsp;· ' + tagsHtml : '') + '</div>' +
                 '</div>' +
                 '<span class="badge ' + badgeClass + '">' + a.source + '</span>' +
@@ -595,34 +659,11 @@ export class KnowledgeBaseProvider {
                 '</div>';
         }
 
-        function toggleExclude(event, id, currentlyExcluded) {
-            event.stopPropagation();
-            vscode.postMessage({ type: 'toggleExclude', id, excluded: !currentlyExcluded });
-        }
-
-        function openArticle(id, source) {
-            vscode.postMessage({ type: 'openArticle', id, source });
-        }
-
-        function showModal(article) {
-            document.getElementById('modalTitle').textContent = article.title;
-            document.getElementById('modalMeta').textContent =
-                article.category + (article.tags?.length ? '  ·  ' + article.tags.join(', ') : '');
-            document.getElementById('modalContent').textContent = article.content;
-            document.getElementById('modalOverlay').style.display = 'block';
-        }
-
-        function closeModal(event) {
-            if (!event || event.target === document.getElementById('modalOverlay') || event.type === 'click') {
-                document.getElementById('modalOverlay').style.display = 'none';
-            }
-        }
-
         function escHtml(str) {
             return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
         function escAttr(str) {
-            return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+            return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
         }
     </script>
 </body>
