@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.1.12] - 2026-03-31
+## [3.2.0] - 2026-04-05
+
+### Added
+- **Knowledge Base UI (Issue #107)**: New `bctb.manageKnowledgeBase` command and webview to browse community and local KB articles.
+  - Per-article exclude checkboxes (community only) — writes to `knowledgeBase.exclude` in config.
+  - **Disable Community KB** / **Enable Community KB** toggle — sets `knowledgeBase.enabled: false/true`.
+  - Filter by category, source, and free-text search matching title, tags, and event IDs.
+- **KB status bar item**: `$(book) KB: N articles` shows in the status bar. Updates dynamically to reflect article count, `KB: disabled`, or `KB: offline (cached)` via a `.bctb-config.json` file watcher.
 
 ### Fixed
 - **Config detection after wizard save (Issue #104)**: `hasWorkspaceSettings()` now checks `.bctb-config.json` in all workspace folders before falling back to legacy `settings.json` keys. Previously, the wizard would save config but the extension still reported "not configured".
