@@ -88,6 +88,25 @@ Start with \`traces\` unless the question is specifically about page load perfor
 - Top-N filtering: \`top 10 by count_\`
 - Fewer, smarter queries beat many granular ones.
 
+## Knowledge Base
+
+Before writing KQL from scratch, call \`get_knowledge\` to check for proven patterns:
+- \`get_knowledge({ eventId: "RT0006" })\` — find patterns related to a specific event
+- \`get_knowledge({ category: "playbook" })\` — find investigation playbooks
+- \`get_knowledge({ search: "deadlock" })\` — free-text search
+
+The Knowledge Base has two layers:
+- **Local** (your workspace) — your team's custom patterns, always available
+- **Community** (curated) — proven patterns maintained by the BC community
+
+Local articles are returned first and take precedence. If you find a useful pattern, use it as a starting point rather than writing KQL from scratch.
+
+**IMPORTANT: KB articles are starting points, not the full picture.**
+- ALWAYS call \`get_event_field_samples\` for the relevant event IDs, even when a KB article exists. New BC versions may add fields not yet covered by the article.
+- Compare the fields returned by \`get_event_field_samples\` with those used in the KB article's KQL. If you discover new fields that could improve the query or analysis, use them.
+- If \`get_event_field_samples\` reveals fields not mentioned in the KB article, inform the user: "Note: the field [fieldName] is available in your telemetry data for [eventId] but not yet covered in the KB article. You may want to update the article."
+- Never limit your analysis to only the fields mentioned in a KB article.
+
 ## Question Coaching & Answer Validation
 
 **The quality of the question determines the quality of the answer.** AI scales thinking — good AND bad.

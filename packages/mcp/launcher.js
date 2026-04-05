@@ -10,6 +10,14 @@
  * package.json, we ensure reliable module loading across all environments.
  */
 
+// Suppress DEP0169 (url.parse() standardization warning) emitted by dependencies.
+// Patching process.emit intercepts the warning before Node's internal stderr printer.
+const _originalEmit = process.emit.bind(process);
+process.emit = function (event, ...args) {
+    if (event === 'warning' && args[0] && args[0].code === 'DEP0169') return false;
+    return _originalEmit(event, ...args);
+};
+
 try {
     const server = require('./server.js');
 

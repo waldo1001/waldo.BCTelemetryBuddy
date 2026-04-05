@@ -1888,3 +1888,48 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-05** — Add memory suggestion instructions to agent definitions [Entry: 11ab2854-ed1e-4087-a4fd-cb8c82123832]
   - **Why:** Users repeatedly looking up the same tenants/baselines/patterns should be reminded they can save that to Copilot memory for future sessions.
   - **How:** Added \"Build Knowledge Over Time — Suggest Memory\" section to BCTelemetryBuddyAgent, BCPerformanceAnalysisAgent, and chatParticipant SYSTEM_PROMPT with guidance on when/how to suggest memory to users.
+- **2026-04-05** — Implement Community Knowledge Base — KnowledgeBaseService, MCP tool, seed articles [Entry: 5e0e041d-a937-423c-a305-e595b5630ee2]
+  - **Why:** Issue #107 — enable agents to leverage proven KQL patterns, event interpretations, and investigation playbooks instead of writing KQL from scratch.
+  - **How:** Created KnowledgeBaseService in packages/shared (YAML frontmatter parsing, GitHub fetch with cache fallback, local KB, search/filter). Added get_knowledge tool to MCP (toolDefinitions + toolHandlers). Enhanced SERVER_INSTRUCTIONS with KB guidance. Added knowledgeBase config to config-schema.json. Integrated KB startup loading in mcpSdkServer.ts. Seeded 4 KB articles (2 query-patterns, 1 event-interpretation, 1 playbook). TDD: 27 shared tests + 8 MCP tests, all green, coverage up.
+- **2026-04-05** — Created 4 real-world KB seed articles [Entry: 7c36fda2-3325-4d9c-92a7-0625a8d0dc0d]
+  - **Why:** Replace placeholder articles with patterns observed across 16 real customer telemetry investigations.
+  - **How:** Created slow-sql-and-missing-indexes.md, job-queue-health-check.md, environment-upgrade-troubleshooting.md, database-wait-statistics.md — covering RT0005/RT0017, AL0000E24/E25, LC events, RT0026 respectively.
+- **2026-04-05** — Removed slow-sql-and-missing-indexes KB article [Entry: 95428c9e-033e-4c24-9608-19b9507a7663]
+  - **Why:** User didn't like the article.
+  - **How:** Deleted knowledge-base/query-patterns/slow-sql-and-missing-indexes.md.
+- **2026-04-05** — Rewrote job-queue-health-check KB article [Entry: c6e9858c-4ae1-45a8-8b14-cbb0d179a72e]
+  - **Why:** Original had wrong event ID mappings and overly complex multi-step queries. User provided real KQL pattern from customer investigations.
+  - **How:** Fixed event IDs (AL0000E24=enqueued, E25=started, E26=finished, HE7=errored), replaced 4 generic steps with single focused query correlating start+finish by alJobQueueScheduledTaskId to compute avg processing time per hour per job.
+- **2026-04-05** — Verified KB articles with script + tests [Entry: 47d31c0b-c878-456f-b797-6c8dc4abafb9]
+  - **Why:** User asked how to verify the KB articles are correct.
+  - **How:** Created /tmp/verify-kb.js that parses all articles from disk and validates frontmatter, then ran existing 27 shared + 8 MCP unit tests. Result: 4 articles, 0 errors, 10 KQL blocks, 13 event IDs.
+- **2026-04-05** — Cross-referenced KB articles against Microsoft Learn telemetry docs and fixed inaccuracies [Entry: 09ac0b9f-9e91-459c-ab77-8730012f242a]
+  - **Why:** User wanted to validate that KB articles contain correct event IDs, field names, and KQL patterns per official docs.
+  - **How:** Fetched 4 MS Learn pages. Found and fixed: lock-timeout used wrong snapshotId field name and had sqlTableName on RT0012 (only on RT0013); wait-stats wrong field name databaseWaitStatisticsTimeMs→databaseWaitTimeInMs and wrong version 22.0→20.0; job-queue added True/Yes support for alJobQueueIsRecurring and bumped appliesTo to 22.2+.
+- **2026-04-05** — Confirmed get_event_field_samples as KB validation source [Entry: c887a7e3-fd56-48f6-84ec-29c3d70bcf6a]
+  - **Why:** User pointed out BCTB itself has get_event_field_samples which returns real field names from live telemetry — better than docs for validation.
+  - **How:** Attempted to call the tool but MCP server not running in this workspace. Confirmed the approach is valid and discussed options for building self-verification into KB.
+- **2026-04-05** — Validated KB articles against live Application Insights telemetry [Entry: 07c2bcfd-b66d-4f32-aea2-0ca01c661319]
+  - **Why:** Use get_event_field_samples / direct API queries to verify KB article field names against actual data in App Insights.
+  - **How:** Queried real customDimensions for RT0012, RT0013, RT0005, RT0026, AL0000HE7 via az rest. Built /tmp/validate-kb-fields.py that cross-references KQL field usage against real fields. Result: all field names confirmed correct, including the databaseWaitTimeInMs fix.
+- **2026-04-05** — Added SERVER_INSTRUCTIONS guidance: KB articles are starting points, always verify with get_event_field_samples [Entry: 3ba39a1c-07b5-4003-8687-ec0668a16851]
+  - **Why:** KB articles may lag behind new BC versions that add fields. Agent should never be limited to only KB-listed fields.
+  - **How:** Updated Knowledge Base section in serverInstructions.ts: agent must always call get_event_field_samples alongside KB articles, compare fields, and notify user when new fields are discovered that could improve the KB article.
+- **2026-04-05** — Set up local MCP testing via npm link [Entry: 97adca7e-5153-4d28-a0ca-49321e873917]
+  - **Why:** User wants to test the get_knowledge tool end-to-end with real MCP.
+  - **How:** Ran npm link in packages/mcp to replace global bctb-mcp (v3.2.5) with local dev build. User needs to reload VS Code window, then test via Copilot Chat. Undo with npm unlink -g.
+- **2026-04-05** — Fixed local KB loading for dev testing [Entry: 623ff89d-5bbb-4717-aad8-f28c95fa835d]
+  - **Why:** MCP showed 0 articles because community KB needs GitHub commit, and local KB scans .vscode/.bctb/knowledge/ not knowledge-base/.
+  - **How:** Copied knowledge-base/ subfolders to .vscode/.bctb/knowledge/ for immediate local testing without commit. Community KB will work once knowledge-base/ is pushed to GitHub.
+- **2026-04-05** — Fix az CLI Python warning at source with PYTHONWARNINGS=ignore [Entry: c19cbe99-7ee8-4c4a-b686-1fe196e5801e]
+  - **Why:** Suppress urllib3/LibreSSL warning properly rather than string-filtering stderr.
+  - **How:** Pass PYTHONWARNINGS=ignore in env to execAsync when calling az account get-access-token. Reverted the stderr string filter since warning no longer appears.
+- **2026-04-05** — Suppress DEP0169 warning in launcher.js [Entry: ebe6ad5e-4ab3-44ed-9935-c9f5082ba639]
+  - **Why:** Node.js url.parse() deprecation warning from a dependency appearing in MCP startup output
+  - **How:** Patched process.emit in launcher.js to drop DEP0169 before Node internal stderr printer
+- **2026-04-05** — Suppress DEP0169 warning in launcher.js [Entry: a45b2edb-f60e-4363-9d18-ab374fec39d9]
+  - **Why:** dep warning from third-party code appearing in MCP startup output
+  - **How:** patched process.emit in launcher.js to drop event before Node stderr printer
+- **2026-04-05** — Fix DEP0169 warning in cli.ts via process.emit patch [Entry: 4b7a334f-7be0-4a63-a7d3-0850aacb799b]
+  - **Why:** proxy-from-env v1.1.0 (used by axios latest) calls url.parse() on first HTTP request; upgrading proxy-from-env to v2.x breaks axios API
+  - **How:** added process.emit intercept in cli.ts after imports to filter DEP0169 before it reaches Node stderr

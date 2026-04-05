@@ -23,6 +23,7 @@ import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInst
 import { ToolHandlers, initializeServices } from './tools/toolHandlers.js';
 import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
 
 /**
  * Convert a JSON Schema property definition to a Zod schema.
@@ -221,6 +222,22 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
 
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);
+
+    // Load Knowledge Base (community + local) — eager load at startup
+    try {
+        const kbConfig: KBConfig = (resolvedConfig as any).knowledgeBase ?? {
+            enabled: true,
+            source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
+            exclude: [],
+            autoRefresh: true,
+            cacheOnly: false,
+        };
+        const kbService = new KnowledgeBaseService(resolvedConfig.workspacePath, kbConfig);
+        await kbService.loadAll();
+        toolHandlers.knowledgeBase = kbService;
+    } catch (err: any) {
+        console.error(`KB load failed (non-fatal): ${err.message}`);
+    }
 
     // Create SDK server with all tools
     const server = createSdkServer(toolHandlers);

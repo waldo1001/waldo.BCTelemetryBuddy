@@ -262,6 +262,26 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             idempotentHint: true,
             openWorldHint: false
         }
+    },
+    {
+        name: 'get_knowledge',
+        description: 'Search the Knowledge Base for proven KQL patterns, event interpretations, investigation playbooks, and vendor-specific patterns. The KB has two layers: community articles (curated, from GitHub) and local articles (your workspace). Use this BEFORE writing KQL from scratch — there may already be a proven pattern. Filter by category, tags, eventId, or free-text search. Local articles are returned first (higher relevance).',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                category: { type: 'string', enum: ['query-pattern', 'event-interpretation', 'playbook', 'vendor-pattern'], description: 'Filter by article category' },
+                tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags (matches any)' },
+                eventId: { type: 'string', description: 'Filter by related BC event ID (e.g. RT0006)' },
+                search: { type: 'string', description: 'Free-text search in titles and content' },
+                source: { type: 'string', enum: ['community', 'local', 'all'], description: 'Filter by source layer (default: all)' }
+            }
+        },
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false
+        }
     }
 ];
 

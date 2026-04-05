@@ -3152,3 +3152,63 @@ Change instructions an business logic to do this."
 > "Can we add anything to BC Telemetry Buddy that can remind the agent to suggest memory usage to users for recurring patterns?"
 
 ---
+### Entry ID: 5e0e041d-a937-423c-a305-e595b5630ee2 — 2026-04-05 11:25
+> "Start implementation — Community Knowledge Base (Issue #107, PR1: Phases 1+2+3)"
+
+---
+### Entry ID: 7c36fda2-3325-4d9c-92a7-0625a8d0dc0d — 2026-04-05 12:00
+> "Continue creating the remaining 4 KB seed articles based on real customer telemetry investigation patterns (slow SQL, job queue, environment upgrades, DB wait stats)."
+
+---
+### Entry ID: 95428c9e-033e-4c24-9608-19b9507a7663 — 2026-04-05 12:14
+> "I dont like the slow-sql and missing indexes .. remove that."
+
+---
+### Entry ID: c6e9858c-4ae1-45a8-8b14-cbb0d179a72e — 2026-04-05 12:18
+> "Analyze a real-world job queue KQL using start/finish event correlation, simplify it to focus only on average processing time per hour per job, and update the KB article."
+
+---
+### Entry ID: 47d31c0b-c878-456f-b797-6c8dc4abafb9 — 2026-04-05 12:21
+> "How can we verify what is in these knowledge base articles?"
+
+---
+### Entry ID: 09ac0b9f-9e91-459c-ab77-8730012f242a — 2026-04-05 12:26
+> "How can we verify KB articles are actually correct? Idea: check against learn.microsoft.com telemetry docs."
+
+---
+### Entry ID: c887a7e3-fd56-48f6-84ec-29c3d70bcf6a — 2026-04-05 12:28
+> "We have a tool in BCTB to check field names too, right? (get_event_field_samples)"
+
+---
+### Entry ID: 07c2bcfd-b66d-4f32-aea2-0ca01c661319 — 2026-04-05 12:39
+> "We have a tool in BCTB to check field names — start the MCP, retry, validate KB against real telemetry data."
+
+---
+### Entry ID: 3ba39a1c-07b5-4003-8687-ec0668a16851 — 2026-04-05 12:42
+> "KB articles should not limit the agent — always check real fields via get_event_field_samples. If new fields arise, notify user that KB article may need updating."
+
+---
+### Entry ID: 97adca7e-5153-4d28-a0ca-49321e873917 — 2026-04-05 12:45
+> "How do I test this? (KB feature end-to-end)"
+
+---
+### Entry ID: 623ff89d-5bbb-4717-aad8-f28c95fa835d — 2026-04-05 12:53
+> "Starting the MCP shows 0 community articles, 0 local articles - do I need to commit first?"
+
+---
+### Entry ID: c19cbe99-7ee8-4c4a-b686-1fe196e5801e — 2026-04-05 13:34
+> "Shouldnt we fix the python warning instead of filtering it?"
+
+---
+### Entry ID: ebe6ad5e-4ab3-44ed-9935-c9f5082ba639 — 2026-04-05 14:06
+> "Fix Node.js url.parse() DEP0169 deprecation warning at MCP startup"
+
+---
+### Entry ID: a45b2edb-f60e-4363-9d18-ab374fec39d9 — 2026-04-05 12:06
+> "Fix Node.js url.parse() DEP0169 deprecation warning at MCP startup"
+
+---
+### Entry ID: 4b7a334f-7be0-4a63-a7d3-0850aacb799b — 2026-04-05 12:38
+> "Trace and fix the url.parse() DEP0169 warning: trace-deprecation showed it was proxy-from-env inside axios"
+
+---

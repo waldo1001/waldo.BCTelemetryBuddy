@@ -144,6 +144,7 @@ export class ToolHandlers {
     public services: ServerServices;
     private isStdioMode: boolean;
     public activeProfileName: string | null = null;
+    public knowledgeBase: any = null;
 
     constructor(
         config: MCPConfig,
@@ -300,6 +301,31 @@ export class ToolHandlers {
                         result = this.services.auth.getStatus();
                     }
                     break;
+
+                case 'get_knowledge': {
+                    if (!this.knowledgeBase) {
+                        result = {
+                            articles: [],
+                            count: 0,
+                            message: 'Knowledge Base is not available. It may be disabled or failed to load at startup.',
+                        };
+                    } else {
+                        const searchParams: any = {};
+                        if (params.category) searchParams.category = params.category;
+                        if (params.tags) searchParams.tags = params.tags;
+                        if (params.eventId) searchParams.eventId = params.eventId;
+                        if (params.search) searchParams.search = params.search;
+                        if (params.source) searchParams.source = params.source;
+                        const articles = this.knowledgeBase.search(searchParams);
+                        const summary = this.knowledgeBase.getSummary();
+                        result = {
+                            articles,
+                            count: articles.length,
+                            summary,
+                        };
+                    }
+                    break;
+                }
 
                 default:
                     throw new Error(`Unknown tool: ${toolName}`);
