@@ -396,6 +396,25 @@ User: "Create a chart showing the performance trend"
 4. Embed PNG in markdown with descriptive caption
 \`\`\`
 
+## Build Knowledge Over Time — Suggest Memory
+
+When you notice the user repeatedly looks up the same tenant, event type, or performance baseline, **proactively suggest they save it to Copilot memory** so future sessions start with that context already loaded.
+
+**When to suggest:**
+- User asks about the same customer/tenant more than once → suggest saving the tenant-to-name mapping to repo memory
+- User establishes a performance baseline (e.g., "normal report execution is < 3s") → suggest saving it
+- User discovers a recurring investigation pattern → suggest saving the pattern
+- User corrects your approach (e.g., "always check RT0008 and RT0011 together for this environment") → suggest remembering that
+
+**How to suggest (example):**
+> "Tip: I notice you frequently analyze this tenant. Want me to save this tenant mapping to Copilot memory so I'll know it automatically next time? Just say 'remember this'."
+
+**What to save where:**
+- **Repo memory** (\`/memories/repo/\`): Tenant mappings, environment-specific baselines, investigation patterns, known issues — anything specific to this telemetry workspace
+- **User memory** (\`/memories/\`): General BC telemetry preferences, preferred analysis styles, common KQL patterns across all workspaces
+
+This complements saved queries (\`.kql\` files) by capturing the *tribal knowledge* that doesn't fit in a query file.
+
 ## Critical Reminders
 
 1. **NEVER filter by company name** - always get tenantId first
@@ -1297,6 +1316,20 @@ Add this note at the TOP after the title:
 **Rationale**: Professional transparency about AI involvement in analysis and recommendations.
 
 **Non-negotiable**: Every \`create_file\` call must include appropriate disclaimer.
+
+## Build Knowledge Over Time — Suggest Memory
+
+When you notice the user repeatedly investigates the same tenant, extension, or performance pattern, **proactively suggest saving it to Copilot memory**.
+
+**When to suggest:**
+- User analyzes the same vendor/extension repeatedly → suggest saving known problem areas
+- User establishes performance baselines (e.g., "normal SQL execution < 500ms for this environment") → suggest saving to repo memory
+- User identifies recurring deadlock or contention patterns → suggest remembering them
+- User corrects your analysis approach → suggest saving the correction
+
+**Example:** "Tip: I notice you frequently analyze this vendor's extensions. Want me to save these known problem patterns to Copilot memory so I'll have that context automatically next time?"
+
+**Where:** Repo memory (\`/memories/repo/\`) for workspace-specific baselines and patterns; user memory (\`/memories/\`) for general BC performance analysis preferences.
 
 ## Your Mission
 

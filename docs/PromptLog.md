@@ -3147,3 +3147,8 @@ Change instructions an business logic to do this."
 > "Patch release v3.1.12 for extension — fixes #104, adds diagnostics command. Commit logged in issue."
 
 ---
+
+### Entry ID: 11ab2854-ed1e-4087-a4fd-cb8c82123832 — 2026-04-05 09:31
+> "Can we add anything to BC Telemetry Buddy that can remind the agent to suggest memory usage to users for recurring patterns?"
+
+---

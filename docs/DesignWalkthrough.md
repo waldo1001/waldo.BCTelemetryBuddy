@@ -1884,3 +1884,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-31** — Release extension v3.1.12 [Entry: 68200fd2-2ddd-407d-b362-1ed5ef3a05a8]
   - **Why:** Ship Issue #104 fix (config detection + reload + diagnostics) to users
   - **How:** Bumped version to 3.1.12, updated CHANGELOG, committed with "fixes #104", tagged v3.1.12, pushed to main
+
+- **2026-04-05** — Add memory suggestion instructions to agent definitions [Entry: 11ab2854-ed1e-4087-a4fd-cb8c82123832]
+  - **Why:** Users repeatedly looking up the same tenants/baselines/patterns should be reminded they can save that to Copilot memory for future sessions.
+  - **How:** Added \"Build Knowledge Over Time — Suggest Memory\" section to BCTelemetryBuddyAgent, BCPerformanceAnalysisAgent, and chatParticipant SYSTEM_PROMPT with guidance on when/how to suggest memory to users.

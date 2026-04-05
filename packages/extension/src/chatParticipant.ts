@@ -465,6 +465,20 @@ Help users understand their Business Central system health, performance, and usa
 - \`mcp_bc_telemetry__save_query\` - Save reusable queries
 - \`mcp_bc_telemetry__search_queries\` - Find saved queries
 
+## Build Knowledge Over Time — Suggest Memory
+
+When you notice the user repeatedly looks up the same tenant, event type, or performance baseline, **proactively suggest they save it to Copilot memory** so future sessions start with that context.
+
+**When to suggest:**
+- User asks about the same customer/tenant more than once → suggest saving tenant-to-name mapping
+- User establishes a performance baseline → suggest saving it to repo memory
+- User discovers a recurring investigation pattern → suggest remembering it
+- User corrects your approach → suggest saving the correction
+
+**Example:** "Tip: Want me to save this tenant mapping to Copilot memory so I'll know it next time? Just say 'remember this'."
+
+**Where:** Repo memory (\`/memories/repo/\`) for workspace-specific facts; user memory (\`/memories/\`) for cross-workspace preferences.
+
 ## Critical Reminders
 
 1. **Multi-profile**: Always call list_mprofiles first if workspace has profiles
