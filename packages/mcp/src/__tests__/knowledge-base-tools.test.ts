@@ -275,4 +275,108 @@ describe('Knowledge Base MCP Tools', () => {
             expect(result.count).toBe(2);
         });
     });
+
+    // =========================================================================
+    // Tool Definition — save_knowledge
+    // =========================================================================
+    describe('Tool Definition — save_knowledge', () => {
+        it('should include save_knowledge in TOOL_DEFINITIONS', () => {
+            const tool = TOOL_DEFINITIONS.find(t => t.name === 'save_knowledge');
+            expect(tool).toBeDefined();
+            expect(tool!.description).toContain('Knowledge Base');
+        });
+
+        it('should require title, category, content, and target', () => {
+            const tool = TOOL_DEFINITIONS.find(t => t.name === 'save_knowledge')!;
+            expect(tool.inputSchema.required).toContain('title');
+            expect(tool.inputSchema.required).toContain('category');
+            expect(tool.inputSchema.required).toContain('content');
+            expect(tool.inputSchema.required).toContain('target');
+        });
+
+        it('should have target enum with local and community', () => {
+            const tool = TOOL_DEFINITIONS.find(t => t.name === 'save_knowledge')!;
+            expect(tool.inputSchema.properties['target'].enum).toEqual(['local', 'community']);
+        });
+
+        it('should NOT be marked as read-only', () => {
+            const tool = TOOL_DEFINITIONS.find(t => t.name === 'save_knowledge')!;
+            expect(tool.annotations?.readOnlyHint).toBe(false);
+        });
+    });
+
+    // =========================================================================
+    // Tool Handler — save_knowledge (local)
+    // =========================================================================
+    describe('executeToolCall - save_knowledge', () => {
+        const SAVE_PARAMS = {
+            title: 'Report Timeout Investigation',
+            category: 'playbook',
+            tags: ['RT0006', 'timeout'],
+            eventIds: ['RT0006'],
+            content: '## Steps\n1. Check RT0006 events.',
+            target: 'local',
+        };
+
+        it('should call saveArticle when target is local', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+
+            const saveResult = { success: true, id: 'report-timeout-investigation', path: '.vscode/.bctb/knowledge/playbook/report-timeout-investigation.md', message: 'Saved.' };
+            const mockKB = {
+                saveArticle: jest.fn().mockResolvedValue(saveResult),
+                contributeArticle: jest.fn(),
+            };
+            (handlers as any).knowledgeBase = mockKB;
+
+            const result = await handlers.executeToolCall('save_knowledge', SAVE_PARAMS);
+
+            expect(mockKB.saveArticle).toHaveBeenCalledWith(expect.objectContaining({
+                title: SAVE_PARAMS.title,
+                category: SAVE_PARAMS.category,
+                tags: SAVE_PARAMS.tags,
+                content: SAVE_PARAMS.content,
+            }));
+            expect(mockKB.contributeArticle).not.toHaveBeenCalled();
+            expect(result.success).toBe(true);
+            expect(result.id).toBe('report-timeout-investigation');
+        });
+
+        it('should call contributeArticle when target is community', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+
+            const contributeResult = { success: true, id: 'report-timeout-investigation', prUrl: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/99', message: 'PR created.' };
+            const mockKB = {
+                saveArticle: jest.fn(),
+                contributeArticle: jest.fn().mockResolvedValue(contributeResult),
+            };
+            (handlers as any).knowledgeBase = mockKB;
+
+            const result = await handlers.executeToolCall('save_knowledge', { ...SAVE_PARAMS, target: 'community' });
+
+            expect(mockKB.contributeArticle).toHaveBeenCalled();
+            expect(mockKB.saveArticle).not.toHaveBeenCalled();
+            expect(result.success).toBe(true);
+            expect(result.prUrl).toBeDefined();
+        });
+
+        it('should throw when required params are missing', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            (handlers as any).knowledgeBase = { saveArticle: jest.fn(), contributeArticle: jest.fn() };
+
+            await expect(handlers.executeToolCall('save_knowledge', { title: 'test' }))
+                .rejects.toThrow('title, category, content, and target are required');
+        });
+
+        it('should throw when KB is not available', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            // No knowledgeBase attached
+
+            await expect(handlers.executeToolCall('save_knowledge', SAVE_PARAMS))
+                .rejects.toThrow('Knowledge Base is not available');
+        });
+    });
 });

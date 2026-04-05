@@ -3220,3 +3220,11 @@ Change instructions an business logic to do this."
 > "Implement get_knowledge as Step 1b in the tool-call workflow (between get_event_catalog and get_event_field_samples), updating serverInstructions.ts, WORKFLOW_PROMPT_CONTENT, chatParticipant.ts, agentDefinitions.ts, and server-instructions test (including bc-telemetry-workflow MCP prompt)."
 
 ---
+### Entry ID: 198ad665-6674-4831-8383-8cc2265534c0 — 2026-04-05 15:42
+> "Fix missing parts of issue 107: add knowledgeBase to MCPConfig type in config.ts (removing as any cast), create scripts/generate-kb-index.js, generate initial index.json from 4 seed articles, add update-kb-index CI job to ci.yml."
+
+---
+### Entry ID: e03fbbf3-aec7-4e6d-808e-44717fb757e4 — 2026-04-05 15:50
+> "Read issue 107 again and verify all is implemented. Fix what was missing: vendor-patterns dir, id field in seed articles, startup log format, Exclude All toggle in webview, eventId filter in webview, dynamic status bar text."
+
+---

@@ -10,10 +10,11 @@ import { registerAgentCommands } from './agent/cli.js';
 // proxy-from-env v1.x uses legacy url.parse(); v2.x (WHATWG) is not yet adopted by axios.
 // The warning fires lazily (on first HTTP request), so patching here — after imports but
 // before any command action runs — is sufficient.
-const _originalEmit = process.emit.bind(process);
-(process as NodeJS.Process).emit = function (event: string, ...args: unknown[]) {
-    if (event === 'warning' && (args[0] as NodeJS.ProcessWarning)?.code === 'DEP0169') return false;
-    return _originalEmit(event, ...args);
+const _originalEmit = process.emit;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(process as any).emit = function (event: string, ...args: unknown[]) {
+    if (event === 'warning' && (args[0] as { code?: string })?.code === 'DEP0169') return false;
+    return _originalEmit.apply(process, [event, ...args] as unknown as Parameters<typeof process.emit>);
 } as typeof process.emit;
 
 const program = new Command();

@@ -8,6 +8,7 @@ import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
 import { ReleaseNotesProvider } from './webviews/ReleaseNotesProvider';
 import { AgentMonitoringSetupProvider } from './webviews/AgentMonitoringSetupProvider';
+import { KnowledgeBaseProvider } from './webviews/KnowledgeBaseProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { AGENT_DEFINITIONS } from './agentDefinitions';
 import { TelemetryService } from './services/telemetryService';
@@ -48,6 +49,8 @@ let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let agentMonitoringWizard: AgentMonitoringSetupProvider | null = null;
+let knowledgeBaseProvider: KnowledgeBaseProvider | null = null;
+let kbStatusBarItem: vscode.StatusBarItem | null = null;
 let extensionContext: vscode.ExtensionContext;
 let vscodeAuthService: VSCodeAuthService | null = null;
 
@@ -425,6 +428,38 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine(`⚠️  ProfileStatusBar initialization failed: ${error.message}`);
     }
 
+    // Initialize Knowledge Base webview provider
+    try {
+        knowledgeBaseProvider = new KnowledgeBaseProvider(context.extensionUri, outputChannel);
+        context.subscriptions.push(knowledgeBaseProvider);
+        outputChannel.appendLine('✓ KnowledgeBaseProvider initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  KnowledgeBaseProvider initialization failed: ${error.message}`);
+    }
+
+    // Initialize KB status bar item
+    try {
+        kbStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
+        kbStatusBarItem.command = 'bctb.manageKnowledgeBase';
+        kbStatusBarItem.tooltip = 'BC Telemetry Buddy — Click to manage Knowledge Base';
+        kbStatusBarItem.text = '$(book) KB';
+        kbStatusBarItem.show();
+        context.subscriptions.push(kbStatusBarItem);
+        outputChannel.appendLine('✓ KB status bar initialized');
+
+        // Initial dynamic text
+        updateKbStatusBar();
+
+        // Refresh status bar if the config or KB cache changes on disk
+        const kbWatcher = vscode.workspace.createFileSystemWatcher('**/.bctb-config.json');
+        kbWatcher.onDidChange(() => updateKbStatusBar());
+        kbWatcher.onDidCreate(() => updateKbStatusBar());
+        kbWatcher.onDidDelete(() => updateKbStatusBar());
+        context.subscriptions.push(kbWatcher);
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  KB status bar initialization failed: ${error.message}`);
+    }
+
     // Initialize VS Code authentication service
     try {
         vscodeAuthService = new VSCodeAuthService(outputChannel);
@@ -627,7 +662,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.setupAgentMonitoring', withCommandTelemetry('setupAgentMonitoring', async () => {
             await agentMonitoringWizard?.show();
         })),
-        vscode.commands.registerCommand('bctb.showDiagnostics', withCommandTelemetry('showDiagnostics', () => showDiagnosticsCommand()))
+        vscode.commands.registerCommand('bctb.showDiagnostics', withCommandTelemetry('showDiagnostics', () => showDiagnosticsCommand())),
+        vscode.commands.registerCommand('bctb.manageKnowledgeBase', withCommandTelemetry('manageKnowledgeBase', async () => {
+            await knowledgeBaseProvider?.show();
+        }))
     );
 
     // Register CodeLens provider for .kql files
@@ -1225,7 +1263,7 @@ async function showDiagnosticsCommand(): Promise<void> {
     lines.push('── Profiles ──');
     if (profileManager) {
         try {
-            const profiles = profileManager.getProfileNames();
+            const profiles = profileManager.listProfiles().map(p => p.name);
             const current = profileManager.getCurrentProfile();
             lines.push(`  Current: ${current || '(default)'}`);
             lines.push(`  Available: ${profiles.length > 0 ? profiles.join(', ') : '(single profile)'}`);
@@ -1820,6 +1858,55 @@ async function switchProfileCommand(): Promise<void> {
 /**
  * Command: Refresh profile status bar
  */
+/**
+ * Updates the KB status bar item to reflect current KB state:
+ * "KB: 47 articles" / "KB: offline (cached)" / "KB: disabled"
+ */
+function updateKbStatusBar(): void {
+    if (!kbStatusBarItem) return;
+    try {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length === 0) {
+            kbStatusBarItem.text = '$(book) KB';
+            return;
+        }
+        const workspacePath = folders[0].uri.fsPath;
+
+        // Read enabled state from config
+        let kbEnabled = true;
+        try {
+            const configPath = require('path').join(workspacePath, '.bctb-config.json');
+            if (require('fs').existsSync(configPath)) {
+                const cfg = JSON.parse(require('fs').readFileSync(configPath, 'utf-8'));
+                kbEnabled = cfg?.knowledgeBase?.enabled !== false;
+            }
+        } catch { /* ignore */ }
+
+        if (!kbEnabled) {
+            kbStatusBarItem.text = '$(book) KB: disabled';
+            kbStatusBarItem.tooltip = 'Community Knowledge Base is disabled. Click to manage.';
+            return;
+        }
+
+        // Count articles from community cache
+        const cachePath = require('path').join(workspacePath, '.vscode', '.bctb', 'kb-cache', 'community-articles.json');
+        if (require('fs').existsSync(cachePath)) {
+            try {
+                const articles: any[] = JSON.parse(require('fs').readFileSync(cachePath, 'utf-8'));
+                const count = articles.length;
+                kbStatusBarItem.text = `$(book) KB: ${count} article${count !== 1 ? 's' : ''}`;
+                kbStatusBarItem.tooltip = `BC Telemetry Buddy — ${count} community KB articles cached. Click to manage.`;
+            } catch {
+                kbStatusBarItem.text = '$(book) KB: offline (cached)';
+                kbStatusBarItem.tooltip = 'KB cache unreadable. Click to manage Knowledge Base.';
+            }
+        } else {
+            kbStatusBarItem.text = '$(book) KB';
+            kbStatusBarItem.tooltip = 'BC Telemetry Buddy — Click to manage Knowledge Base';
+        }
+    } catch { /* never crash the extension */ }
+}
+
 async function refreshProfileStatusBarCommand(): Promise<void> {
     try {
         if (!profileStatusBar) {

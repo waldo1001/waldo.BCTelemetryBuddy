@@ -1,4 +1,5 @@
 ---
+id: database-wait-statistics
 title: "Understanding Database Wait Statistics (RT0026)"
 category: event-interpretation
 tags: [RT0026, wait-stats, performance, database, cpu, memory, locks, resource-exhaustion]

@@ -540,6 +540,151 @@ describe('KnowledgeBaseService', () => {
     });
 
     // =========================================================================
+    // saveArticle
+    // =========================================================================
+    describe('saveArticle', () => {
+        beforeEach(() => {
+            (mockedFs.existsSync as jest.Mock).mockReturnValue(false);
+            (mockedFs.mkdirSync as jest.Mock).mockImplementation(() => undefined);
+            (mockedFs.writeFileSync as jest.Mock).mockImplementation(() => undefined);
+        });
+
+        it('should write the article file with correct frontmatter', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            await service.saveArticle({
+                title: 'Lock Timeout Investigation',
+                category: 'playbook',
+                tags: ['AL0000DD5', 'lock', 'timeout'],
+                eventIds: ['AL0000DD5'],
+                content: '## Steps\n1. Check lock events.',
+            });
+
+            expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(1);
+            const writtenContent = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+            expect(writtenContent).toContain('title: "Lock Timeout Investigation"');
+            expect(writtenContent).toContain('category: playbook');
+            expect(writtenContent).toContain('## Steps');
+        });
+
+        it('should return success result with slug id and path', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            const result = await service.saveArticle({
+                title: 'My Test Article',
+                category: 'query-pattern',
+                content: 'Some content',
+            });
+
+            expect(result.success).toBe(true);
+            expect(result.id).toBe('my-test-article');
+            expect(result.path).toContain('my-test-article.md');
+            expect(result.message).toContain('Saved');
+        });
+
+        it('should add saved article to in-memory catalog', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            (service as any).articles = [];
+
+            await service.saveArticle({
+                title: 'New Local Article',
+                category: 'vendor-pattern',
+                content: 'Vendor specific pattern',
+            });
+
+            const articles = (service as any).articles as KBArticle[];
+            expect(articles.length).toBe(1);
+            expect(articles[0].id).toBe('new-local-article');
+            expect(articles[0].source).toBe('local');
+        });
+
+        it('should replace existing local article with same slug', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            (service as any).articles = [
+                { id: 'my-article', source: 'local', title: 'Old Title', category: 'playbook', tags: [], content: 'old' },
+            ];
+
+            await service.saveArticle({
+                title: 'My Article',
+                category: 'playbook',
+                content: 'Updated content',
+            });
+
+            const articles = (service as any).articles as KBArticle[];
+            expect(articles.length).toBe(1);
+            expect(articles[0].content).toBe('Updated content');
+        });
+
+        it('should create category directory if it does not exist', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            await service.saveArticle({
+                title: 'Test',
+                category: 'event-interpretation',
+                content: 'Content',
+            });
+
+            expect(mockedFs.mkdirSync).toHaveBeenCalledWith(
+                expect.stringContaining('event-interpretation'),
+                { recursive: true }
+            );
+        });
+    });
+
+    // =========================================================================
+    // contributeArticle
+    // =========================================================================
+    describe('contributeArticle', () => {
+        it('should throw when no github token configured', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            delete process.env['BCTB_GITHUB_TOKEN'];
+
+            await expect(service.contributeArticle({
+                title: 'Community Article',
+                category: 'playbook',
+                content: 'Content',
+            })).rejects.toThrow('GitHub token is required');
+        });
+
+        it('should throw when community source URL is invalid', async () => {
+            const badConfig = { ...DEFAULT_KB_CONFIG, githubToken: 'test-token', source: 'not-a-github-url' };
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, badConfig);
+
+            await expect(service.contributeArticle({
+                title: 'Test',
+                category: 'playbook',
+                content: 'Content',
+            })).rejects.toThrow('Cannot parse community KB source URL');
+        });
+
+        it('should create a PR and return prUrl on success', async () => {
+            const configWithToken = { ...DEFAULT_KB_CONFIG, githubToken: 'ghp_test123' };
+            const mockHttpClient = {
+                get: jest.fn()
+                    .mockResolvedValueOnce({ data: { default_branch: 'main' } })
+                    .mockResolvedValueOnce({ data: { object: { sha: 'abc123' } } }),
+                post: jest.fn()
+                    .mockResolvedValueOnce({ data: {} })
+                    .mockResolvedValueOnce({ data: { html_url: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/42' } }),
+                put: jest.fn().mockResolvedValue({ data: {} }),
+            };
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, configWithToken, mockHttpClient as any);
+
+            const result = await service.contributeArticle({
+                title: 'Community Pattern',
+                category: 'query-pattern',
+                tags: ['performance'],
+                content: 'KQL pattern content',
+            });
+
+            expect(result.success).toBe(true);
+            expect(result.prUrl).toBe('https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/42');
+            expect(result.message).toContain('PR created');
+            expect(mockHttpClient.put).toHaveBeenCalledWith(
+                expect.stringContaining('/contents/'),
+                expect.objectContaining({ branch: expect.stringContaining('kb-contribution-') })
+            );
+        });
+    });
+
+    // =========================================================================
     // getSummary
     // =========================================================================
     describe('getSummary', () => {

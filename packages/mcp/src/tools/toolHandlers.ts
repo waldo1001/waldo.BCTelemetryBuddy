@@ -327,6 +327,30 @@ export class ToolHandlers {
                     break;
                 }
 
+                case 'save_knowledge': {
+                    if (!params?.title || !params?.category || !params?.content || !params?.target) {
+                        throw new Error('title, category, content, and target are required.');
+                    }
+                    if (!this.knowledgeBase) {
+                        throw new Error('Knowledge Base is not available. It may be disabled or failed to load at startup.');
+                    }
+                    const saveParams = {
+                        title: params.title,
+                        category: params.category,
+                        tags: params.tags,
+                        eventIds: params.eventIds,
+                        appliesTo: params.appliesTo,
+                        content: params.content,
+                        author: 'local',
+                    };
+                    if (params.target === 'community') {
+                        result = await this.knowledgeBase.contributeArticle(saveParams);
+                    } else {
+                        result = await this.knowledgeBase.saveArticle(saveParams);
+                    }
+                    break;
+                }
+
                 default:
                     throw new Error(`Unknown tool: ${toolName}`);
             }

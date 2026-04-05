@@ -1,4 +1,5 @@
 ---
+id: job-queue-health-check
 title: "Job Queue Health Check — Average Processing Time"
 category: query-pattern
 tags: [job-queue, AL0000E25, AL0000E26, AL0000HE7, scheduling, background-tasks, processing-time]

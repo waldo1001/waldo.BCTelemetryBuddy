@@ -142,6 +142,11 @@
                 "command": "bctb.showDiagnostics",
                 "title": "BC Telemetry Buddy: Show Diagnostics",
                 "icon": "$(info)"
+            },
+            {
+                "command": "bctb.manageKnowledgeBase",
+                "title": "BC Telemetry Buddy: Manage Knowledge Base",
+                "icon": "$(book)"
             }
         ],
         "configuration": {

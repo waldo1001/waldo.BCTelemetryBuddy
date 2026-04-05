@@ -130,6 +130,11 @@
                     "type": "boolean",
                     "description": "Skip GitHub fetch, use cached community KB only",
                     "default": false
+                },
+                "githubToken": {
+                    "type": "string",
+                    "description": "GitHub personal access token for community KB contributions (PR creation). Can also be set via BCTB_GITHUB_TOKEN env var.",
+                    "default": ""
                 }
             }
         },

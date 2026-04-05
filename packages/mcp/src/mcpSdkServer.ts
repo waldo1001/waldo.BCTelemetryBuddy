@@ -225,7 +225,7 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
 
     // Load Knowledge Base (community + local) — eager load at startup
     try {
-        const kbConfig: KBConfig = (resolvedConfig as any).knowledgeBase ?? {
+        const kbConfig: KBConfig = resolvedConfig.knowledgeBase ?? {
             enabled: true,
             source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
             exclude: [],

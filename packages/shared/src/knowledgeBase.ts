@@ -37,6 +37,31 @@ export interface KBConfig {
     exclude: string[];
     autoRefresh: boolean;
     cacheOnly: boolean;
+    githubToken?: string;
+}
+
+export interface KBSaveParams {
+    title: string;
+    category: KBCategory;
+    tags?: string[];
+    eventIds?: string[];
+    appliesTo?: string;
+    content: string;
+    author?: string;
+}
+
+export interface KBSaveResult {
+    success: boolean;
+    id: string;
+    path: string;
+    message: string;
+}
+
+export interface KBContributeResult {
+    success: boolean;
+    id: string;
+    prUrl: string;
+    message: string;
 }
 
 export interface KBLoadResult {
@@ -169,10 +194,13 @@ export class KnowledgeBaseService {
         this.excludedCount = excludedCount;
         this.loadSource = communitySource;
 
+        const sourceLabel = communitySource === 'github' ? 'GitHub [fresh]'
+            : communitySource === 'cache' ? 'cache [offline]'
+                : 'disabled';
         const total = communityArticles.length + localArticles.length;
         console.log(
             `KB loaded: ${communityArticles.length} community articles (${excludedCount} excluded), ` +
-            `${localArticles.length} local articles. Source: ${communitySource}`
+            `${localArticles.length} local articles. Source: ${sourceLabel} + local`
         );
 
         return {
@@ -235,7 +263,173 @@ export class KnowledgeBaseService {
         };
     }
 
+    /**
+     * Save an article to the local workspace KB.
+     * Writes to {workspace}/.vscode/.bctb/knowledge/{category}/{slug}.md
+     * and adds it to the in-memory catalog immediately.
+     */
+    async saveArticle(params: KBSaveParams): Promise<KBSaveResult> {
+        const slug = this.titleToSlug(params.title);
+        const today = new Date().toISOString().slice(0, 10);
+        const frontmatter = this.buildFrontmatter({ ...params, slug, created: today, updated: today });
+        const fileContent = `${frontmatter}\n${params.content.trim()}\n`;
+
+        const categoryDir = path.join(
+            this.workspacePath, '.vscode', '.bctb', 'knowledge', params.category
+        );
+        if (!fs.existsSync(categoryDir)) {
+            fs.mkdirSync(categoryDir, { recursive: true });
+        }
+
+        const filePath = path.join(categoryDir, `${slug}.md`);
+        fs.writeFileSync(filePath, fileContent, 'utf-8');
+
+        // Add to in-memory catalog (or replace existing local article with same slug)
+        const article: KBArticle = {
+            id: slug,
+            title: params.title,
+            category: params.category,
+            tags: params.tags ?? [],
+            eventIds: params.eventIds,
+            appliesTo: params.appliesTo,
+            author: params.author ?? 'local',
+            created: today,
+            updated: today,
+            content: params.content.trim(),
+            source: 'local',
+        };
+        const existing = this.articles.findIndex(a => a.id === slug && a.source === 'local');
+        if (existing >= 0) {
+            this.articles[existing] = article;
+        } else {
+            this.articles.unshift(article); // local first
+        }
+
+        const relPath = path.relative(this.workspacePath, filePath);
+        return {
+            success: true,
+            id: slug,
+            path: relPath,
+            message: `Saved to ${relPath}. Available immediately in this session.`,
+        };
+    }
+
+    /**
+     * Contribute an article to the community KB by creating a GitHub PR.
+     * Requires a GitHub token (knowledgeBase.githubToken or BCTB_GITHUB_TOKEN env var).
+     */
+    async contributeArticle(params: KBSaveParams): Promise<KBContributeResult> {
+        const token = this.config.githubToken || process.env['BCTB_GITHUB_TOKEN'];
+        if (!token) {
+            throw new Error(
+                'A GitHub token is required to contribute to the community KB. ' +
+                'Set knowledgeBase.githubToken in .bctb-config.json or BCTB_GITHUB_TOKEN env var.'
+            );
+        }
+
+        const repoInfo = this.parseGitHubURL(this.config.source);
+        if (!repoInfo) {
+            throw new Error(`Cannot parse community KB source URL: ${this.config.source}`);
+        }
+
+        const slug = this.titleToSlug(params.title);
+        const today = new Date().toISOString().slice(0, 10);
+        const frontmatter = this.buildFrontmatter({ ...params, slug, created: today, updated: today });
+        const fileContent = `${frontmatter}\n${params.content.trim()}\n`;
+
+        const authClient = axios.create({
+            timeout: 30000,
+            headers: {
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'BC-Telemetry-Buddy-KB',
+                'Authorization': `token ${token}`,
+            },
+        });
+
+        // 1. Get default branch SHA
+        const repoResp = await authClient.get(
+            `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}`
+        );
+        const defaultBranch: string = repoResp.data.default_branch;
+        const branchResp = await authClient.get(
+            `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/ref/heads/${defaultBranch}`
+        );
+        const baseSha: string = branchResp.data.object.sha;
+
+        // 2. Create a new branch
+        const branchName = `kb-contribution-${slug}-${Date.now()}`;
+        await authClient.post(
+            `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/refs`,
+            { ref: `refs/heads/${branchName}`, sha: baseSha }
+        );
+
+        // 3. Create the file on the branch
+        const filePath = `${repoInfo.path}/${params.category}/${slug}.md`;
+        await authClient.put(
+            `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${filePath}`,
+            {
+                message: `feat(kb): add ${params.category} article "${params.title}"`,
+                content: Buffer.from(fileContent).toString('base64'),
+                branch: branchName,
+            }
+        );
+
+        // 4. Create PR
+        const prResp = await authClient.post(
+            `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/pulls`,
+            {
+                title: `KB: ${params.title}`,
+                body: `Community Knowledge Base contribution\n\n**Category:** ${params.category}\n**Tags:** ${(params.tags ?? []).join(', ')}\n\nGenerated by BC Telemetry Buddy.`,
+                head: branchName,
+                base: defaultBranch,
+            }
+        );
+
+        const prUrl: string = prResp.data.html_url;
+        return {
+            success: true,
+            id: slug,
+            prUrl,
+            message: `Community PR created: ${prUrl}. Review and merge to publish.`,
+        };
+    }
+
     // --- Private helpers ---
+
+    /**
+     * Convert a title string to a URL-safe slug.
+     */
+    private titleToSlug(title: string): string {
+        return title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .slice(0, 64);
+    }
+
+    /**
+     * Build YAML frontmatter block from save params.
+     */
+    private buildFrontmatter(p: KBSaveParams & { slug: string; created: string; updated: string }): string {
+        const tags = (p.tags && p.tags.length > 0) ? `[${p.tags.join(', ')}]` : '[]';
+        const eventIds = (p.eventIds && p.eventIds.length > 0) ? `[${p.eventIds.join(', ')}]` : undefined;
+        const lines = [
+            '---',
+            `id: ${p.slug}`,
+            `title: "${p.title.replace(/"/g, '\\"')}"`,
+            `category: ${p.category}`,
+            `tags: ${tags}`,
+        ];
+        if (eventIds) lines.push(`eventIds: ${eventIds}`);
+        if (p.appliesTo) lines.push(`appliesTo: "${p.appliesTo}"`);
+        lines.push(`author: ${p.author ?? 'local'}`);
+        lines.push(`created: ${p.created}`);
+        lines.push(`updated: ${p.updated}`);
+        lines.push('---');
+        return lines.join('\n') + '\n';
+    }
 
     /**
      * Simple YAML key-value parser for frontmatter.

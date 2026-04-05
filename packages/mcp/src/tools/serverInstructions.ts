@@ -60,6 +60,13 @@ Call \`query_telemetry\` with KQL that is shaped by what Steps 1-4 told you.
 ### Step 6: Save Useful Queries
 Call \`save_query\` to persist successful queries for future reuse.
 
+### Step 7: Save to Knowledge Base (user-initiated only)
+Call \`save_knowledge\` ONLY when the user EXPLICITLY asks to save a pattern or investigation approach to the KB ("save this for next time", "add to KB", "remember this approach").
+- **NEVER auto-save** — always wait for an explicit user request.
+- Workflow: (1) Present a preview (title, category, tags). (2) Ask: "Local or Community?" (3) Generate content. (4) Call \`save_knowledge\`. (5) Confirm the save path.
+- \`target: "local"\` → saves to workspace KB, available next session.
+- \`target: "community"\` → creates a GitHub PR (requires \`knowledgeBase.githubToken\`).
+
 ## FORBIDDEN Patterns
 
 These patterns are EXPLICITLY BANNED — never use them:
@@ -127,6 +134,7 @@ export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call 
 4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
 5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)
 6. **save_query** → Persist useful queries for reuse
+7. **save_knowledge** → Save investigation patterns to KB (ONLY when user explicitly asks)
 
 UNNECESSARY: Do not use "take 1 | project customDimensions" — get_event_field_samples already does this (samples 20 rows) and returns richer results including field types, occurrence rates, and a ready-to-use query.
 FORBIDDEN: Never guess field names or treat duration fields as numbers (they are TIMESPAN).

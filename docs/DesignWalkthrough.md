@@ -1939,3 +1939,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-05** — Added get_knowledge as Step 2 in 6-step workflow [Entry: 8bd8f1e4-79c9-41f2-b70d-b7c6e1983cf1]
   - **Why:** KB lookup after event discovery gives proven KQL patterns before field sampling, so agents leverage existing knowledge first.
   - **How:** Updated SERVER_INSTRUCTIONS (merged standalone KB section into Step 2, renumbered to 6 steps), WORKFLOW_PROMPT_CONTENT (6-step list), chatParticipant.ts SYSTEM_PROMPT (5 locations), agentDefinitions.ts (4 locations incl. perf agent Step 1b), server-instructions test (6-step name + get_knowledge assertion).
+- **2026-04-05** — Fix issue 107 gaps: KB type safety + index.json CI generation [Entry: 198ad665-6674-4831-8383-8cc2265534c0]
+  - **Why:** MCPConfig lacked the knowledgeBase field (as any cast) and index.json was never generated; issue 107 specifies both as required.
+  - **How:** Added KBConfig import + knowledgeBase?: KBConfig to MCPConfig; created generate-kb-index.js; generated initial index.json (4 articles); added update-kb-index CI job that auto-commits on push to main.
+- **2026-04-05** — Complete issue 107: all remaining gaps closed [Entry: e03fbbf3-aec7-4e6d-808e-44717fb757e4]
+  - **Why:** Thorough re-check revealed 3 hard gaps (vendor-patterns/ missing, no Exclude All toggle, static status bar) and 3 partial issues.
+  - **How:** Created vendor-patterns/ dir + README; added id: frontmatter to 4 seed articles; fixed startup log to show GitHub [fresh]/cache [offline]/disabled; added Exclude All button to KnowledgeBaseProvider webview (sends excludeAll message, writes enabled:false to config); added eventId filter (search now matches tags, title, AND eventIds); added dynamic updateKbStatusBar() to extension.ts with file watcher.

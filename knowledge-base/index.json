@@ -1,0 +1,102 @@
+{
+  "generated": "2026-04-05",
+  "count": 4,
+  "articles": [
+    {
+      "id": "database-wait-statistics",
+      "title": "Understanding Database Wait Statistics (RT0026)",
+      "category": "event-interpretation",
+      "tags": [
+        "RT0026",
+        "wait-stats",
+        "performance",
+        "database",
+        "cpu",
+        "memory",
+        "locks",
+        "resource-exhaustion"
+      ],
+      "eventIds": [
+        "RT0026"
+      ],
+      "appliesTo": "BC 20.0+",
+      "author": "community",
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    {
+      "id": "environment-upgrade-troubleshooting",
+      "title": "Environment Upgrade Troubleshooting (LC Events)",
+      "category": "playbook",
+      "tags": [
+        "upgrade",
+        "LC0101",
+        "LC0105",
+        "LC0106",
+        "LC0107",
+        "LC0017",
+        "LC0155",
+        "lifecycle",
+        "environment"
+      ],
+      "eventIds": [
+        "LC0101",
+        "LC0105",
+        "LC0106",
+        "LC0107",
+        "LC0017",
+        "LC0155"
+      ],
+      "appliesTo": "BC 21.0+",
+      "author": "community",
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    {
+      "id": "job-queue-health-check",
+      "title": "Job Queue Health Check — Average Processing Time",
+      "category": "query-pattern",
+      "tags": [
+        "job-queue",
+        "AL0000E25",
+        "AL0000E26",
+        "AL0000HE7",
+        "scheduling",
+        "background-tasks",
+        "processing-time"
+      ],
+      "eventIds": [
+        "AL0000E24",
+        "AL0000E25",
+        "AL0000E26",
+        "AL0000HE7"
+      ],
+      "appliesTo": "BC 22.2+",
+      "author": "community",
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    {
+      "id": "lock-timeout-investigation",
+      "title": "Investigating Lock Timeouts (RT0012 + RT0013)",
+      "category": "query-pattern",
+      "tags": [
+        "locks",
+        "RT0012",
+        "RT0013",
+        "deadlocks",
+        "timeouts",
+        "performance",
+        "integrations"
+      ],
+      "eventIds": [
+        "RT0012",
+        "RT0013"
+      ],
+      "appliesTo": "BC 21.0+",
+      "author": "community",
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    }
+  ]
+}

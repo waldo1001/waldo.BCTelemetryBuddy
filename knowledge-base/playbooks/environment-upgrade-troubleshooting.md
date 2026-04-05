@@ -1,4 +1,5 @@
 ---
+id: environment-upgrade-troubleshooting
 title: "Environment Upgrade Troubleshooting (LC Events)"
 category: playbook
 tags: [upgrade, LC0101, LC0105, LC0106, LC0107, LC0017, LC0155, lifecycle, environment]

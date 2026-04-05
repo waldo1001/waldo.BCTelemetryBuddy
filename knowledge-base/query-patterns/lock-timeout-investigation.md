@@ -1,4 +1,5 @@
 ---
+id: lock-timeout-investigation
 title: "Investigating Lock Timeouts (RT0012 + RT0013)"
 category: query-pattern
 tags: [locks, RT0012, RT0013, deadlocks, timeouts, performance, integrations]
