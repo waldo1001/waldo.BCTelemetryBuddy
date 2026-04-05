@@ -3228,3 +3228,11 @@ Change instructions an business logic to do this."
 > "Read issue 107 again and verify all is implemented. Fix what was missing: vendor-patterns dir, id field in seed articles, startup log format, Exclude All toggle in webview, eventId filter in webview, dynamic status bar text."
 
 ---
+### Entry ID: c0318716-e8ec-415e-a6d0-2b9c9581f3ee — 2026-04-05 16:14
+> "After a release, builds are failing (CI links provided). Fix all!"
+
+---
+### Entry ID: c3f2089b-b0bd-4717-8c2f-e7ac03cd7dfc — 2026-04-05 16:18
+> "Bump patch release!"
+
+---
