@@ -3252,3 +3252,8 @@ Change instructions an business logic to do this."
 > "CI bot-commit of KB index.json was failing. Drop the auto-commit, validate in CI that index.json is not stale instead. No bot commits needed. Make sure all agent instructions keep the index up-to-date."
 
 ---
+
+### Entry ID: 0602888f-cb71-41d8-a735-60c8837388ec — 2026-04-06 12:19
+> "Replace the complete requirement for creating a pull request, and replace it by creating a decent github issue, where the kb article is decently described."
+
+---

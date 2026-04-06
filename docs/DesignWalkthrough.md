@@ -1963,3 +1963,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Replace bot-commit KB index job with validate-only CI check [Entry: 3c37e8db-235c-4dc6-acf9-99f184226ff6]
   - **Why:** The bot commit in CI was failing due to branch protection; validate-only eliminates the problem category entirely.
   - **How:** Added --check flag to generate-kb-index.js (compares articles, ignores date); swapped update-kb-index CI job for validate-kb-index; added npm run generate-kb-index/check-kb-index scripts; updated copilot-instructions.md rule 9a.
+
+- **2026-04-06** — Replace community KB PR flow with GitHub Issue [Entry: 0602888f-cb71-41d8-a735-60c8837388ec]
+  - **Why:** Simpler contribution path — no fork/branch/PR needed; no-token case returns pre-filled URL instead of throwing an error
+  - **How:** Rewrote contributeArticle() — URL parsed first, issue body built always, token checked after; no token → pre-filled issues/new URL + body; with token → single POST to /issues API. Renamed prUrl→issueUrl, updated toolDefinitions, serverInstructions, config-schema.

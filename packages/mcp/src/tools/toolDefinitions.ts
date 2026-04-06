@@ -265,7 +265,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'save_knowledge',
-        description: 'Save a proven KQL pattern, investigation playbook, or event interpretation to the Knowledge Base. Only call this when the user EXPLICITLY asks to save ("save this for next time", "remember this approach", "add to KB"). NEVER auto-save without user request. Workflow: (1) Present a preview of what will be saved — title, category, tags, content summary. (2) Ask the user: "Local (just your workspace) or Community (PR for everyone)?" (3) Generate the full article content with correct YAML frontmatter. (4) Call this tool. (5) Confirm: "Saved to {path}. Available next session."  For community contributions: requires knowledgeBase.githubToken in .bctb-config.json or BCTB_GITHUB_TOKEN env var.',
+        description: 'Save a proven KQL pattern, investigation playbook, or event interpretation to the Knowledge Base. Only call this when the user EXPLICITLY asks to save ("save this for next time", "remember this approach", "add to KB"). NEVER auto-save without user request. Workflow: (1) Present a preview of what will be saved — title, category, tags, content summary. (2) Ask the user: "Local (just your workspace) or Community (GitHub issue for everyone)?" (3) Generate the full article content with correct YAML frontmatter. (4) Call this tool. (5) Confirm: "Saved to {path}. Available next session."  For community contributions: optionally set knowledgeBase.githubToken in .bctb-config.json or BCTB_GITHUB_TOKEN env var to create the issue automatically; without a token a pre-filled issues/new URL and the full article body are returned so you can submit manually.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -275,7 +275,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
                 eventIds: { type: 'array', items: { type: 'string' }, description: 'Related BC event IDs (e.g. ["RT0006", "RT0007"])' },
                 appliesTo: { type: 'string', description: 'BC version applicability (e.g. "BC 24.0+")' },
                 content: { type: 'string', description: 'Full article body in Markdown (no frontmatter — that is generated automatically)' },
-                target: { type: 'string', enum: ['local', 'community'], description: '"local" writes to workspace KB; "community" creates a GitHub PR' }
+                target: { type: 'string', enum: ['local', 'community'], description: '"local" writes to workspace KB; "community" creates a GitHub issue (or returns a pre-filled URL if no token is configured)' }
             },
             required: ['title', 'category', 'content', 'target']
         },

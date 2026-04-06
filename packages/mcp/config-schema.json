@@ -133,7 +133,7 @@
                 },
                 "githubToken": {
                     "type": "string",
-                    "description": "GitHub personal access token for community KB contributions (PR creation). Can also be set via BCTB_GITHUB_TOKEN env var.",
+                    "description": "GitHub personal access token for community KB contributions (issue creation). Requires issues:write scope. Can also be set via BCTB_GITHUB_TOKEN env var. Optional — without a token the tool returns a pre-filled issues/new URL and article body for manual submission.",
                     "default": ""
                 }
             }

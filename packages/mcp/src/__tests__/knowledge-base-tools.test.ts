@@ -346,7 +346,7 @@ describe('Knowledge Base MCP Tools', () => {
             const services = createMockServices();
             const handlers = new ToolHandlers(TEST_CONFIG, services, true);
 
-            const contributeResult = { success: true, id: 'report-timeout-investigation', prUrl: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/99', message: 'PR created.' };
+            const contributeResult = { success: true, id: 'report-timeout-investigation', issueUrl: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/99', message: 'Issue created.' };
             const mockKB = {
                 saveArticle: jest.fn(),
                 contributeArticle: jest.fn().mockResolvedValue(contributeResult),
@@ -358,7 +358,7 @@ describe('Knowledge Base MCP Tools', () => {
             expect(mockKB.contributeArticle).toHaveBeenCalled();
             expect(mockKB.saveArticle).not.toHaveBeenCalled();
             expect(result.success).toBe(true);
-            expect(result.prUrl).toBeDefined();
+            expect(result.issueUrl).toBeDefined();
         });
 
         it('should throw when required params are missing', async () => {

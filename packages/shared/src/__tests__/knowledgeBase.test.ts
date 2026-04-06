@@ -632,19 +632,8 @@ describe('KnowledgeBaseService', () => {
     // contributeArticle
     // =========================================================================
     describe('contributeArticle', () => {
-        it('should throw when no github token configured', async () => {
-            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
-            delete process.env['BCTB_GITHUB_TOKEN'];
-
-            await expect(service.contributeArticle({
-                title: 'Community Article',
-                category: 'playbook',
-                content: 'Content',
-            })).rejects.toThrow('GitHub token is required');
-        });
-
         it('should throw when community source URL is invalid', async () => {
-            const badConfig = { ...DEFAULT_KB_CONFIG, githubToken: 'test-token', source: 'not-a-github-url' };
+            const badConfig = { ...DEFAULT_KB_CONFIG, source: 'not-a-github-url' };
             const service = new KnowledgeBaseService(WORKSPACE_PATH, badConfig);
 
             await expect(service.contributeArticle({
@@ -654,16 +643,32 @@ describe('KnowledgeBaseService', () => {
             })).rejects.toThrow('Cannot parse community KB source URL');
         });
 
-        it('should create a PR and return prUrl on success', async () => {
+        it('should return pre-filled URL and article body when no token configured', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            delete process.env['BCTB_GITHUB_TOKEN'];
+
+            const result = await service.contributeArticle({
+                title: 'Community Article',
+                category: 'playbook',
+                content: '## My Playbook Content',
+            });
+
+            expect(result.success).toBe(false);
+            expect(result.issueUrl).toContain('github.com/');
+            expect(result.issueUrl).toContain('/issues/new');
+            expect(result.issueUrl).toContain('kb-contribution');
+            expect(result.message).toContain('## My Playbook Content');
+            expect(result.message).toContain('community-article'); // slug in frontmatter
+        });
+
+        it('should create an issue and return issueUrl on success', async () => {
             const configWithToken = { ...DEFAULT_KB_CONFIG, githubToken: 'ghp_test123' };
             const mockHttpClient = {
-                get: jest.fn()
-                    .mockResolvedValueOnce({ data: { default_branch: 'main' } })
-                    .mockResolvedValueOnce({ data: { object: { sha: 'abc123' } } }),
-                post: jest.fn()
-                    .mockResolvedValueOnce({ data: {} })
-                    .mockResolvedValueOnce({ data: { html_url: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/42' } }),
-                put: jest.fn().mockResolvedValue({ data: {} }),
+                get: jest.fn(),
+                post: jest.fn().mockResolvedValue({
+                    data: { html_url: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/42' },
+                }),
+                put: jest.fn(),
             };
             const service = new KnowledgeBaseService(WORKSPACE_PATH, configWithToken, mockHttpClient as any);
 
@@ -675,12 +680,12 @@ describe('KnowledgeBaseService', () => {
             });
 
             expect(result.success).toBe(true);
-            expect(result.prUrl).toBe('https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/42');
-            expect(result.message).toContain('PR created');
-            expect(mockHttpClient.put).toHaveBeenCalledWith(
-                expect.stringContaining('/contents/'),
-                expect.objectContaining({ branch: expect.stringContaining('kb-contribution-') })
-            );
+            expect(result.issueUrl).toBe('https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/42');
+            expect(result.message).toContain('Issue created');
+            // Single POST only — no branch creation, no file upload
+            expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
+            expect(mockHttpClient.get).not.toHaveBeenCalled();
+            expect(mockHttpClient.put).not.toHaveBeenCalled();
         });
     });
 
