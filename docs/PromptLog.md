@@ -3090,3 +3090,7 @@ Change instructions an business logic to do this."
 > "Start implementation (Phase 1: funding fields in package.json + instruction file for Phases 2 & 3)"
 
 ---
+### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30
+> "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
+
+---

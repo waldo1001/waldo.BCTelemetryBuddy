@@ -1840,3 +1840,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-03-06** — Added sponsorship Phase 1 (funding fields) and Phases 2+3 instruction file [Entry: 30e242d7-7ded-49d3-bd3b-c9002678c784]
   - **Why:** Surface GitHub Sponsors link in VS Code Marketplace, npm, and GitHub repo header; provide a roadmap for further sponsor touchpoints.
   - **How:** Added unding field to packages/extension/package.json and packages/mcp/package.json; created Instructions/5. Sponsorship/Phases2and3.md with step-by-step guide for Phases 2 (passive UI) and 3 (one-time milestone notification).
+- **2026-04-06** — Add MCP embedded resources support [Entry: 758a5beb-356d-434d-9434-6b07fdedd9ea]
+  - **Why:** Enable external agents to request query results as file resources instead of inline text, allowing code interpreters (Python/pandas) to process large datasets — aligned with Microsoft BC MCP 2026 Wave 1 pattern.
+  - **How:** Added `resultFormat` and `fileFormat` parameters to `query_telemetry` tool. Created `ExportService` in shared package for CSV/JSON file exports. Modified SDK server to return MCP embedded resources (`{type: 'resource'}`) and registered a resource template (`bctb://exports/{filename}`) for `resources/list` and `resources/read` support. Backward compatible — defaults to `text` format.

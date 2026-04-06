@@ -14,6 +14,7 @@ import {
     CacheService,
     QueriesService,
     ReferencesService,
+    ExportService,
     sanitizeObject,
     lookupEventCategory,
     IUsageTelemetry,
@@ -44,6 +45,20 @@ export interface QueryResult {
 }
 
 /**
+ * Result wrapper for tool calls that may return embedded resources.
+ * When asResource is true, the server layer returns an MCP embedded resource
+ * instead of inline text — keeping the model context lightweight.
+ */
+export interface ToolCallResult {
+    data: any;
+    asResource?: boolean;
+    filePath?: string;
+    fileUri?: string;
+    mimeType?: string;
+    summary?: string;
+}
+
+/**
  * Services container — initialized from config, injected into ToolHandlers
  */
 export interface ServerServices {
@@ -52,6 +67,7 @@ export interface ServerServices {
     cache: CacheService;
     queries: QueriesService;
     references: ReferencesService;
+    exports: ExportService;
     usageTelemetry: IUsageTelemetry;
     installationId: string;
     sessionId: string;
@@ -128,6 +144,7 @@ export function initializeServices(
         cache: new CacheService(config.workspacePath, config.cacheTTLSeconds, config.cacheEnabled),
         queries: new QueriesService(config.workspacePath, config.queriesFolder),
         references: new ReferencesService(config.references, usageTelemetry as any), // ReferencesService accepts cache or telemetry
+        exports: new ExportService(config.workspacePath),
         usageTelemetry,
         installationId,
         sessionId
@@ -319,6 +336,37 @@ export class ToolHandlers {
                 }
             );
             this.services.usageTelemetry.trackEvent('Mcp.ToolCompleted', cleanTelemetryProperties(completedProps), { duration: durationMs });
+
+            // When resultFormat is 'resource', export data to file and return as ToolCallResult
+            if (params?.resultFormat === 'resource' && toolName === 'query_telemetry') {
+                const fileFormat = params?.fileFormat || 'csv';
+                let exportInfo;
+                let summary: string;
+
+                if (fileFormat === 'csv' && result?.columns && result?.rows) {
+                    exportInfo = this.services.exports.exportCsv(result.columns, result.rows, toolName);
+                    summary = `Query returned ${result.rows.length} row(s) with ${result.columns.length} column(s). Results exported as CSV file.`;
+                } else {
+                    exportInfo = this.services.exports.exportJson(result, toolName);
+                    const rowCount = result?.rows?.length ?? 0;
+                    const colCount = result?.columns?.length ?? 0;
+                    summary = rowCount > 0
+                        ? `Query returned ${rowCount} row(s) with ${colCount} column(s). Results exported as JSON file.`
+                        : `Query results exported as JSON file.`;
+                }
+
+                // Lazy cleanup of expired exports
+                this.services.exports.cleanupExpired();
+
+                return {
+                    data: result,
+                    asResource: true,
+                    filePath: exportInfo.filePath,
+                    fileUri: exportInfo.fileUri,
+                    mimeType: exportInfo.mimeType,
+                    summary
+                } as ToolCallResult;
+            }
 
             return result;
         } catch (error: any) {

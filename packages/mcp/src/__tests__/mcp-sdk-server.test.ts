@@ -19,8 +19,13 @@ jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
             server: {},
             registerTool: jest.fn(),
             registerPrompt: jest.fn(),
+            registerResource: jest.fn(),
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn().mockResolvedValue(undefined)
+        })),
+        ResourceTemplate: jest.fn().mockImplementation((uri: string, callbacks: any) => ({
+            uriTemplate: uri,
+            callbacks
         }))
     };
 });
@@ -30,6 +35,8 @@ jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => {
         StdioServerTransport: jest.fn().mockImplementation(() => ({}))
     };
 });
+
+jest.mock('@modelcontextprotocol/sdk/types.js', () => ({}));
 
 // Mock shared modules
 jest.mock('@bctb/shared', () => ({
@@ -58,6 +65,14 @@ jest.mock('@bctb/shared', () => ({
     })),
     ReferencesService: jest.fn().mockImplementation(() => ({
         getAllExternalQueries: jest.fn().mockResolvedValue([])
+    })),
+    ExportService: jest.fn().mockImplementation(() => ({
+        exportJson: jest.fn().mockReturnValue({ filePath: '/test/export.json', fileUri: 'file:///test/export.json', mimeType: 'application/json', filename: 'export.json' }),
+        exportCsv: jest.fn().mockReturnValue({ filePath: '/test/export.csv', fileUri: 'file:///test/export.csv', mimeType: 'text/csv', filename: 'export.csv' }),
+        listExports: jest.fn().mockReturnValue([]),
+        readExport: jest.fn().mockReturnValue(null),
+        cleanupExpired: jest.fn().mockReturnValue(0),
+        getExportsDir: jest.fn().mockReturnValue('/test/exports')
     })),
     sanitizeObject: jest.fn((obj: any) => obj),
     lookupEventCategory: jest.fn().mockResolvedValue({
@@ -122,6 +137,7 @@ function createMockServices(overrides?: any) {
         cache: { get: jest.fn(), set: jest.fn(), getStats: jest.fn(), clear: jest.fn(), cleanupExpired: jest.fn() },
         queries: { getAllQueries: jest.fn().mockReturnValue([]), searchQueries: jest.fn(), saveQuery: jest.fn(), getCategories: jest.fn() },
         references: { getAllExternalQueries: jest.fn() },
+        exports: { exportJson: jest.fn(), exportCsv: jest.fn(), listExports: jest.fn().mockReturnValue([]), readExport: jest.fn(), cleanupExpired: jest.fn(), getExportsDir: jest.fn() },
         usageTelemetry: { trackEvent: jest.fn(), trackException: jest.fn(), flush: jest.fn() },
         installationId: 'test-id',
         sessionId: 'test-session',
@@ -437,6 +453,94 @@ describe('MCP SDK Server', () => {
             const result = await callback({});
 
             expect(result.content[0].text).toBe('plain text result');
+        });
+    });
+
+    describe('Embedded resources support', () => {
+        test('query_telemetry tool definition includes resultFormat and fileFormat parameters', () => {
+            const queryTool = getToolDefinition('query_telemetry');
+            expect(queryTool).toBeDefined();
+            expect(queryTool!.inputSchema.properties).toHaveProperty('resultFormat');
+            expect(queryTool!.inputSchema.properties.resultFormat.enum).toEqual(['text', 'resource']);
+            expect(queryTool!.inputSchema.properties).toHaveProperty('fileFormat');
+            expect(queryTool!.inputSchema.properties.fileFormat.enum).toEqual(['json', 'csv']);
+        });
+
+        test('createSdkServer registers resource template when exportService is provided', async () => {
+            const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+            const { createSdkServer } = require('../mcpSdkServer.js');
+            const { ToolHandlers } = require('../tools/toolHandlers.js');
+            const { ExportService } = require('@bctb/shared');
+
+            const handlers = new ToolHandlers(mockConfig, createMockServices(), true, []);
+            const exportService = new ExportService('/test/workspace');
+            createSdkServer(handlers, exportService);
+
+            const mockInstance = McpServer.mock.results[0].value;
+            expect(mockInstance.registerResource).toHaveBeenCalledTimes(1);
+            expect(mockInstance.registerResource).toHaveBeenCalledWith(
+                'telemetry-export',
+                expect.any(Object), // ResourceTemplate
+                expect.objectContaining({ description: expect.any(String) }),
+                expect.any(Function) // read callback
+            );
+        });
+
+        test('createSdkServer does not register resource template when exportService is not provided', async () => {
+            const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+            const { createSdkServer } = require('../mcpSdkServer.js');
+            const { ToolHandlers } = require('../tools/toolHandlers.js');
+
+            const handlers = new ToolHandlers(mockConfig, createMockServices(), true, []);
+            createSdkServer(handlers); // No exportService
+
+            const mockInstance = McpServer.mock.results[0].value;
+            expect(mockInstance.registerResource).not.toHaveBeenCalled();
+        });
+
+        test('tool callback returns embedded resource when result has asResource flag', async () => {
+            const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+            const { createSdkServer } = require('../mcpSdkServer.js');
+            const { ToolHandlers } = require('../tools/toolHandlers.js');
+
+            const services = createMockServices();
+            const handlers = new ToolHandlers(mockConfig, services, true, []);
+
+            // Mock executeToolCall to return a ToolCallResult with asResource
+            jest.spyOn(handlers, 'executeToolCall').mockResolvedValue({
+                data: { type: 'table', columns: ['a'], rows: [['b']], summary: 'test' },
+                asResource: true,
+                filePath: path.join(__dirname, '../mcpSdkServer.ts'), // Use a real file for readFileSync
+                fileUri: 'file:///test/export.csv',
+                mimeType: 'text/csv',
+                summary: 'Query returned 1 row(s) with 1 column(s). Results exported as CSV file.'
+            });
+
+            createSdkServer(handlers);
+
+            const mockInstance = McpServer.mock.results[0].value;
+            const queryCall = mockInstance.registerTool.mock.calls.find(
+                (c: any[]) => c[0] === 'query_telemetry'
+            );
+            const callback = queryCall[2];
+            const result = await callback({ kql: 'test', resultFormat: 'resource' });
+
+            // Should have 2 content blocks: text summary + embedded resource
+            expect(result.content).toHaveLength(2);
+            expect(result.content[0].type).toBe('text');
+            expect(result.content[0].text).toContain('Query returned 1 row(s)');
+            expect(result.content[1].type).toBe('resource');
+            expect(result.content[1].resource).toHaveProperty('uri', 'file:///test/export.csv');
+            expect(result.content[1].resource).toHaveProperty('mimeType', 'text/csv');
+            expect(result.content[1].resource).toHaveProperty('text');
+        });
+
+        test('server capabilities include resources', () => {
+            const source = fs.readFileSync(
+                path.join(__dirname, '../mcpSdkServer.ts'),
+                'utf-8'
+            );
+            expect(source).toContain('resources: {}');
         });
     });
 
