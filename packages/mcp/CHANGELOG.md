@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-04-06
+
+### Added
+- **Telemetry for Knowledge Base MCP tools**: Dedicated event IDs (`TB-MCP-108` for `get_knowledge`, `TB-MCP-109` for `save_knowledge`) added to `telemetryEvents.ts`. `trackEvent` calls wired into `get_knowledge` and `save_knowledge` handlers in `toolHandlers.ts`.
+
 ## [3.3.0] - 2026-04-05
 
 ### Added

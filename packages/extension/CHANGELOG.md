@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.4] - 2026-04-06
+
+### Added
+- **Telemetry for Knowledge Base interactions**: `trackOperationWithTelemetry` and `trackEvent` calls added to `KnowledgeBaseProvider` for open, refresh, save, and filter actions. New event ID constants in `telemetryEvents.ts` (`KNOWLEDGE_BASE_OPENED`, `KNOWLEDGE_BASE_REFRESHED`, `KNOWLEDGE_BASE_ARTICLE_OPENED`, `KNOWLEDGE_BASE_SAVED`).
+
 ## [3.2.3] - 2026-04-06
 
 ### Added
