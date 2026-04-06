@@ -1957,3 +1957,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Extension patch release v3.2.3 [Entry: f9e2c461-8b3a-4f05-9d7e-2c1a0b4e6d83]
   - **Why:** Ship the Knowledge Base button in Setup Wizard as a patch release.
   - **How:** Bumped version to 3.2.3, updated CHANGELOGs, tagged v3.2.3, pushed to trigger release workflow.
+- **2026-04-06** — Patch release: extension v3.2.4 and MCP v3.3.1 [Entry: 37ac9e35-77eb-4bfa-8aed-5bdb12620e88]
+  - **Why:** Release unreleased telemetry tracking commits for both components.
+  - **How:** Bumped versions, updated CHANGELOGs, committed, tagged v3.2.4 and mcp-v3.3.1, pushed.

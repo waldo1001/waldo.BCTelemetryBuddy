@@ -3244,3 +3244,7 @@ Change instructions an business logic to do this."
 > "Patch release, please!"
 
 ---
+### Entry ID: 37ac9e35-77eb-4bfa-8aed-5bdb12620e88 — 2026-04-06 10:25
+> "perform a patch release of both extension and mcp of the latest changes"
+
+---
