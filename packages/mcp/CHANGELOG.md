@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **MCP Embedded Resources for `query_telemetry`**: New `resultFormat` (`text` | `resource`) and `fileFormat` (`json` | `csv`) parameters. When `resultFormat: "resource"`, query results are returned as an MCP embedded resource file (CSV or JSON) with a brief text summary in model context — enabling agents with code interpreters to process large datasets. Aligned with Microsoft BC MCP 2026 Wave 1 pattern.
+- **Resource template** `bctb://exports/{filename}`: Clients can list and read exported files via `resources/list` and `resources/read`.
+- **`resources` capability** added to server capabilities.
+- **`ExportService`** in shared package: CSV/JSON file exports to `.vscode/.bctb/exports/` with 24h auto-cleanup.
+- **Telemetry**: `TB-MCP-113` (`RESOURCE_EXPORTED`) event ID for tracking resource exports with format and row/column counts.
+
 ## [3.3.4] - 2026-04-06
 
 ### Fixed

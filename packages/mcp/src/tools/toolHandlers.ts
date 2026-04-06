@@ -436,6 +436,23 @@ export class ToolHandlers {
                         : `Query results exported as JSON file.`;
                 }
 
+                // Track resource export telemetry
+                const exportProps = createCommonProperties(
+                    TELEMETRY_EVENTS.MCP_TOOLS.RESOURCE_EXPORTED,
+                    'mcp',
+                    this.services.sessionId,
+                    this.services.installationId,
+                    VERSION,
+                    {
+                        toolName,
+                        profileHash,
+                        fileFormat,
+                        rowCount: String(result?.rows?.length ?? 0),
+                        columnCount: String(result?.columns?.length ?? 0)
+                    }
+                );
+                this.services.usageTelemetry.trackEvent('Mcp.ResourceExported', cleanTelemetryProperties(exportProps));
+
                 // Lazy cleanup of expired exports
                 this.services.exports.cleanupExpired();
 
