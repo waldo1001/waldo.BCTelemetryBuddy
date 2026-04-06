@@ -163,9 +163,12 @@ When adding a new MCP tool, follow this exact sequence:
 - [ ] **Design:** Define tool name, description, inputSchema, annotations
 - [ ] **Test toolDefinition:** Verify tool appears in TOOL_DEFINITIONS array
 - [ ] **Test toolHandler:** Write tests for handler dispatch + business logic
+- [ ] **Test telemetry:** Write tests verifying `usageTelemetry.trackEvent` is called with correct event name/properties
 - [ ] **Scaffold:** Add tool to TOOL_DEFINITIONS, add empty handler case
+- [ ] **Add telemetry event ID:** Add `TOOL_NAME: 'TB-MCP-1xx'` to `TELEMETRY_EVENTS.MCP_TOOLS` in `packages/shared/src/telemetryEvents.ts`
 - [ ] **Verify fail:** Tests should fail on missing logic (not compile errors)
 - [ ] **Implement handler:** Write business logic in toolHandlers.ts
+- [ ] **Add telemetry call:** Call `usageTelemetry.trackEvent` inside the handler case for meaningful outcomes (in addition to the generic `Mcp.ToolCompleted` that fires automatically)
 - [ ] **Verify pass:** All tests green, coverage meets threshold
 - [ ] **Integration check:** Run `npm run build` from root
 - [ ] **Document:** Update CHANGELOG, tool descriptions, UserGuide if needed
@@ -176,9 +179,11 @@ When adding a new extension service or command:
 
 - [ ] **Design:** Define service interface, dependencies, command palette entry
 - [ ] **Test service:** Write tests mocking vscode namespace + @bctb/shared
+- [ ] **Test telemetry:** Write tests verifying `usageTelemetry.trackEvent` or `trackOperationWithTelemetry` is called for key operations
 - [ ] **Scaffold:** Create service file with empty class/methods
 - [ ] **Verify fail:** Tests fail on assertions
 - [ ] **Implement:** Fill in service logic
+- [ ] **Add telemetry:** Use `trackOperationWithTelemetry` for async operations, or `usageTelemetry.trackEvent` for simple events; add event ID constants to `TELEMETRY_EVENTS.EXTENSION` if significant
 - [ ] **Verify pass:** All tests green
 - [ ] **Wire up:** Register command in extension.ts, add to package.json
 - [ ] **Build check:** `npm run build` from root

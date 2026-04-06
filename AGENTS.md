@@ -23,6 +23,7 @@ All instructions, rules, logging requirements, TDD workflow, and behavioral stan
 - Rule 10: SOLID principles and code quality standards
 - Rule 11: Never execute git commands without explicit user request
 - Rule 12: Release workflow automation
+- Rule 13: Always add telemetry for new features and tools (event IDs + trackEvent calls)
 - **Mandatory Skills** — load `.github/skills/tdd-workflow/SKILL.md` before any code change
 - **Default TDD Workflow** — the 6-phase design → test → implement cycle that applies to ALL code changes
 - **Project Architecture Reference** — packages layout, test locations, test commands

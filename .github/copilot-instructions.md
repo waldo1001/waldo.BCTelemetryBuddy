@@ -319,6 +319,73 @@ When testing the MCP server without Claude Desktop or VSCode, use the MCP Inspec
          Changes are ready - please review and commit when you're satisfied."
 ```
 
+### 13. Always add telemetry for new features and tools
+
+**Every new MCP tool and every new extension feature/command MUST include telemetry.** No exceptions. If you add code without telemetry, the implementation is incomplete.
+
+#### MCP Tools
+
+When adding a new MCP tool (e.g., `get_knowledge`, `save_knowledge`):
+
+1. **Add a dedicated event ID** to `TELEMETRY_EVENTS.MCP_TOOLS` in `packages/shared/src/telemetryEvents.ts`:
+   ```typescript
+   GET_KNOWLEDGE: 'TB-MCP-111',
+   SAVE_KNOWLEDGE: 'TB-MCP-112',
+   ```
+   - Use sequential IDs (`TB-MCP-1xx` for tools)
+   - Name matches the tool name in SCREAMING_SNAKE_CASE
+
+2. **The generic completion event** already fires for all tools at the end of `toolHandlers.ts` (`Mcp.ToolCompleted` with `toolName` property). That is the minimum — it covers all tools automatically.
+
+3. **For tools that have meaningful outcomes**, add a tool-specific `trackEvent` call inside the handler case (before `result` is set) using the dedicated event ID:
+   ```typescript
+   case 'save_knowledge': {
+       // ... implementation ...
+       this.services.usageTelemetry.trackEvent(
+           'Mcp.SaveKnowledge',
+           cleanTelemetryProperties(createCommonProperties(
+               TELEMETRY_EVENTS.MCP_TOOLS.SAVE_KNOWLEDGE, 'mcp',
+               this.services.sessionId, this.services.installationId, VERSION,
+               { target: params.target, toolName: 'save_knowledge' }
+           ))
+       );
+   }
+   ```
+
+#### Extension Features
+
+When adding a new extension service, command, or webview provider:
+
+1. **Use `trackOperationWithTelemetry`** from `packages/extension/src/services/extensionTelemetry.ts` to wrap operations that can succeed or fail:
+   ```typescript
+   import { trackOperationWithTelemetry } from '../services/extensionTelemetry.js';
+
+   await trackOperationWithTelemetry(
+       usageTelemetry,
+       'KnowledgeBase.SaveArticle',
+       { category: params.category },
+       async () => { /* ... */ }
+   );
+   ```
+
+2. **For simpler events**, call `usageTelemetry.trackEvent` directly with a descriptive name:
+   ```typescript
+   usageTelemetry.trackEvent('KnowledgeBase.Opened', { source: 'commandPalette' });
+   ```
+
+3. **Add event ID constants** to `TELEMETRY_EVENTS.EXTENSION` in `telemetryEvents.ts` if the event is significant (user actions, errors, lifecycle events).
+
+#### Telemetry Checklist (applies to EVERY feature)
+
+- [ ] Event ID added to `packages/shared/src/telemetryEvents.ts` (if significant)
+- [ ] `trackEvent` or `trackOperationWithTelemetry` called in the handler/service
+- [ ] Tests verify telemetry is called with correct event name and properties (mock `usageTelemetry.trackEvent`)
+- [ ] No sensitive data (tokens, tenant IDs, user content) in telemetry properties
+
+**Why this rule exists:** Telemetry was omitted from `get_knowledge`, `save_knowledge` (MCP) and `KnowledgeBaseProvider` (extension) because there was no explicit instruction requiring it. This rule closes that gap permanently.
+
+---
+
 ### 12. Release workflow automation
 
 **AUTOMATED RELEASE PROCESS** - Use the release script for streamlined releases:
