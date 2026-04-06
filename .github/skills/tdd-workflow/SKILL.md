@@ -13,9 +13,17 @@ description: 'Test-Driven Development workflow for BC Telemetry Buddy. Enforces 
 - Refactoring existing code
 - Any code change that touches packages/shared, packages/mcp, or packages/extension
 
+## HARD GATE — Read this before touching any file
+
+**DO NOT write or edit any source code until you have output a DESIGN block and received explicit user approval.**
+
+This means: read the relevant files, understand the problem, form your plan — then output the DESIGN block and stop. Wait for the user to say "yes", "looks good", "proceed", or equivalent. Only then move to Phase 2.
+
+No exceptions for small changes. No exceptions for "obvious" fixes. The design phase is the cheapest point at which to catch a wrong approach.
+
 ## The 6-Phase TDD Cycle
 
-### Phase 1: DESIGN (Plan Mode)
+### Phase 1: DESIGN (output this, then STOP)
 Before writing ANY code, produce a brief design document covering:
 
 1. **What** — One-line description of the feature/fix

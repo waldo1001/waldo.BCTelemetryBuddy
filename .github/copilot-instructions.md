@@ -540,7 +540,29 @@ Also use any other skills under `.github/skills/` that match the type of work be
 
 Every code change follows a strict 6-phase cycle. This is not an opt-in mode — it is the default way we work.
 
-### Phase 1 — DESIGN (present to user, wait for approval)
+---
+
+### HARD GATE FOR CLAUDE CODE (and all AI agents)
+
+**YOU MAY NOT WRITE OR EDIT ANY SOURCE CODE FILE until you have:**
+
+1. Output a DESIGN block (exact format below) in your response
+2. Received explicit user approval ("yes", "looks good", "proceed", or equivalent)
+
+This is a **blocking rule**. "I know what to do" is not an exception. "It's a small change" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase."
+
+**Why this exists:** Claude Code skips Phase 1 by default because it is wired to be task-completion-oriented. The design phase exists precisely to catch wrong assumptions before any code is written. A 30-second approval gate is cheaper than a wrong implementation.
+
+**Violation pattern to avoid:**
+```
+❌ BAD: User asks for feature → Claude reads files → Claude writes code
+✅ GOOD: User asks for feature → Claude reads files → Claude outputs DESIGN block → User approves → Claude writes tests → Claude implements
+```
+
+---
+
+### Phase 1 — DESIGN (output this, then STOP and wait)
+
 ```
 DESIGN: <feature name>
 
@@ -557,6 +579,10 @@ TEST STRATEGY:
   - <what to mock>
   - <edge cases>
 
+TELEMETRY:
+  - <event IDs to add to telemetryEvents.ts>
+  - <trackEvent calls to add>
+
 Approve this design? (I'll write tests next)
 ```
 
@@ -565,6 +591,7 @@ Approve this design? (I'll write tests next)
 - Follow the mocking patterns from `.github/skills/tdd-workflow/SKILL.md`
 - Cover happy path, error paths, and edge cases
 - Use `describe`/`it` blocks matching the interface from Phase 1
+- **Include telemetry tests**: verify `usageTelemetry.trackEvent` is called with correct name and properties
 
 ### Phase 3 — VERIFY TESTS FAIL
 - Run: `cd packages/<pkg> && npx jest --no-coverage <test-file>`
@@ -591,7 +618,7 @@ Approve this design? (I'll write tests next)
 ### TDD Behavioral Rules
 
 1. **NEVER write implementation code first** — always tests first
-2. **NEVER skip the design phase** — present a plan before writing any code
+2. **NEVER skip the design phase** — output the DESIGN block and wait for approval
 3. **NEVER mark something as done without running tests**
 4. **ALWAYS use `manage_todo_list`** with the 6 phases as todo items
 5. **Run tests in terminal** — never assume tests pass without running them

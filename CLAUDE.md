@@ -6,6 +6,22 @@ Read `AGENTS.md` first. It covers logging rules, TDD workflow, SOLID principles,
 
 ---
 
+## HARD RULE FOR CLAUDE CODE — Read before doing anything else
+
+**You may NOT write or edit any source code file until you have:**
+
+1. Output a DESIGN block (format in `.github/copilot-instructions.md`)
+2. Received explicit user approval
+
+"It's a small change" is not an exception. "I know what to do" is not an exception.  
+The design phase exists to catch wrong assumptions before any code is written.
+
+**Every new feature or tool MUST also include telemetry** (event IDs in `telemetryEvents.ts` + `trackEvent` calls). This is part of the definition of done — not optional.
+
+See `.github/copilot-instructions.md` Rule 13 and the TDD workflow section for the full requirements.
+
+---
+
 ## Quick Reference: Build & Test Commands
 
 ```bash
