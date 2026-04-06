@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-05",
+  "generated": "2026-04-06",
   "count": 4,
   "articles": [
     {
@@ -20,7 +20,7 @@
         "RT0026"
       ],
       "appliesTo": "BC 20.0+",
-      "author": "community",
+      "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
     },
@@ -48,7 +48,7 @@
         "LC0155"
       ],
       "appliesTo": "BC 21.0+",
-      "author": "community",
+      "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
     },
@@ -72,7 +72,7 @@
         "AL0000HE7"
       ],
       "appliesTo": "BC 22.2+",
-      "author": "community",
+      "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
     },
@@ -94,7 +94,7 @@
         "RT0013"
       ],
       "appliesTo": "BC 21.0+",
-      "author": "community",
+      "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
     }

@@ -296,7 +296,7 @@ export class KnowledgeBaseService {
             tags: params.tags ?? [],
             eventIds: params.eventIds,
             appliesTo: params.appliesTo,
-            author: params.author ?? 'local',
+            author: params.author,
             created: today,
             updated: today,
             content: params.content.trim(),
@@ -336,8 +336,7 @@ export class KnowledgeBaseService {
 
         const slug = this.titleToSlug(params.title);
         const today = new Date().toISOString().slice(0, 10);
-        const communityParams = { ...params, author: 'community' };
-        const frontmatter = this.buildFrontmatter({ ...communityParams, slug, created: today, updated: today });
+        const frontmatter = this.buildFrontmatter({ ...params, slug, created: today, updated: today });
         const articleContent = `${frontmatter}\n${params.content.trim()}\n`;
         const filePath = `${repoInfo.path}/${params.category}/${slug}.md`;
 
@@ -429,7 +428,7 @@ export class KnowledgeBaseService {
         ];
         if (eventIds) lines.push(`eventIds: ${eventIds}`);
         if (p.appliesTo) lines.push(`appliesTo: "${p.appliesTo}"`);
-        lines.push(`author: ${p.author ?? 'local'}`);
+        if (p.author) lines.push(`author: ${p.author}`);
         lines.push(`created: ${p.created}`);
         lines.push(`updated: ${p.updated}`);
         lines.push('---');

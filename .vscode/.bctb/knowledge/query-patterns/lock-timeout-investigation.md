@@ -4,7 +4,7 @@ category: query-pattern
 tags: [locks, RT0012, RT0013, deadlocks, timeouts, performance, integrations]
 eventIds: [RT0012, RT0013]
 appliesTo: "BC 21.0+"
-author: community
+author: waldo
 created: 2026-04-05
 updated: 2026-04-05
 ---

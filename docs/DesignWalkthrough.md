@@ -1982,3 +1982,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Add articleMarkdown field for copyable community KB output [Entry: 7f8e44a7-0f17-43aa-9577-ab231944b6b5]
   - **Why:** articleBody contained nested backtick fences which broke the outer code block — only half was selectable
   - **How:** Added articleMarkdown (raw frontmatter+content) to KBContributeResult; agent instructions now use ~~~markdown fences (no conflict with inner backticks)
+- **2026-04-06** — KB author field: real names instead of hardcoded community/local [Entry: b56e6eb7-ffbb-4626-9c77-ce96daf3b5f4]
+  - **Why:** The author field was meaninglessly set to "community" or "local" — user wants real contributor names for attribution.
+  - **How:** Removed author overrides in contributeArticle/saveArticle/buildFrontmatter. Added resolveGitAuthor() in MCP handler using async exec. Updated 8 KB article files, README example, index generator, and all related tests.

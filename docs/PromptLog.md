@@ -3277,3 +3277,7 @@ Change instructions an business logic to do this."
 > "When I now asked to save knowledge to the community, it came back with an url, and with text. Good. But .. The text was not copy-able. I expect a PURE md output, so I can simply select all, and copy from that. Not some output in the agents chat, where only half of it is copy-able."
 
 ---
+### Entry ID: b56e6eb7-ffbb-4626-9c77-ce96daf3b5f4 — 2026-04-06 22:05
+> "Question about knowledge base author field. User wants real author names instead of hardcoded community/local. Approved plan and requested implementation."
+
+---

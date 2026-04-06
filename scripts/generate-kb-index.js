@@ -81,7 +81,7 @@ for (const category of CATEGORIES) {
             tags: Array.isArray(fm.tags) ? fm.tags : (fm.tags ? [fm.tags] : []),
             ...(fm.eventIds && { eventIds: Array.isArray(fm.eventIds) ? fm.eventIds : [fm.eventIds] }),
             ...(fm.appliesTo && { appliesTo: fm.appliesTo }),
-            author: fm.author || 'community',
+            author: fm.author || undefined,
             created: fm.created || '',
             updated: fm.updated || fm.created || '',
         };

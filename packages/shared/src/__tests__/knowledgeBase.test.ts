@@ -39,7 +39,7 @@ category: playbook
 tags: [reports, RT0006, performance, timeout]
 eventIds: [RT0006, RT0007]
 appliesTo: "BC 24.0+"
-author: community
+author: waldo
 created: 2026-04-05
 updated: 2026-04-05
 ---
@@ -152,7 +152,7 @@ describe('KnowledgeBaseService', () => {
             expect(result!.tags).toEqual(['reports', 'RT0006', 'performance', 'timeout']);
             expect(result!.eventIds).toEqual(['RT0006', 'RT0007']);
             expect(result!.appliesTo).toBe('BC 24.0+');
-            expect(result!.author).toBe('community');
+            expect(result!.author).toBe('waldo');
             expect(result!.content).toContain('## When to use this');
             expect(result!.content).toContain('traces | where');
         });
@@ -596,6 +596,39 @@ describe('KnowledgeBaseService', () => {
             expect(articles[0].source).toBe('local');
         });
 
+        it('should store author in article and frontmatter when provided', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            (service as any).articles = [];
+
+            await service.saveArticle({
+                title: 'Authored Article',
+                category: 'playbook',
+                content: 'Content',
+                author: 'Jane Doe',
+            });
+
+            const articles = (service as any).articles as KBArticle[];
+            expect(articles[0].author).toBe('Jane Doe');
+            const writtenContent = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+            expect(writtenContent).toContain('author: Jane Doe');
+        });
+
+        it('should omit author from article and frontmatter when not provided', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            (service as any).articles = [];
+
+            await service.saveArticle({
+                title: 'No Author Article',
+                category: 'playbook',
+                content: 'Content',
+            });
+
+            const articles = (service as any).articles as KBArticle[];
+            expect(articles[0].author).toBeUndefined();
+            const writtenContent = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+            expect(writtenContent).not.toContain('author:');
+        });
+
         it('should replace existing local article with same slug', async () => {
             const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
             (service as any).articles = [
@@ -699,6 +732,33 @@ describe('KnowledgeBaseService', () => {
             expect(mockHttpClient.post).toHaveBeenCalledTimes(1);
             expect(mockHttpClient.get).not.toHaveBeenCalled();
             expect(mockHttpClient.put).not.toHaveBeenCalled();
+        });
+
+        it('should preserve params.author in the generated frontmatter', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            delete process.env['BCTB_GITHUB_TOKEN'];
+
+            const result = await service.contributeArticle({
+                title: 'Authored Article',
+                category: 'playbook',
+                content: '## Content',
+                author: 'Jane Doe',
+            });
+
+            expect(result.articleMarkdown).toContain('author: Jane Doe');
+        });
+
+        it('should omit author line from frontmatter when author is undefined', async () => {
+            const service = new KnowledgeBaseService(WORKSPACE_PATH, DEFAULT_KB_CONFIG);
+            delete process.env['BCTB_GITHUB_TOKEN'];
+
+            const result = await service.contributeArticle({
+                title: 'No Author Article',
+                category: 'playbook',
+                content: '## Content',
+            });
+
+            expect(result.articleMarkdown).not.toContain('author:');
         });
     });
 

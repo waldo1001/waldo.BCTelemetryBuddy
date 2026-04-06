@@ -23,7 +23,7 @@ category: playbook          # query-pattern | event-interpretation | playbook | 
 tags: [relevant, tags, here]
 eventIds: [RT0006, RT0007]  # optional — related BC event IDs
 appliesTo: "BC 24.0+"       # optional — BC version relevance
-author: community
+author: Jane Doe
 created: 2026-04-05
 updated: 2026-04-05
 ---

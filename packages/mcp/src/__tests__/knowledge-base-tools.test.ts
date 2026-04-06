@@ -86,6 +86,26 @@ jest.mock('../mcpTelemetry.js', () => ({
     getMCPInstallationId: jest.fn().mockReturnValue('test-install-id'),
 }));
 
+// Mock child_process for resolveGitAuthor
+jest.mock('child_process', () => ({
+    exec: jest.fn((_cmd: string, callback: Function) => {
+        callback(null, { stdout: 'Test Author\n', stderr: '' });
+    }),
+}));
+jest.mock('util', () => ({
+    ...jest.requireActual('util'),
+    promisify: jest.fn((fn: any) => {
+        return (...args: any[]) => {
+            return new Promise((resolve, reject) => {
+                fn(...args, (err: any, result: any) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                });
+            });
+        };
+    }),
+}));
+
 import { TOOL_DEFINITIONS } from '../tools/toolDefinitions.js';
 import { ToolHandlers, ServerServices } from '../tools/toolHandlers.js';
 import { MCPConfig } from '../config.js';
@@ -336,10 +356,53 @@ describe('Knowledge Base MCP Tools', () => {
                 category: SAVE_PARAMS.category,
                 tags: SAVE_PARAMS.tags,
                 content: SAVE_PARAMS.content,
+                author: 'Test Author',
             }));
             expect(mockKB.contributeArticle).not.toHaveBeenCalled();
             expect(result.success).toBe(true);
             expect(result.id).toBe('report-timeout-investigation');
+        });
+
+        it('should pass resolved git author to contributeArticle for community target', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+
+            const contributeResult = { success: true, id: 'report-timeout-investigation', issueUrl: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/99', message: 'Issue created.' };
+            const mockKB = {
+                saveArticle: jest.fn(),
+                contributeArticle: jest.fn().mockResolvedValue(contributeResult),
+            };
+            (handlers as any).knowledgeBase = mockKB;
+
+            await handlers.executeToolCall('save_knowledge', { ...SAVE_PARAMS, target: 'community' });
+
+            expect(mockKB.contributeArticle).toHaveBeenCalledWith(expect.objectContaining({
+                author: 'Test Author',
+            }));
+        });
+
+        it('should pass undefined author when git config fails', async () => {
+            // Override mock to simulate git failure
+            const { exec } = require('child_process');
+            (exec as jest.Mock).mockImplementationOnce((_cmd: string, callback: Function) => {
+                callback(new Error('git not found'), { stdout: '', stderr: '' });
+            });
+
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+
+            const saveResult = { success: true, id: 'test', path: 'path', message: 'Saved.' };
+            const mockKB = {
+                saveArticle: jest.fn().mockResolvedValue(saveResult),
+                contributeArticle: jest.fn(),
+            };
+            (handlers as any).knowledgeBase = mockKB;
+
+            await handlers.executeToolCall('save_knowledge', SAVE_PARAMS);
+
+            expect(mockKB.saveArticle).toHaveBeenCalledWith(expect.objectContaining({
+                author: undefined,
+            }));
         });
 
         it('should call contributeArticle when target is community', async () => {

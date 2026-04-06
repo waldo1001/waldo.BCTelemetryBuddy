@@ -28,6 +28,20 @@ import {
 import { VERSION } from '../version.js';
 import { createMCPUsageTelemetry, getMCPInstallationId } from '../mcpTelemetry.js';
 import * as crypto from 'crypto';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+async function resolveGitAuthor(): Promise<string | undefined> {
+    try {
+        const { stdout } = await execAsync('git config user.name');
+        const name = stdout.trim();
+        return name || undefined;
+    } catch {
+        return undefined;
+    }
+}
 
 /**
  * Query result for LLM consumption
@@ -364,7 +378,7 @@ export class ToolHandlers {
                         eventIds: params.eventIds,
                         appliesTo: params.appliesTo,
                         content: params.content,
-                        author: 'local',
+                        author: await resolveGitAuthor(),
                     };
                     if (params.target === 'community') {
                         result = await this.knowledgeBase.contributeArticle(saveParams);

@@ -4,7 +4,7 @@ category: event-interpretation
 tags: [RT0026, wait-stats, performance, database, cpu, memory, locks, resource-exhaustion]
 eventIds: [RT0026]
 appliesTo: "BC 20.0+"
-author: community
+author: waldo
 created: 2026-04-05
 updated: 2026-04-05
 ---

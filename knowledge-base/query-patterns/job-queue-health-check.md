@@ -5,7 +5,7 @@ category: query-pattern
 tags: [job-queue, AL0000E25, AL0000E26, AL0000HE7, scheduling, background-tasks, processing-time]
 eventIds: [AL0000E24, AL0000E25, AL0000E26, AL0000HE7]
 appliesTo: "BC 22.2+"
-author: community
+author: waldo
 created: 2026-04-05
 updated: 2026-04-05
 ---

@@ -5,7 +5,7 @@ category: playbook
 tags: [upgrade, LC0101, LC0105, LC0106, LC0107, LC0017, LC0155, lifecycle, environment]
 eventIds: [LC0101, LC0105, LC0106, LC0107, LC0017, LC0155]
 appliesTo: "BC 21.0+"
-author: community
+author: waldo
 created: 2026-04-05
 updated: 2026-04-05
 ---
