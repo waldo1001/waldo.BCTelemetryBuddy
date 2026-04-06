@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.5] - 2026-04-06
+
+### Changed
+- **Knowledge base author attribution**: The `author` field in KB articles now stores the real author name (auto-detected from `git config user.name`) instead of hardcoded `'community'` or `'local'`. If git is unavailable, the field is omitted rather than writing a fake value. Existing articles updated to real author names.
+
 ## [3.3.4] - 2026-04-06
 
 ### Fixed
