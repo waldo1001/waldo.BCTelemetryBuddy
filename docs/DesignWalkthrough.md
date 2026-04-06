@@ -1967,3 +1967,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Replace community KB PR flow with GitHub Issue [Entry: 0602888f-cb71-41d8-a735-60c8837388ec]
   - **Why:** Simpler contribution path — no fork/branch/PR needed; no-token case returns pre-filled URL instead of throwing an error
   - **How:** Rewrote contributeArticle() — URL parsed first, issue body built always, token checked after; no token → pre-filled issues/new URL + body; with token → single POST to /issues API. Renamed prUrl→issueUrl, updated toolDefinitions, serverInstructions, config-schema.
+- **2026-04-06** — Documentation sync: all docs updated to reflect 48h changes [Entry: ce6719c2-9880-4864-af5f-2bb7af6716ed]
+  - **Why:** Recent commits (KB issue flow, CI validate-only, design enforcement, v3.3.2) were not reflected in UserGuide, README, or docs/CHANGELOG.
+  - **How:** Updated What's New section + versions in UserGuide; added KB feature + Show Diagnostics to README features list; prepended 3 new entries to docs/CHANGELOG.md.

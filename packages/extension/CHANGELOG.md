@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.5] - 2026-04-06
+
+### Changed
+- **Community KB contributions now create a GitHub Issue instead of a PR**: clicking "Contribute to community" in the Knowledge Base webview (or via the `save_knowledge` MCP tool with `target: "community"`) opens a pre-filled GitHub issue — no fork or branch required.
+- **CI: KB index is now validate-only**: CI fails if `knowledge-base/index.json` is stale instead of auto-committing a fix. Run `npm run generate-kb-index` locally to regenerate before pushing.
+
+### Documentation
+- **UserGuide updated to v3.2.x**: What's New section, architecture version references, commands table, MCP tools table, and new Knowledge Base configuration section.
+- **README updated**: Community Knowledge Base and Show Diagnostics added to features list.
+- **CHANGELOG updated**: 3 missing recent entries added.
+
 ## [3.2.4] - 2026-04-06
 
 ### Added
