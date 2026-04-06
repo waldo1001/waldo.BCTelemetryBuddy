@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.3] - 2026-04-06
+
+### Added
+- **Knowledge Base button in Setup Wizard**: After saving configuration on the final step, a "📚 Knowledge Base" button now appears alongside "👥 Manage Profiles" in the Next Steps section, allowing users to open the Knowledge Base webview directly from the wizard.
+
 ## [3.2.2] - 2026-04-06
 
 ### Fixed

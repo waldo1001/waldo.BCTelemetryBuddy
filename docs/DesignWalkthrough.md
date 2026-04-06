@@ -1951,3 +1951,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-05** — Extension patch release v3.2.1 [Entry: c3f2089b-b0bd-4717-8c2f-e7ac03cd7dfc]
   - **Why:** Ship the KnowledgeBaseProvider coverage fix as a patch release.
   - **How:** Bumped version to 3.2.1, updated CHANGELOG, tagged v3.2.1, pushed to trigger release workflow.
+- **2026-04-06** — Add Knowledge Base button to Setup Wizard [Entry: a1f4e829-3c7b-4d91-b2e0-7f8c6d5a3b12]
+  - **Why:** User wanted to open the Knowledge Base webview directly from the wizard's final step.
+  - **How:** Added openKnowledgeBase message handler in SetupWizardProvider.ts executing bctb.manageKnowledgeBase; added 📚 Knowledge Base button and list item to Next Steps section; wired click handler.
+- **2026-04-06** — Extension patch release v3.2.3 [Entry: f9e2c461-8b3a-4f05-9d7e-2c1a0b4e6d83]
+  - **Why:** Ship the Knowledge Base button in Setup Wizard as a patch release.
+  - **How:** Bumped version to 3.2.3, updated CHANGELOGs, tagged v3.2.3, pushed to trigger release workflow.

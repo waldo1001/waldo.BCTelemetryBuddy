@@ -3236,3 +3236,11 @@ Change instructions an business logic to do this."
 > "Bump patch release!"
 
 ---
+### Entry ID: a1f4e829-3c7b-4d91-b2e0-7f8c6d5a3b12 — 2026-04-06 00:00
+> "I want the be able to open the knowledge base webview from the setup wizard"
+
+---
+### Entry ID: f9e2c461-8b3a-4f05-9d7e-2c1a0b4e6d83 — 2026-04-06 00:00
+> "Patch release, please!"
+
+---
