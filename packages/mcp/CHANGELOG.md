@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.2] - 2026-04-06
+
+### Changed
+- **Community KB contributions now create a GitHub Issue instead of a PR**: The `save_knowledge` tool (`target: "community"`) no longer requires forking the repo or creating a branch. With a token (`BCTB_GITHUB_TOKEN` / `knowledgeBase.githubToken`, scope `public_repo`), an issue is created automatically. Without a token, a pre-filled `issues/new` URL and the full article body are returned so the user can submit manually — no error thrown.
+- `KBContributeResult.prUrl` renamed to `issueUrl`.
+- `knowledgeBase.githubToken` in `config-schema.json` updated to reflect reduced scope requirement.
+
 ## [3.3.1] - 2026-04-06
 
 ### Added
