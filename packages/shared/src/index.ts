@@ -7,6 +7,7 @@ export * from './sanitize.js';
 export * from './eventLookup.js';
 export * from './references.js';
 export * from './exports.js';
+export * from './knowledgeBase.js';
 
 // Usage telemetry
 export * from './usageTelemetry.js';

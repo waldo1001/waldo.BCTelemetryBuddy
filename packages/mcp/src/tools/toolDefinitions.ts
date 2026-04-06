@@ -264,6 +264,49 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             idempotentHint: true,
             openWorldHint: false
         }
+    },
+    {
+        name: 'save_knowledge',
+        description: 'Save a proven KQL pattern, investigation playbook, or event interpretation to the Knowledge Base. Only call this when the user EXPLICITLY asks to save ("save this for next time", "remember this approach", "add to KB"). NEVER auto-save without user request. Workflow: (1) Present a preview of what will be saved — title, category, tags, content summary. (2) Ask the user: "Local (just your workspace) or Community (GitHub issue for everyone)?" (3) Generate the full article content with correct YAML frontmatter. (4) Call this tool. (5) Confirm: "Saved to {path}. Available next session."  For community contributions: optionally set knowledgeBase.githubToken in .bctb-config.json or BCTB_GITHUB_TOKEN env var to create the issue automatically. Without a token the result has success: false — you MUST then: (a) show the issueUrl as a clickable link, (b) display the full articleMarkdown as a ~~~markdown code block (NOT backtick-fenced — the content contains backticks which would break a backtick fence) labelled "Paste this into the issue description:" so the user can copy it directly.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                title: { type: 'string', description: 'Article title (clear, descriptive, searchable)' },
+                category: { type: 'string', enum: ['query-pattern', 'event-interpretation', 'playbook', 'vendor-pattern'], description: 'Article category' },
+                tags: { type: 'array', items: { type: 'string' }, description: 'Searchable tags (e.g. ["RT0006", "performance", "timeout"])' },
+                eventIds: { type: 'array', items: { type: 'string' }, description: 'Related BC event IDs (e.g. ["RT0006", "RT0007"])' },
+                appliesTo: { type: 'string', description: 'BC version applicability (e.g. "BC 24.0+")' },
+                content: { type: 'string', description: 'Full article body in Markdown (no frontmatter — that is generated automatically)' },
+                target: { type: 'string', enum: ['local', 'community'], description: '"local" writes to workspace KB; "community" creates a GitHub issue (or returns a pre-filled URL if no token is configured)' }
+            },
+            required: ['title', 'category', 'content', 'target']
+        },
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+            openWorldHint: false
+        }
+    },
+    {
+        name: 'get_knowledge',
+        description: 'Search the Knowledge Base for proven KQL patterns, event interpretations, investigation playbooks, and vendor-specific patterns. The KB has two layers: community articles (curated, from GitHub) and local articles (your workspace). Use this BEFORE writing KQL from scratch — there may already be a proven pattern. Filter by category, tags, eventId, or free-text search. Local articles are returned first (higher relevance).',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                category: { type: 'string', enum: ['query-pattern', 'event-interpretation', 'playbook', 'vendor-pattern'], description: 'Filter by article category' },
+                tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags (matches any)' },
+                eventId: { type: 'string', description: 'Filter by related BC event ID (e.g. RT0006)' },
+                search: { type: 'string', description: 'Free-text search in titles and content' },
+                source: { type: 'string', enum: ['community', 'local', 'all'], description: 'Filter by source layer (default: all)' }
+            }
+        },
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false
+        }
     }
 ];
 

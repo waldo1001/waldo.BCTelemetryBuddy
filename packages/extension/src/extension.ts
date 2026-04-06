@@ -8,6 +8,7 @@ import { SetupWizardProvider } from './webviews/SetupWizardProvider';
 import { ProfileWizardProvider } from './webviews/ProfileWizardProvider';
 import { ReleaseNotesProvider } from './webviews/ReleaseNotesProvider';
 import { AgentMonitoringSetupProvider } from './webviews/AgentMonitoringSetupProvider';
+import { KnowledgeBaseProvider } from './webviews/KnowledgeBaseProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { AGENT_DEFINITIONS } from './agentDefinitions';
 import { TelemetryService } from './services/telemetryService';
@@ -48,6 +49,8 @@ let profileWizard: ProfileWizardProvider | null = null;
 let outputChannel: vscode.OutputChannel;
 let setupWizard: SetupWizardProvider | null = null;
 let agentMonitoringWizard: AgentMonitoringSetupProvider | null = null;
+let knowledgeBaseProvider: KnowledgeBaseProvider | null = null;
+let kbStatusBarItem: vscode.StatusBarItem | null = null;
 let extensionContext: vscode.ExtensionContext;
 let vscodeAuthService: VSCodeAuthService | null = null;
 
@@ -425,6 +428,38 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine(`⚠️  ProfileStatusBar initialization failed: ${error.message}`);
     }
 
+    // Initialize Knowledge Base webview provider
+    try {
+        knowledgeBaseProvider = new KnowledgeBaseProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
+        context.subscriptions.push(knowledgeBaseProvider);
+        outputChannel.appendLine('✓ KnowledgeBaseProvider initialized');
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  KnowledgeBaseProvider initialization failed: ${error.message}`);
+    }
+
+    // Initialize KB status bar item
+    try {
+        kbStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
+        kbStatusBarItem.command = 'bctb.manageKnowledgeBase';
+        kbStatusBarItem.tooltip = 'BC Telemetry Buddy — Click to manage Knowledge Base';
+        kbStatusBarItem.text = '$(book) KB';
+        kbStatusBarItem.show();
+        context.subscriptions.push(kbStatusBarItem);
+        outputChannel.appendLine('✓ KB status bar initialized');
+
+        // Initial dynamic text
+        updateKbStatusBar();
+
+        // Refresh status bar if the config or KB cache changes on disk
+        const kbWatcher = vscode.workspace.createFileSystemWatcher('**/.bctb-config.json');
+        kbWatcher.onDidChange(() => updateKbStatusBar());
+        kbWatcher.onDidCreate(() => updateKbStatusBar());
+        kbWatcher.onDidDelete(() => updateKbStatusBar());
+        context.subscriptions.push(kbWatcher);
+    } catch (error: any) {
+        outputChannel.appendLine(`⚠️  KB status bar initialization failed: ${error.message}`);
+    }
+
     // Initialize VS Code authentication service
     try {
         vscodeAuthService = new VSCodeAuthService(outputChannel);
@@ -441,6 +476,40 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine(`⚠️  TelemetryService initialization failed: ${error.message}`);
         outputChannel.appendLine('   Extension commands will not work until workspace is configured');
     }
+
+    // Register config reload command (called by setup wizard after saving, and by file watcher)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('bctb.reloadConfig', () => {
+            outputChannel.appendLine('[Config] Reloading configuration...');
+            if (telemetryService) {
+                try {
+                    telemetryService.reloadConfig();
+                    outputChannel.appendLine('[Config] ✓ TelemetryService configuration reloaded');
+                } catch (error: any) {
+                    outputChannel.appendLine(`[Config] ⚠️  TelemetryService reload failed: ${error.message}`);
+                }
+            } else {
+                try {
+                    telemetryService = new TelemetryService(outputChannel);
+                    outputChannel.appendLine('[Config] ✓ TelemetryService initialized after config change');
+                } catch (error: any) {
+                    outputChannel.appendLine(`[Config] ⚠️  TelemetryService initialization failed: ${error.message}`);
+                }
+            }
+        })
+    );
+
+    // Watch for .bctb-config.json changes (covers manual edits and wizard saves)
+    const configWatcher = vscode.workspace.createFileSystemWatcher('**/.bctb-config.json');
+    configWatcher.onDidCreate(() => {
+        outputChannel.appendLine('[Config] .bctb-config.json created — reloading configuration');
+        vscode.commands.executeCommand('bctb.reloadConfig');
+    });
+    configWatcher.onDidChange(() => {
+        outputChannel.appendLine('[Config] .bctb-config.json changed — reloading configuration');
+        vscode.commands.executeCommand('bctb.reloadConfig');
+    });
+    context.subscriptions.push(configWatcher);
 
     // Initialize MCP client for HTTP mode (legacy)
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -592,6 +661,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('bctb.resetTelemetryId', withCommandTelemetry('resetTelemetryId', () => resetTelemetryIdCommand(context))),
         vscode.commands.registerCommand('bctb.setupAgentMonitoring', withCommandTelemetry('setupAgentMonitoring', async () => {
             await agentMonitoringWizard?.show();
+        })),
+        vscode.commands.registerCommand('bctb.showDiagnostics', withCommandTelemetry('showDiagnostics', () => showDiagnosticsCommand())),
+        vscode.commands.registerCommand('bctb.manageKnowledgeBase', withCommandTelemetry('manageKnowledgeBase', async () => {
+            await knowledgeBaseProvider?.show();
         }))
     );
 
@@ -756,15 +829,36 @@ export function deactivate() {
  * Check if workspace has BCTB settings configured
  */
 function hasWorkspaceSettings(): boolean {
-    // CRITICAL: Use resource-scoped configuration for the workspace folder
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    const folderUri = workspaceFolders && workspaceFolders.length > 0 ? workspaceFolders[0].uri : undefined;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        outputChannel.appendLine('[Config Check] No workspace folders open');
+        return false;
+    }
+
+    outputChannel.appendLine(`[Config Check] Checking ${workspaceFolders.length} workspace folder(s)...`);
+
+    // Check .bctb-config.json first (new config format, used by Setup Wizard)
+    for (const folder of workspaceFolders) {
+        const configPath = path.join(folder.uri.fsPath, '.bctb-config.json');
+        const exists = fs.existsSync(configPath);
+        outputChannel.appendLine(`[Config Check]   ${exists ? '✓' : '✗'} .bctb-config.json in ${folder.name}`);
+        if (exists) {
+            outputChannel.appendLine('[Config Check] → Found config file');
+            return true;
+        }
+    }
+
+    // Fallback: check settings.json (legacy)
+    const folderUri = workspaceFolders[0].uri;
     const config = vscode.workspace.getConfiguration('bctb.mcp', folderUri);
     const tenantId = config.get<string>('tenantId');
     const appInsightsId = config.get<string>('applicationInsights.appId');
     const kustoUrl = config.get<string>('kusto.clusterUrl');
 
-    return !!(tenantId && appInsightsId && kustoUrl);
+    const hasLegacy = !!(tenantId && appInsightsId && kustoUrl);
+    outputChannel.appendLine(`[Config Check] Legacy settings.json: tenantId=${tenantId ? 'set' : 'empty'}, appInsightsId=${appInsightsId ? 'set' : 'empty'}, kustoUrl=${kustoUrl ? 'set' : 'empty'} → ${hasLegacy ? 'configured' : 'not configured'}`);
+
+    return hasLegacy;
 }
 
 /**
@@ -1046,13 +1140,13 @@ async function startMCPCommand(): Promise<void> {
     try {
         if (!hasWorkspaceSettings()) {
             const result = await vscode.window.showWarningMessage(
-                'No BCTB settings found in workspace. Configure settings first?',
-                'Open Settings',
+                'No BCTB settings found in workspace. Run the setup wizard to configure?',
+                'Run Setup Wizard',
                 'Cancel'
             );
 
-            if (result === 'Open Settings') {
-                await vscode.commands.executeCommand('workbench.action.openWorkspaceSettingsFile');
+            if (result === 'Run Setup Wizard') {
+                await vscode.commands.executeCommand('bctb.setupWizard');
             }
             return;
         }
@@ -1062,6 +1156,142 @@ async function startMCPCommand(): Promise<void> {
     } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to start MCP: ${err.message}`);
         outputChannel.show();
+    }
+}
+
+/**
+ * Command: Show Diagnostics
+ * Dumps a comprehensive diagnostic report to the output channel and offers to copy to clipboard.
+ */
+async function showDiagnosticsCommand(): Promise<void> {
+    const lines: string[] = [];
+    const timestamp = new Date().toISOString();
+
+    lines.push('═══════════════════════════════════════════════════');
+    lines.push(`  BC Telemetry Buddy — Diagnostic Report`);
+    lines.push(`  Generated: ${timestamp}`);
+    lines.push('═══════════════════════════════════════════════════');
+    lines.push('');
+
+    // Extension info
+    lines.push('── Extension ──');
+    lines.push(`  Version: ${extensionVersion || 'unknown'}`);
+    lines.push(`  VS Code: ${vscode.version}`);
+    lines.push(`  OS: ${process.platform} (${process.arch})`);
+    lines.push(`  Node: ${process.version}`);
+    lines.push('');
+
+    // Workspace folders
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    lines.push('── Workspace Folders ──');
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        lines.push('  (none)');
+    } else {
+        for (const folder of workspaceFolders) {
+            const configPath = path.join(folder.uri.fsPath, '.bctb-config.json');
+            const hasConfig = fs.existsSync(configPath);
+            lines.push(`  ${folder.name}: ${folder.uri.fsPath}`);
+            lines.push(`    .bctb-config.json: ${hasConfig ? '✓ found' : '✗ not found'}`);
+            if (hasConfig) {
+                try {
+                    const raw = fs.readFileSync(configPath, 'utf-8');
+                    const cfg = JSON.parse(raw);
+                    lines.push(`    connectionName: ${cfg.connectionName || '(not set)'}`);
+                    lines.push(`    authFlow: ${cfg.authFlow || '(not set)'}`);
+                    lines.push(`    tenantId: ${cfg.tenantId ? cfg.tenantId.substring(0, 8) + '...' : '(not set)'}`);
+                    lines.push(`    applicationInsightsAppId: ${cfg.applicationInsightsAppId ? cfg.applicationInsightsAppId.substring(0, 8) + '...' : '(not set)'}`);
+                    lines.push(`    kustoClusterUrl: ${cfg.kustoClusterUrl ? 'set' : '(not set)'}`);
+                    lines.push(`    cacheEnabled: ${cfg.cacheEnabled}`);
+                    lines.push(`    profiles: ${cfg.profiles ? Object.keys(cfg.profiles).join(', ') : '(single profile)'}`);
+                } catch (e: any) {
+                    lines.push(`    ⚠ Error reading config: ${e.message}`);
+                }
+            }
+        }
+    }
+    lines.push('');
+
+    // Legacy settings check
+    lines.push('── Legacy Settings (settings.json) ──');
+    if (workspaceFolders && workspaceFolders.length > 0) {
+        const config = vscode.workspace.getConfiguration('bctb.mcp', workspaceFolders[0].uri);
+        const tenantId = config.get<string>('tenantId');
+        const appInsightsId = config.get<string>('applicationInsights.appId');
+        const kustoUrl = config.get<string>('kusto.clusterUrl');
+        const authFlow = config.get<string>('authFlow');
+        lines.push(`  tenantId: ${tenantId ? 'set' : '(empty)'}`);
+        lines.push(`  applicationInsights.appId: ${appInsightsId ? 'set' : '(empty)'}`);
+        lines.push(`  kusto.clusterUrl: ${kustoUrl ? 'set' : '(empty)'}`);
+        lines.push(`  authFlow: ${authFlow || '(empty)'}`);
+    } else {
+        lines.push('  (no workspace)');
+    }
+    lines.push('');
+
+    // hasWorkspaceSettings result
+    lines.push('── Config Detection ──');
+    const detected = hasWorkspaceSettings();
+    lines.push(`  hasWorkspaceSettings(): ${detected}`);
+    lines.push('');
+
+    // TelemetryService status
+    lines.push('── TelemetryService ──');
+    lines.push(`  Instance: ${telemetryService ? 'created' : 'null (not initialized)'}`);
+    if (telemetryService) {
+        lines.push(`  isConfigured(): ${telemetryService.isConfigured()}`);
+    }
+    lines.push('');
+
+    // MCP process status
+    lines.push('── MCP Process ──');
+    if (mcpProcess) {
+        lines.push(`  Status: running`);
+        lines.push(`  Port: ${mcpProcess.port}`);
+        lines.push(`  Workspace: ${mcpProcess.workspacePath}`);
+        try {
+            const healthy = await mcpClient?.healthCheck();
+            lines.push(`  Health: ${healthy ? '✓ healthy' : '✗ unhealthy'}`);
+        } catch {
+            lines.push(`  Health: ✗ unreachable`);
+        }
+    } else {
+        lines.push('  Status: not running');
+    }
+    lines.push('');
+
+    // Profile info
+    lines.push('── Profiles ──');
+    if (profileManager) {
+        try {
+            const profiles = profileManager.listProfiles().map(p => p.name);
+            const current = profileManager.getCurrentProfile();
+            lines.push(`  Current: ${current || '(default)'}`);
+            lines.push(`  Available: ${profiles.length > 0 ? profiles.join(', ') : '(single profile)'}`);
+        } catch {
+            lines.push('  (error reading profiles)');
+        }
+    } else {
+        lines.push('  ProfileManager: not initialized');
+    }
+    lines.push('');
+    lines.push('═══════════════════════════════════════════════════');
+    lines.push('Tip: Copy this report and include it in bug reports');
+    lines.push('═══════════════════════════════════════════════════');
+
+    // Write to output channel
+    const report = lines.join('\n');
+    outputChannel.appendLine('');
+    outputChannel.appendLine(report);
+    outputChannel.show();
+
+    // Offer to copy to clipboard
+    const action = await vscode.window.showInformationMessage(
+        'Diagnostics written to Output panel.',
+        'Copy to Clipboard'
+    );
+    if (action === 'Copy to Clipboard') {
+        await vscode.env.clipboard.writeText(report);
+        vscode.window.showInformationMessage('Diagnostics copied to clipboard.');
     }
 }
 
@@ -1628,6 +1858,55 @@ async function switchProfileCommand(): Promise<void> {
 /**
  * Command: Refresh profile status bar
  */
+/**
+ * Updates the KB status bar item to reflect current KB state:
+ * "KB: 47 articles" / "KB: offline (cached)" / "KB: disabled"
+ */
+function updateKbStatusBar(): void {
+    if (!kbStatusBarItem) return;
+    try {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length === 0) {
+            kbStatusBarItem.text = '$(book) KB';
+            return;
+        }
+        const workspacePath = folders[0].uri.fsPath;
+
+        // Read enabled state from config
+        let kbEnabled = true;
+        try {
+            const configPath = require('path').join(workspacePath, '.bctb-config.json');
+            if (require('fs').existsSync(configPath)) {
+                const cfg = JSON.parse(require('fs').readFileSync(configPath, 'utf-8'));
+                kbEnabled = cfg?.knowledgeBase?.enabled !== false;
+            }
+        } catch { /* ignore */ }
+
+        if (!kbEnabled) {
+            kbStatusBarItem.text = '$(book) KB: disabled';
+            kbStatusBarItem.tooltip = 'Community Knowledge Base is disabled. Click to manage.';
+            return;
+        }
+
+        // Count articles from community cache
+        const cachePath = require('path').join(workspacePath, '.vscode', '.bctb', 'kb-cache', 'community-articles.json');
+        if (require('fs').existsSync(cachePath)) {
+            try {
+                const articles: any[] = JSON.parse(require('fs').readFileSync(cachePath, 'utf-8'));
+                const count = articles.length;
+                kbStatusBarItem.text = `$(book) KB: ${count} article${count !== 1 ? 's' : ''}`;
+                kbStatusBarItem.tooltip = `BC Telemetry Buddy — ${count} community KB articles cached. Click to manage.`;
+            } catch {
+                kbStatusBarItem.text = '$(book) KB: offline (cached)';
+                kbStatusBarItem.tooltip = 'KB cache unreadable. Click to manage Knowledge Base.';
+            }
+        } else {
+            kbStatusBarItem.text = '$(book) KB';
+            kbStatusBarItem.tooltip = 'BC Telemetry Buddy — Click to manage Knowledge Base';
+        }
+    } catch { /* never crash the extension */ }
+}
+
 async function refreshProfileStatusBarCommand(): Promise<void> {
     try {
         if (!profileStatusBar) {

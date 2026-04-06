@@ -432,14 +432,16 @@ describe('AgentContextManager', () => {
         });
 
         it('should move resolved issues to resolvedIssues', () => {
+            const recentDate = new Date();
+            recentDate.setDate(recentDate.getDate() - 1); // yesterday — within TTL
             const prev = createTestState({
                 activeIssues: [
                     {
                         id: 'issue-001',
                         fingerprint: 'fp-001',
                         title: 'Will resolve',
-                        firstSeen: '2026-02-24T08:00:00.000Z',
-                        lastSeen: '2026-02-24T10:00:00.000Z',
+                        firstSeen: recentDate.toISOString(),
+                        lastSeen: recentDate.toISOString(),
                         consecutiveDetections: 2,
                         trend: 'stable',
                         counts: [5, 3],

@@ -91,6 +91,9 @@ export class SetupWizardProvider {
                     case 'manageProfiles':
                         await vscode.commands.executeCommand('bctb.manageProfiles');
                         break;
+                    case 'openKnowledgeBase':
+                        await vscode.commands.executeCommand('bctb.manageKnowledgeBase');
+                        break;
                 }
             },
             null,
@@ -379,6 +382,9 @@ export class SetupWizardProvider {
             await vscode.workspace.fs.writeFile(configFilePath, configBuffer);
 
             console.log('Saved config to .bctb-config.json:', config);
+
+            // Notify extension to reload configuration
+            await vscode.commands.executeCommand('bctb.reloadConfig');
 
             this._panel?.webview.postMessage({
                 type: 'configSaved',
@@ -1102,11 +1108,13 @@ export class SetupWizardProvider {
                 <p>Your configuration is saved! Here's what you can do next:</p>
                 <ul style="line-height: 2;">
                     <li><strong>Manage Profiles:</strong> Create, edit, or switch between multiple customer profiles</li>
+                    <li><strong>Knowledge Base:</strong> Browse and manage community articles and local documentation</li>
                     <li><strong>Query Telemetry:</strong> Use the chat participant (@bc-telemetry-buddy) to analyze your data</li>
                     <li><strong>Run KQL:</strong> Execute KQL queries directly from .kql files</li>
                 </ul>
                 <div style="margin-top: 15px;">
                     <button id="btn-manage-profiles" style="margin-right: 10px;">👥 Manage Profiles</button>
+                    <button id="btn-open-knowledge-base">📚 Knowledge Base</button>
                 </div>
             </div>
 
@@ -1773,6 +1781,9 @@ export class SetupWizardProvider {
             document.getElementById('btn-finish').addEventListener('click', finish);
             document.getElementById('btn-manage-profiles').addEventListener('click', function() {
                 vscode.postMessage({ type: 'manageProfiles' });
+            });
+            document.getElementById('btn-open-knowledge-base').addEventListener('click', function() {
+                vscode.postMessage({ type: 'openKnowledgeBase' });
             });
 
             console.log('Wizard initialized, currentStep:', currentStep);

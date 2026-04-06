@@ -2,34 +2,42 @@
 
 Welcome to **BC Telemetry Buddy**, your intelligent companion for querying Business Central telemetry data directly from Visual Studio Code with GitHub Copilot and data-driven discovery tools.
 
-## 🆕 What's New in v1.2.10
+## 🆕 What's New in v3.2.x
 
-### Major Architecture Improvements
+### Community Knowledge Base (v3.2.0 / MCP v3.3.0+)
+
+**✅ Community Knowledge Base**
+- Two-layer KB: community articles fetched from GitHub + optional local articles
+- Browse and filter KB articles directly from VSCode via `BC Telemetry Buddy: Manage Knowledge Base`
+- Per-article exclude checkboxes; disable/enable community KB entirely
+- KB status bar item shows live article count
+- MCP tools `get_knowledge` / `save_knowledge` let agents check proven KQL patterns before writing from scratch
+- Community contributions create a pre-filled GitHub issue (no fork required)
+
+**✅ Knowledge Base in Setup Wizard**
+- "📚 Knowledge Base" quick-launch button on completion step
+
+**✅ Show Diagnostics command**
+- `BC Telemetry Buddy: Show Diagnostics` generates a full diagnostic report (extension version, config state, MCP health) with one-click copy-to-clipboard
+
+### Previous highlights
 
 **✅ Extension Works Standalone**
 - All Command Palette commands work without MCP server
 - MCP only needed for GitHub Copilot chat features
-- Faster, simpler, more reliable
 
 **✅ Simplified Configuration**
 - Single `.bctb-config.json` file replaces VSCode settings
-- Clearer configuration with better validation
 - Easier to share configurations across team
 
 **✅ Multi-Profile Support**
 - Manage multiple customers/environments in one workspace
 - Quick profile switching via status bar dropdown
-- Profile inheritance to reduce duplication
 
 **✅ MCP Optional for Chat**
 - Chat participant (`@bc-telemetry-buddy`) requires separate MCP server
 - Install via: `npm install -g bc-telemetry-buddy-mcp`
 - Direct commands don't need MCP at all
-
-**✅ Automatic Migration**
-- Extension detects and migrates old settings automatically
-- One-click migration from `bcTelemetryBuddy.*` to `.bctb-config.json`
-- Smooth upgrade experience
 
 See [MIGRATION.md](../MIGRATION.md) for migration details.
 
@@ -78,12 +86,13 @@ BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze
 
 ### Architecture
 
-**Current (v1.2.10):**
+**Current (v3.2.4 / MCP v3.3.2):**
 - Extension can execute queries directly via built-in TelemetryService (no MCP needed for Command Palette)
 - MCP optional, only required for GitHub Copilot chat features
 - Configuration in `.bctb-config.json` (workspace root)
-- MCP published as standalone NPM package: `bc-telemetry-buddy-mcp@2.2.9`
+- MCP published as standalone NPM package: `bc-telemetry-buddy-mcp@3.3.2`
 - Supports both stdio (Copilot) and HTTP (Command Palette) modes
+- Community Knowledge Base with `get_knowledge` / `save_knowledge` MCP tools
 
 ---
 
@@ -440,6 +449,8 @@ BC Telemetry Buddy provides several commands accessible from the **Command Palet
 | `BC Telemetry Buddy: Create Profile` | Create a new profile |
 | `BC Telemetry Buddy: Set Default Profile` | Choose which profile loads on startup |
 | `BC Telemetry Buddy: Manage Profiles` | Visual interface for all profile operations |
+| `BC Telemetry Buddy: Manage Knowledge Base` | Browse and manage community / local KB articles |
+| `BC Telemetry Buddy: Show Diagnostics` | Generate diagnostic report (version, config, MCP health) |
 
 ---
 
@@ -609,6 +620,70 @@ When Copilot generates KQL queries:
 
 ---
 
+## Knowledge Base
+
+BC Telemetry Buddy includes a two-layer **Community Knowledge Base** that ships curated KQL patterns and investigation playbooks. Agents automatically check the KB before writing KQL from scratch, reducing wasted tokens and delivering more accurate queries.
+
+### Layers
+
+| Layer | Source | Description |
+|-------|--------|-------------|
+| **Community** | GitHub (`/knowledge-base/`) | Curated articles maintained by the BC community. Fetched at startup, cached for offline use. |
+| **Local** | `{workspace}/.vscode/.bctb/knowledge/` | Your team's private patterns — never shared. |
+
+### Browsing the Knowledge Base
+
+Open Command Palette and run `BC Telemetry Buddy: Manage Knowledge Base` to:
+- Browse all articles (community + local) with category and source filters
+- Free-text search matching title, tags, and event IDs
+- Exclude individual community articles per workspace
+- Disable or re-enable community KB entirely
+
+A status bar item `$(book) KB: N articles` shows the live article count.
+
+### Searching the KB from Copilot Chat
+
+The `get_knowledge` MCP tool lets agents search the KB before writing KQL:
+
+```
+@workspace What patterns exist for investigating lock timeouts?
+@workspace Check the KB for RT0012 event patterns
+```
+
+### Contributing Back
+
+If you discover a useful investigation pattern, the `save_knowledge` tool (agent-driven) can:
+- **Save locally** (`target: local`) — writes to your workspace knowledge folder
+- **Contribute to community** (`target: community`) — opens a pre-filled GitHub issue; no fork or branch required
+
+### Knowledge Base Configuration
+
+Optional `knowledgeBase` block in `.bctb-config.json`:
+
+```json
+{
+  "knowledgeBase": {
+    "enabled": true,
+    "source": "all",
+    "exclude": [],
+    "autoRefresh": true,
+    "cacheOnly": false,
+    "githubToken": ""
+  }
+}
+```
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `enabled` | `true` | Enable/disable community KB entirely |
+| `source` | `"all"` | `"community"`, `"local"`, or `"all"` |
+| `exclude` | `[]` | Array of article file names to skip |
+| `autoRefresh` | `true` | Fetch latest community articles on startup |
+| `cacheOnly` | `false` | Use only cached articles (no network calls) |
+| `githubToken` | `""` | Optional PAT (`public_repo` scope) needed only if you hit GitHub rate limits |
+
+---
+
 ### GitHub Copilot Integration
 
 BC Telemetry Buddy provides multiple ways to interact with GitHub Copilot:
@@ -691,6 +766,9 @@ BC Telemetry Buddy exposes **11 MCP tools** to GitHub Copilot (accessible via al
 | `bctb_get_external_queries` | Fetch KQL examples from configured external references (GitHub repos, blogs) | For additional context when generating queries |
 | **Analysis & Recommendations** |
 | `bctb_get_recommendations` | Analyze results and provide actionable insights | After query execution, to suggest next steps or optimizations |
+| **Knowledge Base** |
+| `get_knowledge` | Search community + local KB articles by `eventId`, `category`, `tags`, or free-text `search`. Returns proven KQL patterns. | Before writing KQL from scratch — check existing patterns first |
+| `save_knowledge` | Save an investigation pattern locally or contribute it to the community (creates a GitHub issue). | When a successful investigation yields reusable patterns |
 
 ### Usage Examples
 

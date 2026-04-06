@@ -68,8 +68,10 @@ export class AuthService {
 
             // Get access token from Azure CLI
             // Use --resource flag to get token for Application Insights API
+            // PYTHONWARNINGS=ignore suppresses urllib3/LibreSSL noise on macOS Python 3.9
             const { stdout, stderr } = await execAsync(
-                'az account get-access-token --resource https://api.applicationinsights.io'
+                'az account get-access-token --resource https://api.applicationinsights.io',
+                { env: { ...process.env, PYTHONWARNINGS: 'ignore' } }
             );
 
             if (stderr) {
@@ -216,20 +218,20 @@ export class AuthService {
             if (this.authResult && this.authResult.authenticated && this.authResult.expiresOn) {
                 const now = new Date();
                 const expiresIn = (this.authResult.expiresOn.getTime() - now.getTime()) / 1000;
-                
+
                 // If token expires in more than 5 minutes, reuse it
                 if (expiresIn > 300) {
                     console.error(`[MCP] ✓ Using cached VS Code token (expires in ${Math.floor(expiresIn / 60)} minutes)`);
                     return this.authResult;
                 }
-                
+
                 console.error('[MCP] Token expired or expiring soon, fetching new token...');
             }
 
             // In MCP context, the extension passes the token via environment variable
             // The extension should refresh this before spawning MCP if using stdio mode
             const accessToken = process.env.BCTB_ACCESS_TOKEN;
-            
+
             if (!accessToken) {
                 const errorMsg = [
                     'BCTB_ACCESS_TOKEN environment variable not set.',
@@ -277,9 +279,9 @@ export class AuthService {
         // For vscode_auth, always re-authenticate to get fresh token if expired
         if (this.config.authFlow === 'vscode_auth') {
             // Check if token is expired or expiring soon (within 5 minutes)
-            if (!status.authenticated || !status.accessToken || 
-                (this.authResult?.expiresOn && 
-                 (this.authResult.expiresOn.getTime() - Date.now()) < 300000)) {
+            if (!status.authenticated || !status.accessToken ||
+                (this.authResult?.expiresOn &&
+                    (this.authResult.expiresOn.getTime() - Date.now()) < 300000)) {
                 console.error('[MCP] Token expired or expiring, re-authenticating...');
                 await this.authenticate();
                 const newStatus = this.getStatus();

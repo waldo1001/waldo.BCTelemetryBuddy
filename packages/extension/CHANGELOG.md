@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.5] - 2026-04-06
+
+### Changed
+- **Community KB contributions now create a GitHub Issue instead of a PR**: clicking "Contribute to community" in the Knowledge Base webview (or via the `save_knowledge` MCP tool with `target: "community"`) opens a pre-filled GitHub issue — no fork or branch required.
+- **CI: KB index is now validate-only**: CI fails if `knowledge-base/index.json` is stale instead of auto-committing a fix. Run `npm run generate-kb-index` locally to regenerate before pushing.
+
+### Documentation
+- **UserGuide updated to v3.2.x**: What's New section, architecture version references, commands table, MCP tools table, and new Knowledge Base configuration section.
+- **README updated**: Community Knowledge Base and Show Diagnostics added to features list.
+- **CHANGELOG updated**: 3 missing recent entries added.
+
+## [3.2.4] - 2026-04-06
+
+### Added
+- **Telemetry for Knowledge Base interactions**: `trackOperationWithTelemetry` and `trackEvent` calls added to `KnowledgeBaseProvider` for open, refresh, save, and filter actions. New event ID constants in `telemetryEvents.ts` (`KNOWLEDGE_BASE_OPENED`, `KNOWLEDGE_BASE_REFRESHED`, `KNOWLEDGE_BASE_ARTICLE_OPENED`, `KNOWLEDGE_BASE_SAVED`).
+
+## [3.2.3] - 2026-04-06
+
+### Added
+- **Knowledge Base button in Setup Wizard**: After saving configuration on the final step, a "📚 Knowledge Base" button now appears alongside "👥 Manage Profiles" in the Next Steps section, allowing users to open the Knowledge Base webview directly from the wizard.
+
+## [3.2.2] - 2026-04-06
+
+### Fixed
+- **Knowledge Base webview interactions**: All buttons, filters, and article links were silently dead due to a Content Security Policy (CSP) violation — `script-src 'nonce-...'` blocks inline `onclick`/`oninput`/`onchange` handlers. Rewired static controls with `addEventListener` and dynamic article rows with event delegation via `data-action` attributes.
+- **Community articles open in browser**: Clicking a community article now opens it in the browser at its GitHub URL. Previously it attempted to show a modal using a cache file that may not exist, silently doing nothing.
+- **Refresh downloads from GitHub**: The Refresh button now triggers a real GitHub fetch via `KnowledgeBaseService`, shows "Downloading…" status, and disables the button until complete. Previously it only re-read the local disk cache.
+- **Category → directory mapping**: Fixed URL construction for community article links (`query-pattern` → `query-patterns` etc.) using an explicit map instead of a fragile regex.
+
+### Added
+- **Knowledge Base Provider tests**: 17 unit tests covering `_loadKbConfig`, `_handleOpenArticle` (all four category mappings, URL construction, local file lookup), and `_refreshFromGitHub` (download notification, error resilience, ordering).
+
+## [3.2.1] - 2026-04-05
+
+### Fixed
+- **CI coverage thresholds**: Excluded `KnowledgeBaseProvider.ts` from Jest coverage collection (UI webview component requiring integration testing), preventing false threshold failures.
+
+## [3.2.0] - 2026-04-05
+
+### Added
+- **Knowledge Base UI (Issue #107)**: New `bctb.manageKnowledgeBase` command and webview to browse community and local KB articles.
+  - Per-article exclude checkboxes (community only) — writes to `knowledgeBase.exclude` in config.
+  - **Disable Community KB** / **Enable Community KB** toggle — sets `knowledgeBase.enabled: false/true`.
+  - Filter by category, source, and free-text search matching title, tags, and event IDs.
+- **KB status bar item**: `$(book) KB: N articles` shows in the status bar. Updates dynamically to reflect article count, `KB: disabled`, or `KB: offline (cached)` via a `.bctb-config.json` file watcher.
+
+### Fixed
+- **Config detection after wizard save (Issue #104)**: `hasWorkspaceSettings()` now checks `.bctb-config.json` in all workspace folders before falling back to legacy `settings.json` keys. Previously, the wizard would save config but the extension still reported "not configured".
+- **Auto-reload config after wizard save**: Added `bctb.reloadConfig` command and a `FileSystemWatcher` for `.bctb-config.json`. The wizard now triggers a config reload after saving, so TelemetryService picks up the new config immediately without requiring a restart.
+- **"Open Settings" opened wrong file**: The "not configured" prompt in Start MCP now launches the Setup Wizard instead of opening `settings.json`.
+
+### Added
+- **Show Diagnostics command**: New "BC Telemetry Buddy: Show Diagnostics" command in the Command Palette. Generates a full diagnostic report (extension version, workspace config state, TelemetryService status, MCP health, profiles) with one-click copy-to-clipboard for easy bug reporting.
+- **Verbose config detection logging**: `hasWorkspaceSettings()` now logs each folder checked and the result to the Output panel, making config issues easier to diagnose.
+
+## [3.1.11] - 2026-03-30
+
+### Added
+- **Question coaching and answer validation**: Enhanced prompts with question coaching guidance and answer validation to improve agent response quality.
+
 ## [3.1.10] - 2026-03-06
 
 ### Added

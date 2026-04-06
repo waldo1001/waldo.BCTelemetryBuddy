@@ -161,6 +161,7 @@ export class ToolHandlers {
     public services: ServerServices;
     private isStdioMode: boolean;
     public activeProfileName: string | null = null;
+    public knowledgeBase: any = null;
 
     constructor(
         config: MCPConfig,
@@ -317,6 +318,86 @@ export class ToolHandlers {
                         result = this.services.auth.getStatus();
                     }
                     break;
+
+                case 'get_knowledge': {
+                    if (!this.knowledgeBase) {
+                        result = {
+                            articles: [],
+                            count: 0,
+                            message: 'Knowledge Base is not available. It may be disabled or failed to load at startup.',
+                        };
+                        this.services.usageTelemetry.trackEvent(
+                            'Mcp.GetKnowledge',
+                            cleanTelemetryProperties(createCommonProperties(
+                                TELEMETRY_EVENTS.MCP_TOOLS.GET_KNOWLEDGE, 'mcp',
+                                this.services.sessionId, this.services.installationId, VERSION,
+                                { profileHash, resultCount: 0, kbAvailable: 'false' }
+                            ))
+                        );
+                    } else {
+                        const searchParams: any = {};
+                        if (params.category) searchParams.category = params.category;
+                        if (params.tags) searchParams.tags = params.tags;
+                        if (params.eventId) searchParams.eventId = params.eventId;
+                        if (params.search) searchParams.search = params.search;
+                        if (params.source) searchParams.source = params.source;
+                        const articles = this.knowledgeBase.search(searchParams);
+                        const summary = this.knowledgeBase.getSummary();
+                        result = {
+                            articles,
+                            count: articles.length,
+                            summary,
+                        };
+                        this.services.usageTelemetry.trackEvent(
+                            'Mcp.GetKnowledge',
+                            cleanTelemetryProperties(createCommonProperties(
+                                TELEMETRY_EVENTS.MCP_TOOLS.GET_KNOWLEDGE, 'mcp',
+                                this.services.sessionId, this.services.installationId, VERSION,
+                                {
+                                    profileHash,
+                                    resultCount: articles.length,
+                                    hasCategory: String(!!params.category),
+                                    hasSearch: String(!!params.search),
+                                    hasEventId: String(!!params.eventId),
+                                    source: params.source ?? 'all',
+                                }
+                            ))
+                        );
+                    }
+                    break;
+                }
+
+                case 'save_knowledge': {
+                    if (!params?.title || !params?.category || !params?.content || !params?.target) {
+                        throw new Error('title, category, content, and target are required.');
+                    }
+                    if (!this.knowledgeBase) {
+                        throw new Error('Knowledge Base is not available. It may be disabled or failed to load at startup.');
+                    }
+                    const saveParams = {
+                        title: params.title,
+                        category: params.category,
+                        tags: params.tags,
+                        eventIds: params.eventIds,
+                        appliesTo: params.appliesTo,
+                        content: params.content,
+                        author: 'local',
+                    };
+                    if (params.target === 'community') {
+                        result = await this.knowledgeBase.contributeArticle(saveParams);
+                    } else {
+                        result = await this.knowledgeBase.saveArticle(saveParams);
+                    }
+                    this.services.usageTelemetry.trackEvent(
+                        'Mcp.SaveKnowledge',
+                        cleanTelemetryProperties(createCommonProperties(
+                            TELEMETRY_EVENTS.MCP_TOOLS.SAVE_KNOWLEDGE, 'mcp',
+                            this.services.sessionId, this.services.installationId, VERSION,
+                            { profileHash, target: params.target, category: params.category }
+                        ))
+                    );
+                    break;
+                }
 
                 default:
                     throw new Error(`Unknown tool: ${toolName}`);

@@ -186,3 +186,21 @@ jobs:
           name: mcp-dist
           path: packages/mcp/dist/
           retention-days: 7
+
+  validate-kb-index:
+    name: Validate KB index.json is up to date
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Check knowledge-base/index.json is not stale
+        run: |
+          node scripts/generate-kb-index.js --check
+          echo "✅ index.json matches the knowledge-base articles"

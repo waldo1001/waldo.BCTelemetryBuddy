@@ -14,7 +14,8 @@ module.exports = {
         '!src/webviews/ProfileWizardProvider.ts',  // UI component (236 lines) with complex webview interactions requiring integration testing
         '!src/agentDefinitions.ts',  // Pure data (1200+ lines of static agent content), no logic to test
         '!src/services/profileManager.ts',  // Profile management service (301 lines) - requires VSCode workspace API integration testing
-        '!src/ui/profileStatusBar.ts'  // Status bar UI component (196 lines) - requires VSCode UI API integration testing
+        '!src/ui/profileStatusBar.ts',  // Status bar UI component (196 lines) - requires VSCode UI API integration testing
+        '!src/webviews/KnowledgeBaseProvider.ts'  // UI webview component (631 lines) - requires VSCode webview API integration testing
     ],
     coverageThreshold: {
         global: {

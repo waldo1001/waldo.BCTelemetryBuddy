@@ -35,6 +35,9 @@ export interface MCPConfig {
 
     // Config file path (set by loadConfigFromFile for profile switching)
     configFilePath?: string;
+
+    // Knowledge Base
+    knowledgeBase?: KBConfig;
 }
 
 export interface Reference {
@@ -60,6 +63,7 @@ export interface ProfiledConfig {
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import type { KBConfig } from '@bctb/shared';
 
 /**
  * Load configuration from environment variables

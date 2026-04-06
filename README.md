@@ -27,6 +27,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 - **📊 Event Catalog & Schema Discovery**: Explore what telemetry events exist and their structure before querying
 - **💾 Smart Caching**: File-based caching with configurable TTL (default 1 hour)
 - **📁 Embedded Resources**: MCP resource support — agents can request query results as file references (CSV/JSON) for code interpreter processing of large datasets
+- **📚 Community Knowledge Base**: Two-layer KB (community articles from GitHub + local patterns). Browse via `BC Telemetry Buddy: Manage Knowledge Base`. MCP tools `get_knowledge` / `save_knowledge` let agents find proven KQL patterns before writing from scratch; contributions create a GitHub issue — no fork required
 - **� Query Library**: Save queries organized by category; customer-specific queries automatically organized in `Companies/[CompanyName]/` folders
 - **👁️ CodeLens Support**: "▶ Run Query" links appear in .kql files for one-click execution
 - **🧠 Context-Aware**: Uses saved queries and external references for better KQL generation
@@ -34,6 +35,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 - **🔒 Privacy-Focused**: Optional PII sanitization, workspace-scoped settings
 - **🤖 Chat Participant**: `@bc-telemetry-buddy` in GitHub Copilot Chat for expert BC telemetry analysis with MCP tool integration
 - **💬 Agent**: `#BCTelemetryBuddy` activates expert mode in Copilot Chat with specialized BC telemetry knowledge, KQL patterns, and systematic workflow guidance
+- **🔍 Show Diagnostics**: `BC Telemetry Buddy: Show Diagnostics` generates a full diagnostic report (version, config state, MCP health) with one-click copy-to-clipboard
 
 ## Quick Start
 
@@ -51,7 +53,7 @@ The 5-step wizard guides you through:
 - **Step 2 - Azure Configuration**: Enter your tenant ID and Application Insights details
 - **Step 3 - Authentication**: Choose VS Code (easiest, recommended), Azure CLI, Device Code, or Client Credentials
 - **Step 4 - Connection Testing**: Validates settings and tests your connection with a sample query
-- **Step 5 - Complete**: Saves settings and provides quick-start tips
+- **Step 5 - Complete**: Saves settings and provides quick-start tips, including a "📚 Knowledge Base" button to open the KB viewer
 
 **Optional**: The wizard can also install the agent file (`.github/agents/BCTelemetryBuddy.agent.md`) for enhanced Copilot Chat integration.
 

@@ -99,6 +99,45 @@
                 "$ref": "#/definitions/reference"
             }
         },
+        "knowledgeBase": {
+            "type": "object",
+            "description": "Knowledge Base configuration — community and local KB articles",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Enable community Knowledge Base (local KB is always available)",
+                    "default": true
+                },
+                "source": {
+                    "type": "string",
+                    "description": "GitHub URL for community KB repository folder",
+                    "default": "https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base"
+                },
+                "exclude": {
+                    "type": "array",
+                    "description": "Article IDs (slugs) to exclude from community KB",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                },
+                "autoRefresh": {
+                    "type": "boolean",
+                    "description": "Refresh community KB from GitHub on startup",
+                    "default": true
+                },
+                "cacheOnly": {
+                    "type": "boolean",
+                    "description": "Skip GitHub fetch, use cached community KB only",
+                    "default": false
+                },
+                "githubToken": {
+                    "type": "string",
+                    "description": "GitHub personal access token for community KB contributions (issue creation). Requires issues:write scope. Can also be set via BCTB_GITHUB_TOKEN env var. Optional — without a token the tool returns a pre-filled issues/new URL and article body for manual submission.",
+                    "default": ""
+                }
+            }
+        },
         "agents": {
             "type": "object",
             "description": "Agentic Autonomous Telemetry Monitoring — configuration for scheduled monitoring agents that run via bctb-mcp agent commands or CI/CD pipelines.",

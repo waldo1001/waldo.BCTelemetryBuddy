@@ -2464,7 +2464,8 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b — 2026-01-06 14:41
 > "Exclude fields with explicit millisecond indicators (Ms, Milliseconds, InMs, _ms) from timespan detection - if field name indicates milliseconds, it's NOT a timespan"
-=======
+
+---
 ### Entry ID: 749c22d6-ea18-4d83-9042-f99aab6c5110 — 2026-01-08 14:45
 > "Fix GitHub Actions labeler workflow permissions issue - Resource not accessible by integration error"
 ### Entry ID: a4a2d36e-0bff-401f-86c8-bffc1dc23cf4 — 2026-01-14 23:10
@@ -3088,6 +3089,193 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 30e242d7-7ded-49d3-bd3b-c9002678c784 — 2026-03-06 00:01
 > "Start implementation (Phase 1: funding fields in package.json + instruction file for Phases 2 & 3)"
+
+---
+### Entry ID: 7f3a2c8e-91d4-4b5f-a6e3-8c1d9f4b2e7a — 2026-03-29 04:20
+> "Add question coaching and answer validation to BCTB prompts — help users ask better questions (rephrase vague input, suggest investigation paths) and be more critical of AI output (state assumptions, flag limitations, suggest verification steps)"
+
+---
+### Entry ID: bd1b5b1b-df06-43b3-983b-dcf284c87f0f — 2026-03-29 22:47
+> "This PR is failing: https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/23702041951/job/69089038341?pr=106 - PR from DmitryKatson failing CI; how can I help?"
+
+---
+### Entry ID: ba78bf0e-44a2-46be-ba17-7f321ba5ea19 — 2026-03-29 23:08
+> "Any idea how this can be solved? https://github.com/waldo1001/waldo.BCTelemetryBuddy/actions/runs/23718994648/job/69090741706?pr=106"
+
+---
+
+### Entry ID: c1aec57a-5e37-4274-ba3c-f053c68fcef7 — 2026-03-29 23:27
+> "The PR is merged. Add to changelog and thank Dmitry! (I meant: in the changelog)"
+
+---
+### Entry ID: a053b65f-c2a2-4f9d-be1c-a665fa579965 — 2026-03-29 23:56
+> "User asked about Microsoft email re: Application Insights API key retirement on 31 March 2026 — how much of a problem is it for BC Telemetry Buddy?"
+
+---
+### Entry ID: 51da74e0-e8db-4fdc-881b-5ebace77acfe — 2026-03-29 23:56
+> "User asked about Microsoft email re: Application Insights API key retirement on 31 March 2026 — how much of a problem is it for BC Telemetry Buddy?"
+
+---
+### Entry ID: 5f833ce0-f4e6-4011-8d58-a0e25b217d2f — 2026-03-29 22:09
+> "MCP first$ — release MCP as patch"
+
+---
+### Entry ID: b6a4b92c-0032-477f-b417-66239bcd6269 — 2026-03-29 22:11
+> "No extension? — release extension as patch too"
+
+---
+### Entry ID: 7a3c91e2-f4d8-4b2a-a1c5-8e6f3d9b0a47 — 2026-03-30 14:15
+> "Develop this agent as a decent agent with skills, for the shit we do in this extension. To know what we do in this extension - analyze! I want to force a test-driven approach: design (like plan-mode), develop tests, see if tests fail (scaffold if necessary), develop, see if test succeed, document. Develop skills, agents and subagents according to all we already did. Look into docs to get inspiration. Also look into designwalkthrough and promptlog to see how this project has come to be."
+
+---
+
+### Entry ID: 38b7d375-fd3c-49b6-b7c6-69c096925023 — 2026-03-31 15:25
+> "Fix Issue #104: Config detection broken after wizard save. hasWorkspaceSettings() only checked settings.json, telemetryService never reloaded, Open Settings opened wrong file."
+
+---
+
+### Entry ID: 711c3906-68fe-4854-a9e1-156c31182fd8 — 2026-03-31 15:53
+> "Fix Issue #104: Config detection broken after wizard save."
+
+---
+
+### Entry ID: 506665c6-f27a-40a9-b794-d3dbc4c83696 — 2026-03-31 16:13
+> "Add diagnostic logging for config detection and a Show Diagnostics command so users can share debug output when reporting issues."
+
+---
+
+### Entry ID: 68200fd2-2ddd-407d-b362-1ed5ef3a05a8 — 2026-03-31 16:18
+> "Patch release v3.1.12 for extension — fixes #104, adds diagnostics command. Commit logged in issue."
+
+---
+
+### Entry ID: 11ab2854-ed1e-4087-a4fd-cb8c82123832 — 2026-04-05 09:31
+> "Can we add anything to BC Telemetry Buddy that can remind the agent to suggest memory usage to users for recurring patterns?"
+
+---
+### Entry ID: 5e0e041d-a937-423c-a305-e595b5630ee2 — 2026-04-05 11:25
+> "Start implementation — Community Knowledge Base (Issue #107, PR1: Phases 1+2+3)"
+
+---
+### Entry ID: 7c36fda2-3325-4d9c-92a7-0625a8d0dc0d — 2026-04-05 12:00
+> "Continue creating the remaining 4 KB seed articles based on real customer telemetry investigation patterns (slow SQL, job queue, environment upgrades, DB wait stats)."
+
+---
+### Entry ID: 95428c9e-033e-4c24-9608-19b9507a7663 — 2026-04-05 12:14
+> "I dont like the slow-sql and missing indexes .. remove that."
+
+---
+### Entry ID: c6e9858c-4ae1-45a8-8b14-cbb0d179a72e — 2026-04-05 12:18
+> "Analyze a real-world job queue KQL using start/finish event correlation, simplify it to focus only on average processing time per hour per job, and update the KB article."
+
+---
+### Entry ID: 47d31c0b-c878-456f-b797-6c8dc4abafb9 — 2026-04-05 12:21
+> "How can we verify what is in these knowledge base articles?"
+
+---
+### Entry ID: 09ac0b9f-9e91-459c-ab77-8730012f242a — 2026-04-05 12:26
+> "How can we verify KB articles are actually correct? Idea: check against learn.microsoft.com telemetry docs."
+
+---
+### Entry ID: c887a7e3-fd56-48f6-84ec-29c3d70bcf6a — 2026-04-05 12:28
+> "We have a tool in BCTB to check field names too, right? (get_event_field_samples)"
+
+---
+### Entry ID: 07c2bcfd-b66d-4f32-aea2-0ca01c661319 — 2026-04-05 12:39
+> "We have a tool in BCTB to check field names — start the MCP, retry, validate KB against real telemetry data."
+
+---
+### Entry ID: 3ba39a1c-07b5-4003-8687-ec0668a16851 — 2026-04-05 12:42
+> "KB articles should not limit the agent — always check real fields via get_event_field_samples. If new fields arise, notify user that KB article may need updating."
+
+---
+### Entry ID: 97adca7e-5153-4d28-a0ca-49321e873917 — 2026-04-05 12:45
+> "How do I test this? (KB feature end-to-end)"
+
+---
+### Entry ID: 623ff89d-5bbb-4717-aad8-f28c95fa835d — 2026-04-05 12:53
+> "Starting the MCP shows 0 community articles, 0 local articles - do I need to commit first?"
+
+---
+### Entry ID: c19cbe99-7ee8-4c4a-b686-1fe196e5801e — 2026-04-05 13:34
+> "Shouldnt we fix the python warning instead of filtering it?"
+
+---
+### Entry ID: ebe6ad5e-4ab3-44ed-9935-c9f5082ba639 — 2026-04-05 14:06
+> "Fix Node.js url.parse() DEP0169 deprecation warning at MCP startup"
+
+---
+### Entry ID: a45b2edb-f60e-4363-9d18-ab374fec39d9 — 2026-04-05 12:06
+> "Fix Node.js url.parse() DEP0169 deprecation warning at MCP startup"
+
+---
+### Entry ID: 4b7a334f-7be0-4a63-a7d3-0850aacb799b — 2026-04-05 12:38
+> "Trace and fix the url.parse() DEP0169 warning: trace-deprecation showed it was proxy-from-env inside axios"
+
+---
+### Entry ID: 5b7a9cc9-3c68-40e7-989e-932675357c48 — 2026-04-05 14:52
+> "I want to be able to work with github copilot and claude. On top of that, I want the github copilot agent bcpt.tdd to be the general instructions for anything I do in this repo. Move the instructions from the agent to AGENTS.md, point claude.md to agents.md so we only have to maintain one instructionset, and make sure both will always use the skills under the .github folder."
+
+---
+### Entry ID: 8bd8f1e4-79c9-41f2-b70d-b7c6e1983cf1 — 2026-04-05 14:56
+> "Implement get_knowledge as Step 1b in the tool-call workflow (between get_event_catalog and get_event_field_samples), updating serverInstructions.ts, WORKFLOW_PROMPT_CONTENT, chatParticipant.ts, agentDefinitions.ts, and server-instructions test (including bc-telemetry-workflow MCP prompt)."
+
+---
+### Entry ID: 198ad665-6674-4831-8383-8cc2265534c0 — 2026-04-05 15:42
+> "Fix missing parts of issue 107: add knowledgeBase to MCPConfig type in config.ts (removing as any cast), create scripts/generate-kb-index.js, generate initial index.json from 4 seed articles, add update-kb-index CI job to ci.yml."
+
+---
+### Entry ID: e03fbbf3-aec7-4e6d-808e-44717fb757e4 — 2026-04-05 15:50
+> "Read issue 107 again and verify all is implemented. Fix what was missing: vendor-patterns dir, id field in seed articles, startup log format, Exclude All toggle in webview, eventId filter in webview, dynamic status bar text."
+
+---
+### Entry ID: c0318716-e8ec-415e-a6d0-2b9c9581f3ee — 2026-04-05 16:14
+> "After a release, builds are failing (CI links provided). Fix all!"
+
+---
+### Entry ID: c3f2089b-b0bd-4717-8c2f-e7ac03cd7dfc — 2026-04-05 16:18
+> "Bump patch release!"
+
+---
+### Entry ID: a1f4e829-3c7b-4d91-b2e0-7f8c6d5a3b12 — 2026-04-06 00:00
+> "I want the be able to open the knowledge base webview from the setup wizard"
+
+---
+### Entry ID: f9e2c461-8b3a-4f05-9d7e-2c1a0b4e6d83 — 2026-04-06 00:00
+> "Patch release, please!"
+
+---
+### Entry ID: 37ac9e35-77eb-4bfa-8aed-5bdb12620e88 — 2026-04-06 10:25
+> "perform a patch release of both extension and mcp of the latest changes"
+
+---
+### Entry ID: 3c37e8db-235c-4dc6-acf9-99f184226ff6 — 2026-04-06 10:40
+> "CI bot-commit of KB index.json was failing. Drop the auto-commit, validate in CI that index.json is not stale instead. No bot commits needed. Make sure all agent instructions keep the index up-to-date."
+
+---
+
+### Entry ID: 0602888f-cb71-41d8-a735-60c8837388ec — 2026-04-06 12:19
+> "Replace the complete requirement for creating a pull request, and replace it by creating a decent github issue, where the kb article is decently described."
+
+---
+### Entry ID: ce6719c2-9880-4864-af5f-2bb7af6716ed — 2026-04-06 12:37
+> "Make sure our changes of the past 48 hours are reflected in ALL documentations!"
+
+---
+### Entry ID: bd47d7fb-0d86-41e8-838a-69cfe49a623a — 2026-04-06 13:09
+> "This is not a nice conversation to get a new knowledge article to github. I would expect it to be clearer: what to do, a display of the content to copy"
+
+---
+### Entry ID: 20738624-2be0-4458-a260-00b7e59bb3d8 — 2026-04-06 13:33
+> "Twice, I had the agent error: save_knowledge TypeError: Cannot read properties of undefined (reading invoke) — can we avoid it?"
+
+---
+### Entry ID: edfa0ae1-adfb-4cde-a6e8-f383057a9f4f - 2026-04-06 13:33
+> "Twice, I had the agent error: save_knowledge TypeError: Cannot read properties of undefined (reading invoke) - can we avoid it?"
+
+---
+### Entry ID: 7f8e44a7-0f17-43aa-9577-ab231944b6b5 — 2026-04-06 13:39
+> "When I now asked to save knowledge to the community, it came back with an url, and with text. Good. But .. The text was not copy-able. I expect a PURE md output, so I can simply select all, and copy from that. Not some output in the agents chat, where only half of it is copy-able."
 
 ---
 ### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30

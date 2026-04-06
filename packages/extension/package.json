@@ -2,7 +2,7 @@
     "name": "bc-telemetry-buddy",
     "displayName": "BC Telemetry Buddy",
     "description": "Query Business Central telemetry from VSCode using natural language with GitHub Copilot",
-    "version": "3.1.10",
+    "version": "3.2.5",
     "publisher": "waldoBC",
     "license": "MIT",
     "icon": "images/waldo.png",
@@ -137,6 +137,16 @@
                 "command": "bctb.setupAgentMonitoring",
                 "title": "BC Telemetry Buddy: Setup Agent Monitoring (Preview)",
                 "icon": "$(robot)"
+            },
+            {
+                "command": "bctb.showDiagnostics",
+                "title": "BC Telemetry Buddy: Show Diagnostics",
+                "icon": "$(info)"
+            },
+            {
+                "command": "bctb.manageKnowledgeBase",
+                "title": "BC Telemetry Buddy: Manage Knowledge Base",
+                "icon": "$(book)"
             }
         ],
         "configuration": {
