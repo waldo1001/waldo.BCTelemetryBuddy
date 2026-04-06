@@ -3261,3 +3261,7 @@ Change instructions an business logic to do this."
 > "Make sure our changes of the past 48 hours are reflected in ALL documentations!"
 
 ---
+### Entry ID: bd47d7fb-0d86-41e8-838a-69cfe49a623a — 2026-04-06 13:09
+> "This is not a nice conversation to get a new knowledge article to github. I would expect it to be clearer: what to do, a display of the content to copy"
+
+---

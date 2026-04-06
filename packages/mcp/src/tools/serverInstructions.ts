@@ -65,7 +65,10 @@ Call \`save_knowledge\` ONLY when the user EXPLICITLY asks to save a pattern or 
 - **NEVER auto-save** — always wait for an explicit user request.
 - Workflow: (1) Present a preview (title, category, tags). (2) Ask: "Local or Community?" (3) Generate content. (4) Call \`save_knowledge\`. (5) Confirm the save path.
 - \`target: "local"\` → saves to workspace KB, available next session.
-- \`target: "community"\` → creates a GitHub issue. With \`knowledgeBase.githubToken\` (or \`BCTB_GITHUB_TOKEN\` env var) set, the issue is created automatically; without a token, a pre-filled URL and full article body are returned for manual submission.
+- \`target: "community"\` → creates a GitHub issue. With \`knowledgeBase.githubToken\` (or \`BCTB_GITHUB_TOKEN\` env var) set, the issue is created automatically; without a token, a pre-filled URL is returned.
+- **When \`success: false\` (no token)**: you MUST present these two things clearly and in order:
+  1. A clickable link to the GitHub issue URL (from \`issueUrl\`)
+  2. The full content of \`articleBody\` displayed as a fenced code block labelled "Paste this into the issue description:" — do NOT summarize it, do NOT omit it, show the complete text so the user can copy it.
 
 ## FORBIDDEN Patterns
 

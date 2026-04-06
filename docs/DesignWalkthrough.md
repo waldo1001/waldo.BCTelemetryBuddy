@@ -1970,3 +1970,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Documentation sync: all docs updated to reflect 48h changes [Entry: ce6719c2-9880-4864-af5f-2bb7af6716ed]
   - **Why:** Recent commits (KB issue flow, CI validate-only, design enforcement, v3.3.2) were not reflected in UserGuide, README, or docs/CHANGELOG.
   - **How:** Updated What's New section + versions in UserGuide; added KB feature + Show Diagnostics to README features list; prepended 3 new entries to docs/CHANGELOG.md.
+- **2026-04-06** — Improve community contribution UX: add articleBody field [Entry: bd47d7fb-0d86-41e8-838a-69cfe49a623a]
+  - **Why:** Users could not find the article content to copy when no GitHub token was configured
+  - **How:** Added articleBody to KBContributeResult, simplified message to numbered steps, added explicit AI rendering instructions in serverInstructions.ts and toolDefinitions.ts

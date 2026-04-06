@@ -657,8 +657,14 @@ describe('KnowledgeBaseService', () => {
             expect(result.issueUrl).toContain('github.com/');
             expect(result.issueUrl).toContain('/issues/new');
             expect(result.issueUrl).toContain('kb-contribution');
-            expect(result.message).toContain('## My Playbook Content');
-            expect(result.message).toContain('community-article'); // slug in frontmatter
+            // article content must be in articleBody (NOT buried in message)
+            expect(result.articleBody).toBeDefined();
+            expect(result.articleBody).toContain('## My Playbook Content');
+            expect(result.articleBody).toContain('community-article'); // slug in frontmatter
+            // message should be short and instructional, not contain the full article
+            expect(result.message).not.toContain('## My Playbook Content');
+            expect(result.message).toContain('1.');  // numbered steps
+            expect(result.message).toContain('2.');
         });
 
         it('should create an issue and return issueUrl on success', async () => {
