@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.6] - 2026-04-06
+
+### Changed
+- **Knowledge base author attribution**: Shared library now stores real author names in KB articles (from `git config user.name`) instead of hardcoded placeholders.
+
 ## [3.2.5] - 2026-04-06
 
 ### Changed
