@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.3] - 2026-04-06
+
+### Fixed
+- **Community contribution UX**: When no GitHub token is configured, `save_knowledge` now returns the article body in a separate `articleBody` field instead of burying it inside `message`. The AI is explicitly instructed to display the URL as a clickable link and show `articleBody` as a copyable code block, so users always know what to do and where to paste.
+
 ## [3.3.2] - 2026-04-06
 
 ### Changed
