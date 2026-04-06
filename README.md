@@ -26,6 +26,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 - **🔐 Flexible Authentication**: VS Code (easiest, recommended), Azure CLI, Device Code, or Client Credentials
 - **📊 Event Catalog & Schema Discovery**: Explore what telemetry events exist and their structure before querying
 - **💾 Smart Caching**: File-based caching with configurable TTL (default 1 hour)
+- **📁 Embedded Resources**: MCP resource support — agents can request query results as file references (CSV/JSON) for code interpreter processing of large datasets
 - **� Query Library**: Save queries organized by category; customer-specific queries automatically organized in `Companies/[CompanyName]/` folders
 - **👁️ CodeLens Support**: "▶ Run Query" links appear in .kql files for one-click execution
 - **🧠 Context-Aware**: Uses saved queries and external references for better KQL generation

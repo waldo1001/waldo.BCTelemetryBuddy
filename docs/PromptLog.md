@@ -3094,3 +3094,8 @@ Change instructions an business logic to do this."
 > "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
 
 ---
+
+### Entry ID: 8b2d9f02-3fc5-4a1b-ba06-2606ab3a3df3 — 2026-04-06 14:45
+> "Ok, update docs and readme"
+
+---

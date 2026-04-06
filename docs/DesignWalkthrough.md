@@ -1843,3 +1843,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Add MCP embedded resources support [Entry: 758a5beb-356d-434d-9434-6b07fdedd9ea]
   - **Why:** Enable external agents to request query results as file resources instead of inline text, allowing code interpreters (Python/pandas) to process large datasets — aligned with Microsoft BC MCP 2026 Wave 1 pattern.
   - **How:** Added `resultFormat` and `fileFormat` parameters to `query_telemetry` tool. Created `ExportService` in shared package for CSV/JSON file exports. Modified SDK server to return MCP embedded resources (`{type: 'resource'}`) and registered a resource template (`bctb://exports/{filename}`) for `resources/list` and `resources/read` support. Backward compatible — defaults to `text` format.
+
+- **2026-04-06** — Update documentation for embedded resources [Entry: 8b2d9f02-3fc5-4a1b-ba06-2606ab3a3df3]
+  - **Why:** Document the new MCP embedded resources feature across all READMEs, UserGuide, and CLAUDE.md.
+  - **How:** Added embedded resources section to MCP README (architecture, usage, file cleanup), UserGuide (parameters table, file management), shared README (ExportService), root README (feature bullet), and CLAUDE.md (design decision).

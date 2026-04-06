@@ -56,6 +56,7 @@ npm install -g @modelcontextprotocol/inspector
 - **Shared library is bundled** into both MCP and extension, not installed as a separate npm dep
 - **Workspace-scoped config** — all settings are per-workspace (`.vscode/settings.json` or `.bctb-config.json`); no global settings
 - **File-based caching** survives process restarts; TTL-based expiration (default 1 hour)
+- **Embedded resources** — `query_telemetry` supports `resultFormat: 'resource'` to return data as MCP embedded resource files (CSV/JSON) for code interpreter processing; exports stored in `.vscode/.bctb/exports/` with 24h auto-cleanup
 - **PII sanitization is opt-in** — redacts email, IP, GUIDs, phone, URLs before caching and LLM
 
 ### Auth Flows (configurable via `BCTB_AUTH_FLOW`)
