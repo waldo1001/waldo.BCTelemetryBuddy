@@ -1973,3 +1973,12 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Improve community contribution UX: add articleBody field [Entry: bd47d7fb-0d86-41e8-838a-69cfe49a623a]
   - **Why:** Users could not find the article content to copy when no GitHub token was configured
   - **How:** Added articleBody to KBContributeResult, simplified message to numbered steps, added explicit AI rendering instructions in serverInstructions.ts and toolDefinitions.ts
+- **2026-04-06** — Add deferred-tool load warning for save_knowledge and save_query [Entry: 20738624-2be0-4458-a260-00b7e59bb3d8]
+  - **Why:** Agent called save_knowledge without first loading via tool_search_tool_regex, causing Cannot read properties of undefined in VS Code/GitHub Copilot.
+  - **How:** Added GitHub Copilot deferred-tool notes to Steps 6 & 7 in serverInstructions.ts and WORKFLOW_PROMPT_CONTENT.
+- **2026-04-06** - Add deferred-tool load warning for save_knowledge/save_query [Entry: edfa0ae1-adfb-4cde-a6e8-f383057a9f4f]
+  - **Why:** Agent called save_knowledge without loading via tool_search_tool_regex, causing Cannot read properties of undefined in VS Code.
+  - **How:** Added GitHub Copilot deferred-tool notes to Steps 6 and 7 in serverInstructions.ts and WORKFLOW_PROMPT_CONTENT.
+- **2026-04-06** — Add articleMarkdown field for copyable community KB output [Entry: 7f8e44a7-0f17-43aa-9577-ab231944b6b5]
+  - **Why:** articleBody contained nested backtick fences which broke the outer code block — only half was selectable
+  - **How:** Added articleMarkdown (raw frontmatter+content) to KBContributeResult; agent instructions now use ~~~markdown fences (no conflict with inner backticks)

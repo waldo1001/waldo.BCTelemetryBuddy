@@ -64,6 +64,8 @@ export interface KBContributeResult {
     message: string;
     /** Full formatted article body to paste into the GitHub issue description (only present when success: false / no token). */
     articleBody?: string;
+    /** Raw article markdown (frontmatter + content). Display this in a ~~~markdown fence so users can select-all and copy without nested-fence issues. Only present when success: false / no token. */
+    articleMarkdown?: string;
 }
 
 export interface KBLoadResult {
@@ -373,7 +375,8 @@ export class KnowledgeBaseService {
                 id: slug,
                 issueUrl: preFilledUrl,
                 articleBody: issueBody,
-                message: `No GitHub token configured. To submit this community contribution:\n\n1. Open this URL to create a GitHub issue:\n   ${preFilledUrl}\n\n2. Paste the content in \`articleBody\` below into the issue description.\n\nTo skip this manual step in future, set \`BCTB_GITHUB_TOKEN\` in your environment or configure \`knowledgeBase.githubToken\` in .bctb-config.json.`,
+                articleMarkdown: articleContent.trimEnd(),
+                message: `No GitHub token configured. To submit this community contribution:\n\n1. Open this URL to create a GitHub issue:\n   ${preFilledUrl}\n\n2. Paste the content in \`articleMarkdown\` below into the issue description.\n\nTo skip this manual step in future, set \`BCTB_GITHUB_TOKEN\` in your environment or configure \`knowledgeBase.githubToken\` in .bctb-config.json.`,
             };
         }
 

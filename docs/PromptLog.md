@@ -3265,3 +3265,15 @@ Change instructions an business logic to do this."
 > "This is not a nice conversation to get a new knowledge article to github. I would expect it to be clearer: what to do, a display of the content to copy"
 
 ---
+### Entry ID: 20738624-2be0-4458-a260-00b7e59bb3d8 — 2026-04-06 13:33
+> "Twice, I had the agent error: save_knowledge TypeError: Cannot read properties of undefined (reading invoke) — can we avoid it?"
+
+---
+### Entry ID: edfa0ae1-adfb-4cde-a6e8-f383057a9f4f - 2026-04-06 13:33
+> "Twice, I had the agent error: save_knowledge TypeError: Cannot read properties of undefined (reading invoke) - can we avoid it?"
+
+---
+### Entry ID: 7f8e44a7-0f17-43aa-9577-ab231944b6b5 — 2026-04-06 13:39
+> "When I now asked to save knowledge to the community, it came back with an url, and with text. Good. But .. The text was not copy-able. I expect a PURE md output, so I can simply select all, and copy from that. Not some output in the agents chat, where only half of it is copy-able."
+
+---

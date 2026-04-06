@@ -58,9 +58,11 @@ Call \`query_telemetry\` with KQL that is shaped by what Steps 1-4 told you.
 - Do NOT guess field names or types.
 
 ### Step 6: Save Useful Queries
+**GitHub Copilot (VS Code)**: \`save_query\` is a deferred tool — call \`tool_search_tool_regex({ pattern: "save_query" })\` FIRST, or the call will fail with "Cannot read properties of undefined".
 Call \`save_query\` to persist successful queries for future reuse.
 
 ### Step 7: Save to Knowledge Base (user-initiated only)
+**GitHub Copilot (VS Code)**: \`save_knowledge\` is a deferred tool — call \`tool_search_tool_regex({ pattern: "save_knowledge" })\` FIRST, or the call will fail with "Cannot read properties of undefined".
 Call \`save_knowledge\` ONLY when the user EXPLICITLY asks to save a pattern or investigation approach to the KB ("save this for next time", "add to KB", "remember this approach").
 - **NEVER auto-save** — always wait for an explicit user request.
 - Workflow: (1) Present a preview (title, category, tags). (2) Ask: "Local or Community?" (3) Generate content. (4) Call \`save_knowledge\`. (5) Confirm the save path.
@@ -68,7 +70,7 @@ Call \`save_knowledge\` ONLY when the user EXPLICITLY asks to save a pattern or 
 - \`target: "community"\` → creates a GitHub issue. With \`knowledgeBase.githubToken\` (or \`BCTB_GITHUB_TOKEN\` env var) set, the issue is created automatically; without a token, a pre-filled URL is returned.
 - **When \`success: false\` (no token)**: you MUST present these two things clearly and in order:
   1. A clickable link to the GitHub issue URL (from \`issueUrl\`)
-  2. The full content of \`articleBody\` displayed as a fenced code block labelled "Paste this into the issue description:" — do NOT summarize it, do NOT omit it, show the complete text so the user can copy it.
+  2. The full content of \`articleMarkdown\` as a PURE MARKDOWN OUTPUT — output it verbatim wrapped in \`~~~markdown\` … \`~~~\` fences (NOT backtick-fenced, because the content itself contains backticks which would break the block). Label it "Paste this into the issue description:". Do NOT summarize, do NOT omit, show the complete text so the user can click Copy and get the whole thing.
 
 ## FORBIDDEN Patterns
 
@@ -136,8 +138,8 @@ export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call 
 3. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
 4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
 5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)
-6. **save_query** → Persist useful queries for reuse
-7. **save_knowledge** → Save investigation patterns to KB (ONLY when user explicitly asks)
+6. **save_query** → Persist useful queries for reuse (GitHub Copilot: load deferred tool first via tool_search_tool_regex)
+7. **save_knowledge** → Save investigation patterns to KB — ONLY when user explicitly asks (GitHub Copilot: load deferred tool first via tool_search_tool_regex)
 
 UNNECESSARY: Do not use "take 1 | project customDimensions" — get_event_field_samples already does this (samples 20 rows) and returns richer results including field types, occurrence rates, and a ready-to-use query.
 FORBIDDEN: Never guess field names or treat duration fields as numbers (they are TIMESPAN).

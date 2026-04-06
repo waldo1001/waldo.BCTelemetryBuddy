@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.4] - 2026-04-06
+
+### Fixed
+- **Community contribution copyability**: Added `articleMarkdown` field to `KBContributeResult` containing the raw frontmatter + content (no GitHub issue wrapping). Agent instructions updated to display it in `~~~markdown` fences so the content can be selected and copied in full — nested backtick fences inside the article no longer break the code block.
+
 ## [3.3.3] - 2026-04-06
 
 ### Fixed
