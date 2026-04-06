@@ -430,7 +430,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize Knowledge Base webview provider
     try {
-        knowledgeBaseProvider = new KnowledgeBaseProvider(context.extensionUri, outputChannel);
+        knowledgeBaseProvider = new KnowledgeBaseProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
         context.subscriptions.push(knowledgeBaseProvider);
         outputChannel.appendLine('✓ KnowledgeBaseProvider initialized');
     } catch (error: any) {

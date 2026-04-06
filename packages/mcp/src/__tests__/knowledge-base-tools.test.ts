@@ -71,8 +71,8 @@ jest.mock('@bctb/shared', () => ({
     })),
     RateLimitedUsageTelemetry: jest.fn(),
     TELEMETRY_CONNECTION_STRING: '',
-    TELEMETRY_EVENTS: { MCP: { SERVER_STARTED: 'Mcp.ServerStarted', TOOL_CALLED: 'Mcp.ToolCalled', ERROR: 'Mcp.Error' }, MCP_TOOLS: { QUERY_TELEMETRY: 'Mcp.Tools.QueryTelemetry' } },
-    createCommonProperties: jest.fn().mockReturnValue({}),
+    TELEMETRY_EVENTS: { MCP: { SERVER_STARTED: 'TB-MCP-001', TOOL_CALLED: 'Mcp.ToolCalled', ERROR: 'TB-MCP-005' }, MCP_TOOLS: { QUERY_TELEMETRY: 'TB-MCP-101', GET_KNOWLEDGE: 'TB-MCP-111', SAVE_KNOWLEDGE: 'TB-MCP-112' } },
+    createCommonProperties: jest.fn((_eventId: string, _component: string, _sessionId: string, _installationId: string, _version: string, options?: any) => ({ ...options })),
     cleanTelemetryProperties: jest.fn((p: any) => p),
     hashValue: jest.fn((v: string) => 'hash-' + v),
     loadConfig: jest.fn(),
@@ -377,6 +377,82 @@ describe('Knowledge Base MCP Tools', () => {
 
             await expect(handlers.executeToolCall('save_knowledge', SAVE_PARAMS))
                 .rejects.toThrow('Knowledge Base is not available');
+        });
+    });
+
+    // =========================================================================
+    // Telemetry — get_knowledge
+    // =========================================================================
+    describe('Telemetry — get_knowledge', () => {
+        it('tracks Mcp.GetKnowledge with resultCount when KB is available', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            const mockKB = {
+                search: jest.fn().mockReturnValue(SAMPLE_ARTICLES),
+                getSummary: jest.fn().mockReturnValue({ community: 1, local: 1, excluded: 0, source: 'github' }),
+            };
+            (handlers as any).knowledgeBase = mockKB;
+
+            await handlers.executeToolCall('get_knowledge', { eventId: 'RT0006' });
+
+            expect(services.usageTelemetry.trackEvent).toHaveBeenCalledWith(
+                'Mcp.GetKnowledge',
+                expect.objectContaining({ resultCount: 2 })
+            );
+        });
+
+        it('tracks Mcp.GetKnowledge with resultCount:0 when KB is unavailable', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            // no knowledgeBase attached
+
+            await handlers.executeToolCall('get_knowledge', {});
+
+            expect(services.usageTelemetry.trackEvent).toHaveBeenCalledWith(
+                'Mcp.GetKnowledge',
+                expect.objectContaining({ resultCount: 0 })
+            );
+        });
+    });
+
+    // =========================================================================
+    // Telemetry — save_knowledge
+    // =========================================================================
+    describe('Telemetry — save_knowledge', () => {
+        it('tracks Mcp.SaveKnowledge with target and category on local save', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            (handlers as any).knowledgeBase = {
+                saveArticle: jest.fn().mockResolvedValue({ success: true }),
+                contributeArticle: jest.fn(),
+            };
+
+            await handlers.executeToolCall('save_knowledge', {
+                title: 'T', category: 'playbook', content: 'C', target: 'local',
+            });
+
+            expect(services.usageTelemetry.trackEvent).toHaveBeenCalledWith(
+                'Mcp.SaveKnowledge',
+                expect.objectContaining({ target: 'local', category: 'playbook' })
+            );
+        });
+
+        it('tracks Mcp.SaveKnowledge with target:community on community save', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            (handlers as any).knowledgeBase = {
+                saveArticle: jest.fn(),
+                contributeArticle: jest.fn().mockResolvedValue({ success: true }),
+            };
+
+            await handlers.executeToolCall('save_knowledge', {
+                title: 'T', category: 'query-pattern', content: 'C', target: 'community',
+            });
+
+            expect(services.usageTelemetry.trackEvent).toHaveBeenCalledWith(
+                'Mcp.SaveKnowledge',
+                expect.objectContaining({ target: 'community' })
+            );
         });
     });
 });

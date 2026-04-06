@@ -309,6 +309,14 @@ export class ToolHandlers {
                             count: 0,
                             message: 'Knowledge Base is not available. It may be disabled or failed to load at startup.',
                         };
+                        this.services.usageTelemetry.trackEvent(
+                            'Mcp.GetKnowledge',
+                            cleanTelemetryProperties(createCommonProperties(
+                                TELEMETRY_EVENTS.MCP_TOOLS.GET_KNOWLEDGE, 'mcp',
+                                this.services.sessionId, this.services.installationId, VERSION,
+                                { profileHash, resultCount: 0, kbAvailable: 'false' }
+                            ))
+                        );
                     } else {
                         const searchParams: any = {};
                         if (params.category) searchParams.category = params.category;
@@ -323,6 +331,21 @@ export class ToolHandlers {
                             count: articles.length,
                             summary,
                         };
+                        this.services.usageTelemetry.trackEvent(
+                            'Mcp.GetKnowledge',
+                            cleanTelemetryProperties(createCommonProperties(
+                                TELEMETRY_EVENTS.MCP_TOOLS.GET_KNOWLEDGE, 'mcp',
+                                this.services.sessionId, this.services.installationId, VERSION,
+                                {
+                                    profileHash,
+                                    resultCount: articles.length,
+                                    hasCategory: String(!!params.category),
+                                    hasSearch: String(!!params.search),
+                                    hasEventId: String(!!params.eventId),
+                                    source: params.source ?? 'all',
+                                }
+                            ))
+                        );
                     }
                     break;
                 }
@@ -348,6 +371,14 @@ export class ToolHandlers {
                     } else {
                         result = await this.knowledgeBase.saveArticle(saveParams);
                     }
+                    this.services.usageTelemetry.trackEvent(
+                        'Mcp.SaveKnowledge',
+                        cleanTelemetryProperties(createCommonProperties(
+                            TELEMETRY_EVENTS.MCP_TOOLS.SAVE_KNOWLEDGE, 'mcp',
+                            this.services.sessionId, this.services.installationId, VERSION,
+                            { profileHash, target: params.target, category: params.category }
+                        ))
+                    );
                     break;
                 }
 

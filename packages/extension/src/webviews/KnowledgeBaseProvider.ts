@@ -12,7 +12,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
+import { KnowledgeBaseService, KBConfig, IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
 
 const DEFAULT_KB_SOURCE = 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base';
 
@@ -42,7 +42,8 @@ export class KnowledgeBaseProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        outputChannel: vscode.OutputChannel
+        outputChannel: vscode.OutputChannel,
+        private readonly _usageTelemetry?: IUsageTelemetry
     ) {
         this._outputChannel = outputChannel;
     }
@@ -79,6 +80,7 @@ export class KnowledgeBaseProvider {
         // without depending on a message-passing handshake.
         const initialData = this._loadArticleData();
         this._panel.webview.html = this._getHtml(initialData);
+        this._usageTelemetry?.trackEvent('KB.PanelOpened', { eventId: TELEMETRY_EVENTS.EXTENSION.KB_PANEL_OPENED });
 
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
@@ -266,10 +268,18 @@ export class KnowledgeBaseProvider {
         try {
             const kbConfig = this._loadKbConfig(workspacePath);
             const service = new KnowledgeBaseService(workspacePath, kbConfig);
-            await service.loadAll(); // fetches from GitHub and writes cache
+            const refreshResult = await service.loadAll(); // fetches from GitHub and writes cache
             this._outputChannel.appendLine('[KB] Community articles refreshed from GitHub');
+            this._usageTelemetry?.trackEvent('KB.RefreshCompleted', {
+                eventId: TELEMETRY_EVENTS.EXTENSION.KB_REFRESH_COMPLETED,
+                articleCount: refreshResult.communityArticles?.length ?? 0,
+            });
         } catch (err: any) {
             this._outputChannel.appendLine(`[KB] GitHub refresh failed: ${err.message}`);
+            this._usageTelemetry?.trackEvent('KB.RefreshFailed', {
+                eventId: TELEMETRY_EVENTS.EXTENSION.KB_REFRESH_FAILED,
+                errorType: err?.constructor?.name ?? 'Error',
+            });
         }
 
         await this._sendArticles();
@@ -287,6 +297,11 @@ export class KnowledgeBaseProvider {
         try {
             this._saveExcludeList(workspacePath, next);
             this._outputChannel.appendLine(`[KB] ${excluded ? 'Excluded' : 'Included'} article: ${id}`);
+            this._usageTelemetry?.trackEvent('KB.ArticleExcluded', {
+                eventId: TELEMETRY_EVENTS.EXTENSION.KB_ARTICLE_EXCLUDED,
+                articleId: id,
+                excluded: String(excluded),
+            });
             // Reflect change in UI immediately
             this._panel?.webview.postMessage({ type: 'excludeUpdated', id, excluded, total: next.length });
         } catch (err: any) {
@@ -307,6 +322,10 @@ export class KnowledgeBaseProvider {
             config.knowledgeBase.enabled = !exclude;
             fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf-8');
             this._outputChannel.appendLine(`[KB] Community KB ${exclude ? 'disabled' : 'enabled'} (enabled: ${!exclude})`);
+            this._usageTelemetry?.trackEvent('KB.CommunityToggled', {
+                eventId: TELEMETRY_EVENTS.EXTENSION.KB_COMMUNITY_TOGGLED,
+                enabled: String(!exclude),
+            });
             await this._sendArticles();
             this._panel?.webview.postMessage({ type: 'kbEnabledChanged', enabled: !exclude });
         } catch (err: any) {
@@ -324,6 +343,12 @@ export class KnowledgeBaseProvider {
                 const filePath = path.join(workspacePath, '.vscode', '.bctb', 'knowledge', cat, `${id}.md`);
                 if (fs.existsSync(filePath)) {
                     await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(filePath));
+                    this._usageTelemetry?.trackEvent('KB.ArticleOpened', {
+                        eventId: TELEMETRY_EVENTS.EXTENSION.KB_ARTICLE_OPENED,
+                        source,
+                        category: cat,
+                        articleId: id,
+                    });
                     return;
                 }
             }
@@ -337,6 +362,12 @@ export class KnowledgeBaseProvider {
                 const dirName = KB_CATEGORY_DIRS[category ?? ''] ?? category ?? '';
                 const url = `${blobBase}/${dirName}/${id}.md`;
                 await vscode.env.openExternal(vscode.Uri.parse(url));
+                this._usageTelemetry?.trackEvent('KB.ArticleOpened', {
+                    eventId: TELEMETRY_EVENTS.EXTENSION.KB_ARTICLE_OPENED,
+                    source,
+                    category: category ?? '',
+                    articleId: id,
+                });
             } catch (err: any) {
                 this._outputChannel.appendLine(`[KB] Failed to open article in browser: ${err.message}`);
             }
