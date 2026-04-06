@@ -13,7 +13,9 @@
         "test": "npm run test --workspaces",
         "clean": "npm run clean --workspaces",
         "dev:mcp": "npm run dev --workspace=packages/mcp",
-        "dev:extension": "npm run dev --workspace=packages/extension"
+        "dev:extension": "npm run dev --workspace=packages/extension",
+        "generate-kb-index": "node scripts/generate-kb-index.js",
+        "check-kb-index": "node scripts/generate-kb-index.js --check"
     },
     "engines": {
         "node": ">=18.0.0",

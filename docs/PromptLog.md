@@ -3248,3 +3248,7 @@ Change instructions an business logic to do this."
 > "perform a patch release of both extension and mcp of the latest changes"
 
 ---
+### Entry ID: 3c37e8db-235c-4dc6-acf9-99f184226ff6 — 2026-04-06 10:40
+> "CI bot-commit of KB index.json was failing. Drop the auto-commit, validate in CI that index.json is not stale instead. No bot commits needed. Make sure all agent instructions keep the index up-to-date."
+
+---

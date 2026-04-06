@@ -1960,3 +1960,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Patch release: extension v3.2.4 and MCP v3.3.1 [Entry: 37ac9e35-77eb-4bfa-8aed-5bdb12620e88]
   - **Why:** Release unreleased telemetry tracking commits for both components.
   - **How:** Bumped versions, updated CHANGELOGs, committed, tagged v3.2.4 and mcp-v3.3.1, pushed.
+- **2026-04-06** — Replace bot-commit KB index job with validate-only CI check [Entry: 3c37e8db-235c-4dc6-acf9-99f184226ff6]
+  - **Why:** The bot commit in CI was failing due to branch protection; validate-only eliminates the problem category entirely.
+  - **How:** Added --check flag to generate-kb-index.js (compares articles, ignores date); swapped update-kb-index CI job for validate-kb-index; added npm run generate-kb-index/check-kb-index scripts; updated copilot-instructions.md rule 9a.

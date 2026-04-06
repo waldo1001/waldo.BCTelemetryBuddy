@@ -102,7 +102,26 @@ const index = {
     articles,
 };
 
-fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2) + '\n');
-
-console.log(`✓ Generated knowledge-base/index.json`);
-console.log(`  Articles: ${articles.length}  (${totalFiles} files scanned, ${skipped} skipped)`);
+// --check mode: validate that the committed index.json matches what would be generated.
+// The `generated` date and `count` fields are intentionally excluded from the comparison
+// because `generated` changes daily and `count` is derived from `articles`.
+if (process.argv.includes('--check')) {
+    if (!fs.existsSync(OUTPUT)) {
+        console.error('❌ knowledge-base/index.json does not exist.');
+        console.error('   Run: node scripts/generate-kb-index.js');
+        process.exit(1);
+    }
+    const existing = JSON.parse(fs.readFileSync(OUTPUT, 'utf-8'));
+    const existingArticles = JSON.stringify(existing.articles ?? []);
+    const newArticles = JSON.stringify(articles);
+    if (existingArticles !== newArticles) {
+        console.error('❌ knowledge-base/index.json is stale.');
+        console.error('   Run: node scripts/generate-kb-index.js  and commit the result.');
+        process.exit(1);
+    }
+    console.log(`✓ knowledge-base/index.json is up to date (${articles.length} articles)`);
+} else {
+    fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2) + '\n');
+    console.log(`✓ Generated knowledge-base/index.json`);
+    console.log(`  Articles: ${articles.length}  (${totalFiles} files scanned, ${skipped} skipped)`);
+}
