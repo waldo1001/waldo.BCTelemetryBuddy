@@ -1982,3 +1982,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — Add articleMarkdown field for copyable community KB output [Entry: 7f8e44a7-0f17-43aa-9577-ab231944b6b5]
   - **Why:** articleBody contained nested backtick fences which broke the outer code block — only half was selectable
   - **How:** Added articleMarkdown (raw frontmatter+content) to KBContributeResult; agent instructions now use ~~~markdown fences (no conflict with inner backticks)
+- **2026-04-06** — Add MCP embedded resources support [Entry: 758a5beb-356d-434d-9434-6b07fdedd9ea]
+  - **Why:** Enable external agents to request query results as file resources instead of inline text, allowing code interpreters (Python/pandas) to process large datasets — aligned with Microsoft BC MCP 2026 Wave 1 pattern.
+  - **How:** Added `resultFormat` and `fileFormat` parameters to `query_telemetry` tool. Created `ExportService` in shared package for CSV/JSON file exports. Modified SDK server to return MCP embedded resources (`{type: 'resource'}`) and registered a resource template (`bctb://exports/{filename}`) for `resources/list` and `resources/read` support. Backward compatible — defaults to `text` format. Updated documentation across README, MCP README, shared README, UserGuide, and CLAUDE.md.

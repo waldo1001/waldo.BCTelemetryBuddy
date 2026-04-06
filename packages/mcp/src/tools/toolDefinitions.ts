@@ -121,7 +121,9 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             properties: {
                 kql: { type: 'string', description: 'KQL query string - MUST use event IDs from get_event_catalog() and field names from get_event_field_samples(). Do not guess.' },
                 useContext: { type: 'boolean', description: 'Use saved queries as examples', default: true },
-                includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true }
+                includeExternal: { type: 'boolean', description: 'Include external reference queries', default: true },
+                resultFormat: { type: 'string', enum: ['text', 'resource'], description: 'Set to "resource" to return results as an embedded MCP resource file instead of inline text. Use this for large result sets that benefit from code interpreter processing (e.g., pandas, charts). When "resource", only a brief summary is added to the model context while the full data is returned as a file reference. Default: "text" (inline JSON, backward compatible).', default: 'text' },
+                fileFormat: { type: 'string', enum: ['json', 'csv'], description: 'File format when resultFormat is "resource". CSV is recommended for tabular data and code interpreters. Default: "csv".', default: 'csv' }
             },
             required: ['kql']
         },

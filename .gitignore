@@ -55,3 +55,4 @@ logs/
 Thumbs.db
 .bctb-config.json
 .vscode/.bctb/cache/*.json
+packages/shared/.cache/

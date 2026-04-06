@@ -395,8 +395,9 @@ The server exposes **11 tools** to language models (GitHub Copilot, Claude Deskt
 
 ### Query Execution (Step 4 of workflow)
 - **`query_telemetry`**: Execute KQL queries against Application Insights
-  - Parameters: `kql` (required KQL query string), `useContext` (boolean, default: true), `includeExternal` (boolean, default: true)
+  - Parameters: `kql` (required KQL query string), `useContext` (boolean, default: true), `includeExternal` (boolean, default: true), `resultFormat` (enum: `text` | `resource`, default: `text`), `fileFormat` (enum: `json` | `csv`, default: `csv`)
   - Returns: Query results with summary, recommendations, and chart suggestions
+  - **Embedded Resources**: Set `resultFormat: "resource"` to receive results as an MCP embedded resource file instead of inline text. The response contains a brief text summary (for lightweight model context) plus an embedded resource with the full data as CSV or JSON. This enables agents with code interpreters (e.g., Python/pandas) to process large datasets, create visualizations, and perform structured analysis. CSV is the default file format as it works natively with `pd.read_csv()`.
   - **When to use**: After discovery and understanding phases - execute the actual query with precise KQL
 
 ### Query Library (Step 3 of workflow)
@@ -664,7 +665,7 @@ The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, q
 **`mcpSdkServer.ts`** - MCP SDK server for stdio mode (primary)
 - Uses official `@modelcontextprotocol/sdk` (protocol 2025-06-18)
 - `StdioServerTransport` for JSON-RPC 2.0 over stdin/stdout
-- Capabilities: `tools` (with `listChanged`), `logging`
+- Capabilities: `tools` (with `listChanged`), `resources`, `prompts`, `logging`
 - Automatic Zod schema conversion from JSON Schema tool definitions
 
 **`tools/toolDefinitions.ts`** - Single source of truth for all tool metadata
@@ -695,6 +696,7 @@ The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, q
 - **`sanitize.ts`** - PII removal and data sanitization
 - **`eventLookup.ts`** - Telemetry event catalog and schema discovery
 - **`references.ts`** - External KQL example fetching
+- **`exports.ts`** - File export service for embedded MCP resources (CSV/JSON)
 
 ### Data Flow
 
@@ -710,6 +712,22 @@ The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, q
 2. **Tool Request**: Extension sends JSON-RPC via HTTP POST to `/rpc`
 3. **Execution**: Same business logic methods on MCPServer class
 4. **Response**: JSON-RPC response over HTTP
+
+### Embedded Resources (MCP Resource Support)
+
+The MCP server supports **embedded resources** for `query_telemetry`, enabling agents to receive large result sets as file references instead of inline text. This is aligned with Microsoft's BC MCP 2026 Wave 1 pattern.
+
+**How it works:**
+1. Agent calls `query_telemetry` with `resultFormat: "resource"` (and optionally `fileFormat: "csv"` or `"json"`)
+2. Server executes the query, writes results to a file in `{workspace}/.vscode/.bctb/exports/`
+3. Response contains a brief text summary + an MCP embedded resource (`{type: "resource", resource: {uri, mimeType, text}}`)
+4. Agent passes the file reference to a code interpreter for analysis, charts, etc.
+
+**Resource template:** `bctb://exports/{filename}` — clients can list and read exported files via `resources/list` and `resources/read`.
+
+**File cleanup:** Export files older than 24 hours are automatically cleaned up on server startup and after each new export.
+
+**Backward compatible:** Without `resultFormat` (or with `resultFormat: "text"`), behavior is unchanged — results are returned as inline JSON text.
 
 ## Publishing
 

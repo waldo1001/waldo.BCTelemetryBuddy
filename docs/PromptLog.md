@@ -2464,7 +2464,8 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b — 2026-01-06 14:41
 > "Exclude fields with explicit millisecond indicators (Ms, Milliseconds, InMs, _ms) from timespan detection - if field name indicates milliseconds, it's NOT a timespan"
-=======
+
+---
 ### Entry ID: 749c22d6-ea18-4d83-9042-f99aab6c5110 — 2026-01-08 14:45
 > "Fix GitHub Actions labeler workflow permissions issue - Resource not accessible by integration error"
 ### Entry ID: a4a2d36e-0bff-401f-86c8-bffc1dc23cf4 — 2026-01-14 23:10
@@ -3275,5 +3276,9 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 7f8e44a7-0f17-43aa-9577-ab231944b6b5 — 2026-04-06 13:39
 > "When I now asked to save knowledge to the community, it came back with an url, and with text. Good. But .. The text was not copy-able. I expect a PURE md output, so I can simply select all, and copy from that. Not some output in the agents chat, where only half of it is copy-able."
+
+---
+### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30
+> "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
 
 ---

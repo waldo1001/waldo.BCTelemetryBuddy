@@ -758,7 +758,7 @@ BC Telemetry Buddy exposes **11 MCP tools** to GitHub Copilot (accessible via al
 | `bctb_get_categories` | Get available event categories (Lifecycle, Performance, Security, Error, Integration, Configuration, Custom) | To understand event categorization and filter by category |
 | `bctb_get_tenant_mapping` | Map company names to Azure tenant IDs and environment names | When you mention a specific customer/company name in your query |
 | **Query Execution** |
-| `bctb_query_telemetry` | Execute KQL queries against telemetry (use discovery tools first for best results) | For every telemetry query (after using discovery tools to understand structure) |
+| `bctb_query_telemetry` | Execute KQL queries against telemetry. Supports `resultFormat: "resource"` for embedded file output (CSV/JSON) usable by code interpreters | For every telemetry query (after using discovery tools to understand structure) |
 | **Query Library** |
 | `bctb_get_saved_queries` | List saved queries (with optional tag filtering) | To find existing patterns before generating new queries |
 | `bctb_search_queries` | Search saved queries by keywords | When your question matches common patterns (errors, slow, login, etc.) |
@@ -961,6 +961,32 @@ Control query result caching:
 ```
 
 Cache is stored in `.vscode/.bctb/cache/` (automatically excluded from git).
+
+### Embedded Resources (File-Based Results)
+
+For large query results, agents can request data as file references instead of inline text. This keeps the model context lightweight while enabling code interpreters (Python/pandas) to process the full dataset.
+
+**How to use:** The agent sets `resultFormat: "resource"` when calling `query_telemetry`:
+```
+@bc-telemetry-buddy show me all page views from the last week as a CSV file for analysis
+```
+
+The response includes:
+- A brief text summary in the model context (e.g., "Query returned 500 rows with 12 columns")
+- An embedded MCP resource file (CSV or JSON) that code interpreters can read
+
+**Parameters on `query_telemetry`:**
+| Parameter | Values | Default | Description |
+|-----------|--------|---------|-------------|
+| `resultFormat` | `text`, `resource` | `text` | `text` = inline JSON (default), `resource` = embedded file |
+| `fileFormat` | `csv`, `json` | `csv` | File format when `resultFormat` is `resource`. CSV recommended for code interpreters |
+
+**File management:**
+- Export files are stored in `.vscode/.bctb/exports/`
+- Files older than 24 hours are automatically cleaned up on server startup and after each new export
+- The `exports/` directory should not be committed to git
+
+**Backward compatible:** Without `resultFormat`, behavior is unchanged — results are returned as inline JSON text, same as before.
 
 ### PII Sanitization
 
@@ -1610,6 +1636,7 @@ The MCP backend runs locally and only sends what's necessary for query generatio
 
 **Do NOT commit:**
 - `.vscode/.bctb/cache/` (cached results)
+- `.vscode/.bctb/exports/` (exported query result files)
 - `.vscode/.bctb/references-cache/` (external references cache)
 - Workspace settings with secrets
 

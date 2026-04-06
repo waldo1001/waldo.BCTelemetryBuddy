@@ -12,6 +12,7 @@ This package contains the core business logic shared between the MCP server and 
 - **Query Management** (`queries.ts`) - Saved query storage and retrieval
 - **Sanitization** (`sanitize.ts`) - PII removal and data sanitization
 - **Event Lookup** (`eventLookup.ts`) - Telemetry event catalog
+- **Exports** (`exports.ts`) - File export service for MCP embedded resources (CSV/JSON conversion, file management, cleanup)
 
 ## Usage
 
