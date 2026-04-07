@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.6] - 2026-04-07
+
+### Changed
+- **get_knowledge step made mandatory in agent instructions**: Strengthened the `get_knowledge` step in `SERVER_INSTRUCTIONS` and `WORKFLOW_PROMPT_CONTENT` with "⚠️ NEVER SKIP THIS STEP" banners, MANDATORY labels, and explicit "not optional" language. Added "Skipping `get_knowledge`" as FORBIDDEN pattern #5 to prevent agents from bypassing the knowledge base before writing KQL.
+
 ## [3.3.5] - 2026-04-06
 
 ### Changed

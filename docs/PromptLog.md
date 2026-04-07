@@ -3281,3 +3281,7 @@ Change instructions an business logic to do this."
 > "Question about knowledge base author field. User wants real author names instead of hardcoded community/local. Approved plan and requested implementation."
 
 ---
+### Entry ID: 405c9d7c-18ce-4703-b698-d7ac990c0ea6 — 2026-04-07 08:19
+> "I tested this, and seems get_knowledge is skipped some of the times. It should not be skipped. Make it more prominent."
+
+---

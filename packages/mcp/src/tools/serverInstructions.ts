@@ -30,11 +30,13 @@ Call \`get_event_catalog\` FIRST to discover which event IDs exist in the teleme
 - Use filters (status, minCount) to narrow results.
 - The response includes a \`significantEvents\` list: events covering 90% of total volume. Investigate ALL of these, not just the first one.
 
-### Step 2: Consult Knowledge Base
-Call \`get_knowledge\` with the event IDs discovered in Step 1 to check for proven KQL patterns before writing from scratch.
+### Step 2: Consult Knowledge Base — ⚠️ NEVER SKIP THIS STEP
+**MANDATORY**: Call \`get_knowledge\` with the event IDs discovered in Step 1 BEFORE writing any KQL. This step is NOT optional — skipping it means ignoring proven patterns and writing queries from scratch, which wastes time and produces worse results.
 - \`get_knowledge({ eventId: "RT0006" })\` — find patterns related to a specific event
 - \`get_knowledge({ category: "playbook" })\` — find investigation playbooks
 - \`get_knowledge({ search: "deadlock" })\` — free-text search
+- If \`get_knowledge\` returns results, USE THEM as your starting point — do not discard them.
+- If \`get_knowledge\` returns no results, proceed to Step 3 — but you MUST have called it first.
 - KB articles are starting points, not the full picture — always follow with Step 3 to catch new fields not yet covered by the article.
 - Local workspace articles take precedence over community articles.
 
@@ -83,6 +85,8 @@ These patterns are EXPLICITLY BANNED — never use them:
 3. **Treating duration fields as numbers** — Fields like executionTime, totalTime, serverTime are TIMESPAN format ("hh:mm:ss.fffffff"). Use \`totimespan()\` for conversion, not \`toint()\` or \`toreal()\`.
 
 4. **Filtering by companyName** — Always filter by \`aadTenantId\`. Use \`get_tenant_mapping\` to resolve company names to tenant IDs.
+
+5. **Skipping \`get_knowledge\`** — You MUST call \`get_knowledge\` after \`get_event_catalog\` and before writing KQL. The knowledge base contains proven patterns, investigation playbooks, and query templates that save time and produce better results. Jumping straight to \`get_event_field_samples\` or \`query_telemetry\` without checking the KB first is a violation of the mandatory workflow.
 
 ## Multi-Profile Workspaces
 
@@ -134,7 +138,7 @@ Start with \`traces\` unless the question is specifically about page load perfor
 export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call workflow:
 
 1. **get_event_catalog** → Discover available events (ALWAYS FIRST)
-2. **get_knowledge(eventId)** → Check knowledge base for proven patterns (BEFORE writing KQL)
+2. **get_knowledge(eventId)** → ⚠️ NEVER SKIP — Check knowledge base for proven patterns (MUST call BEFORE writing KQL)
 3. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
 4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
 5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)

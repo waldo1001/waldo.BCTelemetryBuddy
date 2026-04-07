@@ -1985,3 +1985,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-06** — KB author field: real names instead of hardcoded community/local [Entry: b56e6eb7-ffbb-4626-9c77-ce96daf3b5f4]
   - **Why:** The author field was meaninglessly set to "community" or "local" — user wants real contributor names for attribution.
   - **How:** Removed author overrides in contributeArticle/saveArticle/buildFrontmatter. Added resolveGitAuthor() in MCP handler using async exec. Updated 8 KB article files, README example, index generator, and all related tests.
+- **2026-04-07** — Made get_knowledge step more prominent in agent instructions [Entry: 405c9d7c-18ce-4703-b698-d7ac990c0ea6]
+  - **Why:** get_knowledge was being skipped by agents during telemetry workflows — needed stronger emphasis to prevent agents from bypassing the knowledge base step.
+  - **How:** Added NEVER SKIP banners, MANDATORY labels, and warning markers to get_knowledge step in serverInstructions.ts, chatParticipant.ts, and agentDefinitions.ts. Also added skipping get_knowledge as a FORBIDDEN pattern in server instructions.
