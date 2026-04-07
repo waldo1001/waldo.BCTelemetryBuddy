@@ -1988,3 +1988,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-07** — Made get_knowledge step more prominent in agent instructions [Entry: 405c9d7c-18ce-4703-b698-d7ac990c0ea6]
   - **Why:** get_knowledge was being skipped by agents during telemetry workflows — needed stronger emphasis to prevent agents from bypassing the knowledge base step.
   - **How:** Added NEVER SKIP banners, MANDATORY labels, and warning markers to get_knowledge step in serverInstructions.ts, chatParticipant.ts, and agentDefinitions.ts. Also added skipping get_knowledge as a FORBIDDEN pattern in server instructions.
+- **2026-04-07** — Patch release MCP 3.3.6 + Extension 3.2.7 [Entry: 202452ae-9303-4f8a-aed2-b50c4acbdba1]
+  - **Why:** Release the get_knowledge prominence changes so agents stop skipping the KB step.
+  - **How:** Bumped MCP to 3.3.6 and Extension to 3.2.7, updated CHANGELOGs, committed, tagged (mcp-v3.3.6, v3.2.7), and pushed to GitHub.
