@@ -142,7 +142,7 @@ When user mentions a company/customer name OR multiple profiles exist:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events — it will tell you the next step
-2. Call mcp_bc_telemetry__get_knowledge with the event IDs from step 1 — check for proven KQL patterns and investigation playbooks
+2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the event IDs from step 1 — check for proven KQL patterns and investigation playbooks. This is MANDATORY, not optional.
 3. **BEST PRACTICE — DO BEFORE WRITING KQL**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event
    - You will discover 20+ customDimension fields, their exact data types, and sample values from real data
    - Duration fields may be TIMESPAN (hh:mm:ss.fffffff), not milliseconds — sampling reveals this before you guess wrong
@@ -153,8 +153,9 @@ Before writing queries about specific events:
 
 ### Step 3: Query and Analyze
 \`\`\`
-1. Use mcp_bc_telemetry__get_event_catalog (discovery) → get_knowledge (proven patterns) → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
-2. **ALWAYS call get_event_field_samples BEFORE writing KQL** — it tells you:
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → ⚠️ **NEVER SKIP: get_knowledge (proven patterns)** → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
+2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains proven patterns that save time and produce better results. Skipping this step is a workflow violation.
+3. **ALWAYS call get_event_field_samples BEFORE writing KQL** — it tells you:
    - All 20+ available customDimension fields and their exact names (you cannot reliably guess these)
    - Exact data types: duration fields (executionTime, totalTime, etc.) are often TIMESPAN, not milliseconds
    - Sample values from real data so you use correct comparison operators and conversions
@@ -564,8 +565,8 @@ This will show you:
 - Occurrence counts
 - Documentation links
 
-### Step 1b: Consult Knowledge Base
-After discovering event IDs, call \`mcp_bc_telemetry__get_knowledge\` for the relevant events to find proven KQL patterns and investigation playbooks before writing queries from scratch.
+### Step 1b: Consult Knowledge Base — ⚠️ NEVER SKIP THIS STEP
+**MANDATORY**: After discovering event IDs, call \`mcp_bc_telemetry__get_knowledge\` for the relevant events to find proven KQL patterns and investigation playbooks. This step is NOT optional — skipping it means ignoring proven patterns and writing queries from scratch.
 \`\`\`
 Call: mcp_bc_telemetry__get_knowledge
 Parameters: eventId (e.g., "RT0028"), category (e.g., "playbook"), or search (e.g., "deadlock")

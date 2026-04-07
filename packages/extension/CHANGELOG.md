@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.7] - 2026-04-07
+
+### Changed
+- **get_knowledge step made mandatory in agent instructions**: Strengthened the `get_knowledge` step in `chatParticipant.ts` (SYSTEM_PROMPT) and `agentDefinitions.ts` with "⚠️ NEVER SKIP" banners and MANDATORY labels across all workflow summaries, tool reference lists, and step-by-step instructions to prevent agents from skipping the knowledge base lookup.
+
 ## [3.2.6] - 2026-04-06
 
 ### Changed

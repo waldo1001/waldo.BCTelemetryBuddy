@@ -87,7 +87,7 @@ When user mentions a company/customer name:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. Call mcp_bc_telemetry__get_knowledge with the discovered event IDs — check for proven KQL patterns and investigation playbooks
+2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the discovered event IDs — check for proven KQL patterns and investigation playbooks. This is MANDATORY, not optional.
 3. **BEST PRACTICE**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing KQL
    - Events typically have 20+ customDimensions fields you cannot guess
    - This tells you the exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff", NOT numbers)
@@ -268,8 +268,9 @@ If an analysis seems empty or missing expected detail:
 
 **Workflow:**
 \`\`\`
-1. Use mcp_bc_telemetry__get_event_catalog (discovery) → **get_knowledge (proven patterns)** → **MANDATORY: field_samples** → event_schema (if complex)
-2. **ALWAYS call get_event_field_samples BEFORE writing ANY queries** - verify data types, especially:
+1. Use mcp_bc_telemetry__get_event_catalog (discovery) → ⚠️ **NEVER SKIP: get_knowledge (proven patterns)** → **MANDATORY: field_samples** → event_schema (if complex)
+2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains proven patterns that save time and produce better results. Skipping this step is a workflow violation.
+3. **ALWAYS call get_event_field_samples BEFORE writing ANY queries** - verify data types, especially:
    - Duration fields (executionTime, totalTime, etc.) are PROBABLY timespans, not milliseconds
    - Use samples to confirm format (hh:mm:ss.fffffff = timespan, needs conversion)
    - String vs numeric fields (use tostring(), toint(), toreal() appropriately)
@@ -416,7 +417,7 @@ When user asks to "create analysis document" or "generate report":
 
 **Event Discovery:**
 - \`mcp_bc_telemetry__get_event_catalog\` - Discover relevant events (call BEFORE building queries)
-- \`mcp_bc_telemetry__get_knowledge\` - Check knowledge base for proven KQL patterns (call AFTER catalog, BEFORE field samples)
+- \`mcp_bc_telemetry__get_knowledge\` - ⚠️ **NEVER SKIP** — Check knowledge base for proven KQL patterns (MUST call AFTER catalog, BEFORE field samples)
 - \`mcp_bc_telemetry__get_event_field_samples\` - **MANDATORY** Get field samples and data types for EVERY event before writing queries
 - \`mcp_bc_telemetry__get_event_schema\` - Get detailed event schema for complex queries
 
@@ -448,7 +449,7 @@ Help users understand their Business Central system health, performance, and usa
 1. **Multi-profile**: Call list_mprofiles first if workspace has profiles
 2. **Tenant mapping**: Use get_tenant_mapping for customer names, filter by aadTenantId (NEVER companyName)
 3. **Event discovery**: Call get_event_catalog to find relevant events
-4. **Knowledge base**: Call get_knowledge with event IDs for proven patterns (BEFORE field sampling)
+4. ⚠️ **Knowledge base — NEVER SKIP**: Call get_knowledge with event IDs for proven patterns (MUST call BEFORE field sampling)
 5. **Field sampling**: **MANDATORY** call get_event_field_samples BEFORE writing ANY queries
 6. **Execute queries**: Build tenant-centric KQL, verify timespan conversions, proper type casting
 7. **Format output**: Clean tables with readable names, truncated IDs, formatted numbers
@@ -458,7 +459,7 @@ Help users understand their Business Central system health, performance, and usa
 
 **Event Discovery:**
 - \`mcp_bc_telemetry__get_event_catalog\` - Discover relevant events (call BEFORE building queries)
-- \`mcp_bc_telemetry__get_knowledge\` - Check knowledge base for proven KQL patterns (call AFTER catalog, BEFORE field samples)
+- \`mcp_bc_telemetry__get_knowledge\` - ⚠️ **NEVER SKIP** — Check knowledge base for proven KQL patterns (MUST call AFTER catalog, BEFORE field samples)
 - \`mcp_bc_telemetry__get_event_field_samples\` - Get field samples and data types
 - \`mcp_bc_telemetry__get_event_schema\` - Get detailed event schema
 
