@@ -1991,3 +1991,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-07** — Patch release MCP 3.3.6 + Extension 3.2.7 [Entry: 202452ae-9303-4f8a-aed2-b50c4acbdba1]
   - **Why:** Release the get_knowledge prominence changes so agents stop skipping the KB step.
   - **How:** Bumped MCP to 3.3.6 and Extension to 3.2.7, updated CHANGELOGs, committed, tagged (mcp-v3.3.6, v3.2.7), and pushed to GitHub.
+- **2026-04-09** — Feature usage telemetry analysis [Entry: 0ac21dd1-9d6d-44b8-a237-5c754146c68b]
+  - **Why:** User wanted to see which features are most/least used in BC Telemetry Buddy.
+  - **How:** Ran the feature-usage.kql query from UsageTelemetryAnalysis/ against customEvents table via query_telemetry.
+- **2026-04-09** — Knowledge telemetry deep-dive [Entry: d8aa7650-300a-4c90-87fc-ce932ba42887]
+  - **Why:** Verify that the newly added get_knowledge/save_knowledge telemetry is flowing correctly.
+  - **How:** Queried customEvents for Mcp.GetKnowledge and Mcp.SaveKnowledge, analyzed hit rates, search patterns, and save targets.

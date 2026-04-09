@@ -3289,3 +3289,11 @@ Change instructions an business logic to do this."
 > "Make a patch release"
 
 ---
+### Entry ID: 0ac21dd1-9d6d-44b8-a237-5c754146c68b — 2026-04-09 17:30
+> "Get the feature usage based on the kql in the UsageTelemetryAnalysis folder."
+
+---
+### Entry ID: d8aa7650-300a-4c90-87fc-ce932ba42887 — 2026-04-09 17:31
+> "We just added telemetry for knowledge - and telemetry on that on this endpoint?"
+
+---
