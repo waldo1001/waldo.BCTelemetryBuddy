@@ -2000,3 +2000,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-04-09** — Fix 3 bugs causing ~23% of MCP error telemetry [Entry: 025b4ec2-f244-40f9-a747-7b5cc9560207]
   - **Why:** Eliminate ~19 false/avoidable errors from telemetry dashboard: undefined crashes in parseResult and generateRecommendations, and "No events found" misclassified as errors.
   - **How:** Added optional chaining in parseResult (kusto.ts), early-return guard in generateRecommendations + required schema constraint (toolHandlers.ts, toolDefinitions.ts), and replaced throw with structured no-data return in getEventFieldSamples (toolHandlers.ts, server.ts). 7 new tests added.
+- **2026-04-09** — Patch release MCP v3.3.7 + Extension v3.2.8 [Entry: 12a716ed-ff71-47eb-9c4c-eac321e02c09]
+  - **Why:** Ship the 3 error-reduction fixes to users; eliminate ~19 false/avoidable errors from telemetry dashboard.
+  - **How:** Bumped versions, updated component CHANGELOGs and docs/CHANGELOG.md, committed, tagged (mcp-v3.3.7, v3.2.8), pushed to trigger CI/CD.

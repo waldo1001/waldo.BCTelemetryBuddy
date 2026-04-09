@@ -3301,3 +3301,7 @@ Change instructions an business logic to do this."
 > "Execute the plan to reduce user-facing errors: Fix 1 (guard parseResult against undefined rows/columns), Fix 2 (guard generateRecommendations against undefined kql + add required schema), Fix 3 (return structured result instead of throwing on no events found)."
 
 ---
+### Entry ID: 12a716ed-ff71-47eb-9c4c-eac321e02c09 — 2026-04-09 21:27
+> "Document and perform a patch release for MCP v3.3.7 and Extension v3.2.8 — fixes 3 bugs causing ~23% of MCP error telemetry."
+
+---
