@@ -3297,3 +3297,7 @@ Change instructions an business logic to do this."
 > "We just added telemetry for knowledge - and telemetry on that on this endpoint?"
 
 ---
+### Entry ID: 025b4ec2-f244-40f9-a747-7b5cc9560207 — 2026-04-09 21:22
+> "Execute the plan to reduce user-facing errors: Fix 1 (guard parseResult against undefined rows/columns), Fix 2 (guard generateRecommendations against undefined kql + add required schema), Fix 3 (return structured result instead of throwing on no events found)."
+
+---

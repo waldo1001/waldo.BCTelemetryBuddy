@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.7] - 2026-04-09
+
+### Fixed
+- **Guard `parseResult()` against undefined rows/columns**: Added optional chaining on `primaryTable.columns` and fallback for `primaryTable.rows` in `KustoService.parseResult()` to prevent `Cannot read properties of undefined (reading 'rows')` crashes when the Application Insights API returns incomplete table structures (~10 errors eliminated).
+- **Guard `generateRecommendations()` against undefined kql**: Added early-return guard when `kql` is undefined/empty, preventing `Cannot read properties of undefined (reading 'includes')` crashes. Also added `required: ['kql']` to the `get_recommendations` tool schema for defense in depth (~2 errors eliminated).
+- **Return structured result for "No events found" instead of throwing**: `getEventFieldSamples()` now returns `{ eventId, samplesAnalyzed: 0, fields: [], summary, recommendations }` instead of throwing an Error when no data is found. This prevents expected "no data" conditions from polluting the error telemetry dashboard (~7 false errors eliminated).
+
 ## [3.3.6] - 2026-04-07
 
 ### Changed

@@ -378,5 +378,61 @@ describe('KustoService', () => {
             expect(parsed.rows).toEqual([]);
             expect(parsed.summary).toBe('Returned 0 row(s) with 1 column(s)');
         });
+
+        it('should handle table with undefined rows property', () => {
+            const result: KustoQueryResult = {
+                tables: [
+                    {
+                        tableName: 'PrimaryResult',
+                        columns: [
+                            { columnName: 'col1', dataType: 'string', columnType: 'string' }
+                        ],
+                        rows: undefined as any
+                    }
+                ]
+            };
+
+            const parsed = service.parseResult(result);
+
+            expect(parsed.columns).toEqual(['col1']);
+            expect(parsed.rows).toEqual([]);
+            expect(parsed.summary).toBe('Returned 0 row(s) with 1 column(s)');
+        });
+
+        it('should handle table with undefined columns property', () => {
+            const result: KustoQueryResult = {
+                tables: [
+                    {
+                        tableName: 'PrimaryResult',
+                        columns: undefined as any,
+                        rows: [['value1', 100]]
+                    }
+                ]
+            };
+
+            const parsed = service.parseResult(result);
+
+            expect(parsed.columns).toEqual([]);
+            expect(parsed.rows).toEqual([['value1', 100]]);
+            expect(parsed.summary).toBe('Returned 1 row(s) with 0 column(s)');
+        });
+
+        it('should handle table with both columns and rows undefined', () => {
+            const result: KustoQueryResult = {
+                tables: [
+                    {
+                        tableName: 'PrimaryResult',
+                        columns: undefined as any,
+                        rows: undefined as any
+                    }
+                ]
+            };
+
+            const parsed = service.parseResult(result);
+
+            expect(parsed.columns).toEqual([]);
+            expect(parsed.rows).toEqual([]);
+            expect(parsed.summary).toBe('Returned 0 row(s) with 0 column(s)');
+        });
     });
 });

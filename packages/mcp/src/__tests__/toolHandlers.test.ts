@@ -765,7 +765,7 @@ describe('ToolHandlers', () => {
             expect(result).toHaveProperty('recommendations');
         });
 
-        test('throws when no events found', async () => {
+        test('returns no-data result when no events found', async () => {
             const { handlers } = createHandlersWithServices();
             jest.spyOn(handlers, 'executeQuery').mockResolvedValue({
                 type: 'table', kql: '', summary: 'OK',
@@ -774,8 +774,27 @@ describe('ToolHandlers', () => {
                 cached: false
             });
 
-            await expect(handlers.getEventFieldSamples('RT9999', 10, 7))
-                .rejects.toThrow('No events found');
+            const result = await handlers.getEventFieldSamples('RT9999', 10, 7);
+            expect(result).toHaveProperty('eventId', 'RT9999');
+            expect(result).toHaveProperty('samplesAnalyzed', 0);
+            expect(result).toHaveProperty('fields', []);
+            expect(result.summary).toContain('No events found');
+            expect(result).toHaveProperty('recommendations');
+        });
+
+        test('returns no-data result when rows is undefined', async () => {
+            const { handlers } = createHandlersWithServices();
+            jest.spyOn(handlers, 'executeQuery').mockResolvedValue({
+                type: 'table', kql: '', summary: 'OK',
+                columns: ['timestamp', 'message', 'customDimensions'],
+                rows: undefined as any,
+                cached: false
+            });
+
+            const result = await handlers.getEventFieldSamples('RT9999', 10, 7);
+            expect(result).toHaveProperty('eventId', 'RT9999');
+            expect(result).toHaveProperty('samplesAnalyzed', 0);
+            expect(result).toHaveProperty('fields', []);
         });
 
         test('handles string-encoded customDimensions', async () => {
@@ -925,6 +944,20 @@ describe('ToolHandlers', () => {
             });
 
             expect(recs).toHaveLength(0);
+        });
+
+        test('returns empty array when kql is undefined', async () => {
+            const { handlers } = createHandlersWithServices();
+            const recs = await handlers.generateRecommendations(undefined as any, {});
+
+            expect(recs).toEqual([]);
+        });
+
+        test('returns empty array when kql is empty string', async () => {
+            const { handlers } = createHandlersWithServices();
+            const recs = await handlers.generateRecommendations('', {});
+
+            expect(recs).toEqual([]);
         });
     });
 

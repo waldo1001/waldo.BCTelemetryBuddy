@@ -209,7 +209,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             properties: {
                 kql: { type: 'string', description: 'KQL query to analyze' },
                 results: { type: 'object', description: 'Query results to analyze' }
-            }
+            },
+            required: ['kql']
         },
         annotations: {
             readOnlyHint: true,

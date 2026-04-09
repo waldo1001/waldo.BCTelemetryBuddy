@@ -191,8 +191,8 @@ export class KustoService {
         }
 
         const primaryTable = result.tables[0];
-        const columns = primaryTable.columns.map(col => col.columnName);
-        const rows = primaryTable.rows;
+        const columns = primaryTable.columns?.map(col => col.columnName) ?? [];
+        const rows = primaryTable.rows ?? [];
 
         const summary = `Returned ${rows.length} row(s) with ${columns.length} column(s)`;
 

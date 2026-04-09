@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.8] - 2026-04-09
+
+### Fixed
+- **Guard `parseResult()` against undefined rows/columns**: Shared library fix — `KustoService.parseResult()` now handles undefined `columns`/`rows` on table objects instead of crashing with `TypeError`.
+
 ## [3.2.7] - 2026-04-07
 
 ### Changed

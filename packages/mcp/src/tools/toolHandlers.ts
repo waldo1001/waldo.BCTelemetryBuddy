@@ -893,7 +893,13 @@ traces
         }
 
         if (!result.rows || result.rows.length === 0) {
-            throw new Error(`No events found for eventId "${eventId}" in the last ${daysBack} days. Try increasing daysBack or check if the eventId is correct.`);
+            return {
+                eventId,
+                samplesAnalyzed: 0,
+                fields: [],
+                summary: `No events found for eventId "${eventId}" in the last ${daysBack} days. Try increasing daysBack or check if the eventId is correct.`,
+                recommendations: ['Try increasing daysBack parameter', 'Verify the eventId is correct']
+            };
         }
 
         interface FieldStats {
@@ -1289,6 +1295,10 @@ ${extendStatements}
      */
     async generateRecommendations(kql: string, results: any): Promise<string[]> {
         const recommendations: string[] = [];
+
+        if (!kql) {
+            return recommendations;
+        }
 
         if (kql.includes('where') && !kql.includes('| where')) {
             recommendations.push('Consider using the pipe operator before "where" for better performance');

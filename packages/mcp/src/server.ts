@@ -992,7 +992,13 @@ traces
         }
 
         if (!result.rows || result.rows.length === 0) {
-            throw new Error(`No events found for eventId "${eventId}" in the last ${daysBack} days. Try increasing daysBack or check if the eventId is correct.`);
+            return {
+                eventId,
+                samplesAnalyzed: 0,
+                fields: [],
+                summary: `No events found for eventId "${eventId}" in the last ${daysBack} days. Try increasing daysBack or check if the eventId is correct.`,
+                recommendations: ['Try increasing daysBack parameter', 'Verify the eventId is correct']
+            };
         }
 
         // Analyze all customDimensions to find field patterns
