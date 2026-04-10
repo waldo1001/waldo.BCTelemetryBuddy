@@ -3312,4 +3312,7 @@ Change instructions an business logic to do this."
 ### Entry ID: e3a1c8f2-7b4d-4e9a-a5f0-9d2e6b8c1a3f — 2026-04-10
 > "Just a brainfart - but I have been executing a SHITLOAD of telemetry, and struggling with getting authenticated. I don't see any of those errors of my machine in the error list. [...] To be able to improve the setup and UX, I would like to retrieve detailed telemetry, including callstacks, of every error a user or agent might get. And I feel I'm not getting that. Are we able to improve this?"
 
+---### Entry ID: 7c3f8a1d-2e5b-4d6c-b9a0-8f1e3c7d5b2a — 2026-04-11
+> "We did a massive update on telemetry in waldo.BCTelemetryBuddy. Come up with a plan to update the dashboard's data. [...] Most of the metrics on the new pages are empty. Please use BCTB yourself to verify the KQL you came up with. [...] Fix it all. Release it all!"
+
 ---

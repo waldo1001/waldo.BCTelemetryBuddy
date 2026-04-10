@@ -138,7 +138,7 @@ export function initializeServices(
     }
 
     return {
-        auth: new AuthService(config),
+        auth: new AuthService(config, usageTelemetry),
         kusto: new KustoService(config.applicationInsightsAppId, config.kustoClusterUrl, usageTelemetry),
         cache: new CacheService(config.workspacePath, config.cacheTTLSeconds, config.cacheEnabled),
         queries: new QueriesService(config.workspacePath, config.queriesFolder),
@@ -1192,7 +1192,7 @@ ${extendStatements}
             this.activeProfileName = profileName;
 
             // Reinitialize services
-            this.services.auth = new AuthService(this.config);
+            this.services.auth = new AuthService(this.config, this.services.usageTelemetry);
             this.services.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl, this.services.usageTelemetry);
             this.services.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
             this.services.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);

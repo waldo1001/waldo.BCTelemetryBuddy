@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.9] - 2026-04-11
+
+### Fixed
+- **Auth telemetry not emitted from MCP SDK/stdio mode**: `toolHandlers.ts` created `AuthService` without passing `usageTelemetry`, so auth events (TB-AUTH-001 attempt, TB-AUTH-002 completed, TB-AUTH-003 token refreshed) were silently dropped for all MCP SDK users. Now passes `usageTelemetry` to `AuthService` in both `createServices()` and `switchProfile()` code paths.
+
 ## [3.3.8] - 2026-04-10
 
 ### Added
