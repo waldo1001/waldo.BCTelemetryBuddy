@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.9] - 2026-04-10
+
 ### Added
 - **Chat participant error telemetry**: Tool call failures and top-level handler errors in `@bc-telemetry-buddy` chat participant are now tracked via `trackException`, making previously invisible errors visible in the Usage dashboard.
 - **`errorCategory` on `Extension.CommandFailed` events**: Failed command telemetry now includes a categorized error type (AuthenticationError, NetworkError, QueryError, etc.) via `categorizeError()`.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.8] - 2026-04-10
+
 ### Added
 - **Comprehensive error telemetry with callstacks**: All exceptions tracked via `trackException` now automatically include sanitized stack trace, stack hash, error category, and sanitized error message — powered by the existing but previously unused `createErrorProperties()` utility. Enrichment happens centrally in `RateLimitedUsageTelemetry` so every caller benefits automatically.
 - **Auth telemetry events (TB-AUTH-001–004)**: `AuthService` now emits `TB-AUTH-001` (attempt), `TB-AUTH-002` (completed), `TB-AUTH-003` (token refreshed), and `trackException` with `TB-AUTH-004` (failed) for all four auth flows.
