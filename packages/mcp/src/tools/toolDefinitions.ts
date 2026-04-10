@@ -203,7 +203,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'get_recommendations',
-        description: 'Get recommendations for improving a query',
+        description: '[DEPRECATED] This tool is deprecated and will be removed in a future version. Recommendations are already included automatically in every query_telemetry response. Do not call this tool separately.',
         inputSchema: {
             type: 'object',
             properties: {

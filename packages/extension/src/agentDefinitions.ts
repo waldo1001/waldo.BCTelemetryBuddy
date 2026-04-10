@@ -100,27 +100,23 @@ traces
     - Retrieve full field definitions & types for an event
     - Use after field samples when constructing complex queries
 
-8. **mcp_bc_telemetry__get_recommendations**
-    - Provides optimization and follow‑up suggestions based on prior queries
-    - Use after presenting initial findings to enrich actionability
-
-9. **mcp_bc_telemetry__get_categories**
+8. **mcp_bc_telemetry__get_categories**
     - Lists available query categories (errors, performance, contention, usage)
     - Helps classify and structure analysis outputs
 
-10. **mcp_bc_telemetry__get_external_queries**
+9. **mcp_bc_telemetry__get_external_queries**
      - Returns example patterns from external sources for inspiration
      - Use when crafting advanced or comparative queries
 
-11. **mcp_bc_telemetry__get_saved_queries**
+10. **mcp_bc_telemetry__get_saved_queries**
      - Enumerates stored workspace queries for reuse & consistency
      - Encourage leveraging existing proven logic before writing new
 
-12. **mcp_bc_telemetry__list_profiles**
+11. **mcp_bc_telemetry__list_profiles**
      - For multi‑profile workspaces: discover available telemetry profiles
      - Use BEFORE any mapping or discovery when multiple customers are active
 
-13. **mcp_bc_telemetry__switch_profile**
+12. **mcp_bc_telemetry__switch_profile**
      - Switch to a different telemetry profile in a multi‑profile workspace
      - Reloads credentials and App Insights configuration for the selected profile
      - All subsequent queries will use the new profile's connection
@@ -165,8 +161,7 @@ Before writing queries about specific events:
 4. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
 5. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
 6. Provide actionable insights and recommendations (performance, contention, failure patterns)
-7. Use mcp_bc_telemetry__get_recommendations to enrich output
-8. Save useful queries with mcp_bc_telemetry__save_query for reuse
+7. Save useful queries with mcp_bc_telemetry__save_query for reuse
 \`\`\`
 
 ### Tenant vs Company Clarification
