@@ -27,7 +27,7 @@ import {
     getInstallationId,
     resetInstallationId
 } from './services/extensionTelemetry';
-import { IUsageTelemetry, NoOpUsageTelemetry, RateLimitedUsageTelemetry, TELEMETRY_CONNECTION_STRING, TELEMETRY_EVENTS, createCommonProperties, cleanTelemetryProperties, hashValue } from '@bctb/shared';
+import { IUsageTelemetry, NoOpUsageTelemetry, RateLimitedUsageTelemetry, TELEMETRY_CONNECTION_STRING, TELEMETRY_EVENTS, createCommonProperties, cleanTelemetryProperties, hashValue, categorizeError } from '@bctb/shared';
 
 /**
  * MCP process handle
@@ -582,6 +582,7 @@ export function activate(context: vscode.ExtensionContext) {
                 // Track failed completion
                 const durationMs = Date.now() - startTime;
                 const errorType = error?.constructor?.name || 'UnknownError';
+                const errorCategory = error instanceof Error ? categorizeError(error) : 'UnknownError';
                 const failedProps = createCommonProperties(
                     TELEMETRY_EVENTS.EXTENSION.COMMAND_FAILED,
                     'extension',
@@ -591,7 +592,8 @@ export function activate(context: vscode.ExtensionContext) {
                     {
                         commandName,
                         profileHash: getCurrentProfileHash(),
-                        errorType
+                        errorType,
+                        errorCategory
                     }
                 );
                 usageTelemetry?.trackEvent('Extension.CommandFailed', cleanTelemetryProperties(failedProps), { duration: durationMs });
@@ -790,7 +792,7 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel.appendLine('✓ Registered MCP Server Definition Provider');
 
     // Register chat participant for @bc-telemetry-buddy
-    registerChatParticipant(context, outputChannel);
+    registerChatParticipant(context, outputChannel, usageTelemetry);
 
     // Auto-show setup wizard on first activation if not configured
     checkAndShowSetupWizard(context);

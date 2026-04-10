@@ -1,5 +1,7 @@
 import { ConfidentialClientApplication, DeviceCodeRequest, PublicClientApplication } from '@azure/msal-node';
 import { MCPConfig } from './config.js';
+import { IUsageTelemetry } from './usageTelemetry.js';
+import { TELEMETRY_EVENTS } from './telemetryEvents.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -21,10 +23,12 @@ export interface AuthResult {
  */
 export class AuthService {
     private config: MCPConfig;
+    private usageTelemetry?: IUsageTelemetry;
     private authResult: AuthResult | null = null;
 
-    constructor(config: MCPConfig) {
+    constructor(config: MCPConfig, usageTelemetry?: IUsageTelemetry) {
         this.config = config;
+        this.usageTelemetry = usageTelemetry;
     }
 
     /**
@@ -47,6 +51,10 @@ export class AuthService {
      * Authenticate using configured flow
      */
     async authenticate(): Promise<AuthResult> {
+        this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_ATTEMPT, {
+            authFlow: this.config.authFlow || 'client_credentials'
+        });
+
         if (this.config.authFlow === 'azure_cli') {
             return this.authenticateAzureCLI();
         } else if (this.config.authFlow === 'device_code') {
@@ -95,6 +103,10 @@ export class AuthService {
             console.error(`[MCP]   Subscription: ${tokenResponse.subscription || 'N/A'}`);
             console.error(`[MCP]   Tenant: ${tokenResponse.tenant || 'N/A'}`);
 
+            this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED, {
+                authFlow: 'azure_cli'
+            });
+
             return this.authResult;
         } catch (error: any) {
             console.error('Azure CLI authentication failed:', error.message);
@@ -108,6 +120,9 @@ export class AuthService {
             }
 
             this.authResult = { authenticated: false };
+            if (error instanceof Error) {
+                this.usageTelemetry?.trackException(error, { eventId: TELEMETRY_EVENTS.AUTH.FAILED, authFlow: 'azure_cli' });
+            }
             throw error;
         }
     }
@@ -153,10 +168,17 @@ export class AuthService {
 
             console.log(`✓ Authenticated as: ${this.authResult.user}`);
 
+            this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED, {
+                authFlow: 'device_code'
+            });
+
             return this.authResult;
         } catch (error) {
             console.error('Device code authentication failed:', error);
             this.authResult = { authenticated: false };
+            if (error instanceof Error) {
+                this.usageTelemetry?.trackException(error, { eventId: TELEMETRY_EVENTS.AUTH.FAILED, authFlow: 'device_code' });
+            }
             throw error;
         }
     }
@@ -196,10 +218,17 @@ export class AuthService {
 
             console.log(`✓ Authenticated with service principal`);
 
+            this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED, {
+                authFlow: 'client_credentials'
+            });
+
             return this.authResult;
         } catch (error) {
             console.error('Client credentials authentication failed:', error);
             this.authResult = { authenticated: false };
+            if (error instanceof Error) {
+                this.usageTelemetry?.trackException(error, { eventId: TELEMETRY_EVENTS.AUTH.FAILED, authFlow: 'client_credentials' });
+            }
             throw error;
         }
     }
@@ -262,10 +291,17 @@ export class AuthService {
 
             console.error(`[MCP] ✓ Authenticated via VS Code`);
 
+            this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED, {
+                authFlow: 'vscode_auth'
+            });
+
             return this.authResult;
         } catch (error: any) {
             console.error('VS Code authentication failed:', error.message);
             this.authResult = { authenticated: false };
+            if (error instanceof Error) {
+                this.usageTelemetry?.trackException(error, { eventId: TELEMETRY_EVENTS.AUTH.FAILED, authFlow: 'vscode_auth' });
+            }
             throw error;
         }
     }
@@ -290,6 +326,10 @@ export class AuthService {
                     throw new Error('Failed to obtain access token from VS Code');
                 }
 
+                this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.TOKEN_REFRESHED, {
+                    authFlow: 'vscode_auth'
+                });
+
                 return newStatus.accessToken;
             }
             return status.accessToken;
@@ -303,6 +343,10 @@ export class AuthService {
             if (!newStatus.accessToken) {
                 throw new Error('Failed to obtain access token');
             }
+
+            this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.TOKEN_REFRESHED, {
+                authFlow: this.config.authFlow || 'client_credentials'
+            });
 
             return newStatus.accessToken;
         }

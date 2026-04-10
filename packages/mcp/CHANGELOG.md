@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Comprehensive error telemetry with callstacks**: All exceptions tracked via `trackException` now automatically include sanitized stack trace, stack hash, error category, and sanitized error message — powered by the existing but previously unused `createErrorProperties()` utility. Enrichment happens centrally in `RateLimitedUsageTelemetry` so every caller benefits automatically.
+- **Auth telemetry events (TB-AUTH-001–004)**: `AuthService` now emits `TB-AUTH-001` (attempt), `TB-AUTH-002` (completed), `TB-AUTH-003` (token refreshed), and `trackException` with `TB-AUTH-004` (failed) for all four auth flows.
+- **`errorCategory` on `Mcp.ToolFailed` events**: Failed tool telemetry now includes a categorized error type (AuthenticationError, NetworkError, QueryError, etc.) via `categorizeError()`.
+- **Error message sanitization**: Raw error messages in server.ts `trackEvent` properties are now sanitized to remove PII, file paths, and secrets.
+
+### Deprecated
+- **`get_recommendations` tool**: This tool is now deprecated and will be removed in a future major version. Recommendations are already included automatically in every `query_telemetry` response. The tool now returns a deprecation notice alongside its results. Usage is tracked via `TB-MCP-113` telemetry event.
+
+### Fixed
+- **`generateRecommendations()` crashes with undefined params**: Added guards for `typeof kql !== 'string'` and `results?.rows` optional chaining, fixing 48 TypeErrors/month (37 `.rows` + 11 `.includes`) caused by AI agents calling `get_recommendations` without passing all parameters.
+
 ### Improved
 - **`agent run-all` failure summary**: The results summary now lists each failed agent by name with its error message, instead of just showing a count. Makes it easy to see which agents failed and why without scrolling through interleaved output.
 

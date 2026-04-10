@@ -86,7 +86,8 @@ jest.mock('@bctb/shared', () => ({
     },
     createCommonProperties: jest.fn().mockReturnValue({}),
     cleanTelemetryProperties: jest.fn().mockReturnValue({}),
-    hashValue: jest.fn().mockReturnValue('abc123')
+    hashValue: jest.fn().mockReturnValue('abc123'),
+    categorizeError: jest.fn().mockReturnValue('UnknownError')
 }));
 
 jest.mock('../mcpTelemetry.js', () => ({

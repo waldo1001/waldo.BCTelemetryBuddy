@@ -15,7 +15,7 @@ jest.mock('vscode', () => ({
             { name: 'mcp_bc_telemetry__search_queries', description: 'Search saved queries', tags: ['mcp'] },
             { name: 'mcp_bc_telemetry__save_query', description: 'Save a query', tags: ['mcp'] },
             { name: 'mcp_bc_telemetry__get_event_field_samples', description: 'Analyze event fields', tags: ['mcp'] },
-            { name: 'mcp_bc_telemetry__get_recommendations', description: 'Get recommendations', tags: ['mcp'] },
+            { name: 'mcp_bc_telemetry__get_recommendations', description: '[DEPRECATED] Get recommendations', tags: ['mcp'] },
             { name: 'mcp_bc_telemetry__get_categories', description: 'Get event categories', tags: ['mcp'] },
             { name: 'mcp_bc_telemetry__get_external_queries', description: 'Fetch external query examples', tags: ['mcp'] },
             { name: 'some_other_tool', description: 'Not a BC Telemetry tool', tags: [] }
@@ -320,6 +320,41 @@ describe('Chat Participant', () => {
             );
             expect(mockStream.markdown).toHaveBeenCalledWith(
                 expect.stringContaining('Error: Test error')
+            );
+        });
+
+        it('should call trackException on error when telemetry is provided', async () => {
+            // Re-register with telemetry
+            const mockTelemetry = {
+                trackEvent: jest.fn(),
+                trackException: jest.fn(),
+                trackDependency: jest.fn(),
+                trackTrace: jest.fn(),
+                flush: jest.fn().mockResolvedValue(undefined)
+            };
+
+            // Reset and re-register with telemetry
+            createdParticipant = {
+                handler: null as any,
+                iconPath: null,
+            };
+            (vscode.chat.createChatParticipant as jest.Mock).mockReturnValue(createdParticipant);
+            (vscode.chat.createChatParticipant as jest.Mock).mockImplementation((_id: string, handler: any) => {
+                createdParticipant.handler = handler;
+                return createdParticipant;
+            });
+
+            registerChatParticipant(mockContext, mockOutputChannel, mockTelemetry);
+            handler = createdParticipant.handler;
+
+            const error = new Error('Test telemetry error');
+            mockRequest.model.sendRequest = jest.fn().mockRejectedValue(error);
+
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            expect(mockTelemetry.trackException).toHaveBeenCalledWith(
+                error,
+                expect.objectContaining({ operation: 'chatParticipant' })
             );
         });
 

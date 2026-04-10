@@ -3305,3 +3305,11 @@ Change instructions an business logic to do this."
 > "Document and perform a patch release for MCP v3.3.7 and Extension v3.2.8 — fixes 3 bugs causing ~23% of MCP error telemetry."
 
 ---
+### Entry ID: 08a746c3-e342-439e-9579-528f54041ba5 — 2026-04-10
+> "Investigate usage errors via BCTB telemetry. Deprecate get_recommendations tool — 48 TypeErrors/month from AI agents calling it with missing params. Fix undefined guards, return deprecation notice, track with TB-MCP-113 telemetry, remove from agent prompts."
+
+---
+### Entry ID: e3a1c8f2-7b4d-4e9a-a5f0-9d2e6b8c1a3f — 2026-04-10
+> "Just a brainfart - but I have been executing a SHITLOAD of telemetry, and struggling with getting authenticated. I don't see any of those errors of my machine in the error list. [...] To be able to improve the setup and UX, I would like to retrieve detailed telemetry, including callstacks, of every error a user or agent might get. And I feel I'm not getting that. Are we able to improve this?"
+
+---

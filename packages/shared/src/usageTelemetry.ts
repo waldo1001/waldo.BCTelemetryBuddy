@@ -1,9 +1,11 @@
 /**
  * Usage Telemetry Interface and Implementations
- * 
+ *
  * This module provides telemetry tracking for BCTelemetryBuddy extension/MCP usage.
  * IMPORTANT: This is separate from TelemetryService which queries BC telemetry data.
  */
+
+import { createErrorProperties } from './usageTelemetryUtils.js';
 
 /**
  * Core interface for tracking usage telemetry events
@@ -107,7 +109,10 @@ export class RateLimitedUsageTelemetry implements IUsageTelemetry {
     }
 
     trackException(error: Error, properties?: Record<string, string>): void {
-        const errorKey = `${error.name}:${properties?.stackHash || ''}`;
+        // Enrich with sanitized stack, category, and hash — caller props win on overlap
+        const enriched = { ...createErrorProperties(error), ...properties };
+
+        const errorKey = `${error.name}:${enriched.stackHash || ''}`;
 
         // Check if this error has been throttled
         if (this.throttledErrors.has(errorKey)) {
@@ -150,7 +155,7 @@ export class RateLimitedUsageTelemetry implements IUsageTelemetry {
 
         try {
             this.incrementEventCount();
-            this.innerTelemetry.trackException(error, properties);
+            this.innerTelemetry.trackException(error, enriched);
         } catch {
             // Swallow
         }

@@ -1,4 +1,5 @@
 import { KustoService, KustoQueryResult, KustoTable } from '../kusto.js';
+import { IUsageTelemetry } from '../usageTelemetry.js';
 import axios from 'axios';
 
 // Mock axios
@@ -433,6 +434,61 @@ describe('KustoService', () => {
             expect(parsed.columns).toEqual([]);
             expect(parsed.rows).toEqual([]);
             expect(parsed.summary).toBe('Returned 0 row(s) with 0 column(s)');
+        });
+    });
+
+    describe('Error Exception Tracking', () => {
+        let mockTelemetry: jest.Mocked<IUsageTelemetry>;
+
+        beforeEach(() => {
+            mockTelemetry = {
+                trackEvent: jest.fn(),
+                trackException: jest.fn(),
+                trackDependency: jest.fn(),
+                trackTrace: jest.fn(),
+                flush: jest.fn().mockResolvedValue(undefined)
+            };
+        });
+
+        it('should call trackException on authentication error', async () => {
+            const mockError = {
+                isAxiosError: true,
+                response: {
+                    status: 401,
+                    data: { error: { message: 'Invalid token' } }
+                }
+            };
+
+            const mockClient = { post: jest.fn().mockRejectedValue(mockError) };
+            mockedAxios.create.mockReturnValue(mockClient as any);
+            mockedAxios.isAxiosError.mockReturnValue(true);
+
+            const service = new KustoService(appInsightsAppId, clusterUrl, mockTelemetry);
+
+            await expect(service.executeQuery('traces | take 10', accessToken))
+                .rejects.toThrow('Authentication failed');
+
+            expect(mockTelemetry.trackException).toHaveBeenCalledWith(
+                expect.any(Error),
+                expect.objectContaining({ operation: 'kusto.query' })
+            );
+        });
+
+        it('should call trackException on non-axios error', async () => {
+            const mockError = new Error('Network error');
+            const mockClient = { post: jest.fn().mockRejectedValue(mockError) };
+            mockedAxios.create.mockReturnValue(mockClient as any);
+            mockedAxios.isAxiosError.mockReturnValue(false);
+
+            const service = new KustoService(appInsightsAppId, clusterUrl, mockTelemetry);
+
+            await expect(service.executeQuery('traces | take 10', accessToken))
+                .rejects.toThrow('Network error');
+
+            expect(mockTelemetry.trackException).toHaveBeenCalledWith(
+                mockError,
+                expect.objectContaining({ operation: 'kusto.query' })
+            );
         });
     });
 });

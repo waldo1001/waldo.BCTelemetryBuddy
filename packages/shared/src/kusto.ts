@@ -117,16 +117,22 @@ export class KustoService {
                     }
                 );
 
-                // Provide helpful error messages
-                if (status === 401 || status === 403) {
-                    throw new Error(`Authentication failed: ${message}. Check your credentials and permissions.`);
-                } else if (status === 400) {
-                    throw new Error(`Invalid query: ${message}`);
-                } else if (status === 429) {
-                    throw new Error(`Rate limit exceeded: ${message}. Please try again later.`);
-                } else {
-                    throw new Error(`Query execution failed: ${message}`);
-                }
+                // Track the exception with full context
+                const queryError = status === 401 || status === 403
+                    ? new Error(`Authentication failed: ${message}. Check your credentials and permissions.`)
+                    : status === 400
+                        ? new Error(`Invalid query: ${message}`)
+                        : status === 429
+                            ? new Error(`Rate limit exceeded: ${message}. Please try again later.`)
+                            : new Error(`Query execution failed: ${message}`);
+
+                this.usageTelemetry.trackException(queryError, {
+                    operation: 'kusto.query',
+                    queryName: safeName,
+                    correlationId: correlationId || 'unknown'
+                });
+
+                throw queryError;
             }
 
             // Track failed dependency call for non-axios errors
@@ -144,6 +150,14 @@ export class KustoService {
                     errorCategory: 'Unknown'
                 }
             );
+
+            if (error instanceof Error) {
+                this.usageTelemetry.trackException(error, {
+                    operation: 'kusto.query',
+                    queryName: safeName,
+                    correlationId: correlationId || 'unknown'
+                });
+            }
 
             throw error;
         }

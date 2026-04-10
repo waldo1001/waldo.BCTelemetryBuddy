@@ -1,5 +1,7 @@
 import { AuthService, AuthResult } from '../auth.js';
 import { MCPConfig } from '../config.js';
+import { IUsageTelemetry } from '../usageTelemetry.js';
+import { TELEMETRY_EVENTS } from '../telemetryEvents.js';
 import { PublicClientApplication, DeviceCodeRequest, ConfidentialClientApplication } from '@azure/msal-node';
 
 // Mock MSAL
@@ -316,6 +318,115 @@ describe('AuthService', () => {
 
             // Assert
             expect(authService.getStatus().authenticated).toBe(false);
+        });
+    });
+
+    describe('Auth Telemetry Tracking', () => {
+        let mockTelemetry: jest.Mocked<IUsageTelemetry>;
+
+        beforeEach(() => {
+            mockTelemetry = {
+                trackEvent: jest.fn(),
+                trackException: jest.fn(),
+                trackDependency: jest.fn(),
+                trackTrace: jest.fn(),
+                flush: jest.fn().mockResolvedValue(undefined)
+            };
+        });
+
+        it('should emit TB-AUTH-001 on authentication attempt', async () => {
+            const mockPCA = {
+                acquireTokenByDeviceCode: jest.fn().mockResolvedValue({
+                    accessToken: 'token',
+                    account: { username: 'user@example.com' },
+                    expiresOn: new Date(Date.now() + 3600000)
+                })
+            };
+            (PublicClientApplication as jest.Mock).mockReturnValue(mockPCA);
+
+            const authService = new AuthService({ ...mockConfig, authFlow: 'device_code' }, mockTelemetry);
+            await authService.authenticate();
+
+            expect(mockTelemetry.trackEvent).toHaveBeenCalledWith(
+                TELEMETRY_EVENTS.AUTH.AUTHENTICATION_ATTEMPT,
+                expect.objectContaining({ authFlow: 'device_code' })
+            );
+        });
+
+        it('should emit TB-AUTH-002 on successful authentication', async () => {
+            const mockPCA = {
+                acquireTokenByDeviceCode: jest.fn().mockResolvedValue({
+                    accessToken: 'token',
+                    account: { username: 'user@example.com' },
+                    expiresOn: new Date(Date.now() + 3600000)
+                })
+            };
+            (PublicClientApplication as jest.Mock).mockReturnValue(mockPCA);
+
+            const authService = new AuthService({ ...mockConfig, authFlow: 'device_code' }, mockTelemetry);
+            await authService.authenticate();
+
+            expect(mockTelemetry.trackEvent).toHaveBeenCalledWith(
+                TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED,
+                expect.objectContaining({ authFlow: 'device_code' })
+            );
+        });
+
+        it('should emit TB-AUTH-004 and trackException on authentication failure', async () => {
+            const mockError = new Error('Auth failed');
+            const mockPCA = {
+                acquireTokenByDeviceCode: jest.fn().mockRejectedValue(mockError)
+            };
+            (PublicClientApplication as jest.Mock).mockReturnValue(mockPCA);
+
+            const authService = new AuthService({ ...mockConfig, authFlow: 'device_code' }, mockTelemetry);
+            await expect(authService.authenticate()).rejects.toThrow('Auth failed');
+
+            expect(mockTelemetry.trackException).toHaveBeenCalledWith(
+                mockError,
+                expect.objectContaining({
+                    eventId: TELEMETRY_EVENTS.AUTH.FAILED,
+                    authFlow: 'device_code'
+                })
+            );
+        });
+
+        it('should emit TB-AUTH-003 on token refresh', async () => {
+            const mockPCA = {
+                acquireTokenByDeviceCode: jest.fn().mockResolvedValue({
+                    accessToken: 'refreshed-token',
+                    account: { username: 'user@example.com' },
+                    expiresOn: new Date(Date.now() + 3600000)
+                })
+            };
+            (PublicClientApplication as jest.Mock).mockReturnValue(mockPCA);
+
+            const authService = new AuthService({ ...mockConfig, authFlow: 'device_code' }, mockTelemetry);
+
+            // getAccessToken with no existing token triggers authenticate + token refresh event
+            const token = await authService.getAccessToken();
+
+            expect(token).toBe('refreshed-token');
+            expect(mockTelemetry.trackEvent).toHaveBeenCalledWith(
+                TELEMETRY_EVENTS.AUTH.TOKEN_REFRESHED,
+                expect.objectContaining({ authFlow: 'device_code' })
+            );
+        });
+
+        it('should work without telemetry (optional param)', async () => {
+            const mockPCA = {
+                acquireTokenByDeviceCode: jest.fn().mockResolvedValue({
+                    accessToken: 'token',
+                    account: { username: 'user@example.com' },
+                    expiresOn: new Date(Date.now() + 3600000)
+                })
+            };
+            (PublicClientApplication as jest.Mock).mockReturnValue(mockPCA);
+
+            // No telemetry param — should not throw
+            const authService = new AuthService({ ...mockConfig, authFlow: 'device_code' });
+            const result = await authService.authenticate();
+            expect(result.authenticated).toBe(true);
         });
     });
 

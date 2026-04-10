@@ -75,6 +75,7 @@ jest.mock('@bctb/shared', () => ({
     createCommonProperties: jest.fn((_eventId: string, _component: string, _sessionId: string, _installationId: string, _version: string, options?: any) => ({ ...options })),
     cleanTelemetryProperties: jest.fn((p: any) => p),
     hashValue: jest.fn((v: string) => 'hash-' + v),
+    categorizeError: jest.fn().mockReturnValue('UnknownError'),
     loadConfig: jest.fn(),
     validateConfig: jest.fn().mockReturnValue([]),
     loadConfigFromFile: jest.fn(),

@@ -23,7 +23,8 @@ import {
     TELEMETRY_EVENTS,
     createCommonProperties,
     cleanTelemetryProperties,
-    hashValue
+    hashValue,
+    categorizeError
 } from '@bctb/shared';
 import { VERSION } from '../version.js';
 import { createMCPUsageTelemetry, getMCPInstallationId } from '../mcpTelemetry.js';
@@ -231,9 +232,25 @@ export class ToolHandlers {
                     result = this.services.queries.getCategories();
                     break;
 
-                case 'get_recommendations':
-                    result = await this.generateRecommendations(params.kql, params.results);
+                case 'get_recommendations': {
+                    const recommendations = await this.generateRecommendations(params.kql, params.results);
+                    this.services.usageTelemetry.trackEvent('Mcp.DeprecatedToolCalled', cleanTelemetryProperties(
+                        createCommonProperties(
+                            TELEMETRY_EVENTS.MCP_TOOLS.DEPRECATED_TOOL_CALLED,
+                            'mcp',
+                            this.services.sessionId,
+                            this.services.installationId,
+                            VERSION,
+                            { toolName: 'get_recommendations', profileHash }
+                        )
+                    ));
+                    result = {
+                        deprecated: true,
+                        message: 'This tool is deprecated and will be removed in a future version. Recommendations are already included automatically in every query_telemetry response. Do not call this tool separately.',
+                        recommendations
+                    };
                     break;
+                }
 
                 case 'get_external_queries':
                     result = await this.services.references.getAllExternalQueries();
@@ -420,6 +437,7 @@ export class ToolHandlers {
             // Track failed tool completion
             const durationMs = Date.now() - startTime;
             const errorType = error?.constructor?.name || 'UnknownError';
+            const errorCategory = error instanceof Error ? categorizeError(error) : 'UnknownError';
             const failedProps = createCommonProperties(
                 TELEMETRY_EVENTS.MCP.ERROR,
                 'mcp',
@@ -429,7 +447,8 @@ export class ToolHandlers {
                 {
                     toolName,
                     profileHash,
-                    errorType
+                    errorType,
+                    errorCategory
                 }
             );
             this.services.usageTelemetry.trackEvent('Mcp.ToolFailed', cleanTelemetryProperties(failedProps), { duration: durationMs });
@@ -1296,7 +1315,7 @@ ${extendStatements}
     async generateRecommendations(kql: string, results: any): Promise<string[]> {
         const recommendations: string[] = [];
 
-        if (!kql) {
+        if (!kql || typeof kql !== 'string') {
             return recommendations;
         }
 
@@ -1312,7 +1331,7 @@ ${extendStatements}
             recommendations.push('Consider adding a time range filter (e.g., | where timestamp > ago(1d))');
         }
 
-        if (results.rows && results.rows.length > 10000) {
+        if (results?.rows && results.rows.length > 10000) {
             recommendations.push('Large result set. Consider adding "| take 100" or similar limit');
         }
 

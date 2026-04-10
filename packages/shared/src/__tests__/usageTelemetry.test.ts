@@ -139,6 +139,47 @@ describe('RateLimitedUsageTelemetry', () => {
         expect(mockInnerTelemetry.trackEvent).toHaveBeenCalledTimes(3);
     });
 
+    test('enriches trackException with sanitized stack, category, and hash', () => {
+        rateLimited = new RateLimitedUsageTelemetry(mockInnerTelemetry, {
+            maxEventsPerSession: 1000,
+            maxEventsPerMinute: 100,
+            maxIdenticalErrors: 10
+        });
+
+        const error = new Error('Authentication failed: token expired');
+        error.stack = 'Error: Authentication failed\n    at Object.<anonymous> (/Users/dev/project/src/auth.ts:42:11)';
+
+        rateLimited.trackException(error, { operation: 'test' });
+
+        expect(mockInnerTelemetry.trackException).toHaveBeenCalledTimes(1);
+        const [passedError, passedProps] = mockInnerTelemetry.trackException.mock.calls[0];
+        expect(passedError).toBe(error);
+        expect(passedProps).toHaveProperty('errorType', 'Error');
+        expect(passedProps).toHaveProperty('errorCategory', 'AuthenticationError');
+        expect(passedProps).toHaveProperty('errorMessage');
+        expect(passedProps).toHaveProperty('stackTrace');
+        expect(passedProps).toHaveProperty('stackHash');
+        // Caller props should be preserved
+        expect(passedProps).toHaveProperty('operation', 'test');
+        // Stack should be sanitized (no absolute paths)
+        expect(passedProps!.stackTrace).not.toContain('/Users/dev');
+    });
+
+    test('caller properties override enriched properties', () => {
+        rateLimited = new RateLimitedUsageTelemetry(mockInnerTelemetry, {
+            maxEventsPerSession: 1000,
+            maxEventsPerMinute: 100,
+            maxIdenticalErrors: 10
+        });
+
+        const error = new Error('test');
+        rateLimited.trackException(error, { errorCategory: 'CustomCategory', stackHash: 'custom-hash' });
+
+        const [, passedProps] = mockInnerTelemetry.trackException.mock.calls[0];
+        expect(passedProps).toHaveProperty('errorCategory', 'CustomCategory');
+        expect(passedProps).toHaveProperty('stackHash', 'custom-hash');
+    });
+
     test('passes through to inner telemetry within limits', () => {
         rateLimited = new RateLimitedUsageTelemetry(mockInnerTelemetry, {
             maxEventsPerSession: 1000,

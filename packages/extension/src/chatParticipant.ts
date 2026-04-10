@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { IUsageTelemetry } from '@bctb/shared';
 
 /**
  * BC Telemetry Buddy Chat Participant
@@ -278,8 +279,7 @@ If an analysis seems empty or missing expected detail:
 4. Use mcp_bc_telemetry__query_telemetry with proper KQL (avoid companyName filters)
 5. Interpret results in business context (customer‑/tenant‑level impact, not per company unless asked)
 6. Provide actionable insights and recommendations (performance, contention, failure patterns)
-7. Use mcp_bc_telemetry__get_recommendations to enrich output
-8. Save useful queries with mcp_bc_telemetry__save_query for reuse
+7. Save useful queries with mcp_bc_telemetry__save_query for reuse
 \`\`\`
 
 **Key KQL patterns for BC telemetry:**
@@ -431,7 +431,6 @@ When user asks to "create analysis document" or "generate report":
 - \`mcp_bc_telemetry__get_external_queries\` - Get example queries from external sources
 
 **Optimization:**
-- \`mcp_bc_telemetry__get_recommendations\` - Get optimization suggestions based on query results
 - \`mcp_bc_telemetry__get_categories\` - List available query categories
 
 **File Artifacts:**
@@ -507,7 +506,7 @@ Provide expert Business Central telemetry analysis with:
 /**
  * Register the BC Telemetry Buddy chat participant
  */
-export function registerChatParticipant(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void {
+export function registerChatParticipant(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel, usageTelemetry?: IUsageTelemetry): void {
     outputChannel.appendLine('Registering BC Telemetry Buddy chat participant...');
 
     // Create chat participant
@@ -706,6 +705,10 @@ Now, let me help with your question...\n\n---\n\n`);
                         outputChannel.appendLine(`[@${PARTICIPANT_ID}] Tool error: ${toolError.message || toolError}`);
                         stream.markdown(`\n\n⚠️ Tool ${toolCall.name} failed: ${toolError.message || String(toolError)}\n\n`);
 
+                        if (toolError instanceof Error) {
+                            usageTelemetry?.trackException(toolError, { operation: 'chatParticipant.toolCall', toolName: toolCall.name });
+                        }
+
                         // Still need to provide a response for this tool call to satisfy Copilot API
                         assistantToolCalls.push(toolCall);
 
@@ -810,6 +813,10 @@ Original analysis content (for reference):\n\n${accumulatedResponse.substring(0,
             }
         } catch (error: any) {
             outputChannel.appendLine(`[@${PARTICIPANT_ID}] Error: ${error.message}`);
+
+            if (error instanceof Error) {
+                usageTelemetry?.trackException(error, { operation: 'chatParticipant' });
+            }
 
             // Provide helpful context for common errors
             if (error.message.includes('No lowest priority node found') || error.message.includes('path: PU')) {

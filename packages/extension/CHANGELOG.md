@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Chat participant error telemetry**: Tool call failures and top-level handler errors in `@bc-telemetry-buddy` chat participant are now tracked via `trackException`, making previously invisible errors visible in the Usage dashboard.
+- **`errorCategory` on `Extension.CommandFailed` events**: Failed command telemetry now includes a categorized error type (AuthenticationError, NetworkError, QueryError, etc.) via `categorizeError()`.
+- **Comprehensive error enrichment**: All exceptions tracked via `trackException` now automatically include sanitized stack trace, stack hash, error category, and sanitized error message (shared library change).
+
 ## [3.2.8] - 2026-04-09
 
 ### Fixed

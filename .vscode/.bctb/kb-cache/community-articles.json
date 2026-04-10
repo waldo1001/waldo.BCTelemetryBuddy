@@ -1,0 +1,106 @@
+[
+  {
+    "id": "database-wait-statistics",
+    "title": "Understanding Database Wait Statistics (RT0026)",
+    "category": "event-interpretation",
+    "tags": [
+      "RT0026",
+      "wait-stats",
+      "performance",
+      "database",
+      "cpu",
+      "memory",
+      "locks",
+      "resource-exhaustion"
+    ],
+    "eventIds": [
+      "RT0026"
+    ],
+    "appliesTo": "BC 20.0+",
+    "author": "waldo",
+    "created": "2026-04-05",
+    "updated": "2026-04-05",
+    "content": "## When to use this\n\nWhen the environment feels slow across the board — not one specific page or process, but general sluggishness. RT0026 reports database wait statistics categories, revealing which resource the SQL database is waiting on most. This is one of the most underused but powerful telemetry signals.\n\n## Step 1: Wait category breakdown (last 7 days)\n\n```kql\ntraces\n| where timestamp > ago(7d)\n| where customDimensions.eventId == \"RT0026\"\n| extend\n    waitCategory = tostring(customDimensions.databaseWaitStatisticsCategory),\n    waitTimeMs = toreal(customDimensions.databaseWaitTimeInMs)\n| summarize\n    totalWaitMs = sum(waitTimeMs),\n    count = count()\n    by waitCategory\n| order by totalWaitMs desc\n```\n\n## Step 2: Wait category trend over time\n\n```kql\ntraces\n| where timestamp > ago(14d)\n| where customDimensions.eventId == \"RT0026\"\n| extend\n    waitCategory = tostring(customDimensions.databaseWaitStatisticsCategory),\n    waitTimeMs = toreal(customDimensions.databaseWaitTimeInMs)\n| summarize totalWaitMs = sum(waitTimeMs) by waitCategory, bin(timestamp, 1d)\n| render timechart\n```\n\n## Step 3: Correlate with specific operations during high-wait periods\n\n```kql\n// First find when wait times spiked, then look at what was running\nlet highWaitDay = datetime(2025-01-15); // adjust from Step 2\ntraces\n| where timestamp between (highWaitDay .. (highWaitDay + 1d))\n| where customDimensions.eventId == \"RT0005\"\n| extend\n    objectName = tostring(customDimensions.alObjectName),\n    executionTime = totimespan(customDimensions.executionTime)\n| summarize\n    count = count(),\n    totalTime = sum(executionTime)\n    by objectName\n| order by totalTime desc\n| take 10\n```\n\n## Wait Category Reference\n\n| Category | Meaning | Common Cause |\n|----------|---------|--------------|\n| **Memory** | SQL waiting for memory grants | Large queries, many concurrent users, missing indexes causing scans |\n| **CPU** | SQL waiting for CPU cycles | Heavy computation, too many concurrent queries |\n| **Worker Thread** | No available threads to process queries | Thread pool exhaustion from too many concurrent sessions |\n| **Buffer IO** | Waiting for disk reads into memory | Large table scans, insufficient database memory |\n| **Lock** | Waiting for row/table locks | Concurrent writes to same records — investigate with RT0012/RT0013 |\n| **Network IO** | Waiting on network transfer | Large result sets, slow client connections |\n| **Compilation** | Waiting for query plan compilation | Many ad-hoc queries causing plan cache churn |\n\n## Interpretation Tips\n\n- **Memory dominant** → look for missing indexes (RT0017) causing full table scans that require large memory grants\n- **Lock dominant** → pivot to lock timeout investigation (RT0012/RT0013) to find the conflicting operations\n- **Worker Thread exhaustion** → too many concurrent sessions; check for runaway integrations or job queues\n- **Sudden category shift** → compare with deployment events (LC events) — a new extension version may have introduced inefficient queries\n- If ALL categories are elevated → the environment may need a higher service tier, or a single bad query is cascading",
+    "source": "community"
+  },
+  {
+    "id": "environment-upgrade-troubleshooting",
+    "title": "Environment Upgrade Troubleshooting (LC Events)",
+    "category": "playbook",
+    "tags": [
+      "upgrade",
+      "LC0101",
+      "LC0105",
+      "LC0106",
+      "LC0107",
+      "LC0017",
+      "LC0155",
+      "lifecycle",
+      "environment"
+    ],
+    "eventIds": [
+      "LC0101",
+      "LC0105",
+      "LC0106",
+      "LC0107",
+      "LC0017",
+      "LC0155"
+    ],
+    "appliesTo": "BC 21.0+",
+    "author": "waldo",
+    "created": "2026-04-05",
+    "updated": "2026-04-05",
+    "content": "## When to use this\n\nAfter a scheduled or manual environment update fails, or you need to confirm an upgrade completed successfully. LC events track the full lifecycle: scheduling → start → success/failure → individual extension upgrade status.\n\n## Step 1: Recent upgrade lifecycle overview\n\n```kql\ntraces\n| where timestamp > ago(30d)\n| where customDimensions.eventId in (\"LC0101\", \"LC0105\", \"LC0106\", \"LC0107\")\n| extend\n    eventId = tostring(customDimensions.eventId),\n    environmentName = tostring(customDimensions.environmentName),\n    sourceVersion = tostring(customDimensions.sourceVersion),\n    destinationVersion = tostring(customDimensions.destinationVersion),\n    failureReason = tostring(customDimensions.failureReason)\n| project timestamp, eventId, environmentName, sourceVersion, destinationVersion, failureReason\n| order by timestamp desc\n```\n\n## Step 2: Extension upgrade failures\n\n```kql\ntraces\n| where timestamp > ago(30d)\n| where customDimensions.eventId in (\"LC0017\", \"LC0155\")\n| extend\n    eventId = tostring(customDimensions.eventId),\n    extensionName = tostring(customDimensions.extensionName),\n    extensionVersion = tostring(customDimensions.extensionVersion),\n    failureReason = tostring(customDimensions.failureReason),\n    environmentName = tostring(customDimensions.environmentName)\n| project timestamp, eventId, environmentName, extensionName, extensionVersion, failureReason\n| order by timestamp desc\n```\n\n## Step 3: Correlate with errors during upgrade window\n\nOnce you know the upgrade start/end time from Step 1, check for errors in that window:\n\n```kql\nlet upgradeStart = datetime(2025-01-15T02:00:00Z); // adjust from Step 1\nlet upgradeEnd = datetime(2025-01-15T04:00:00Z);   // adjust from Step 1\ntraces\n| where timestamp between (upgradeStart .. upgradeEnd)\n| where customDimensions.eventId startswith \"RT\" or customDimensions.eventId startswith \"AL\"\n| extend\n    eventId = tostring(customDimensions.eventId),\n    message = tostring(customDimensions.message)\n| summarize count() by eventId\n| order by count_ desc\n```\n\n## Event Reference\n\n| Event ID | Meaning |\n|----------|---------|\n| LC0101   | Environment update scheduled |\n| LC0105   | Environment update started |\n| LC0106   | Environment update completed successfully |\n| LC0107   | Environment update failed |\n| LC0017   | Extension update succeeded |\n| LC0155   | Extension update failed |\n\n## Interpretation Tips\n\n- **LC0107 with `failureReason`** → read the reason carefully; often a specific extension's upgrade code failed\n- **LC0155 for a specific extension** → that extension's upgrade codeunit has a bug; contact the publisher\n- **No LC0106 after LC0105** → upgrade may still be in progress, or it crashed without logging failure\n- **Check Step 3** for RT0012 (lock timeouts) during upgrade → other processes were competing with the upgrade",
+    "source": "community"
+  },
+  {
+    "id": "job-queue-health-check",
+    "title": "Job Queue Health Check — Average Processing Time",
+    "category": "query-pattern",
+    "tags": [
+      "job-queue",
+      "AL0000E25",
+      "AL0000E26",
+      "AL0000HE7",
+      "scheduling",
+      "background-tasks",
+      "processing-time"
+    ],
+    "eventIds": [
+      "AL0000E24",
+      "AL0000E25",
+      "AL0000E26",
+      "AL0000HE7"
+    ],
+    "appliesTo": "BC 22.2+",
+    "author": "waldo",
+    "created": "2026-04-05",
+    "updated": "2026-04-05",
+    "content": "## When to use this\n\nWhen you want to know how long recurring job queue entries actually take to process, and spot jobs that are getting slower over time. This uses the correlation between AL0000E25 (job started) and AL0000E26 (job finished) to calculate real processing duration per execution, then averages per hour.\n\n## Event Reference\n\n| Event ID | Meaning |\n|----------|---------|\n| AL0000E24 | Job queue entry enqueued |\n| AL0000E25 | Job queue entry started |\n| AL0000E26 | Job queue entry finished |\n| AL0000HE7 | Job queue entry errored |\n\n## Average processing time per hour per job\n\nCorrelates start and finish events by `alJobQueueScheduledTaskId` to compute the actual processing duration, then averages per hour per job description.\n\n```kql\ntraces\n| where timestamp > ago(7d)\n| where customDimensions.eventId in (\"AL0000E25\", \"AL0000E26\")\n| where tostring(customDimensions.alJobQueueIsRecurring) in (\"Yes\", \"True\")\n| extend\n    eventId = tostring(customDimensions.eventId),\n    jobTaskId = tostring(customDimensions.alJobQueueScheduledTaskId),\n    jobDescription = tostring(customDimensions.alJobQueueObjectDescription)\n| summarize\n    startTime = minif(timestamp, eventId == \"AL0000E25\"),\n    endTime = maxif(timestamp, eventId == \"AL0000E26\")\n    by jobTaskId, jobDescription\n| where isnotempty(startTime) and isnotempty(endTime)\n| extend processingTimeMs = datetime_diff('millisecond', endTime, startTime)\n| summarize avgProcessingTimeMs = avg(processingTimeMs) by bin(startTime, 1h), jobDescription\n| order by avgProcessingTimeMs desc\n```\n\n## Key Fields\n\n- `alJobQueueScheduledTaskId` — unique ID per job execution (correlation key between start and finish events)\n- `alJobQueueObjectDescription` — human-readable name of the job\n- `alJobQueueIsRecurring` — \"Yes\"/\"True\" for recurring jobs (value is localized in some versions), filters out one-time runs\n\n## Interpretation Tips\n\n- **Rising `avgProcessingTimeMs` over time** → the job is getting slower, likely due to growing data volume\n- **Large spikes in specific hours** → correlate with business activity (e.g., end-of-day posting, integration syncs)\n- **Jobs with no matching AL0000E26** → job crashed or timed out before finishing; check AL0000HE7 for errors\n- Add `| render timechart` to visualize the trend over time",
+    "source": "community"
+  },
+  {
+    "id": "lock-timeout-investigation",
+    "title": "Investigating Lock Timeouts (RT0012 + RT0013)",
+    "category": "query-pattern",
+    "tags": [
+      "locks",
+      "RT0012",
+      "RT0013",
+      "deadlocks",
+      "timeouts",
+      "performance",
+      "integrations"
+    ],
+    "eventIds": [
+      "RT0012",
+      "RT0013"
+    ],
+    "appliesTo": "BC 21.0+",
+    "author": "waldo",
+    "created": "2026-04-05",
+    "updated": "2026-04-05",
+    "content": "## When to use this\n\nWhen users report sporadic \"busy\" errors, posting failures, or you see lock timeout events spiking. Lock contention is the #1 performance issue in BC environments with integrations — seen across NC365/Magento, TDO, CRM/Dataverse, Shopware, and other sync apps.\n\n## Step 1: How many lock timeouts and which tables?\n\n```kql\ntraces\n| where timestamp > ago(30d)\n| where customDimensions.eventId == \"RT0012\"\n| extend\n    company = tostring(customDimensions.companyName),\n    objectName = tostring(customDimensions.alObjectName),\n    extensionName = tostring(customDimensions.extensionName)\n| summarize\n    count = count(),\n    lastSeen = max(timestamp)\n    by company, objectName, extensionName\n| order by count desc\n| take 20\n```\n\n## Step 2: Daily trend — is it getting worse?\n\n```kql\ntraces\n| where timestamp > ago(30d)\n| where customDimensions.eventId == \"RT0012\"\n| summarize count() by bin(timestamp, 1d)\n| render timechart\n```\n\n## Step 3: Who is blocking whom? (the power query)\n\nJoin RT0012 (victim) with RT0013 (snapshot) on `snapshotId` to identify the actual blocker:\n\n```kql\nlet victims = traces\n| where timestamp > ago(7d)\n| where customDimensions.eventId == \"RT0012\"\n| extend\n    snapshotId = tostring(customDimensions.snapshotId),\n    victimObject = tostring(customDimensions.alObjectName),\n    victimStack = tostring(customDimensions.alStackTrace);\nlet snapshots = traces\n| where timestamp > ago(7d)\n| where customDimensions.eventId == \"RT0013\"\n| extend\n    snapshotId = tostring(customDimensions.snapshotId),\n    sqlTable = tostring(customDimensions.sqlTableName),\n    lockMode = tostring(customDimensions.sqlLockRequestMode),\n    lockStatus = tostring(customDimensions.sqlLockRequestStatus),\n    blockerObject = tostring(customDimensions.alObjectName),\n    blockerStack = tostring(customDimensions.alStackTrace);\nvictims\n| join kind=inner (\n    snapshots | where lockStatus == \"GRANT\"\n) on snapshotId\n| summarize\n    count = count()\n    by victimObject, blockerObject, sqlTable, lockMode\n| order by count desc\n| take 15\n```\n\n## Key Fields\n\n- `snapshotId` — links victims (RT0012) to lock snapshot details (RT0013)\n- `sqlLockRequestMode` — UPDLOCK, EXCLUSIVELOCK, etc.\n- `sqlLockRequestStatus` — \"WAIT\" (victim), \"GRANT\" (blocker)\n- `alStackTrace` — AL call stack showing what code caused the lock\n\n## Common Root Causes\n\n1. **Integration `OnAfterOnDatabaseModify` subscribers** — global event subscribers from sync apps hold locks across HTTP calls\n2. **`SELECT ... WITH(UPDLOCK)` patterns** — integration apps doing pessimistic locking on high-traffic tables\n3. **Batch jobs competing with users** — large posting routines overlapping with interactive sessions\n4. **On-prem without RCSI** — READCOMMITTED isolation causes read-write conflicts; enabling RCSI eliminates this class entirely",
+    "source": "community"
+  }
+]

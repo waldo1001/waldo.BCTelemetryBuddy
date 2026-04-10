@@ -15,7 +15,8 @@ import {
     TELEMETRY_EVENTS,
     createCommonProperties,
     cleanTelemetryProperties,
-    hashValue
+    hashValue,
+    sanitizeErrorMessage
 } from '@bctb/shared';
 import type { AuthResult } from '@bctb/shared';
 import type { SavedQuery } from '@bctb/shared';
@@ -186,7 +187,7 @@ export class MCPServer {
         this.activeProfileName = this.detectInitialProfile();
 
         // Initialize services (pass telemetry to KustoService for dependency tracking)
-        this.auth = new AuthService(this.config);
+        this.auth = new AuthService(this.config, this.usageTelemetry);
         this.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl, this.usageTelemetry);
         this.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
         this.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);
@@ -285,7 +286,11 @@ export class MCPServer {
 
         this.app.post('/recommend', async (req: Request, res: Response) => {
             const recommendations = await this.generateRecommendations(req.body.kql, req.body.results);
-            res.json({ recommendations });
+            res.json({
+                deprecated: true,
+                message: 'This endpoint is deprecated and will be removed in a future version. Recommendations are already included automatically in every query_telemetry response.',
+                recommendations
+            });
         });
 
         // Cache management endpoints
@@ -435,12 +440,28 @@ export class MCPServer {
                     result = this.queries.getCategories();
                     break;
 
-                case 'get_recommendations':
-                    result = await this.generateRecommendations(
+                case 'get_recommendations': {
+                    const recommendations = await this.generateRecommendations(
                         rpcRequest.params.kql,
                         rpcRequest.params.results
                     );
+                    this.usageTelemetry.trackEvent('Mcp.DeprecatedToolCalled', cleanTelemetryProperties(
+                        createCommonProperties(
+                            TELEMETRY_EVENTS.MCP_TOOLS.DEPRECATED_TOOL_CALLED,
+                            'mcp',
+                            this.sessionId,
+                            this.installationId,
+                            VERSION,
+                            { toolName: 'get_recommendations' }
+                        )
+                    ));
+                    result = {
+                        deprecated: true,
+                        message: 'This tool is deprecated and will be removed in a future version. Recommendations are already included automatically in every query_telemetry response. Do not call this tool separately.',
+                        recommendations
+                    };
                     break;
+                }
 
                 case 'get_auth_status':
                     // Check if configuration is incomplete
@@ -541,7 +562,7 @@ export class MCPServer {
                     correlationId,
                     profileHash,
                     toolName: rpcRequest.method,
-                    errorMessage,
+                    errorMessage: sanitizeErrorMessage(errorMessage),
                     errorCategory: error.name || 'Error'
                 }
             );
@@ -1290,7 +1311,7 @@ ${extendStatements}
             this.activeProfileName = profileName;
 
             // Reinitialize services with new config
-            this.auth = new AuthService(this.config);
+            this.auth = new AuthService(this.config, this.usageTelemetry);
             this.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl, this.usageTelemetry);
             this.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
             this.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);
@@ -1419,6 +1440,10 @@ ${extendStatements}
     private async generateRecommendations(kql: string, results: any): Promise<string[]> {
         const recommendations: string[] = [];
 
+        if (!kql || typeof kql !== 'string') {
+            return recommendations;
+        }
+
         // Check for missing indexes (simplified heuristic)
         if (kql.includes('where') && !kql.includes('| where')) {
             recommendations.push('Consider using the pipe operator before "where" for better performance');
@@ -1435,7 +1460,7 @@ ${extendStatements}
         }
 
         // Check result size
-        if (results.rows && results.rows.length > 10000) {
+        if (results?.rows && results.rows.length > 10000) {
             recommendations.push('Large result set. Consider adding "| take 100" or similar limit');
         }
 

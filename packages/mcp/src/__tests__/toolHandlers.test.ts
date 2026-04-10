@@ -68,7 +68,8 @@ jest.mock('@bctb/shared', () => ({
     },
     createCommonProperties: jest.fn().mockReturnValue({}),
     cleanTelemetryProperties: jest.fn().mockReturnValue({}),
-    hashValue: jest.fn().mockReturnValue('abc123def456')
+    hashValue: jest.fn().mockReturnValue('abc123def456'),
+    categorizeError: jest.fn().mockReturnValue('UnknownError')
 }));
 
 jest.mock('../mcpTelemetry.js', () => ({
@@ -365,14 +366,27 @@ describe('ToolHandlers', () => {
                 .rejects.toThrow('profileName parameter is required');
         });
 
-        test('dispatches get_recommendations', async () => {
+        test('dispatches get_recommendations with deprecation notice', async () => {
             const { handlers } = createHandlersWithServices();
             const result = await handlers.executeToolCall('get_recommendations', {
                 kql: 'traces | where * | take 10',
                 results: { rows: [] }
             });
 
-            expect(Array.isArray(result)).toBe(true);
+            expect(result).toHaveProperty('deprecated', true);
+            expect(result).toHaveProperty('message');
+            expect(result.message).toContain('deprecated');
+            expect(Array.isArray(result.recommendations)).toBe(true);
+        });
+
+        test('dispatches get_recommendations without results (no crash)', async () => {
+            const { handlers } = createHandlersWithServices();
+            const result = await handlers.executeToolCall('get_recommendations', {
+                kql: 'traces | take 10'
+            });
+
+            expect(result).toHaveProperty('deprecated', true);
+            expect(Array.isArray(result.recommendations)).toBe(true);
         });
 
         test('dispatches query_telemetry with empty kql throws', async () => {
@@ -958,6 +972,27 @@ describe('ToolHandlers', () => {
             const recs = await handlers.generateRecommendations('', {});
 
             expect(recs).toEqual([]);
+        });
+
+        test('returns empty array when kql is non-string type', async () => {
+            const { handlers } = createHandlersWithServices();
+            const recs = await handlers.generateRecommendations(123 as any, {});
+
+            expect(recs).toEqual([]);
+        });
+
+        test('handles undefined results without crashing', async () => {
+            const { handlers } = createHandlersWithServices();
+            const recs = await handlers.generateRecommendations('traces | take 10', undefined);
+
+            expect(Array.isArray(recs)).toBe(true);
+        });
+
+        test('handles null results without crashing', async () => {
+            const { handlers } = createHandlersWithServices();
+            const recs = await handlers.generateRecommendations('traces | take 10', null);
+
+            expect(Array.isArray(recs)).toBe(true);
         });
     });
 

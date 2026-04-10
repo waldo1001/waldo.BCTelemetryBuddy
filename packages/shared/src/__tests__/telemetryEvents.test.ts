@@ -38,6 +38,7 @@ describe('TelemetryEvents', () => {
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_EVENT_CATALOG).toBe('TB-MCP-108');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_EVENT_SCHEMA).toBe('TB-MCP-109');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_EVENT_FIELD_SAMPLES).toBe('TB-MCP-110');
+            expect(TELEMETRY_EVENTS.MCP_TOOLS.DEPRECATED_TOOL_CALLED).toBe('TB-MCP-113');
         });
 
         it('should export all Kusto query event constants', () => {
