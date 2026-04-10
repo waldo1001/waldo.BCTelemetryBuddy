@@ -308,7 +308,7 @@ export function registerAgentCommands(program: Command): void {
                 const runtime = new AgentRuntime(toolHandlers, contextManager, actionDispatcher, runtimeConfig);
 
                 let succeeded = 0;
-                let failed = 0;
+                const failedAgents: { name: string; error: string }[] = [];
 
                 for (const agent of agents) {
                     try {
@@ -324,12 +324,18 @@ export function registerAgentCommands(program: Command): void {
                         succeeded++;
                     } catch (error: any) {
                         console.error(`  ✗ Failed: ${error.message}`);
-                        failed++;
+                        failedAgents.push({ name: agent.name, error: error.message });
                     }
                 }
 
-                console.log(`\nResults: ${succeeded} succeeded, ${failed} failed`);
-                if (failed > 0) process.exit(1);
+                console.log(`\nResults: ${succeeded} succeeded, ${failedAgents.length} failed`);
+                if (failedAgents.length > 0) {
+                    console.error('Failed agents:');
+                    for (const f of failedAgents) {
+                        console.error(`  - ${f.name}: ${f.error}`);
+                    }
+                    process.exit(1);
+                }
             } catch (error: any) {
                 console.error(`✗ Run-all failed: ${error.message}`);
                 process.exit(1);

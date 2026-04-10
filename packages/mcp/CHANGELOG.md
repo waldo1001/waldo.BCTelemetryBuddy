@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improved
+- **`agent run-all` failure summary**: The results summary now lists each failed agent by name with its error message, instead of just showing a count. Makes it easy to see which agents failed and why without scrolling through interleaved output.
+
 ## [3.3.7] - 2026-04-09
 
 ### Fixed

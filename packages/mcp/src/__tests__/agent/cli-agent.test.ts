@@ -442,6 +442,204 @@ describe('agent start', () => {
     });
 });
 
+// ─── agent run-all summary output ────────────────────────────────────────────
+
+describe('agent run-all failure summary', () => {
+    // These tests mock the heavy dependencies (config, LLM, ToolHandlers)
+    // and focus on the summary output at the end of run-all.
+
+    const mockRun = jest.fn();
+
+    beforeEach(() => {
+        // Set env var so createLLMProvider doesn't throw on missing API key
+        process.env.AZURE_OPENAI_KEY = 'test-key-for-mock';
+
+        // Mock loadConfigFromFile to return a minimal MCPConfig
+        jest.spyOn(require('../../config'), 'loadConfigFromFile')
+            .mockReturnValue({ workspacePath: tmpDir });
+
+        // Mock initializeServices + ToolHandlers (dynamic import in run-all)
+        jest.spyOn(require('../../tools/toolHandlers'), 'initializeServices')
+            .mockReturnValue({});
+        jest.spyOn(require('../../tools/toolHandlers'), 'ToolHandlers')
+            .mockImplementation(() => ({}));
+
+        // Mock AgentRuntime — inject our mockRun into every instance
+        jest.spyOn(require('../../agent/runtime'), 'AgentRuntime')
+            .mockImplementation(() => ({ run: mockRun }));
+
+        mockRun.mockReset();
+    });
+
+    afterEach(() => {
+        delete process.env.AZURE_OPENAI_KEY;
+        jest.restoreAllMocks();
+    });
+
+    function setupAgents(names: string[]): void {
+        for (const name of names) {
+            const agentDir = path.join(tmpDir, 'agents', name);
+            fs.mkdirSync(agentDir, { recursive: true });
+            fs.writeFileSync(path.join(agentDir, 'instruction.md'), `Monitor ${name}.`, 'utf-8');
+        }
+    }
+
+    function writeAgentsConfig(): string {
+        const configPath = path.join(tmpDir, '.bctb-config.json');
+        fs.writeFileSync(configPath, JSON.stringify({
+            workspacePath: tmpDir,
+            agents: {
+                llm: { provider: 'azure-openai', endpoint: 'https://test', deployment: 'gpt-4o' },
+                defaults: {}
+            }
+        }), 'utf-8');
+        return configPath;
+    }
+
+    function makeRunLog(agentName: string, runId: number): AgentRunLog {
+        return {
+            runId,
+            agentName,
+            timestamp: '2026-04-10T10:00:00.000Z',
+            durationMs: 5000,
+            instruction: `Monitor ${agentName}.`,
+            stateAtStart: { summary: '', activeIssueCount: 0, runCount: 0 },
+            llm: { model: 'gpt-4o', promptTokens: 100, completionTokens: 50, totalTokens: 150, toolCallCount: 3 },
+            toolCalls: [],
+            assessment: 'All clear.',
+            findings: 'No issues found.',
+            actions: [],
+            stateChanges: { issuesCreated: [], issuesUpdated: [], issuesResolved: [], summaryUpdated: true }
+        };
+    }
+
+    it('should list failed agent names in summary when some agents fail', async () => {
+        // Agents are iterated alphabetically: aaa-ok, bbb-broken, ccc-broken
+        setupAgents(['aaa-ok', 'bbb-broken', 'ccc-broken']);
+        const configPath = writeAgentsConfig();
+
+        mockRun
+            .mockResolvedValueOnce(makeRunLog('aaa-ok', 1))
+            .mockRejectedValueOnce(new Error('LLM timeout after 240s'))
+            .mockRejectedValueOnce(new Error('No instruction.md found'));
+
+        const output: string[] = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        console.log = (...a: any[]) => output.push(a.join(' '));
+        console.error = (...a: any[]) => output.push(a.join(' '));
+        const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+
+        const program = makeProgram();
+        try {
+            await program.parseAsync(['node', 'bctb-mcp', 'agent', 'run-all', '--config', configPath]);
+        } finally {
+            console.log = originalLog;
+            console.error = originalError;
+            mockExit.mockRestore();
+        }
+
+        const combined = output.join('\n');
+        expect(combined).toContain('1 succeeded, 2 failed');
+        // Summary block must list each failed agent with its error
+        expect(combined).toMatch(/Failed agents:/);
+        expect(combined).toMatch(/bbb-broken.*LLM timeout/);
+        expect(combined).toMatch(/ccc-broken.*No instruction\.md/);
+    });
+
+    it('should not show failure list when all agents succeed', async () => {
+        setupAgents(['agent-a', 'agent-b']);
+        const configPath = writeAgentsConfig();
+
+        mockRun
+            .mockResolvedValueOnce(makeRunLog('agent-a', 1))
+            .mockResolvedValueOnce(makeRunLog('agent-b', 1));
+
+        const output: string[] = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        console.log = (...a: any[]) => output.push(a.join(' '));
+        console.error = (...a: any[]) => output.push(a.join(' '));
+        const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+
+        const program = makeProgram();
+        try {
+            await program.parseAsync(['node', 'bctb-mcp', 'agent', 'run-all', '--config', configPath]);
+        } finally {
+            console.log = originalLog;
+            console.error = originalError;
+            mockExit.mockRestore();
+        }
+
+        const combined = output.join('\n');
+        expect(combined).toContain('2 succeeded, 0 failed');
+        expect(combined).not.toMatch(/Failed agents:/);
+    });
+
+    it('should show all agents as failed when all fail', async () => {
+        setupAgents(['fail-1', 'fail-2']);
+        const configPath = writeAgentsConfig();
+
+        mockRun
+            .mockRejectedValueOnce(new Error('Connection refused'))
+            .mockRejectedValueOnce(new Error('Rate limited'));
+
+        const output: string[] = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        console.log = (...a: any[]) => output.push(a.join(' '));
+        console.error = (...a: any[]) => output.push(a.join(' '));
+        const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+
+        const program = makeProgram();
+        try {
+            await program.parseAsync(['node', 'bctb-mcp', 'agent', 'run-all', '--config', configPath]);
+        } finally {
+            console.log = originalLog;
+            console.error = originalError;
+            mockExit.mockRestore();
+        }
+
+        const combined = output.join('\n');
+        expect(combined).toContain('0 succeeded, 2 failed');
+        expect(combined).toMatch(/Failed agents:/);
+        expect(combined).toMatch(/fail-1.*Connection refused/);
+        expect(combined).toMatch(/fail-2.*Rate limited/);
+    });
+
+    it('should include the error message for each failed agent in the summary', async () => {
+        // Alphabetical: aaa-good runs first (success), bbb-bad runs second (fails)
+        setupAgents(['aaa-good', 'bbb-bad']);
+        const configPath = writeAgentsConfig();
+
+        mockRun
+            .mockResolvedValueOnce(makeRunLog('aaa-good', 1))
+            .mockRejectedValueOnce(new Error('Azure OpenAI API error 429: Rate limited'));
+
+        const output: string[] = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        console.log = (...a: any[]) => output.push(a.join(' '));
+        console.error = (...a: any[]) => output.push(a.join(' '));
+        const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+
+        const program = makeProgram();
+        try {
+            await program.parseAsync(['node', 'bctb-mcp', 'agent', 'run-all', '--config', configPath]);
+        } finally {
+            console.log = originalLog;
+            console.error = originalError;
+            mockExit.mockRestore();
+        }
+
+        const combined = output.join('\n');
+        expect(combined).toMatch(/Failed agents:/);
+        expect(combined).toMatch(/bbb-bad.*Azure OpenAI API error 429/);
+        // aaa-good should NOT appear in the failure list
+        expect(combined).not.toMatch(/aaa-good.*Azure OpenAI/);
+    });
+});
+
 // ─── BCTB_WORKSPACE_PATH resolution ──────────────────────────────────────────
 
 describe('BCTB_WORKSPACE_PATH resolution', () => {
