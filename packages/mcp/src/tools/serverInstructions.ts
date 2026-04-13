@@ -40,6 +40,12 @@ Call \`get_event_catalog\` FIRST to discover which event IDs exist in the teleme
 - KB articles are starting points, not the full picture — always follow with Step 3 to catch new fields not yet covered by the article.
 - Local workspace articles take precedence over community articles.
 
+**⚠️ When the user names a customer/tenant, you MUST issue TWO kinds of \`get_knowledge\` calls:**
+1. One per significant eventId (as above).
+2. Additionally: \`get_knowledge({ search: "<CustomerName>" })\` — customer-scoped articles use \`appliesTo\` and carry **no eventId tag**, so eventId-only searches will never return them.
+
+Run \`get_tenant_mapping\` (Step 4) *before* or *alongside* the KB lookup when a customer is named, so you know the canonical customer label to pass to \`search\`. A past Van Raak investigation missed ~83% of the customer's telemetry because the dual-stream pattern article was never retrieved — it had no eventId tag, so eventId-only lookups could not surface it.
+
 ### Step 3: Understand Event Fields (MANDATORY before ANY KQL)
 Call \`get_event_field_samples\` for EVERY significant event ID from Step 1.
 - The catalog response lists events that cover 90% of total volume — call \`get_event_field_samples\` for ALL of them, not just the first one.
@@ -87,6 +93,8 @@ These patterns are EXPLICITLY BANNED — never use them:
 4. **Filtering by companyName** — Always filter by \`aadTenantId\`. Use \`get_tenant_mapping\` to resolve company names to tenant IDs.
 
 5. **Skipping \`get_knowledge\`** — You MUST call \`get_knowledge\` after \`get_event_catalog\` and before writing KQL. The knowledge base contains proven patterns, investigation playbooks, and query templates that save time and produce better results. Jumping straight to \`get_event_field_samples\` or \`query_telemetry\` without checking the KB first is a violation of the mandatory workflow.
+
+6. **Calling \`get_knowledge\` only with \`eventId\` when the user named a customer** — Customer-scoped articles (\`appliesTo: "<CustomerName>"\`) are not tagged to any eventId and will be invisible to eventId-only queries. A past Van Raak investigation missed ~83% of the customer's telemetry because the dual-stream pattern article was never retrieved — the reported failure count was ~1/6 of reality. Always pair eventId lookups with an additional \`get_knowledge({ search: "<CustomerName>" })\` call when a customer is in scope.
 
 ## Multi-Profile Workspaces
 
@@ -138,7 +146,7 @@ Start with \`traces\` unless the question is specifically about page load perfor
 export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call workflow:
 
 1. **get_event_catalog** → Discover available events (ALWAYS FIRST)
-2. **get_knowledge(eventId)** → ⚠️ NEVER SKIP — Check knowledge base for proven patterns (MUST call BEFORE writing KQL)
+2. **get_knowledge(eventId)** AND **get_knowledge(search: "<CustomerName>")** when the user named a customer → ⚠️ NEVER SKIP — Check knowledge base for proven patterns (MUST call BEFORE writing KQL). Customer-scoped articles have no eventId tag; eventId-only lookups miss them.
 3. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
 4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
 5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)

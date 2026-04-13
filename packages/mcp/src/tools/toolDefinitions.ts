@@ -289,7 +289,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'get_knowledge',
-        description: 'Search the Knowledge Base for proven KQL patterns, event interpretations, investigation playbooks, and vendor-specific patterns. The KB has two layers: community articles (curated, from GitHub) and local articles (your workspace). Use this BEFORE writing KQL from scratch — there may already be a proven pattern. Filter by category, tags, eventId, or free-text search. Local articles are returned first (higher relevance).',
+        description: 'Search the Knowledge Base for proven KQL patterns, event interpretations, investigation playbooks, and vendor-specific patterns. The KB has two layers: community articles (curated, from GitHub) and local articles (your workspace). Use this BEFORE writing KQL from scratch — there may already be a proven pattern. Filter by category, tags, eventId, or free-text search. Local articles are returned first (higher relevance). IMPORTANT: When the user mentions a specific customer/tenant, ALWAYS issue an additional call with `search: "<CustomerName>"` alongside any eventId lookups — customer-scoped articles (tagged via `appliesTo`) are not associated with any eventId and will be missed by eventId-only queries.',
         inputSchema: {
             type: 'object',
             properties: {

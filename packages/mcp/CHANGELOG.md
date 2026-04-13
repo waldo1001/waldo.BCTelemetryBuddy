@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.10] - 2026-04-13
+
+### Fixed
+- **`get_knowledge` workflow guidance missed customer-scoped articles**: Server instructions and the `get_knowledge` tool description now explicitly require an additional `get_knowledge({ search: "<CustomerName>" })` call whenever the user names a specific customer/tenant. Customer-scoped KB articles use `appliesTo` and carry no `eventId` tag, so eventId-only lookups could never surface them. A real investigation (Van Raak) missed ~83% of the customer's telemetry because the dual-stream pattern article was never retrieved — reported failures were ~1/6 of reality. Updates: Step 2 of `SERVER_INSTRUCTIONS`, new FORBIDDEN #6, `WORKFLOW_PROMPT_CONTENT` step 2, and the `get_knowledge` tool description in `toolDefinitions.ts`. Guidance-only fix — no handler behavior changes.
+
 ## [3.3.9] - 2026-04-11
 
 ### Fixed

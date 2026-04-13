@@ -189,6 +189,17 @@ describe('Server Instructions', () => {
             expect(SERVER_INSTRUCTIONS).toContain('Suggest investigation paths');
         });
 
+        test('requires customer-name search alongside eventId lookups in Step 2', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('appliesTo');
+            expect(SERVER_INSTRUCTIONS).toContain('search: "<CustomerName>"');
+            expect(SERVER_INSTRUCTIONS).toContain('no eventId tag');
+        });
+
+        test('forbids eventId-only get_knowledge calls when a customer is named', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('only with `eventId` when the user named a customer');
+            expect(SERVER_INSTRUCTIONS).toContain('~83%');
+        });
+
         test('includes answer validation guidance', () => {
             expect(SERVER_INSTRUCTIONS).toContain('State assumptions');
             expect(SERVER_INSTRUCTIONS).toContain('Flag limitations');
@@ -215,6 +226,12 @@ describe('Server Instructions', () => {
 
         test('marks get_event_field_samples as mandatory', () => {
             expect(WORKFLOW_PROMPT_CONTENT).toContain('MANDATORY before KQL');
+        });
+
+        test('step 2 requires customer-name search alongside eventId', () => {
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('search: "<CustomerName>"');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('customer');
+            expect(WORKFLOW_PROMPT_CONTENT).toContain('no eventId tag');
         });
 
         test('contains coaching and validation rules', () => {
