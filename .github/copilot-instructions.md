@@ -542,18 +542,30 @@ You:
 **BEFORE making any code change**, load and follow the TDD skill:
 
 ```
-.github/skills/tdd-workflow/SKILL.md
+.github/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
+.github/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
+.github/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
 
-This file contains the full TDD methodology, mocking patterns, coverage thresholds, and development checklists for this project. It is mandatory — not optional.
+The `tdd-workflow` skill deep-links into the reference docs under [docs/tdd/](../docs/tdd/):
 
-Also use any other skills under `.github/skills/` that match the type of work being done.
+- [methodology.md](../docs/tdd/methodology.md) — the 9-phase cycle in prose
+- [testability-patterns.md](../docs/tdd/testability-patterns.md) — mocking catalog, seams, conventions
+- [coverage-policy.md](../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+
+Plan files live under [docs/plans/](../docs/plans/) — see [docs/plans/README.md](../docs/plans/README.md) for the naming and status-lifecycle convention.
 
 ---
 
 ## Default TDD Workflow — Apply to ALL code changes in this repo
 
-Every code change follows a strict 6-phase cycle. This is not an opt-in mode — it is the default way we work.
+Every code change follows a strict 9-phase cycle. This is not an opt-in mode — it is the default way we work.
+
+```
+PLAN → FRAME → WRITE TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT
+```
+
+Full phase details, component checklists, and quick commands live in [.github/skills/tdd-workflow/SKILL.md](skills/tdd-workflow/SKILL.md). This section is the **rules layer** — the *how* of each phase is in the skill and the methodology doc.
 
 ---
 
@@ -561,85 +573,50 @@ Every code change follows a strict 6-phase cycle. This is not an opt-in mode —
 
 **YOU MAY NOT WRITE OR EDIT ANY SOURCE CODE FILE until you have:**
 
-1. Output a DESIGN block (exact format below) in your response
-2. Received explicit user approval ("yes", "looks good", "proceed", or equivalent)
+1. Written a plan file under [docs/plans/](../docs/plans/) following [docs/plans/README.md](../docs/plans/README.md)
+2. Posted the plan file path in chat
+3. Received **explicit** user approval — the exact words "go", "approved", "proceed", "looks good", or "yes"
 
-This is a **blocking rule**. "I know what to do" is not an exception. "It's a small change" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase."
+**Silence is not approval.** If the user has not spoken, you do not have approval.
 
-**Why this exists:** Claude Code skips Phase 1 by default because it is wired to be task-completion-oriented. The design phase exists precisely to catch wrong assumptions before any code is written. A 30-second approval gate is cheaper than a wrong implementation.
+This is a **blocking rule**. "I know what to do" is not an exception. "It's a small change" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase".
+
+**Why this exists:** Claude Code skips Phase 1 by default because it is wired to be task-completion-oriented. The plan phase exists precisely to catch wrong assumptions before any code is written. A 30-second approval gate is cheaper than a wrong implementation. Committing the plan as a file (rather than a chat-only DESIGN block) means decisions survive the session.
 
 **Violation pattern to avoid:**
 ```
 ❌ BAD: User asks for feature → Claude reads files → Claude writes code
-✅ GOOD: User asks for feature → Claude reads files → Claude outputs DESIGN block → User approves → Claude writes tests → Claude implements
+✅ GOOD: User asks for feature → Claude reads files → Claude writes plan file → User approves → Claude frames → writes test → proves red → scaffolds → implements → verifies → security-scans → documents
 ```
 
 ---
 
-### Phase 1 — DESIGN (output this, then STOP and wait)
+### Phase summary (authoritative index in the skill)
 
-```
-DESIGN: <feature name>
-
-WHAT: <one-line description>
-WHY: <user need>
-WHERE: <packages and files affected>
-
-INTERFACE:
-  - <function/class signatures>
-  - <tool schema if MCP tool>
-
-TEST STRATEGY:
-  - <what to test>
-  - <what to mock>
-  - <edge cases>
-
-TELEMETRY:
-  - <event IDs to add to telemetryEvents.ts>
-  - <trackEvent calls to add>
-
-Approve this design? (I'll write tests next)
-```
-
-### Phase 2 — WRITE TESTS
-- Create test files in the appropriate `__tests__/` directory
-- Follow the mocking patterns from `.github/skills/tdd-workflow/SKILL.md`
-- Cover happy path, error paths, and edge cases
-- Use `describe`/`it` blocks matching the interface from Phase 1
-- **Include telemetry tests**: verify `usageTelemetry.trackEvent` is called with correct name and properties
-
-### Phase 3 — VERIFY TESTS FAIL
-- Run: `cd packages/<pkg> && npx jest --no-coverage <test-file>`
-- If tests fail for the **right reason** (missing impl) → proceed
-- If tests fail for the **wrong reason** (import error, syntax) → fix the test
-- If scaffolding needed (empty stubs) → create minimal stubs so tests compile
-
-### Phase 4 — IMPLEMENT
-- Write the minimum code to make tests pass
-- SOLID principles, dependency injection, functions < 20 lines
-
-### Phase 5 — VERIFY TESTS PASS
-- Run: `cd packages/<pkg> && npm run test:coverage`
-- ALL tests must pass; coverage must meet thresholds (70% statements/lines, 60% branches)
-- If tests fail → fix implementation, NOT tests
-- Run `npm run build` from root to verify compilation
-
-### Phase 6 — DOCUMENT
-- Append to `docs/PromptLog.md` and `docs/DesignWalkthrough.md` (per Rule 2 above)
-- Update component `CHANGELOG.md` if needed
-- Update `docs/UserGuide.md` if user-facing behavior changed
-- Tell user: "Changes ready — please review and commit when ready."
+| # | Phase | Produces | Gate |
+|---|---|---|---|
+| 1 | **PLAN** | Committed file under `docs/plans/<topic>.md` | **STOP for approval.** Silence is not approval. |
+| 2 | **FRAME** | ≤150-word framing in chat | — |
+| 3 | **WRITE TESTS** | Failing test(s) in `__tests__/` | Must include telemetry assertions (Rule 13) |
+| 4 | **PROVE RED** | `RED confirmed: <failure>` line in chat | Failure must be about behavior, not plumbing |
+| 5 | **SCAFFOLD** | Stubs throwing `not implemented` | Test now fails for the right reason |
+| 6 | **IMPLEMENT** | Minimum code to turn test green | Loop back to Phase 3 for next RED |
+| 7 | **VERIFY PASS** | Full suite + coverage thresholds | 70% statements/lines, 60% branches |
+| 8 | **SECURITY SCAN** | `/security-scan` → PASS | **A finding blocks the cycle.** |
+| 9 | **DOCUMENT** | PromptLog, DesignWalkthrough, CHANGELOG | Flip plan file `approved` → `done` |
 
 ### TDD Behavioral Rules
 
 1. **NEVER write implementation code first** — always tests first
-2. **NEVER skip the design phase** — output the DESIGN block and wait for approval
-3. **NEVER mark something as done without running tests**
-4. **ALWAYS use `manage_todo_list`** with the 6 phases as todo items
-5. **Run tests in terminal** — never assume tests pass without running them
-6. **Show test output** to the user at each verify step
-7. **If a test reveals a bug** in existing code, fix the bug (not the test)
-8. **Keep functions small** — extract helpers when a function exceeds 20 lines
+2. **NEVER skip Phase 1** — write the plan file and wait for *explicit* approval; silence is not approval
+3. **NEVER skip Phase 4** — PROVE RED with a real behavior-level failure message
+4. **NEVER skip Phase 8** — SECURITY SCAN before DOCUMENT; a finding blocks the cycle
+5. **NEVER mark something as done without running tests**
+6. **ALWAYS use `manage_todo_list`** with the 9 phases as todo items
+7. **Run tests in terminal** — never assume tests pass without running them
+8. **Show test output** to the user at each verify step
+9. **If a test reveals a bug** in existing code, fix the bug (not the test)
+10. **Keep functions small** — extract helpers when a function exceeds 20 lines
 
 ---
 

@@ -1,273 +1,189 @@
 ---
 name: tdd-workflow
-description: 'Test-Driven Development workflow for BC Telemetry Buddy. Enforces design-first, test-first development cycle. Use when: adding features, fixing bugs, refactoring code, or implementing new MCP tools/handlers/services.'
+description: 'Test-Driven Development workflow for BC Telemetry Buddy. Enforces the 9-phase PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT cycle. Use when: adding features, fixing bugs, refactoring code, implementing new MCP tools, extension commands, or shared-lib modules. Mandatory before any code change.'
 ---
 
-# TDD Workflow for BC Telemetry Buddy
+# /tdd-workflow — BC Telemetry Buddy TDD enforcer
 
-## When to Use
-- Implementing new MCP tools (toolDefinitions + toolHandlers)
-- Adding extension commands or services
-- Adding shared library functionality
-- Fixing bugs (reproduce with test first)
+You are about to make a code change in BC Telemetry Buddy. This skill forces you through the TDD cycle defined in [docs/tdd/methodology.md](../../../docs/tdd/methodology.md). **Do not skip phases. Do not merge phases.**
+
+## When to use
+
+- Implementing a new MCP tool (`toolDefinitions.ts` + `toolHandlers.ts`)
+- Adding a new extension command, service, or webview provider
+- Adding a new shared-library module or service
+- Fixing a bug (reproduce with a regression test first)
 - Refactoring existing code
-- Any code change that touches packages/shared, packages/mcp, or packages/extension
+- Any change that touches `packages/shared`, `packages/mcp`, or `packages/extension`
+
+## Before you start — load the rules
+
+Re-read these before you write anything:
+
+1. [docs/tdd/methodology.md](../../../docs/tdd/methodology.md) — the 9-phase cycle in prose
+2. [docs/tdd/testability-patterns.md](../../../docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
+3. [docs/tdd/coverage-policy.md](../../../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+4. [.github/copilot-instructions.md](../../copilot-instructions.md) — project-wide rules (logging, git, telemetry)
+
+If the task is a bug fix or refactor, also read the "Bug fixes and refactors" section at the bottom of [methodology.md](../../../docs/tdd/methodology.md).
+
+---
 
 ## HARD GATE — Read this before touching any file
 
-**DO NOT write or edit any source code until you have output a DESIGN block and received explicit user approval.**
+**You may NOT write or edit any source-code file until you have:**
 
-This means: read the relevant files, understand the problem, form your plan — then output the DESIGN block and stop. Wait for the user to say "yes", "looks good", "proceed", or equivalent. Only then move to Phase 2.
+1. Written a plan file under [docs/plans/](../../../docs/plans/) and posted its path in chat
+2. Received explicit user approval ("go", "approved", "proceed", "looks good", "yes")
 
-No exceptions for small changes. No exceptions for "obvious" fixes. The design phase is the cheapest point at which to catch a wrong approach.
+**Silence is not approval.** If the user has not spoken, you do not have approval. "It's a small change" is not an exception. "I know what to do" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase".
 
-## The 6-Phase TDD Cycle
+The design phase is the cheapest point at which to catch a wrong approach. A 30-second approval gate is cheaper than a wrong implementation.
 
-### Phase 1: DESIGN (output this, then STOP)
-Before writing ANY code, produce a brief design document covering:
+---
 
-1. **What** — One-line description of the feature/fix
-2. **Why** — User need or bug being addressed
-3. **Where** — Which package(s) and files will be affected
-4. **Interface** — Public API surface (function signatures, types, tool schemas)
-5. **Dependencies** — What existing services/modules are needed
-6. **Test Strategy** — What to test, what to mock, edge cases
+## The 9-phase cycle
 
-**Output:** Present the design to the user for approval before proceeding.
+| # | Phase | What it produces | Where it lives |
+|---|---|---|---|
+| 1 | **PLAN** | Committed markdown plan file | `docs/plans/<topic>.md` |
+| 2 | **FRAME** | ≤150-word framing of the step | Chat only |
+| 3 | **WRITE TESTS** | Failing test(s) in `__tests__/` | Test file |
+| 4 | **PROVE RED** | `RED confirmed: <failure>` line | Chat + terminal |
+| 5 | **SCAFFOLD** | Stubs throwing `not implemented` | Source files |
+| 6 | **IMPLEMENT** | Minimal code that turns test green | Source files |
+| 7 | **VERIFY PASS** | Full suite + coverage at thresholds | Terminal |
+| 8 | **SECURITY SCAN** | `/security-scan` → PASS | Chat + terminal |
+| 9 | **DOCUMENT** | PromptLog, DesignWalkthrough, CHANGELOG | Docs |
 
-**Package-specific design considerations:**
+Details for each phase are in [methodology.md](../../../docs/tdd/methodology.md). The rest of this file is **actionable checklists and references** — use it as a working surface, not a replacement for the prose doc.
 
-| Package | Module patterns | Test patterns |
-|---------|----------------|---------------|
-| `packages/shared` | Export from `src/index.ts`, services as classes | Mock external deps (axios, fs, MSAL) |
-| `packages/mcp` | Tools: `toolDefinitions.ts` + `toolHandlers.ts` | Mock `@bctb/shared` services |
-| `packages/extension` | Commands in `extension.ts`, services in `services/` | Mock `vscode` namespace + shared |
+---
 
-### Phase 2: WRITE TESTS
-Write failing tests FIRST. Tests go in `__tests__/` directories.
+## Phase 1 — PLAN (file, then STOP)
 
-**Test file conventions:**
+Write `docs/plans/<topic>.md` with the frontmatter and sections from [methodology.md §Phase 1](../../../docs/tdd/methodology.md). See [docs/plans/README.md](../../../docs/plans/README.md) for the file-naming convention and status lifecycle.
+
+**After writing the file, post its path in chat and STOP. Wait for explicit approval.** On approval, flip `status: draft` → `status: approved`.
+
+## Phase 2 — FRAME (chat, ≤150 words)
+
+Post in chat: goal / where-it-stands / why-needed / what-it-contributes. Hard cap 150 words. Not committed.
+
+## Phase 3 — WRITE TESTS
+
+Test file locations:
+
 ```
 packages/shared/src/__tests__/<module>.test.ts
 packages/mcp/src/__tests__/<feature>.test.ts
 packages/extension/src/__tests__/<feature>.test.ts
 ```
 
-**Test structure pattern (from this project):**
-```typescript
-// 1. Mock dependencies at top level
-jest.mock('@bctb/shared', () => ({
-    ServiceName: jest.fn().mockImplementation(() => ({
-        method: jest.fn().mockResolvedValue(result)
-    }))
-}));
+Mocking patterns are in [testability-patterns.md](../../../docs/tdd/testability-patterns.md). Include a telemetry assertion — Rule 13 makes `trackEvent` part of the definition of done.
 
-// 2. Import after mocks
-import { ClassUnderTest } from '../module.js';
-
-// 3. Describe blocks matching class/function structure
-describe('ClassUnderTest', () => {
-    beforeEach(() => { jest.clearAllMocks(); });
-
-    describe('methodName', () => {
-        it('should handle normal case', async () => { /* ... */ });
-        it('should handle error case', async () => { /* ... */ });
-        it('should handle edge case', async () => { /* ... */ });
-    });
-});
-```
-
-**What to test (in priority order):**
-1. Happy path — normal inputs produce expected outputs
-2. Error paths — invalid inputs, network failures, auth failures
-3. Edge cases — empty arrays, null values, boundary values
-4. Integration points — cross-package imports work correctly
-
-**What NOT to test:**
-- VSCode UI components requiring full extension host (`extension.ts`, `SetupWizardProvider.ts`)
-- Pure data files (`agentDefinitions.ts`)
-- Auto-generated files (`version.ts`, `telemetryConfig.generated.ts`)
-- CLI entry points (`cli.ts`, `server.ts`)
-
-### Phase 3: VERIFY TESTS FAIL
-Run the tests and confirm they fail for the RIGHT reason (missing implementation, not broken test).
+## Phase 4 — PROVE RED
 
 ```bash
-# Run specific test file
-cd packages/<package> && npx jest --no-coverage src/__tests__/<test-file>.test.ts
-
-# Run all tests for a package
-cd packages/<package> && npm test
+cd packages/<pkg> && npx jest --no-coverage src/__tests__/<file>.test.ts
 ```
 
-**If tests fail for wrong reason:** Fix the test, not the implementation.
-**If scaffolding is needed:** Create minimal stubs (empty functions, interface-only files) so tests compile but fail on assertions.
+Post in chat: `RED confirmed: <failure message>`. If the failure is about plumbing (`Cannot find module`, `is not a function`), go to Phase 5 first.
 
-### Phase 4: IMPLEMENT
-Write the minimum code to make tests pass. Follow these project conventions:
+## Phase 5 — SCAFFOLD
 
-**TypeScript conventions:**
-- ES2022 + ESM modules in shared/mcp (`import/export`)
-- CommonJS in extension (VSCode requirement)
-- Use `@bctb/shared` for cross-package imports
-- Dependency injection via constructor parameters
-- Single Responsibility: one class/module per concern
+Minimum shape so the test can fail for the *right* reason:
 
-**Project-specific patterns:**
-- MCP tools: add to `TOOL_DEFINITIONS` array in `toolDefinitions.ts`, implement handler in `toolHandlers.ts`
-- Shared services: export from `src/index.ts`, use dependency injection
-- Extension commands: register in `extension.ts`, implement in service classes
-- Config: use `MCPConfig` type from shared, loaded via `loadConfig()`
+- New files + module exports
+- Explicit type signatures
+- Stub implementations throwing `new Error("not implemented: <name>")`
+- For a new MCP tool: add to `TOOL_DEFINITIONS`, add an empty handler case
+- For a new extension command: register in `extension.ts`, add command contribution in `package.json`
 
-**Code quality (from copilot-instructions.md):**
-- SOLID principles (especially SRP and DIP)
-- Functions < 20 lines
-- Meaningful names revealing intent
-- `const` over `let`, avoid `any`
-- Proper error handling with logging
+Go back to Phase 4. You should now see a behavior failure.
 
-### Phase 5: VERIFY TESTS PASS
-Run ALL tests for affected packages, with coverage.
+## Phase 6 — IMPLEMENT
+
+Minimum code to turn this one test green. Loop back to Phase 3 for the next RED.
+
+## Phase 7 — VERIFY PASS
 
 ```bash
-# Package-level with coverage
-cd packages/<package> && npm run test:coverage
-
-# All packages from root
-npm test
+cd packages/<pkg> && npm run test:coverage   # per package with coverage
+npm test                                     # all packages
+npm run build                                # from root — cross-package compile check
 ```
 
-**Coverage thresholds (enforced by Jest):**
+Thresholds: see [coverage-policy.md](../../../docs/tdd/coverage-policy.md). If tests fail, fix the implementation, not the tests.
 
-| Metric | shared | mcp | extension |
-|--------|--------|-----|-----------|
-| Statements | 70% | 70% | 70% |
-| Branches | 60% | 60% | 60% |
-| Functions | 65% | 65% | 70% |
-| Lines | 70% | 70% | 70% |
+## Phase 8 — SECURITY SCAN
 
-**If tests fail:** Fix implementation, NOT the tests (unless the test itself is wrong).
-**If coverage drops:** Add more tests for uncovered paths.
+Run the [`/security-scan`](../security-scan/SKILL.md) skill. A finding **blocks** the cycle. Never "note and continue".
 
-### Phase 6: DOCUMENT
-Update documentation to reflect changes:
+## Phase 9 — DOCUMENT
 
-1. **Always update** (per copilot-instructions.md):
-   - `docs/PromptLog.md` — Log the user prompt (GUID-based entry)
-   - `docs/DesignWalkthrough.md` — Short narrative with Why/How
+1. PromptLog + DesignWalkthrough (Rule 2 — FAST APPEND, never read these files)
+2. `packages/<component>/CHANGELOG.md` if user-visible
+3. `docs/UserGuide.md` if user-facing behavior changed
+4. Flip plan file `status: approved` → `status: done`
 
-2. **Update when user-facing features change:**
-   - `docs/UserGuide.md` — Installation, configuration, usage
-   - `packages/<component>/CHANGELOG.md` — Version history
-   - `packages/<component>/README.md` — Component documentation
+Then: "Changes ready — please review and commit when ready." Never run git commands without explicit request (Rule 11).
 
-3. **Update when test patterns change:**
-   - `docs/TestingGuide.md` — Testing philosophy and instructions
+---
 
 ## MCP Tool Development Checklist
 
 When adding a new MCP tool, follow this exact sequence:
 
-- [ ] **Design:** Define tool name, description, inputSchema, annotations
-- [ ] **Test toolDefinition:** Verify tool appears in TOOL_DEFINITIONS array
-- [ ] **Test toolHandler:** Write tests for handler dispatch + business logic
-- [ ] **Test telemetry:** Write tests verifying `usageTelemetry.trackEvent` is called with correct event name/properties
-- [ ] **Scaffold:** Add tool to TOOL_DEFINITIONS, add empty handler case
-- [ ] **Add telemetry event ID:** Add `TOOL_NAME: 'TB-MCP-1xx'` to `TELEMETRY_EVENTS.MCP_TOOLS` in `packages/shared/src/telemetryEvents.ts`
-- [ ] **Verify fail:** Tests should fail on missing logic (not compile errors)
-- [ ] **Implement handler:** Write business logic in toolHandlers.ts
-- [ ] **Add telemetry call:** Call `usageTelemetry.trackEvent` inside the handler case for meaningful outcomes (in addition to the generic `Mcp.ToolCompleted` that fires automatically)
-- [ ] **Verify pass:** All tests green, coverage meets threshold
-- [ ] **Integration check:** Run `npm run build` from root
-- [ ] **Document:** Update CHANGELOG, tool descriptions, UserGuide if needed
+- [ ] **Phase 1 (PLAN):** Plan file in `docs/plans/` covering tool name, description, `inputSchema`, `annotations`, handler logic, telemetry event ID
+- [ ] **Phase 3 (TESTS):** Test `TOOL_DEFINITIONS` contains the tool; test handler dispatch; test business logic per AC; test `usageTelemetry.trackEvent` is called with correct event name and properties
+- [ ] **Phase 4 (PROVE RED):** Run the test file, confirm behavior-level failure
+- [ ] **Phase 5 (SCAFFOLD):** Add tool to `TOOL_DEFINITIONS`, add empty handler case throwing `not implemented`; add `TOOL_NAME: 'TB-MCP-1xx'` to `TELEMETRY_EVENTS.MCP_TOOLS` in `packages/shared/src/telemetryEvents.ts`
+- [ ] **Phase 6 (IMPLEMENT):** Write handler logic in `toolHandlers.ts`; add `trackEvent` call inside the handler case for meaningful outcomes (in addition to the generic `Mcp.ToolCompleted` that fires automatically)
+- [ ] **Phase 7 (VERIFY):** All tests green, coverage meets threshold, `npm run build` from root
+- [ ] **Phase 8 (SECURITY):** `/security-scan` passes — pay extra attention to check #6 (telemetry properties)
+- [ ] **Phase 9 (DOCUMENT):** CHANGELOG, tool description in UserGuide if user-facing, flip plan to `done`
 
-## Extension Service Development Checklist
+## Extension Service / Command Checklist
 
-When adding a new extension service or command:
+- [ ] **Phase 1 (PLAN):** Service interface, dependencies, command palette entry, telemetry event names
+- [ ] **Phase 3 (TESTS):** Mock `vscode` namespace and `@bctb/shared`; test service logic; test `trackOperationWithTelemetry` or `trackEvent` is called for key operations
+- [ ] **Phase 4 (PROVE RED):** Behavior-level failure confirmed
+- [ ] **Phase 5 (SCAFFOLD):** Empty service class / command registration
+- [ ] **Phase 6 (IMPLEMENT):** Fill in service logic; use `trackOperationWithTelemetry` for async ops, `usageTelemetry.trackEvent` for simple events; add event IDs to `TELEMETRY_EVENTS.EXTENSION` if significant
+- [ ] **Phase 7 (VERIFY):** Tests green; register command in `extension.ts` and `package.json`; `npm run build` from root
+- [ ] **Phase 8 (SECURITY):** `/security-scan` passes
+- [ ] **Phase 9 (DOCUMENT):** CHANGELOG, UserGuide
 
-- [ ] **Design:** Define service interface, dependencies, command palette entry
-- [ ] **Test service:** Write tests mocking vscode namespace + @bctb/shared
-- [ ] **Test telemetry:** Write tests verifying `usageTelemetry.trackEvent` or `trackOperationWithTelemetry` is called for key operations
-- [ ] **Scaffold:** Create service file with empty class/methods
-- [ ] **Verify fail:** Tests fail on assertions
-- [ ] **Implement:** Fill in service logic
-- [ ] **Add telemetry:** Use `trackOperationWithTelemetry` for async operations, or `usageTelemetry.trackEvent` for simple events; add event ID constants to `TELEMETRY_EVENTS.EXTENSION` if significant
-- [ ] **Verify pass:** All tests green
-- [ ] **Wire up:** Register command in extension.ts, add to package.json
-- [ ] **Build check:** `npm run build` from root
-- [ ] **Document:** Update CHANGELOG, UserGuide
+## Shared Library Checklist
 
-## Shared Library Development Checklist
+- [ ] **Phase 1 (PLAN):** Types, interfaces, function signatures, which packages will consume this
+- [ ] **Phase 3 (TESTS):** Mock external deps (axios, fs, MSAL); tests in `packages/shared/src/__tests__/`
+- [ ] **Phase 4 (PROVE RED):** Behavior-level failure confirmed
+- [ ] **Phase 5 (SCAFFOLD):** Module with type stubs; export from `src/index.ts`
+- [ ] **Phase 6 (IMPLEMENT):** Minimal implementation
+- [ ] **Phase 7 (VERIFY):** Tests green, coverage ≥70%, `npm run build` from root (shared must build first); verify MCP and extension can import new exports
+- [ ] **Phase 8 (SECURITY):** `/security-scan` passes
+- [ ] **Phase 9 (DOCUMENT):** CHANGELOG if API-surface change
 
-When adding to @bctb/shared:
+---
 
-- [ ] **Design:** Define types, interfaces, function signatures
-- [ ] **Test:** Write tests mocking external dependencies (axios, fs, MSAL)
-- [ ] **Export:** Add to src/index.ts
-- [ ] **Scaffold:** Create module with type stubs
-- [ ] **Verify fail:** Tests fail on logic
-- [ ] **Implement:** Fill in module
-- [ ] **Verify pass:** All tests green, coverage meets 70%
-- [ ] **Build check:** `npm run build` from root (shared must build first)
-- [ ] **Consumer check:** Verify MCP and extension can import new exports
+## Quick command reference
 
-## Common Mocking Patterns
+```bash
+# Run one test file
+cd packages/<pkg> && npx jest --no-coverage src/__tests__/<file>.test.ts
 
-### Mock @bctb/shared (in MCP or extension tests)
-```typescript
-jest.mock('@bctb/shared', () => ({
-    AuthService: jest.fn().mockImplementation(() => ({
-        authenticate: jest.fn().mockResolvedValue(undefined),
-        getAccessToken: jest.fn().mockResolvedValue('mock-token'),
-    })),
-    KustoService: jest.fn().mockImplementation(() => ({
-        executeQuery: jest.fn(),
-    })),
-    CacheService: jest.fn().mockImplementation(() => ({
-        get: jest.fn().mockReturnValue(null),
-        set: jest.fn(),
-    })),
-}));
+# Run all tests for a package with coverage
+cd packages/<pkg> && npm run test:coverage
+
+# Run all tests from root
+npm test
+
+# Build (cross-package project references)
+npm run build
 ```
 
-### Mock vscode namespace (in extension tests)
-```typescript
-jest.mock('vscode', () => ({
-    window: {
-        showInformationMessage: jest.fn(),
-        showErrorMessage: jest.fn(),
-        createOutputChannel: jest.fn(() => ({ appendLine: jest.fn(), show: jest.fn() })),
-    },
-    workspace: {
-        getConfiguration: jest.fn().mockReturnValue({
-            get: jest.fn(),
-            update: jest.fn(),
-        }),
-        workspaceFolders: [{ uri: { fsPath: '/test' } }],
-    },
-    commands: { registerCommand: jest.fn() },
-    Uri: { file: jest.fn((f: string) => ({ fsPath: f })) },
-}), { virtual: true });
-```
+---
 
-### Mock fs/path (in shared tests)
-```typescript
-jest.mock('fs', () => ({
-    existsSync: jest.fn(),
-    readFileSync: jest.fn(),
-    writeFileSync: jest.fn(),
-    mkdirSync: jest.fn(),
-    readdirSync: jest.fn(),
-}));
-```
-
-## Anti-Patterns to Avoid
-
-1. **Writing implementation before tests** — Always write the test first
-2. **Skipping Phase 3 (verify fail)** — If tests pass before implementation, they test nothing
-3. **Fixing tests to match broken implementation** — Tests define expected behavior
-4. **Testing implementation details** — Test behavior and outcomes, not internal methods
-5. **Giant test files** — One describe block per class/module, split if > 300 lines
-6. **Skipping coverage check** — CI will catch it, but catching locally saves time
-7. **Mocking too much** — If everything is mocked, you're testing mocks not code
-8. **Ignoring cross-package builds** — Always `npm run build` from root after changes
+**If at any phase the test is hard to write, the code is wrong — not the test. Stop, fix the seam, continue. Never skip a test "just this once".**

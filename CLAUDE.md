@@ -10,15 +10,32 @@ Read `AGENTS.md` first. It covers logging rules, TDD workflow, SOLID principles,
 
 **You may NOT write or edit any source code file until you have:**
 
-1. Output a DESIGN block (format in `.github/copilot-instructions.md`)
-2. Received explicit user approval
+1. Written a plan file under [docs/plans/](docs/plans/) following [docs/plans/README.md](docs/plans/README.md)
+2. Posted the plan file path in chat
+3. Received **explicit** user approval ("go", "approved", "proceed", "looks good", "yes")
 
-"It's a small change" is not an exception. "I know what to do" is not an exception.  
-The design phase exists to catch wrong assumptions before any code is written.
+**Silence is not approval.** If the user has not spoken, you do not have approval.
+
+"It's a small change" is not an exception. "I know what to do" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase".
+
+The plan phase is the cheapest point at which to catch a wrong approach. A 30-second approval gate is cheaper than a wrong implementation.
 
 **Every new feature or tool MUST also include telemetry** (event IDs in `telemetryEvents.ts` + `trackEvent` calls). This is part of the definition of done — not optional.
 
-See `.github/copilot-instructions.md` Rule 13 and the TDD workflow section for the full requirements.
+## The 9-phase TDD cycle
+
+Every code change follows: **PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT**.
+
+Full details live in three places:
+
+- [.github/skills/tdd-workflow/SKILL.md](.github/skills/tdd-workflow/SKILL.md) — actionable phase index + component checklists
+- [docs/tdd/methodology.md](docs/tdd/methodology.md) — the cycle in prose
+- [docs/tdd/testability-patterns.md](docs/tdd/testability-patterns.md) — mocking catalog, seams, conventions
+- [docs/tdd/coverage-policy.md](docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+
+Phase 8 (SECURITY SCAN) invokes [.github/skills/security-scan/SKILL.md](.github/skills/security-scan/SKILL.md). A finding blocks the cycle.
+
+See `.github/copilot-instructions.md` Rule 13 for the telemetry requirements.
 
 ---
 

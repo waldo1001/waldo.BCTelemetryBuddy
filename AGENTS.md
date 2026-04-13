@@ -34,9 +34,22 @@ Before any code change, explicitly load and follow the skill(s) under `.github/s
 
 ```
 .github/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
+.github/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
+.github/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
 
 Load skills using `read_file` before generating any code or tests.
+
+## TDD reference docs
+
+The `tdd-workflow` skill deep-links into:
+
+- [docs/tdd/methodology.md](docs/tdd/methodology.md) — the 9-phase cycle (PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT)
+- [docs/tdd/testability-patterns.md](docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
+- [docs/tdd/coverage-policy.md](docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+- [docs/plans/README.md](docs/plans/README.md) — plan-file naming and status lifecycle
+
+**Hard rule:** no source-code edits until a plan file exists under `docs/plans/` and the user has **explicitly** approved it. Silence is not approval.
 
 ## Quick Reference: Build & Test Commands
 

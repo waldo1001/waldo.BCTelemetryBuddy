@@ -1,0 +1,16 @@
+# Security-scan allowlist for BC Telemetry Buddy
+#
+# Format: one entry per line. Matches are exact-string, not regex.
+# Lines starting with # are comments.
+#
+# Add an entry only when a real false positive hits the scan.
+# Each entry MUST have a comment explaining why the value is safe.
+# Do not add wildcards. Do not add entries just to silence the scan.
+#
+# Example (commented out — replace with a real known-safe value when one exists):
+#
+# # Fake tenant GUID used in UserGuide.md and test fixtures
+# 00000000-0000-0000-0000-000000000000
+#
+# # Fake App Insights app ID used in setup-wizard screenshots
+# 11111111-1111-1111-1111-111111111111
