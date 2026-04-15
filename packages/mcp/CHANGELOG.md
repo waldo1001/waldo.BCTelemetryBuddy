@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.12] - 2026-04-15
+
+### Fixed
+- **KB gate now checks the workspace directory directly (follow-up to v3.3.11)**: The v3.3.11 gate relied on `loadConfigFromFile`'s return value, which falls back to `~/.bctb/config.json`. Users with a home-dir config still saw `community-articles.json` created in every workspace because the fallback succeeded and `resolvedConfig.workspacePath` resolved to the current workspace via `BCTB_WORKSPACE_PATH` / `process.cwd()`. The gate is now a direct `fs.existsSync('<workspace>/.bctb-config.json')` check, independent of the home-dir fallback. See [docs/plans/skip-kb-load-without-workspace-config.md](../../docs/plans/skip-kb-load-without-workspace-config.md).
+
 ## [3.3.11] - 2026-04-15
 
 ### Fixed
