@@ -26,6 +26,39 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
 
 /**
+ * Eager-load the Knowledge Base at MCP startup — but only when the workspace
+ * actually has a BCTB config file. Starting MCP against an unrelated workspace
+ * (e.g. via a global MCP registration) must not create
+ * `.vscode/.bctb/kb-cache/community-articles.json` there.
+ *
+ * Returns the loaded service, or null when loading was skipped or failed.
+ * Failures are non-fatal and logged to stderr.
+ */
+export async function maybeLoadKnowledgeBase(
+    resolvedConfig: MCPConfig,
+    hasConfigFile: boolean
+): Promise<KnowledgeBaseService | null> {
+    if (!hasConfigFile) {
+        return null;
+    }
+    try {
+        const kbConfig: KBConfig = resolvedConfig.knowledgeBase ?? {
+            enabled: true,
+            source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
+            exclude: [],
+            autoRefresh: true,
+            cacheOnly: false,
+        };
+        const kbService = new KnowledgeBaseService(resolvedConfig.workspacePath, kbConfig);
+        await kbService.loadAll();
+        return kbService;
+    } catch (err: any) {
+        console.error(`KB load failed (non-fatal): ${err.message}`);
+        return null;
+    }
+}
+
+/**
  * Convert a JSON Schema property definition to a Zod schema.
  * Handles the property types used in our tool definitions.
  */
@@ -204,12 +237,15 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
 
     // Load configuration
     let resolvedConfig: MCPConfig;
+    let hasConfigFile = false;
     if (config) {
         resolvedConfig = config;
+        hasConfigFile = true;
     } else {
         const fileConfig = loadConfigFromFile(undefined, undefined, true);
         if (fileConfig) {
             resolvedConfig = fileConfig;
+            hasConfigFile = true;
         } else {
             resolvedConfig = loadConfig();
         }
@@ -223,20 +259,9 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);
 
-    // Load Knowledge Base (community + local) — eager load at startup
-    try {
-        const kbConfig: KBConfig = resolvedConfig.knowledgeBase ?? {
-            enabled: true,
-            source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
-            exclude: [],
-            autoRefresh: true,
-            cacheOnly: false,
-        };
-        const kbService = new KnowledgeBaseService(resolvedConfig.workspacePath, kbConfig);
-        await kbService.loadAll();
+    const kbService = await maybeLoadKnowledgeBase(resolvedConfig, hasConfigFile);
+    if (kbService) {
         toolHandlers.knowledgeBase = kbService;
-    } catch (err: any) {
-        console.error(`KB load failed (non-fatal): ${err.message}`);
     }
 
     // Create SDK server with all tools

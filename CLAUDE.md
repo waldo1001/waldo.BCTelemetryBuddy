@@ -11,8 +11,9 @@ Read `AGENTS.md` first. It covers logging rules, TDD workflow, SOLID principles,
 **You may NOT write or edit any source code file until you have:**
 
 1. Written a plan file under [docs/plans/](docs/plans/) following [docs/plans/README.md](docs/plans/README.md)
-2. Posted the plan file path in chat
-3. Received **explicit** user approval ("go", "approved", "proceed", "looks good", "yes")
+2. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. A plan without this section is not a plan and must not be posted for approval.
+3. Posted the plan file path in chat
+4. Received **explicit** user approval ("go", "approved", "proceed", "looks good", "yes")
 
 **Silence is not approval.** If the user has not spoken, you do not have approval.
 

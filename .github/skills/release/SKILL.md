@@ -33,6 +33,7 @@ Examples: `/release mcp patch`, `/release both minor`, `/release` (= both patch)
 2. **Confirm git clean**: Run `git status --porcelain`. If dirty, list the uncommitted files and ask the user whether to commit them first or abort. Do NOT proceed with a dirty tree.
 3. **Run tests**: Execute `npm run test` from the repo root. If any test fails, stop and report failures. Do not skip tests.
 4. **Run build**: Execute `npm run build` from the repo root. If build fails, stop and report.
+5. **Validate bump type against blast radius**: Read the `Blast radius / breakage prediction` section of every plan file in [docs/plans/](../../../docs/plans/) whose `status` has flipped to `done` since the last release tag for this component. If any plan touching the component is rated `breaking`, the bump type MUST be `major` — reject a `patch`/`minor` request and ask the user to confirm a `major` bump instead. If any is `risky`, require at least `minor`. If all are `safe`/`low-risk`, any bump type is allowed. Record the highest rating found in the CHANGELOG entry for this release.
 
 ### Phase 2: Version Bump (per component)
 

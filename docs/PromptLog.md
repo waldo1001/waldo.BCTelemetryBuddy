@@ -3316,3 +3316,10 @@ Change instructions an business logic to do this."
 > "We did a massive update on telemetry in waldo.BCTelemetryBuddy. Come up with a plan to update the dashboard's data. [...] Most of the metrics on the new pages are empty. Please use BCTB yourself to verify the KQL you came up with. [...] Fix it all. Release it all!"
 
 ---
+
+### Entry ID: a4b1c2d3-4e5f-4a6b-8c7d-9e0f1a2b3c4d — 2026-04-15
+> "Whenever I now load ANY workspace, it creates: community-articles.json even in a workspace where there is no config for BCTB. I don't want that."
+> "Add to the toolchain to always predict how safe or breaking a change is - in the plan."
+> "You should add that to the toolchain - meaning this projects skills and agents"
+> "Implement!"
+

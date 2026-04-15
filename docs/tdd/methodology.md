@@ -52,7 +52,8 @@ created: YYYY-MM-DD
 7. **Telemetry** — new event IDs to add to `telemetryEvents.ts`, which handlers/services call `trackEvent`. Required by Rule 13.
 8. **Open questions / assumptions** — anything the agent would otherwise silently decide. Each entry is either a question for the user or a stated assumption flagged for confirmation.
 9. **Risks** — what could go wrong, what would force a rollback.
-10. **Out-of-scope follow-ups** — bullet list of deliberately deferred items, so they don't get lost.
+10. **Blast radius / breakage prediction** — **mandatory.** Rate the change as `safe` | `low-risk` | `risky` | `breaking`, justify the rating, list who/what could break (MCP tool consumers, saved queries on disk, KB cache, extension users, CI, downstream scripts), and describe how a regression would be detected. If the rating is `risky` or `breaking`, also spell out the migration path and whether a version bump is required. A plan cannot be submitted for approval without this section filled in. See [docs/plans/README.md](../plans/README.md#required-sections) for the rating definitions.
+11. **Out-of-scope follow-ups** — bullet list of deliberately deferred items, so they don't get lost.
 
 ### Stop for approval
 

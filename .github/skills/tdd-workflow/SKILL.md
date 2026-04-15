@@ -62,7 +62,9 @@ Details for each phase are in [methodology.md](../../../docs/tdd/methodology.md)
 
 ## Phase 1 — PLAN (file, then STOP)
 
-Write `docs/plans/<topic>.md` with the frontmatter and sections from [methodology.md §Phase 1](../../../docs/tdd/methodology.md). See [docs/plans/README.md](../../../docs/plans/README.md) for the file-naming convention and status lifecycle.
+Write `docs/plans/<topic>.md` with the frontmatter and sections from [methodology.md §Phase 1](../../../docs/tdd/methodology.md). See [docs/plans/README.md](../../../docs/plans/README.md) for the file-naming convention, status lifecycle, and **required sections** (including the `Blast radius / breakage prediction` section added below).
+
+**Blast radius is mandatory.** Every plan must include a rating of `safe` | `low-risk` | `risky` | `breaking`, with justification, who/what could break, and how a regression would be detected. If the rating is `risky` or `breaking`, the plan must also spell out the migration path and version-bump implications *before* asking for approval. Do not post the plan for approval without this section filled in.
 
 **After writing the file, post its path in chat and STOP. Wait for explicit approval.** On approval, flip `status: draft` → `status: approved`.
 

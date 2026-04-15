@@ -51,6 +51,8 @@ The `tdd-workflow` skill deep-links into:
 
 **Hard rule:** no source-code edits until a plan file exists under `docs/plans/` and the user has **explicitly** approved it. Silence is not approval.
 
+**Every plan must predict its own blast radius.** Required section: rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. `risky`/`breaking` ratings must also list the migration path and version-bump implications. A plan missing this section cannot be submitted for approval — see [docs/plans/README.md](docs/plans/README.md#required-sections).
+
 ## Quick Reference: Build & Test Commands
 
 ```bash

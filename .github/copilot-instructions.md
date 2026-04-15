@@ -574,8 +574,9 @@ Full phase details, component checklists, and quick commands live in [.github/sk
 **YOU MAY NOT WRITE OR EDIT ANY SOURCE CODE FILE until you have:**
 
 1. Written a plan file under [docs/plans/](../docs/plans/) following [docs/plans/README.md](../docs/plans/README.md)
-2. Posted the plan file path in chat
-3. Received **explicit** user approval — the exact words "go", "approved", "proceed", "looks good", or "yes"
+2. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. `risky`/`breaking` ratings must also list the migration path and version-bump implications. A plan missing this section is not a plan and must not be submitted for approval.
+3. Posted the plan file path in chat
+4. Received **explicit** user approval — the exact words "go", "approved", "proceed", "looks good", or "yes"
 
 **Silence is not approval.** If the user has not spoken, you do not have approval.
 

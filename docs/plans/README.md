@@ -96,6 +96,19 @@ Existing services/modules this relies on.
 ## Risks
 - ...
 
+## Blast radius / breakage prediction
+Predict how safe or breaking this change is **before** implementing. Pick one rating and justify it in 1–3 bullets.
+
+- **Rating:** `safe` | `low-risk` | `risky` | `breaking`
+  - `safe` — internal-only, no API/schema/config/file-format change, pure refactor or gated bug fix. Rollback = revert one commit.
+  - `low-risk` — touches behavior users can observe, but backward compatible. Existing configs, saved queries, tool calls, and cache files keep working unchanged.
+  - `risky` — changes observable behavior in a way that *could* surprise an existing user (new default, renamed field, new required call order) but has a documented migration or fallback.
+  - `breaking` — removes/renames a public tool, command, config key, event ID, cache path, or on-disk format; or changes a return shape a caller depends on. Requires a major-version bump and CHANGELOG "BREAKING" entry.
+- **Who/what could break:** MCP tool consumers | extension users | saved queries on disk | KB cache | telemetry pipeline | CI | downstream scripts | none.
+- **Detection:** how a regression would show up (test that would fail, log line, user report) — so the reviewer knows what to watch for post-merge.
+
+If the rating is `risky` or `breaking`, the plan MUST also list the migration path and whether a version bump is required before it can be approved.
+
 ## Out-of-scope follow-ups
 - ...
 ```
