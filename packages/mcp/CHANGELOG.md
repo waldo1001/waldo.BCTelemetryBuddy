@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.11] - 2026-04-15
+
+### Fixed
+- **KB cache no longer created in unrelated workspaces**: `startSdkStdioServer` now only eager-loads the Knowledge Base when the workspace actually has a `.bctb-config.json`. Previously, starting MCP against any workspace (e.g. via a global MCP registration) would create `.vscode/.bctb/kb-cache/community-articles.json` there. Blast radius: low-risk — env-var-only startups no longer auto-populate the community KB cache; add a workspace config file to re-enable. See [docs/plans/skip-kb-load-without-config.md](../../docs/plans/skip-kb-load-without-config.md).
+
 ## [3.3.10] - 2026-04-13
 
 ### Fixed
