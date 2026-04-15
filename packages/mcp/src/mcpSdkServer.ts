@@ -23,22 +23,30 @@ import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInst
 import { ToolHandlers, initializeServices } from './tools/toolHandlers.js';
 import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import * as fs from 'fs';
+import * as path from 'path';
 import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
 
 /**
  * Eager-load the Knowledge Base at MCP startup — but only when the workspace
- * actually has a BCTB config file. Starting MCP against an unrelated workspace
- * (e.g. via a global MCP registration) must not create
- * `.vscode/.bctb/kb-cache/community-articles.json` there.
+ * directory itself contains `.bctb-config.json`. Checking
+ * `loadConfigFromFile`'s return value is not enough: it falls back to
+ * `~/.bctb/config.json`, and `resolvedConfig.workspacePath` then resolves to
+ * `BCTB_WORKSPACE_PATH` / `process.cwd()` — which is the current (unrelated)
+ * workspace. Without this direct workspace-local check, the KB cache ends up
+ * written into every workspace MCP touches.
  *
  * Returns the loaded service, or null when loading was skipped or failed.
  * Failures are non-fatal and logged to stderr.
  */
 export async function maybeLoadKnowledgeBase(
-    resolvedConfig: MCPConfig,
-    hasConfigFile: boolean
+    resolvedConfig: MCPConfig
 ): Promise<KnowledgeBaseService | null> {
-    if (!hasConfigFile) {
+    if (!resolvedConfig.workspacePath) {
+        return null;
+    }
+    const workspaceConfigPath = path.join(resolvedConfig.workspacePath, '.bctb-config.json');
+    if (!fs.existsSync(workspaceConfigPath)) {
         return null;
     }
     try {
@@ -237,15 +245,12 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
 
     // Load configuration
     let resolvedConfig: MCPConfig;
-    let hasConfigFile = false;
     if (config) {
         resolvedConfig = config;
-        hasConfigFile = true;
     } else {
         const fileConfig = loadConfigFromFile(undefined, undefined, true);
         if (fileConfig) {
             resolvedConfig = fileConfig;
-            hasConfigFile = true;
         } else {
             resolvedConfig = loadConfig();
         }
@@ -259,7 +264,7 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);
 
-    const kbService = await maybeLoadKnowledgeBase(resolvedConfig, hasConfigFile);
+    const kbService = await maybeLoadKnowledgeBase(resolvedConfig);
     if (kbService) {
         toolHandlers.knowledgeBase = kbService;
     }

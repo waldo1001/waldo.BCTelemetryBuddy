@@ -3323,3 +3323,8 @@ Change instructions an business logic to do this."
 > "You should add that to the toolchain - meaning this projects skills and agents"
 > "Implement!"
 
+
+### Entry ID: b5c2d3e4-5f6a-4b7c-9d8e-0f1a2b3c4d5e — 2026-04-15
+> "even after upgrading to the new MCP, the file is still created. May be something in the extension?"
+> "Proceed"
+
