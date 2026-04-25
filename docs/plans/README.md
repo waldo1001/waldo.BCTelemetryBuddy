@@ -117,7 +117,7 @@ If the rating is `risky` or `breaking`, the plan MUST also list the migration pa
 
 ## Examples
 
-- [agent-toolchain-upgrade.md](agent-toolchain-upgrade.md) — the plan that created this folder. A good reference for the format.
+- [done/agent-toolchain-upgrade.md](done/agent-toolchain-upgrade.md) — the plan that created this folder. A good reference for the format.
 
 ---
 
