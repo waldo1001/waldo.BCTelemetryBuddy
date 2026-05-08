@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Resolved 23 `npm audit` findings (1 low / 7 moderate / 13 high / 2 critical) without `--force`**: ranges floored to patched lines — `axios ^1.16.0` (in `@bctb/shared`, used by the kusto/auth paths), `express ^4.22.1` (MCP HTTP transport). Transitive bumps cleared `undici`, `protobufjs` (critical RCE), `handlebars` (critical), `body-parser`, `path-to-regexp`, `qs`, `ajv`, `picomatch`, `minimatch`, `brace-expansion`, `ip-address`, `follow-redirects`, `jws`, `lodash`, `markdown-it`, `underscore`, `express-rate-limit`, `@hono/node-server`, `hono`, `@azure/functions`. No public API change. Build + 27 test suites green; HTTP `/health` and `/query` smoke verified post-bump. See [docs/plans/done/npm-audit-remediation.md](../../docs/plans/done/npm-audit-remediation.md).
+
 ### Added
 - **KB-consultation nudge on pre-query tool responses**: `get_event_catalog`, `get_tenant_mapping`, `get_event_field_samples`, and `get_event_schema` now attach a single-string `kbHint` field to their responses until `get_knowledge` is called in the session. The hint is parameterized from values the source tool already has (significant event IDs for the catalog, `eventId` for samples/schema, `companyNameFilter` for tenant mapping), making the mandatory KB step harder to skip without bloating responses with KB content. Suppressed when KB is not loaded or after `get_knowledge` runs once. New telemetry event `TB-MCP-114` (`Mcp.KbHintEmitted`) measures uptake. See [docs/plans/kb-nudge-on-pre-query-tools.md](../../docs/plans/kb-nudge-on-pre-query-tools.md).
 

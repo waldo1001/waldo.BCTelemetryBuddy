@@ -311,7 +311,7 @@
     "dependencies": {
         "@bctb/shared": "file:../shared",
         "@vscode/extension-telemetry": "^1.2.0",
-        "axios": "^1.13.2"
+        "axios": "^1.16.0"
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Resolved 23 `npm audit` findings via `npm audit fix` (no `--force`)**: `axios` floor raised to `^1.16.0` (used by extension HTTP paths). All extension-side transitive advisories on `undici`, `path-to-regexp`, `qs`, `picomatch`, `minimatch`, `brace-expansion`, `lodash`, `underscore`, `markdown-it`, etc. cleared. No public API change; 23 test suites green. See [docs/plans/done/npm-audit-remediation.md](../../docs/plans/done/npm-audit-remediation.md).
+
 ### Fixed
 - **Knowledge Base webview now follows the config-bearing folder in multi-root workspaces**: `KnowledgeBaseProvider` and the HTTP-MCP `getWorkspacePath()` helper used to always read from `workspaceFolders[0]`, so users whose `.bctb-config.json` lived in a later folder saw an empty KB and got a stray cache written into the wrong folder. Both call sites now use the existing `findConfigWorkspace()` helper. Single-root workspaces are unaffected. ([plan](../../docs/plans/done/kb-webview-multiroot-path.md))
 

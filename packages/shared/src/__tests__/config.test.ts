@@ -174,7 +174,7 @@ describe('Configuration Module', () => {
             const errors = validateConfig(config);
 
             // Assert
-            expect(errors).toContain('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
+            expect(errors).toContain('BCTB_TENANT_ID is required (unless using azure_cli or vscode_auth auth flow)');
         });
 
         it('should return error when applicationInsightsAppId is missing', () => {

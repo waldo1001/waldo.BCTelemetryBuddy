@@ -465,7 +465,7 @@ describe('AuthService', () => {
 
             // Act & Assert
             await expect(authService.authenticate()).rejects.toThrow('BCTB_ACCESS_TOKEN environment variable not set');
-            await expect(authService.authenticate()).rejects.toThrow('Troubleshooting');
+            await expect(authService.authenticate()).rejects.toThrow('Solutions:');
         });
 
         it('should use vscode_auth token for API calls', async () => {

@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@azure/msal-node": "^3.8.0",
-        "axios": "^1.6.0",
+        "axios": "^1.16.0",
         "lru-cache": "^10.1.0"
     },
     "devDependencies": {

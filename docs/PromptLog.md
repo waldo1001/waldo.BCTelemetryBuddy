@@ -3328,3 +3328,11 @@ Change instructions an business logic to do this."
 > "even after upgrading to the new MCP, the file is still created. May be something in the extension?"
 > "Proceed"
 
+
+### Entry ID: 12209769-32f0-4a51-92fd-b255faa888bb — 2026-05-08
+> "/tdd-workflow @docs/plans/npm-audit-remediation.md"
+> "go"
+
+### Entry ID: edcd5fc2-e4a9-4e40-bac9-f3f2c085cf75 — 2026-05-08
+> "Fix all failures"
+> "go"

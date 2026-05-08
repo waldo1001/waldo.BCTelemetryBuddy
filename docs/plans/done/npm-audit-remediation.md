@@ -1,6 +1,6 @@
 ---
 topic: npm-audit-remediation
-status: draft
+status: done
 created: 2026-05-08
 ---
 
