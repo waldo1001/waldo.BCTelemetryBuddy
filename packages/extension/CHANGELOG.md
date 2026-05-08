@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.11] - 2026-05-08
+
+_Highest blast-radius rating across all plans landed in this release: `safe`._
+
+### Changed
+- **`get_knowledge` mandate reframed in chat-participant and custom-agent prompts**: Both `chatParticipant.ts` and `agentDefinitions.ts` previously framed the KB step around "proven KQL patterns and investigation playbooks", which was rationalizable to skip on simple queries. The rule now reads "the KB contains customer-specific data patterns (dual streams, tenant mappings, known quirks) AND proven KQL patterns — it tells you HOW and WHERE data flows, not just how to query it. Applies to every query regardless of complexity — no 'too simple for KB' exception." A new "Critical Reminder" bullet calls out the simple-query rationalization explicitly. Triggered by a real session that produced a confidently wrong answer over half the data because a basic `summarize count() by eventId` skipped the KB lookup that would have surfaced the customer's dual-stream tenant topology. See [docs/plans/done/kb-mandatory-even-simplest.md](../../docs/plans/done/kb-mandatory-even-simplest.md).
+
 ## [3.2.10] - 2026-05-08
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

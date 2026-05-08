@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.14] - 2026-05-08
+
+_Highest blast-radius rating across all plans landed in this release: `safe`._
+
+### Changed
+- **`get_knowledge` mandate reframed in `SERVER_INSTRUCTIONS` + workflow prompt**: Step 2 of the MANDATORY Tool-Call Sequence and `WORKFLOW_PROMPT_CONTENT` step 2 previously framed the KB around "proven KQL patterns" — easy to rationalize away on a simple `summarize count() by eventId` query. The rule now reads "the KB contains customer-specific data patterns (dual streams, tenant mappings, known quirks) AND proven KQL patterns — it tells you HOW and WHERE data flows, not just how to query it. Applies to every query regardless of complexity — no 'too simple for KB' exception." A new FORBIDDEN #7 ("Rationalizing 'the query is too simple for KB'") joins the existing customer-name anti-pattern, with the simple-`count()`-over-half-the-data example. Two new contains-assertions in `server-instructions.test.ts` pin the new phrases. Triggered by a real session that produced a confidently wrong answer over half the data because the basic aggregation skipped the KB lookup that would have surfaced the customer's dual-stream tenant topology. See [docs/plans/done/kb-mandatory-even-simplest.md](../../docs/plans/done/kb-mandatory-even-simplest.md).
+
 ## [3.3.13] - 2026-05-08
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._
