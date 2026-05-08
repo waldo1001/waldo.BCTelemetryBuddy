@@ -200,6 +200,16 @@ describe('Server Instructions', () => {
             expect(SERVER_INSTRUCTIONS).toContain('~83%');
         });
 
+        test('frames get_knowledge around data topology, not only KQL patterns', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('HOW and WHERE data flows');
+            expect(SERVER_INSTRUCTIONS).toContain('regardless of complexity');
+        });
+
+        test('rejects "query is too simple for KB" as a rationalization', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('too simple for KB');
+            expect(SERVER_INSTRUCTIONS).toContain('missing half the data');
+        });
+
         test('includes answer validation guidance', () => {
             expect(SERVER_INSTRUCTIONS).toContain('State assumptions');
             expect(SERVER_INSTRUCTIONS).toContain('Flag limitations');

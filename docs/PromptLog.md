@@ -3336,3 +3336,9 @@ Change instructions an business logic to do this."
 ### Entry ID: edcd5fc2-e4a9-4e40-bac9-f3f2c085cf75 — 2026-05-08
 > "Fix all failures"
 > "go"
+
+### Entry ID: a9d3da48-edde-4d95-ab5f-f1dd26634724 — 2026-05-08
+> "The usage of the knowledgebase (get_knowledge) - is that something that is descrbed in the chatparticipant or agent?"
+> "Add to all descriptions that get_knowledge should even be done for the simplest queries."
+> [follow-up: agent's own diagnosis — KB framing as "KQL patterns" makes it rationalizable to skip on simple queries; real fix is reframing why the KB exists (data topology), plus a "too simple for KB" anti-pattern]
+> "go"

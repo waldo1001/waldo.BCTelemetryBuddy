@@ -138,7 +138,7 @@ When user mentions a company/customer name OR multiple profiles exist:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events — it will tell you the next step
-2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the event IDs from step 1 — check for proven KQL patterns and investigation playbooks. This is MANDATORY, not optional.
+2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the event IDs from step 1 — the KB contains customer-specific data topology (dual streams, tenant mappings, known quirks) AND proven KQL patterns. It tells you HOW and WHERE data flows, not just how to query it. **Applies to every query regardless of complexity** — there is no "too simple for KB" exception. A simple count() over half the data is just as wrong as a complex one.
 3. **BEST PRACTICE — DO BEFORE WRITING KQL**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event
    - You will discover 20+ customDimension fields, their exact data types, and sample values from real data
    - Duration fields may be TIMESPAN (hh:mm:ss.fffffff), not milliseconds — sampling reveals this before you guess wrong
@@ -150,7 +150,7 @@ Before writing queries about specific events:
 ### Step 3: Query and Analyze
 \`\`\`
 1. Use mcp_bc_telemetry__get_event_catalog (discovery) → ⚠️ **NEVER SKIP: get_knowledge (proven patterns)** → get_event_field_samples (BEFORE any KQL) → event_schema (if complex)
-2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains proven patterns that save time and produce better results. Skipping this step is a workflow violation.
+2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains customer-specific data topology (dual streams, tenant mappings, known quirks) AND proven patterns. **No "too simple for KB" exception** — applies regardless of complexity. Skipping this step is a workflow violation.
 3. **ALWAYS call get_event_field_samples BEFORE writing KQL** — it tells you:
    - All 20+ available customDimension fields and their exact names (you cannot reliably guess these)
    - Exact data types: duration fields (executionTime, totalTime, etc.) are often TIMESPAN, not milliseconds
@@ -420,6 +420,7 @@ This complements saved queries (\`.kql\` files) by capturing the *tribal knowled
 4. **Save successful queries** - build the knowledge base
 5. **Provide business context** - explain technical findings in business terms
 6. **Focus on actionable insights** - not just data dumps
+7. **NEVER rationalize "the query is too simple for KB"** — The KB contains customer-specific data topology (dual-stream tenants, special filters, known data gaps) that affects ALL queries regardless of complexity. A simple count() query is just as wrong as a complex one if it's missing half the data. If you find yourself thinking "this is just a basic aggregation, what could the KB add?" — call get_knowledge anyway.
 
 ## Error Handling
 

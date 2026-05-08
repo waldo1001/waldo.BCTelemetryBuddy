@@ -88,7 +88,7 @@ When user mentions a company/customer name:
 Before writing queries about specific events:
 \`\`\`
 1. Call mcp_bc_telemetry__get_event_catalog to see available events
-2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the discovered event IDs — check for proven KQL patterns and investigation playbooks. This is MANDATORY, not optional.
+2. ⚠️ **NEVER SKIP**: Call mcp_bc_telemetry__get_knowledge with the discovered event IDs — the KB contains customer-specific data topology (dual streams, tenant mappings, known quirks) AND proven KQL patterns. It tells you HOW and WHERE data flows, not just how to query it. **Applies to every query regardless of complexity** — there is no "too simple for KB" exception. A simple count() over half the data is just as wrong as a complex one.
 3. **BEST PRACTICE**: Call mcp_bc_telemetry__get_event_field_samples for EVERY event before writing KQL
    - Events typically have 20+ customDimensions fields you cannot guess
    - This tells you the exact data types (duration fields are TIMESPAN "hh:mm:ss.fffffff", NOT numbers)
@@ -270,7 +270,7 @@ If an analysis seems empty or missing expected detail:
 **Workflow:**
 \`\`\`
 1. Use mcp_bc_telemetry__get_event_catalog (discovery) → ⚠️ **NEVER SKIP: get_knowledge (proven patterns)** → **MANDATORY: field_samples** → event_schema (if complex)
-2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains proven patterns that save time and produce better results. Skipping this step is a workflow violation.
+2. **ALWAYS call get_knowledge AFTER event catalog and BEFORE writing ANY queries** — the KB contains customer-specific data topology (dual streams, tenant mappings, known quirks) AND proven patterns. **No "too simple for KB" exception** — applies regardless of complexity. Skipping this step is a workflow violation.
 3. **ALWAYS call get_event_field_samples BEFORE writing ANY queries** - verify data types, especially:
    - Duration fields (executionTime, totalTime, etc.) are PROBABLY timespans, not milliseconds
    - Use samples to confirm format (hh:mm:ss.fffffff = timespan, needs conversion)
@@ -302,6 +302,7 @@ Ke Critical Reminders
 5. **Save successful queries** - build the knowledge base
 6. **Provide business context** - explain technical findings in business terms
 7. **Focus on actionable insights** - not just data dumps
+8. **NEVER rationalize "the query is too simple for KB"** — The KB contains customer-specific data topology (dual-stream tenants, special filters, known data gaps) that affects ALL queries regardless of complexity. A simple count() query is just as wrong as a complex one if it's missing half the data. If you find yourself thinking "this is just a basic aggregation, what could the KB add?" — call get_knowledge anyway.
 
 ## Error Handling
 

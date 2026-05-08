@@ -31,7 +31,7 @@ Call \`get_event_catalog\` FIRST to discover which event IDs exist in the teleme
 - The response includes a \`significantEvents\` list: events covering 90% of total volume. Investigate ALL of these, not just the first one.
 
 ### Step 2: Consult Knowledge Base — ⚠️ NEVER SKIP THIS STEP
-**MANDATORY**: Call \`get_knowledge\` with the event IDs discovered in Step 1 BEFORE writing any KQL. This step is NOT optional — skipping it means ignoring proven patterns and writing queries from scratch, which wastes time and produces worse results.
+**MANDATORY**: Call \`get_knowledge\` with the event IDs discovered in Step 1 BEFORE writing any KQL. The KB contains **customer-specific data patterns (dual streams, tenant mappings, known quirks) AND proven KQL patterns** — it tells you HOW and WHERE data flows, not just how to query it. **This applies to every query regardless of complexity** — a simple \`summarize count()\` over half the data is just as wrong as a complex one. Skipping this step ignores critical context and produces results that look right but are missing data.
 - \`get_knowledge({ eventId: "RT0006" })\` — find patterns related to a specific event
 - \`get_knowledge({ category: "playbook" })\` — find investigation playbooks
 - \`get_knowledge({ search: "deadlock" })\` — free-text search
@@ -96,6 +96,8 @@ These patterns are EXPLICITLY BANNED — never use them:
 
 6. **Calling \`get_knowledge\` only with \`eventId\` when the user named a customer** — Customer-scoped articles (\`appliesTo: "<CustomerName>"\`) are not tagged to any eventId and will be invisible to eventId-only queries. A past Van Raak investigation missed ~83% of the customer's telemetry because the dual-stream pattern article was never retrieved — the reported failure count was ~1/6 of reality. Always pair eventId lookups with an additional \`get_knowledge({ search: "<CustomerName>" })\` call when a customer is in scope.
 
+7. **Rationalizing "the query is too simple for KB"** — There is no "too simple to check the KB" exception. The KB contains customer-specific data topology (dual-stream tenants, special filters, known data gaps) that affects ALL queries regardless of complexity. A simple \`count()\` query is just as wrong as a complex one if it's missing half the data. If you find yourself thinking "this is just a basic aggregation, what could the KB add?" — call \`get_knowledge\` anyway.
+
 ## Multi-Profile Workspaces
 
 If the workspace has multiple telemetry profiles:
@@ -146,7 +148,7 @@ Start with \`traces\` unless the question is specifically about page load perfor
 export const WORKFLOW_PROMPT_CONTENT = `Follow the BC Telemetry Buddy tool-call workflow:
 
 1. **get_event_catalog** → Discover available events (ALWAYS FIRST)
-2. **get_knowledge(eventId)** AND **get_knowledge(search: "<CustomerName>")** when the user named a customer → ⚠️ NEVER SKIP — Check knowledge base for proven patterns (MUST call BEFORE writing KQL). Customer-scoped articles have no eventId tag; eventId-only lookups miss them.
+2. **get_knowledge(eventId)** AND **get_knowledge(search: "<CustomerName>")** when the user named a customer → ⚠️ NEVER SKIP — Check the KB for customer-specific data topology (dual streams, tenant mappings, known quirks) AND proven patterns. Applies to every query regardless of complexity — no "too simple for KB" exception. Customer-scoped articles have no eventId tag; eventId-only lookups miss them.
 3. **get_event_field_samples(eventId)** → Understand fields & types for EACH event (MANDATORY before KQL)
 4. **get_tenant_mapping** → Resolve customer names to aadTenantId (when filtering by customer)
 5. **query_telemetry** → Execute KQL shaped by what discovery told you (NEVER guess)
