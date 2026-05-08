@@ -542,10 +542,12 @@ You:
 **BEFORE making any code change**, load and follow the TDD skill:
 
 ```
-.github/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
-.github/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
-.github/skills/release/SKILL.md        ← mandatory for version bumps / publishes
+.claude/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
+.claude/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
+.claude/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
+
+In Claude Code these are auto-discovered as slash commands: `/tdd-workflow`, `/security-scan`, `/release`.
 
 The `tdd-workflow` skill deep-links into the reference docs under [docs/tdd/](../docs/tdd/):
 
@@ -565,7 +567,7 @@ Every code change follows a strict 9-phase cycle. This is not an opt-in mode —
 PLAN → FRAME → WRITE TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT
 ```
 
-Full phase details, component checklists, and quick commands live in [.github/skills/tdd-workflow/SKILL.md](skills/tdd-workflow/SKILL.md). This section is the **rules layer** — the *how* of each phase is in the skill and the methodology doc.
+Full phase details, component checklists, and quick commands live in [.claude/skills/tdd-workflow/SKILL.md](../.claude/skills/tdd-workflow/SKILL.md). This section is the **rules layer** — the *how* of each phase is in the skill and the methodology doc.
 
 ---
 

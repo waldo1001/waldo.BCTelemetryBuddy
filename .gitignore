@@ -1,5 +1,6 @@
 # Claude Code
-.claude/
+.claude/worktrees/
+.claude/settings.json
 
 # Dependencies
 node_modules/
@@ -58,3 +59,4 @@ logs/
 Thumbs.db
 .bctb-config.json
 .vscode/.bctb/cache/*.json
+

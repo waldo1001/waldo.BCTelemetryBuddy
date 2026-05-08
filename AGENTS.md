@@ -24,19 +24,21 @@ All instructions, rules, logging requirements, TDD workflow, and behavioral stan
 - Rule 11: Never execute git commands without explicit user request
 - Rule 12: Release workflow automation
 - Rule 13: Always add telemetry for new features and tools (event IDs + trackEvent calls)
-- **Mandatory Skills** — load `.github/skills/tdd-workflow/SKILL.md` before any code change
+- **Mandatory Skills** — load `.claude/skills/tdd-workflow/SKILL.md` before any code change
 - **Default TDD Workflow** — the 6-phase design → test → implement cycle that applies to ALL code changes
 - **Project Architecture Reference** — packages layout, test locations, test commands
 
 ## Skills
 
-Before any code change, explicitly load and follow the skill(s) under `.github/skills/`:
+Before any code change, explicitly load and follow the skill(s) under `.claude/skills/`:
 
 ```
-.github/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
-.github/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
-.github/skills/release/SKILL.md        ← mandatory for version bumps / publishes
+.claude/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
+.claude/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
+.claude/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
+
+In Claude Code these are also invocable as slash commands: `/tdd-workflow`, `/security-scan`, `/release`.
 
 Load skills using `read_file` before generating any code or tests.
 

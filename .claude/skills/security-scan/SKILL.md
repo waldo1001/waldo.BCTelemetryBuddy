@@ -34,9 +34,9 @@ Azure tenant IDs and App Insights app IDs are GUID-shaped. A real one in a commi
 **Scope:** everything under the repo **except**:
 - `packages/*/src/__tests__/**` — test files may use a known-fake GUID (see allowlist below)
 - `docs/**` — documentation may reference the known-fake GUID as an example
-- `.github/skills/security-scan/allowlist.txt` — the allowlist file itself
+- `.claude/skills/security-scan/allowlist.txt` — the allowlist file itself
 
-**Allowlisted GUID format:** fake GUIDs used in examples must be listed in `.github/skills/security-scan/allowlist.txt`. A GUID not in the allowlist is treated as real.
+**Allowlisted GUID format:** fake GUIDs used in examples must be listed in `.claude/skills/security-scan/allowlist.txt`. A GUID not in the allowlist is treated as real.
 
 ### 2. Bearer tokens and access tokens
 
@@ -131,7 +131,7 @@ If any check shows findings, the overall result is **FAIL**. Do not proceed past
 
 ## The allowlist
 
-`.github/skills/security-scan/allowlist.txt` contains patterns that are safe-by-design:
+`.claude/skills/security-scan/allowlist.txt` contains patterns that are safe-by-design:
 
 - A known-fake tenant GUID used in examples and documentation
 - A known-fake App Insights app ID

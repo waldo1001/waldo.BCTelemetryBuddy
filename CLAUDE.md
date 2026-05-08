@@ -29,12 +29,12 @@ Every code change follows: **PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD
 
 Full details live in three places:
 
-- [.github/skills/tdd-workflow/SKILL.md](.github/skills/tdd-workflow/SKILL.md) — actionable phase index + component checklists
+- [.claude/skills/tdd-workflow/SKILL.md](.claude/skills/tdd-workflow/SKILL.md) — actionable phase index + component checklists
 - [docs/tdd/methodology.md](docs/tdd/methodology.md) — the cycle in prose
 - [docs/tdd/testability-patterns.md](docs/tdd/testability-patterns.md) — mocking catalog, seams, conventions
 - [docs/tdd/coverage-policy.md](docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
 
-Phase 8 (SECURITY SCAN) invokes [.github/skills/security-scan/SKILL.md](.github/skills/security-scan/SKILL.md). A finding blocks the cycle.
+Phase 8 (SECURITY SCAN) invokes [.claude/skills/security-scan/SKILL.md](.claude/skills/security-scan/SKILL.md). A finding blocks the cycle.
 
 See `.github/copilot-instructions.md` Rule 13 for the telemetry requirements.
 

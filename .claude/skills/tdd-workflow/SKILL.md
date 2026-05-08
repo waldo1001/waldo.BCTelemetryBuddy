@@ -23,7 +23,7 @@ Re-read these before you write anything:
 1. [docs/tdd/methodology.md](../../../docs/tdd/methodology.md) — the 9-phase cycle in prose
 2. [docs/tdd/testability-patterns.md](../../../docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
 3. [docs/tdd/coverage-policy.md](../../../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
-4. [.github/copilot-instructions.md](../../copilot-instructions.md) — project-wide rules (logging, git, telemetry)
+4. [.github/copilot-instructions.md](../../../.github/copilot-instructions.md) — project-wide rules (logging, git, telemetry)
 
 If the task is a bug fix or refactor, also read the "Bug fixes and refactors" section at the bottom of [methodology.md](../../../docs/tdd/methodology.md).
 

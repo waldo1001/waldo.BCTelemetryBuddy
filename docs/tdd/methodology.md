@@ -9,7 +9,7 @@ Every code change in this workspace — new feature, bug fix, refactor — follo
 
 ## The 9-phase cycle
 
-The skill [.github/skills/tdd-workflow/SKILL.md](../../.github/skills/tdd-workflow/SKILL.md) is the actionable index. This doc explains the phases in prose.
+The skill [.claude/skills/tdd-workflow/SKILL.md](../../.claude/skills/tdd-workflow/SKILL.md) is the actionable index. This doc explains the phases in prose.
 
 1. **PLAN** — write a committed markdown plan file, stop, wait for approval
 2. **FRAME** — post a ≤150-word framing of where this step sits in the project
@@ -18,7 +18,7 @@ The skill [.github/skills/tdd-workflow/SKILL.md](../../.github/skills/tdd-workfl
 5. **SCAFFOLD** — add the minimum module shape so the test fails for the right reason
 6. **IMPLEMENT** — smallest code that turns the test green
 7. **VERIFY PASS** — full suite + coverage thresholds
-8. **SECURITY SCAN** — run the [`/security-scan`](../../.github/skills/security-scan/SKILL.md) skill; a finding blocks the cycle
+8. **SECURITY SCAN** — run the [`/security-scan`](../../.claude/skills/security-scan/SKILL.md) skill; a finding blocks the cycle
 9. **DOCUMENT** — PromptLog, DesignWalkthrough, CHANGELOGs, UserGuide
 
 ---
@@ -210,7 +210,7 @@ Then REFACTOR with the tests as a safety net: rename for clarity, extract helper
 
 ## Phase 8 — SECURITY SCAN
 
-Run the [`/security-scan`](../../.github/skills/security-scan/SKILL.md) skill. It scans for:
+Run the [`/security-scan`](../../.claude/skills/security-scan/SKILL.md) skill. It scans for:
 
 - Real tenant GUIDs in fixtures, snapshots, or test data
 - Bearer tokens / access tokens in logs, error messages, or committed files
