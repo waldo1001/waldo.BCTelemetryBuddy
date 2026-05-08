@@ -13,7 +13,7 @@ BC Telemetry Buddy is a VSCode extension that provides an intuitive way to query
 
 - **🧙 Setup Wizard**: Step-by-step guided configuration with validation and testing
 - **Natural Language Queries**: Ask questions in plain English using GitHub Copilot
-- **Optional MCP Backend**: Lightweight Model Context Protocol server for Copilot chat features (v2.2.9)
+- **Optional MCP Backend**: Lightweight Model Context Protocol server for Copilot chat features
 - **Standalone Execution**: Run queries directly from Command Palette without MCP
 - **Event Discovery**: Browse telemetry catalog and schemas before querying
 - **Query Library**: Save and organize queries by category and customer

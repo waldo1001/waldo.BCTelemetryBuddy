@@ -65,9 +65,7 @@ See [MIGRATION.md](../MIGRATION.md) for migration details.
 
 BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze Business Central telemetry data from Application Insights.
 
-**Current Version Status:**
-- **v1.2.10 (Current)**: Stable release with all features functional
-- **v2.2.9 (MCP)**: Latest MCP server version available on NPM
+For the current published versions and per-release notes, see [packages/extension/CHANGELOG.md](../packages/extension/CHANGELOG.md) and [packages/mcp/CHANGELOG.md](../packages/mcp/CHANGELOG.md).
 
 ### Core Features
 
@@ -86,11 +84,10 @@ BC Telemetry Buddy is a VSCode extension that makes it easy to query and analyze
 
 ### Architecture
 
-**Current (v3.2.4 / MCP v3.3.2):**
 - Extension can execute queries directly via built-in TelemetryService (no MCP needed for Command Palette)
 - MCP optional, only required for GitHub Copilot chat features
 - Configuration in `.bctb-config.json` (workspace root)
-- MCP published as standalone NPM package: `bc-telemetry-buddy-mcp@3.3.2`
+- MCP published as standalone NPM package: [`bc-telemetry-buddy-mcp`](https://www.npmjs.com/package/bc-telemetry-buddy-mcp)
 - Supports both stdio (Copilot) and HTTP (Command Palette) modes
 - Community Knowledge Base with `get_knowledge` / `save_knowledge` MCP tools
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.10] - 2026-05-08
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Security
 - **Resolved 23 `npm audit` findings via `npm audit fix` (no `--force`)**: `axios` floor raised to `^1.16.0` (used by extension HTTP paths). All extension-side transitive advisories on `undici`, `path-to-regexp`, `qs`, `picomatch`, `minimatch`, `brace-expansion`, `lodash`, `underscore`, `markdown-it`, etc. cleared. No public API change; 23 test suites green. See [docs/plans/done/npm-audit-remediation.md](../../docs/plans/done/npm-audit-remediation.md).
 

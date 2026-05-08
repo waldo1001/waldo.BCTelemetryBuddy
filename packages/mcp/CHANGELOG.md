@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.13] - 2026-05-08
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Security
 - **Resolved 23 `npm audit` findings (1 low / 7 moderate / 13 high / 2 critical) without `--force`**: ranges floored to patched lines — `axios ^1.16.0` (in `@bctb/shared`, used by the kusto/auth paths), `express ^4.22.1` (MCP HTTP transport). Transitive bumps cleared `undici`, `protobufjs` (critical RCE), `handlebars` (critical), `body-parser`, `path-to-regexp`, `qs`, `ajv`, `picomatch`, `minimatch`, `brace-expansion`, `ip-address`, `follow-redirects`, `jws`, `lodash`, `markdown-it`, `underscore`, `express-rate-limit`, `@hono/node-server`, `hono`, `@azure/functions`. No public API change. Build + 27 test suites green; HTTP `/health` and `/query` smoke verified post-bump. See [docs/plans/done/npm-audit-remediation.md](../../docs/plans/done/npm-audit-remediation.md).
 
