@@ -1,6 +1,6 @@
 ---
 topic: kb-nudge-on-pre-query-tools
-status: draft
+status: done
 created: 2026-05-08
 ---
 
@@ -115,6 +115,7 @@ Per-tool suggestion params:
 Patch release (MCP `v3.3.13`). No CHANGELOG BREAKING entry.
 
 ## Out-of-scope follow-ups
+- **Pre-existing npm audit findings** carried over from baseline (not introduced by this cycle): mcp 11 high + 2 critical; shared 5 high + 1 critical; extension 8 high + 1 critical. Runtime deps include handlebars, hono, undici, jws, protobufjs, path-to-regexp. Needs a dedicated dep-bump plan before next release.
 - Decide whether the legacy `getWorkspacePath()` in extension.ts:901-904 should also migrate to `findConfigWorkspace()` (separate latent bug, only affects HTTP MCP / command palette).
 - Issue 2: webview multi-root path bug — separate plan.
 - Issue 1, escalation path if nudges still fail: KB metadata injection (id+title+1-line per matched article) into `get_event_catalog` and `get_tenant_mapping`. Re-evaluate after collecting `KB_HINT_EMITTED` vs `GET_KNOWLEDGE` correlation data.

@@ -160,6 +160,7 @@ export class ToolHandlers {
     private isStdioMode: boolean;
     public activeProfileName: string | null = null;
     public knowledgeBase: any = null;
+    private kbConsulted: boolean = false;
 
     constructor(
         config: MCPConfig,
@@ -334,6 +335,9 @@ export class ToolHandlers {
                     break;
 
                 case 'get_knowledge': {
+                    if (this.knowledgeBase) {
+                        this.kbConsulted = true;
+                    }
                     if (!this.knowledgeBase) {
                         result = {
                             articles: [],
@@ -417,6 +421,8 @@ export class ToolHandlers {
                     throw new Error(`Unknown tool: ${toolName}`);
             }
 
+            result = this.maybeAttachKbHint(toolName, params, result);
+
             // Track successful tool completion
             const durationMs = Date.now() - startTime;
             const completedProps = createCommonProperties(
@@ -473,6 +479,92 @@ export class ToolHandlers {
 
             throw error;
         }
+    }
+
+    /**
+     * Attach a single-string `kbHint` field to the result of a pre-query tool
+     * when the KB is loaded but `get_knowledge` has not yet been called in
+     * this session. Returns the result unchanged otherwise.
+     *
+     * Suppression rules:
+     *  - skip when `this.knowledgeBase` is falsy (KB not available)
+     *  - skip when `this.kbConsulted` is true (already nudged)
+     *  - skip when toolName is not one of the four pre-query tools
+     */
+    private maybeAttachKbHint(toolName: string, params: any, result: any): any {
+        if (!this.knowledgeBase || this.kbConsulted) {
+            return result;
+        }
+        const PRE_QUERY_TOOLS = new Set([
+            'get_event_catalog',
+            'get_tenant_mapping',
+            'get_event_field_samples',
+            'get_event_schema',
+        ]);
+        if (!PRE_QUERY_TOOLS.has(toolName) || !result || typeof result !== 'object') {
+            return result;
+        }
+
+        let suggestion: string;
+        let hasEventIds = false;
+        let hasCustomerSearch = false;
+
+        switch (toolName) {
+            case 'get_event_catalog': {
+                const sig = Array.isArray(result.significantEvents) ? result.significantEvents : [];
+                const ids = sig.map((e: any) => e?.eventId).filter((id: any) => typeof id === 'string').slice(0, 5);
+                if (ids.length > 0) {
+                    suggestion = `get_knowledge({ eventIds: ${JSON.stringify(ids)} })`;
+                    hasEventIds = true;
+                } else {
+                    suggestion = `get_knowledge({ category: "event-interpretation" })`;
+                }
+                break;
+            }
+            case 'get_event_field_samples':
+            case 'get_event_schema': {
+                const eventId = typeof params?.eventId === 'string' ? params.eventId : '';
+                suggestion = `get_knowledge({ eventId: ${JSON.stringify(eventId)} })`;
+                hasEventIds = true;
+                break;
+            }
+            case 'get_tenant_mapping': {
+                const filter = typeof params?.companyNameFilter === 'string' ? params.companyNameFilter : '';
+                if (filter) {
+                    suggestion = `get_knowledge({ search: ${JSON.stringify(filter)} })`;
+                    hasCustomerSearch = true;
+                } else {
+                    suggestion = `get_knowledge({ category: "playbook" })`;
+                }
+                break;
+            }
+            default:
+                return result;
+        }
+
+        const hint = `⚠️ Knowledge base not consulted yet. Recommended next: ${suggestion} before writing KQL.`;
+
+        const profileHash = this.config.connectionName
+            ? hashValue(this.config.connectionName).substring(0, 16)
+            : undefined;
+        this.services.usageTelemetry.trackEvent(
+            'Mcp.KbHintEmitted',
+            cleanTelemetryProperties(createCommonProperties(
+                TELEMETRY_EVENTS.MCP_TOOLS.KB_HINT_EMITTED,
+                'mcp',
+                this.services.sessionId,
+                this.services.installationId,
+                VERSION,
+                {
+                    toolName,
+                    hasEventIds: String(hasEventIds),
+                    hasCustomerSearch: String(hasCustomerSearch),
+                    profileHash,
+                }
+            ))
+        );
+
+        return { ...result, kbHint: hint };
     }
 
     // ─── Business Logic Methods ─────────────────────────────────────────

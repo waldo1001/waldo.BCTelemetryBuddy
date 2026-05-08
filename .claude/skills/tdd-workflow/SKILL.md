@@ -127,9 +127,9 @@ Run the [`/security-scan`](../security-scan/SKILL.md) skill. A finding **blocks*
 1. PromptLog + DesignWalkthrough (Rule 2 — FAST APPEND, never read these files)
 2. `packages/<component>/CHANGELOG.md` if user-visible
 3. `docs/UserGuide.md` if user-facing behavior changed
-4. Flip plan file `status: approved` → `status: done`
+4. Flip plan file `status: approved` → `status: done` **and** `git mv docs/plans/<topic>.md docs/plans/done/<topic>.md` so only in-flight plans live in the top-level folder. A `done` plan in `docs/plans/` is a bug.
 
-Then: "Changes ready — please review and commit when ready." Never run git commands without explicit request (Rule 11).
+Then: "Changes ready — please review and commit when ready." Never run git commands without explicit request (Rule 11). Note: the `git mv` in step 4 is part of the workflow and does not need separate authorization — it's a rename, not a destructive op.
 
 ---
 
@@ -144,7 +144,7 @@ When adding a new MCP tool, follow this exact sequence:
 - [ ] **Phase 6 (IMPLEMENT):** Write handler logic in `toolHandlers.ts`; add `trackEvent` call inside the handler case for meaningful outcomes (in addition to the generic `Mcp.ToolCompleted` that fires automatically)
 - [ ] **Phase 7 (VERIFY):** All tests green, coverage meets threshold, `npm run build` from root
 - [ ] **Phase 8 (SECURITY):** `/security-scan` passes — pay extra attention to check #6 (telemetry properties)
-- [ ] **Phase 9 (DOCUMENT):** CHANGELOG, tool description in UserGuide if user-facing, flip plan to `done`
+- [ ] **Phase 9 (DOCUMENT):** CHANGELOG, tool description in UserGuide if user-facing, flip plan to `done` and `git mv` it to `docs/plans/done/`
 
 ## Extension Service / Command Checklist
 

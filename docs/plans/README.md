@@ -41,14 +41,14 @@ created: YYYY-MM-DD
 ### Status lifecycle
 
 ```
-draft  →  approved  →  done
+draft  →  approved  →  done (and moved to done/)
 ```
 
-- **draft** — just written. The user has not approved it yet. **No code may be written from a draft.**
-- **approved** — the user has explicitly said "go", "approved", "proceed", "looks good", or "yes". The TDD cycle can start. Flip this manually after approval; silence is not approval.
-- **done** — the cycle is complete, tests are green, docs are updated. Flip this manually in Phase 9 (DOCUMENT).
+- **draft** — just written. The user has not approved it yet. **No code may be written from a draft.** Lives in `docs/plans/`.
+- **approved** — the user has explicitly said "go", "approved", "proceed", "looks good", or "yes". The TDD cycle can start. Flip this manually after approval; silence is not approval. Stays in `docs/plans/`.
+- **done** — the cycle is complete, tests are green, docs are updated. In Phase 9 (DOCUMENT), flip the frontmatter to `status: done` **and** `git mv docs/plans/<topic>.md docs/plans/done/<topic>.md` so only in-flight work shows in the top-level folder.
 
-Never skip `approved`. Never flip `draft` straight to `done`.
+Never skip `approved`. Never flip `draft` straight to `done`. Always do the file move when flipping to `done` — a `done` plan in the top-level folder is a bug.
 
 If a plan is abandoned, delete the file rather than leaving it as `draft` forever — `git log` preserves it if someone needs to recover it later.
 

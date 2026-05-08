@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **KB-consultation nudge on pre-query tool responses**: `get_event_catalog`, `get_tenant_mapping`, `get_event_field_samples`, and `get_event_schema` now attach a single-string `kbHint` field to their responses until `get_knowledge` is called in the session. The hint is parameterized from values the source tool already has (significant event IDs for the catalog, `eventId` for samples/schema, `companyNameFilter` for tenant mapping), making the mandatory KB step harder to skip without bloating responses with KB content. Suppressed when KB is not loaded or after `get_knowledge` runs once. New telemetry event `TB-MCP-114` (`Mcp.KbHintEmitted`) measures uptake. See [docs/plans/kb-nudge-on-pre-query-tools.md](../../docs/plans/kb-nudge-on-pre-query-tools.md).
+
 ## [3.3.12] - 2026-04-15
 
 ### Fixed

@@ -230,7 +230,7 @@ Only on PASS, continue to Phase 9.
 1. **PromptLog + DesignWalkthrough** (Rule 2, always): append the user prompt to `docs/PromptLog.md` with a new GUID and a one-line entry to `docs/DesignWalkthrough.md` referencing the same GUID. Follow the FAST APPEND strategy from copilot-instructions.md — never read these files.
 2. **Component CHANGELOG**: update `packages/<component>/CHANGELOG.md` if the change is user-visible.
 3. **UserGuide**: update `docs/UserGuide.md` if user-facing behavior changed.
-4. **Plan file**: flip the frontmatter of the Phase 1 plan from `status: approved` → `status: done`.
+4. **Plan file**: flip the frontmatter of the Phase 1 plan from `status: approved` → `status: done` **and** `git mv` it from `docs/plans/<topic>.md` to `docs/plans/done/<topic>.md`. Only in-flight (`draft` / `approved`) plans should live in the top-level folder; this is a rename, not a destructive op, and is part of the standard workflow.
 
 Docs that are not updated at the moment of the change will never be updated. This step is not optional.
 
