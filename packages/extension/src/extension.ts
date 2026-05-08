@@ -19,7 +19,7 @@ import { showFirstRunNotification, startPeriodicUpdateChecks, checkForMCPUpdates
 import { resolveMcpServer } from './services/mcpResolver';
 import { VSCodeAuthService } from './services/vscodeAuthService';
 import { buildMcpEnv } from './services/mcpEnvBuilder';
-import { findConfigWorkspace } from './services/workspaceFinder';
+import { findConfigWorkspace, getActiveWorkspacePath } from './services/workspaceFinder';
 import {
     VSCodeUsageTelemetry,
     TelemetryLevelFilter,
@@ -896,11 +896,11 @@ async function checkAndShowSetupWizard(context: vscode.ExtensionContext): Promis
 
 
 /**
- * Get workspace root path
+ * Get workspace root path — picks the folder containing .bctb-config.json
+ * in multi-root workspaces, falling back to the first folder if none have a config.
  */
 function getWorkspacePath(): string | undefined {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    return workspaceFolder?.uri.fsPath;
+    return getActiveWorkspacePath(outputChannel);
 }
 
 /**

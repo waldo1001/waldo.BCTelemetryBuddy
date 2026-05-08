@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Knowledge Base webview now follows the config-bearing folder in multi-root workspaces**: `KnowledgeBaseProvider` and the HTTP-MCP `getWorkspacePath()` helper used to always read from `workspaceFolders[0]`, so users whose `.bctb-config.json` lived in a later folder saw an empty KB and got a stray cache written into the wrong folder. Both call sites now use the existing `findConfigWorkspace()` helper. Single-root workspaces are unaffected. ([plan](../../docs/plans/done/kb-webview-multiroot-path.md))
+
+### Added
+- **`multiRootResolved` property on `KB.PanelOpened` (TB-EXT-013) telemetry**: structural flag (`'true' | 'false' | 'singleRoot'`) measuring how often the multi-root fix actually kicks in. No PII.
+
 ## [3.2.9] - 2026-04-10
 
 ### Added

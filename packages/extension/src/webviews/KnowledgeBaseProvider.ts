@@ -13,6 +13,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { KnowledgeBaseService, KBConfig, IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
+import { findConfigWorkspace } from '../services/workspaceFinder';
 
 const DEFAULT_KB_SOURCE = 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base';
 
@@ -80,7 +81,11 @@ export class KnowledgeBaseProvider {
         // without depending on a message-passing handshake.
         const initialData = this._loadArticleData();
         this._panel.webview.html = this._getHtml(initialData);
-        this._usageTelemetry?.trackEvent('KB.PanelOpened', { eventId: TELEMETRY_EVENTS.EXTENSION.KB_PANEL_OPENED });
+        const multiRootResolved = this._classifyMultiRootResolution(this._getWorkspacePath());
+        this._usageTelemetry?.trackEvent('KB.PanelOpened', {
+            eventId: TELEMETRY_EVENTS.EXTENSION.KB_PANEL_OPENED,
+            multiRootResolved,
+        });
 
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
@@ -119,8 +124,19 @@ export class KnowledgeBaseProvider {
     // --- Private helpers ---
 
     private _getWorkspacePath(): string | undefined {
+        return findConfigWorkspace()?.workspacePath;
+    }
+
+    /**
+     * Classify how the active workspace path was resolved, for telemetry.
+     * - 'singleRoot': zero or one workspace folder open
+     * - 'true':       multi-root, chosen folder is NOT folders[0] (the fix mattered)
+     * - 'false':      multi-root, chosen folder IS folders[0] (legacy behavior would have been correct)
+     */
+    private _classifyMultiRootResolution(workspacePath: string | undefined): 'true' | 'false' | 'singleRoot' {
         const folders = vscode.workspace.workspaceFolders;
-        return folders && folders.length > 0 ? folders[0].uri.fsPath : undefined;
+        if (!folders || folders.length <= 1 || !workspacePath) return 'singleRoot';
+        return folders[0].uri.fsPath === workspacePath ? 'false' : 'true';
     }
 
     private _getConfigPath(workspacePath: string): string {

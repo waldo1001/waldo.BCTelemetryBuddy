@@ -38,3 +38,14 @@ export function findConfigWorkspace(outputChannel?: vscode.OutputChannel): { wor
     outputChannel?.appendLine(`[Config Discovery] No config file found — falling back to first folder: ${workspaceFolders[0].uri.fsPath}`);
     return { workspacePath: workspaceFolders[0].uri.fsPath, configFilePath: undefined };
 }
+
+/**
+ * Return the workspace folder path that should be treated as "active" for
+ * BCTB operations: the folder containing .bctb-config.json, or the first
+ * folder if none have a config, or undefined if no workspace is open.
+ *
+ * Thin wrapper around findConfigWorkspace() for callers that only need the path.
+ */
+export function getActiveWorkspacePath(outputChannel?: vscode.OutputChannel): string | undefined {
+    return findConfigWorkspace(outputChannel)?.workspacePath;
+}
