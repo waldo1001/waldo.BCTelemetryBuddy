@@ -3342,3 +3342,8 @@ Change instructions an business logic to do this."
 > "Add to all descriptions that get_knowledge should even be done for the simplest queries."
 > [follow-up: agent's own diagnosis — KB framing as "KQL patterns" makes it rationalizable to skip on simple queries; real fix is reframing why the KB exists (data topology), plus a "too simple for KB" anti-pattern]
 > "go"
+
+### Entry ID: 8fbb51ef-7ed4-4e9e-86e2-cf63b425717c — 2026-05-30 16:13
+> "Follow kb-article-creation skill for issue #121 (Lock Timeout Deep Triage RT0012/RT0013). Created validation prompt, received validation report, wrote playbook article with clientType awareness throughout, regenerated index, closed issue."
+
+---

@@ -1,6 +1,6 @@
 {
   "generated": "2026-05-30",
-  "count": 5,
+  "count": 6,
   "articles": [
     {
       "id": "database-wait-statistics",
@@ -75,6 +75,30 @@
       "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
+    },
+    {
+      "id": "lock-timeout-deep-triage",
+      "title": "Lock Timeout Deep Triage (RT0012/RT0013)",
+      "category": "playbook",
+      "tags": [
+        "RT0012",
+        "RT0013",
+        "locks",
+        "timeouts",
+        "blocking",
+        "performance",
+        "integration",
+        "snapshot",
+        "contention"
+      ],
+      "eventIds": [
+        "RT0012",
+        "RT0013"
+      ],
+      "appliesTo": "BC 21.0+",
+      "author": "waldo",
+      "created": "2026-05-30",
+      "updated": "2026-05-30"
     },
     {
       "id": "job-queue-health-check",
