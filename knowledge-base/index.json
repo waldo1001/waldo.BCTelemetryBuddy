@@ -1,6 +1,6 @@
 {
-  "generated": "2026-04-06",
-  "count": 4,
+  "generated": "2026-05-30",
+  "count": 5,
   "articles": [
     {
       "id": "database-wait-statistics",
@@ -23,6 +23,30 @@
       "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
+    },
+    {
+      "id": "deadlock-root-cause-analysis",
+      "title": "Deadlock Root Cause Analysis (RT0028)",
+      "category": "playbook",
+      "tags": [
+        "RT0028",
+        "deadlock",
+        "locks",
+        "blocking",
+        "performance",
+        "sql",
+        "background",
+        "job-queue",
+        "integration"
+      ],
+      "eventIds": [
+        "RT0028",
+        "RT0013"
+      ],
+      "appliesTo": "BC 20.0+",
+      "author": "waldo",
+      "created": "2026-05-30",
+      "updated": "2026-05-30"
     },
     {
       "id": "environment-upgrade-troubleshooting",
