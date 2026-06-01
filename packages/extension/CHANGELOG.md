@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
+### Added
+- **Setup pointers toward the client-agnostic connection workflow**: when `@bc-telemetry-buddy` receives a setup-intent request (e.g. "help me set up a connection with my BC telemetry"), it now surfaces a pointer to the `setup-connection` prompt / `get_setup_guide` tool (the chat participant cannot write files, so it directs the user to agent mode or the wizard) and tracks `SETUP_POINTER_SHOWN` telemetry. Intent detection requires an explicit setup verb or "connect to … telemetry" phrase, so normal analysis prompts that merely mention "connection"/"telemetry" do not trigger it. The bundled `BCTelemetryBuddy` agent gains a "Connection Setup" section, and the Setup Wizard welcome screen gains a banner pointing to the chat-driven path. See [docs/plans/done/guided-config-setup.md](../../docs/plans/done/guided-config-setup.md).
+
 ## [3.2.11] - 2026-05-08
 
 _Highest blast-radius rating across all plans landed in this release: `safe`._

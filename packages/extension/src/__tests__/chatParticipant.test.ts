@@ -358,6 +358,74 @@ describe('Chat Participant', () => {
             );
         });
 
+        it('should surface a setup pointer and fire telemetry on a setup-intent prompt', async () => {
+            const mockTelemetry = {
+                trackEvent: jest.fn(),
+                trackException: jest.fn(),
+                trackDependency: jest.fn(),
+                trackTrace: jest.fn(),
+                flush: jest.fn().mockResolvedValue(undefined)
+            };
+            (vscode.chat.createChatParticipant as jest.Mock).mockImplementation((_id: string, h: any) => {
+                createdParticipant = { handler: h, iconPath: null };
+                return createdParticipant;
+            });
+            registerChatParticipant(mockContext, mockOutputChannel, mockTelemetry);
+            handler = createdParticipant.handler;
+
+            mockRequest.prompt = 'help me set up a connection with my bc telemetry';
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            // Pointer mentions the setup mechanism
+            const markdownCalls = mockStream.markdown.mock.calls.map((c: any[]) => c[0]).join('\n');
+            expect(markdownCalls).toMatch(/setup-connection|get_setup_guide/);
+
+            // Telemetry fired
+            const events = mockTelemetry.trackEvent.mock.calls.map((c: any[]) => c[0]);
+            expect(events).toContain('TB-EXT-019');
+        });
+
+        it.each([
+            'Show me all errors from the last 24 hours',
+            'analyze slow SQL for Contoso',
+            'why are there failed connection errors in my bc telemetry', // mentions connection+telemetry but is analysis
+            'show telemetry for dropped connections last week',
+        ])('should NOT surface the setup pointer on analysis prompt: %s', async (prompt) => {
+            const mockTelemetry = { trackEvent: jest.fn(), trackException: jest.fn(), trackDependency: jest.fn(), trackTrace: jest.fn(), flush: jest.fn() };
+            (vscode.chat.createChatParticipant as jest.Mock).mockImplementation((_id: string, h: any) => {
+                createdParticipant = { handler: h, iconPath: null };
+                return createdParticipant;
+            });
+            registerChatParticipant(mockContext, mockOutputChannel, mockTelemetry);
+            handler = createdParticipant.handler;
+
+            mockRequest.prompt = prompt;
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            const events = mockTelemetry.trackEvent.mock.calls.map((c: any[]) => c[0]);
+            expect(events).not.toContain('TB-EXT-019');
+        });
+
+        it.each([
+            'help me set up a connection with my bc telemetry',
+            'configure bc telemetry',
+            'connect to my telemetry',
+        ])('should surface the setup pointer on setup prompt: %s', async (prompt) => {
+            const mockTelemetry = { trackEvent: jest.fn(), trackException: jest.fn(), trackDependency: jest.fn(), trackTrace: jest.fn(), flush: jest.fn() };
+            (vscode.chat.createChatParticipant as jest.Mock).mockImplementation((_id: string, h: any) => {
+                createdParticipant = { handler: h, iconPath: null };
+                return createdParticipant;
+            });
+            registerChatParticipant(mockContext, mockOutputChannel, mockTelemetry);
+            handler = createdParticipant.handler;
+
+            mockRequest.prompt = prompt;
+            await handler(mockRequest, mockChatContext, mockStream, mockToken);
+
+            const events = mockTelemetry.trackEvent.mock.calls.map((c: any[]) => c[0]);
+            expect(events).toContain('TB-EXT-019');
+        });
+
         it('should log completion with iteration count', async () => {
             await handler(mockRequest, mockChatContext, mockStream, mockToken);
 

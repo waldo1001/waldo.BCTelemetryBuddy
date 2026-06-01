@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
+### Added
+- **Client-agnostic connection setup workflow**: a guided "set up a connection to my BC telemetry" flow that works from any MCP client (Claude Code, GitHub Copilot agent mode, Cursor) without the VS Code extension. Delivered as both an MCP prompt (`setup-connection`) and an MCP tool (`get_setup_guide`) — both return the same workflow (authenticate → discover Application Insights endpoints → pick endpoint → choose workspace folder, multi-root aware → write `.bctb-config.json` → reload). The server serves these even when unconfigured, so the workflow is always reachable. Single source of truth in `setupInstructions.ts`; also mirrored in [docs/setup/connection-setup.md](../../docs/setup/connection-setup.md). See [docs/plans/done/guided-config-setup.md](../../docs/plans/done/guided-config-setup.md).
+- **Setup helper CLIs** (shipped via `bin`): `bctb-setup-endpoints` enumerates Application Insights resources (`name`, `appId`, …) across subscriptions via Azure CLI, with a manual App-ID fallback when `az` is unavailable; `bctb-setup-write-config` writes or safely merges a connection profile into `.bctb-config.json` (single-profile or named profile, preserving existing profiles and `defaultProfile`). Underlying logic lives in `src/setup/` and is unit-tested; the CLIs are thin esbuild-bundled wrappers.
+- **`SERVER_INSTRUCTIONS` pointer**: unconfigured agents are now directed to the `setup-connection` prompt / `get_setup_guide` tool instead of attempting to query.
+
 ## [3.3.14] - 2026-05-08
 
 _Highest blast-radius rating across all plans landed in this release: `safe`._

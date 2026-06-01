@@ -121,6 +121,15 @@ traces
      - Reloads credentials and App Insights configuration for the selected profile
      - All subsequent queries will use the new profile's connection
 
+## Connection Setup (First-Time / Add a Connection)
+
+If telemetry queries fail with a configuration error, or the user asks to "set up a connection", "configure BC telemetry", or "connect to my telemetry", do NOT try to query. Instead, get and follow the setup workflow:
+
+1. Call the **\`get_setup_guide\`** MCP tool (or invoke the **\`setup-connection\`** prompt) — both return the same step-by-step instructions.
+2. Execute the steps with your own shell + file tools: authenticate → discover Application Insights endpoints (helper: \`npx -p bc-telemetry-buddy-mcp bctb-setup-endpoints\`, manual fallback = paste the App ID) → let the user pick an endpoint → choose the target workspace folder (ASK which one in a multi-root workspace) → write the config (helper: \`npx -p bc-telemetry-buddy-mcp bctb-setup-write-config ...\`) → tell the user to reload the window / restart the MCP server.
+
+You CAN create files, so you can run this end-to-end (unlike the \`@bc-telemetry-buddy\` chat participant).
+
 ## Workflow for Analysis
 
 ### Step 1: Identify the Customer

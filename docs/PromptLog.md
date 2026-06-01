@@ -3347,3 +3347,5 @@ Change instructions an business logic to do this."
 > "Follow kb-article-creation skill for issue #121 (Lock Timeout Deep Triage RT0012/RT0013). Created validation prompt, received validation report, wrote playbook article with clientType awareness throughout, regenerated index, closed issue."
 
 ---
+## 2026-06-01 — Client-agnostic connection setup
+> "I would like the chat participant and the agent we would install, to assist with setting up the configuration file ... It should also work from Claude, which should not require the vscode extension. So in a way, it should all be a prompt, maybe referring to documentation ... may be refer even to scripts."

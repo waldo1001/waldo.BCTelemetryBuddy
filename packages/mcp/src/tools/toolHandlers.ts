@@ -27,6 +27,7 @@ import {
     categorizeError
 } from '@bctb/shared';
 import { VERSION } from '../version.js';
+import { SETUP_PROMPT_CONTENT } from './setupInstructions.js';
 import { createMCPUsageTelemetry, getMCPInstallationId } from '../mcpTelemetry.js';
 import * as crypto from 'crypto';
 import { exec } from 'child_process';
@@ -416,6 +417,18 @@ export class ToolHandlers {
                     );
                     break;
                 }
+
+                case 'get_setup_guide':
+                    this.services.usageTelemetry.trackEvent(
+                        'Mcp.GetSetupGuide',
+                        cleanTelemetryProperties(createCommonProperties(
+                            TELEMETRY_EVENTS.MCP_TOOLS.GET_SETUP_GUIDE, 'mcp',
+                            this.services.sessionId, this.services.installationId, VERSION,
+                            { profileHash }
+                        ))
+                    );
+                    result = SETUP_PROMPT_CONTENT;
+                    break;
 
                 default:
                     throw new Error(`Unknown tool: ${toolName}`);

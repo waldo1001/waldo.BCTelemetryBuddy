@@ -132,6 +132,11 @@ describe('Server Instructions', () => {
             expect(SERVER_INSTRUCTIONS).toContain('MANDATORY Tool-Call Sequence');
         });
 
+        test('points unconfigured users at the setup workflow', () => {
+            expect(SERVER_INSTRUCTIONS).toContain('setup-connection');
+            expect(SERVER_INSTRUCTIONS).toContain('get_setup_guide');
+        });
+
         test('references get_event_field_samples as mandatory step', () => {
             expect(SERVER_INSTRUCTIONS).toContain('get_event_field_samples');
             expect(SERVER_INSTRUCTIONS).toContain('MANDATORY before ANY KQL');
@@ -298,10 +303,13 @@ describe('Server Instructions', () => {
             createSdkServer(handlers);
 
             const mockInstance = McpServer.mock.results[0].value;
-            expect(mockInstance.registerPrompt).toHaveBeenCalledTimes(1);
+            expect(mockInstance.registerPrompt).toHaveBeenCalledTimes(2);
 
-            const promptCall = mockInstance.registerPrompt.mock.calls[0];
-            expect(promptCall[0]).toBe('bc-telemetry-workflow');
+            const promptNames = mockInstance.registerPrompt.mock.calls.map((c: any[]) => c[0]);
+            expect(promptNames).toContain('bc-telemetry-workflow');
+            expect(promptNames).toContain('setup-connection');
+
+            const promptCall = mockInstance.registerPrompt.mock.calls.find((c: any[]) => c[0] === 'bc-telemetry-workflow');
             expect(promptCall[1]).toHaveProperty('description');
             expect(promptCall[1].description).toContain('Mandatory tool-call workflow');
         });
@@ -315,7 +323,8 @@ describe('Server Instructions', () => {
             createSdkServer(handlers);
 
             const mockInstance = McpServer.mock.results[0].value;
-            const promptCallback = mockInstance.registerPrompt.mock.calls[0][2];
+            const workflowCall = mockInstance.registerPrompt.mock.calls.find((c: any[]) => c[0] === 'bc-telemetry-workflow');
+            const promptCallback = workflowCall[2];
 
             const result = await promptCallback();
 
@@ -344,8 +353,8 @@ describe('Server Instructions', () => {
             // All tools still registered
             expect(mockInstance.registerTool).toHaveBeenCalledTimes(TOOL_DEFINITIONS.length);
 
-            // Prompt also registered
-            expect(mockInstance.registerPrompt).toHaveBeenCalledTimes(1);
+            // Both prompts also registered (workflow + setup-connection)
+            expect(mockInstance.registerPrompt).toHaveBeenCalledTimes(2);
         });
     });
 });

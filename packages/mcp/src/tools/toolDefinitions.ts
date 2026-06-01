@@ -306,6 +306,20 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             idempotentHint: true,
             openWorldHint: false
         }
+    },
+    {
+        name: 'get_setup_guide',
+        description: 'Get the step-by-step workflow for setting up a connection to Business Central telemetry (authenticate → discover Application Insights endpoints → pick endpoint → choose workspace folder → write .bctb-config.json → reload). Call this when the user asks to "set up a connection", "configure BC telemetry", "connect to my telemetry", or when no valid configuration exists yet. Returns instructions you then execute with your own shell + file tools (Claude Code / Copilot agent mode). Universal fallback for clients that do not support MCP prompts.',
+        inputSchema: {
+            type: 'object',
+            properties: {}
+        },
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false
+        }
     }
 ];
 

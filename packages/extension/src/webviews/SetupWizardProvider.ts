@@ -714,6 +714,18 @@ export class SetupWizardProvider {
             </div>
 
             <div id="welcomeContent">
+                <div style="margin: 0 0 25px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-activeForeground); border-radius: 4px;">
+                    <h4 style="margin-top: 0;">💬 Prefer to set up by chatting? (or using Claude / another editor)</h4>
+                    <p style="margin-bottom: 0;">
+                        You don't have to use this wizard. From an AI agent connected to the BC Telemetry Buddy MCP server
+                        — <strong>Claude Code</strong>, <strong>GitHub Copilot agent mode</strong>, or others — just ask:
+                        <em>"help me set up a connection with my BC telemetry"</em>.
+                        It runs the <code>setup-connection</code> prompt (or the <code>get_setup_guide</code> tool) and walks you
+                        through authentication, discovering your Application Insights endpoints, and writing the config —
+                        including into the right project of a multi-root workspace.
+                    </p>
+                </div>
+
                 <h3>What you'll need:</h3>
                 <ul>
                     <li>✅ <strong>Node.js</strong> installed on your system (<a href="https://nodejs.org/" target="_blank">Download Node.js</a>)</li>

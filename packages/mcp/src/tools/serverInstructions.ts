@@ -20,6 +20,12 @@ export const SERVER_INSTRUCTIONS = `# BC Telemetry Buddy — Tool Usage Guide
 
 You are connected to the **BC Telemetry Buddy** MCP server, which provides tools for querying and analyzing Microsoft Dynamics 365 Business Central telemetry data stored in Azure Application Insights.
 
+## Not configured yet? Set up a connection first
+
+If queries fail with a configuration error, or the user asks to "set up a connection", "configure BC telemetry", or "connect to my telemetry", **do not attempt to query**. Instead, get the setup workflow and follow it:
+- Invoke the **\`setup-connection\`** prompt (preferred), or call the **\`get_setup_guide\`** tool — both return the same step-by-step instructions (authenticate → discover Application Insights endpoints → choose workspace folder → write \`.bctb-config.json\` → reload).
+- Then execute those steps with your own shell + file tools.
+
 ## MANDATORY Tool-Call Sequence
 
 You MUST follow this sequence when building KQL queries. Skipping steps produces broken queries, wrong data types, and wasted tokens on retries.

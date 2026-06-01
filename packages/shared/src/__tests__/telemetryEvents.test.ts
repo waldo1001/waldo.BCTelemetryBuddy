@@ -39,6 +39,12 @@ describe('TelemetryEvents', () => {
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_EVENT_SCHEMA).toBe('TB-MCP-109');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_EVENT_FIELD_SAMPLES).toBe('TB-MCP-110');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.DEPRECATED_TOOL_CALLED).toBe('TB-MCP-113');
+            expect(TELEMETRY_EVENTS.MCP_TOOLS.SETUP_PROMPT_SERVED).toBe('TB-MCP-115');
+            expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_SETUP_GUIDE).toBe('TB-MCP-116');
+        });
+
+        it('should export the setup pointer extension event constant', () => {
+            expect(TELEMETRY_EVENTS.EXTENSION.SETUP_POINTER_SHOWN).toBe('TB-EXT-019');
         });
 
         it('should export all Kusto query event constants', () => {

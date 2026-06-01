@@ -1,5 +1,34 @@
 import * as vscode from 'vscode';
-import { IUsageTelemetry } from '@bctb/shared';
+import { IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
+
+/**
+ * Detect a "help me set up / configure / connect my telemetry" request.
+ * The chat participant cannot write files, so on a match it surfaces a pointer to
+ * the client-agnostic setup workflow (the `setup-connection` prompt / `get_setup_guide`
+ * tool) and lets the model drive from there.
+ */
+function isSetupIntent(prompt: string): boolean {
+    // Explicit setup verb ("set up", "configure", "reconfigure") paired with a config subject.
+    const explicitVerb = /\b(set\s?up|configure|reconfigure)\b/i.test(prompt);
+    const subject = /\b(connection|telemetry|app(lication)?\s?insights|config(uration)?|business central)\b/i.test(prompt);
+    // OR an explicit "connect (to) … telemetry/app insights/bc" phrase. Bare "connection"/"connections"
+    // is intentionally NOT a trigger — it appears in normal analysis prompts ("failed connection errors").
+    const connectPhrase = /\bconnect(?:ing)?\s+(?:to\s+)?(?:my\s+|the\s+)?(?:bc\b|business central|telemetry|app(?:lication)?\s?insights)/i.test(prompt);
+    return (explicitVerb && subject) || connectPhrase;
+}
+
+const SETUP_POINTER = `🔌 **Let's connect your Business Central telemetry.**
+
+I can't write files from this chat, but the setup is the same in any tool. To configure a connection:
+
+- **Claude Code / Copilot agent mode:** run the **\`setup-connection\`** prompt (or ask me to call the **\`get_setup_guide\`** tool). It walks you through: authenticate → discover your Application Insights endpoints → pick one → choose the project folder → write \`.bctb-config.json\` → reload.
+- **VS Code only:** you can also run **BC Telemetry Buddy: Setup Wizard** from the Command Palette.
+
+I'll fetch the guide for you now so you can see the exact steps…
+
+---
+
+`;
 
 /**
  * BC Telemetry Buddy Chat Participant
@@ -518,6 +547,13 @@ export function registerChatParticipant(context: vscode.ExtensionContext, output
         token: vscode.CancellationToken
     ) => {
         outputChannel.appendLine(`[@${PARTICIPANT_ID}] User query: ${request.prompt}`);
+
+        // Setup-intent: surface the client-agnostic setup pointer before the normal flow.
+        if (isSetupIntent(request.prompt)) {
+            outputChannel.appendLine(`[@${PARTICIPANT_ID}] Setup intent detected — surfacing setup pointer`);
+            stream.markdown(SETUP_POINTER);
+            usageTelemetry?.trackEvent(TELEMETRY_EVENTS.EXTENSION.SETUP_POINTER_SHOWN, { surface: 'chat' });
+        }
 
         try {
             // Show welcome message on first interaction (no history)

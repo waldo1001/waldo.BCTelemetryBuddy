@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { loadConfig, loadConfigFromFile, validateConfig, MCPConfig } from './config.js';
 import { TOOL_DEFINITIONS } from './tools/toolDefinitions.js';
 import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInstructions.js';
+import { SETUP_PROMPT_CONTENT } from './tools/setupInstructions.js';
 import { ToolHandlers, initializeServices } from './tools/toolHandlers.js';
 import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -176,6 +177,27 @@ export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
                     content: {
                         type: 'text' as const,
                         text: WORKFLOW_PROMPT_CONTENT
+                    }
+                }
+            ]
+        })
+    );
+
+    // Register the connection-setup prompt — lets ANY MCP client (Claude Code, Cursor,
+    // Copilot agent mode) walk the user through configuring .bctb-config.json. Works
+    // even when the server is unconfigured (validateConfig is non-throwing).
+    server.registerPrompt(
+        'setup-connection',
+        {
+            description: 'Set up a connection to your Business Central telemetry. Walks through authentication, discovering your Application Insights endpoints, choosing the target workspace folder (multi-root aware), and writing .bctb-config.json. Invoke this when you have no connection configured yet, or want to add another.'
+        },
+        async () => ({
+            messages: [
+                {
+                    role: 'user' as const,
+                    content: {
+                        type: 'text' as const,
+                        text: SETUP_PROMPT_CONTENT
                     }
                 }
             ]

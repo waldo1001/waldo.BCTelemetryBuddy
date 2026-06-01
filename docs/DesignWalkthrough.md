@@ -2030,3 +2030,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-05-30** — KB: Lock Timeout Deep Triage playbook (RT0012/RT0013) [Entry: 8fbb51ef-7ed4-4e9e-86e2-cf63b425717c]
   - **Why:** Issue #121 requested deep-dive lock timeout investigation playbook with by-customer/day/source-process/snapshot analysis.
   - **How:** Created validated playbook at knowledge-base/playbooks/lock-timeout-deep-triage.md with 8 steps, clientType foreground/background awareness, RT0012→RT0013 snapshot join, and interpretation tips. Regenerated index. Closed issue.
+## 2026-06-01 — Guided connection setup (prompt + tool + scripts)
+**Why:** Let any MCP client (Claude Code, Copilot agent mode), not just the VS Code extension, walk a user through creating `.bctb-config.json`.
+**How:** Single workflow content (`setupInstructions.ts`) exposed as both the `setup-connection` MCP prompt and the `get_setup_guide` tool (served even when unconfigured); two esbuild-bundled CLIs (`bctb-setup-endpoints`, `bctb-setup-write-config`) over unit-tested `src/setup/` logic; pointers added to the chat participant, bundled agent, and Setup Wizard. Full plan: [docs/plans/done/guided-config-setup.md](plans/done/guided-config-setup.md).

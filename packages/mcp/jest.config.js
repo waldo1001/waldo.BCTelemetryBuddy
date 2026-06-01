@@ -23,6 +23,7 @@ module.exports = {
         '!src/__tests__/**',
         '!src/server.ts',  // Exclude MCP server entry point (requires full integration testing)
         '!src/cli.ts',  // Exclude CLI entry point (requires full integration testing)
+        '!src/scripts/**',  // Exclude setup CLI entry points (thin wrappers; logic lives in src/setup, tested there)
         '!src/agent/cli.ts',  // Exclude agent CLI entry point (requires full integration testing)
         '!src/agent/index.ts',  // Exclude barrel re-export file
         '!src/version.ts',  // Exclude auto-generated version file
