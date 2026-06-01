@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-06-01
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Added
 - **Setup Wizard "⚡ Guided setup" button.** Launches the interactive `bctb-setup` CLI in VS Code's integrated terminal (`npx -p bc-telemetry-buddy-mcp@latest bctb-setup --folder <chosen>`) — a real TTY, so its prompts work directly. Walks you through Azure CLI → endpoint discovery → writing `.bctb-config.json`, no manual JSON editing. In a multi-root workspace you're asked which folder to configure; with no folder open it tells you to open one first. Deterministic — does not rely on an LLM choosing to call a tool. Tracks `GUIDED_SETUP_LAUNCHED` telemetry.
 
