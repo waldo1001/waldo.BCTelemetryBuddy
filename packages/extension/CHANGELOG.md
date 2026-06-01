@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-06-01
+
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._
 
 ### Added
