@@ -2033,3 +2033,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 ## 2026-06-01 — Guided connection setup (prompt + tool + scripts)
 **Why:** Let any MCP client (Claude Code, Copilot agent mode), not just the VS Code extension, walk a user through creating `.bctb-config.json`.
 **How:** Single workflow content (`setupInstructions.ts`) exposed as both the `setup-connection` MCP prompt and the `get_setup_guide` tool (served even when unconfigured); two esbuild-bundled CLIs (`bctb-setup-endpoints`, `bctb-setup-write-config`) over unit-tested `src/setup/` logic; pointers added to the chat participant, bundled agent, and Setup Wizard. Full plan: [docs/plans/done/guided-config-setup.md](plans/done/guided-config-setup.md).
+
+## 2026-06-01 — Interactive bctb-setup + wizard button
+**Why:** The MCP-prompt/tool delivery relied on an agent choosing to call a tool and the MCP being connected — fragile (plain Copilot hallucinated instead). 
+**How:** New interactive `bctb-setup` CLI (Azure CLI → discover → pick → write config) over the tested setup/ logic + a robust `createPrompter` (TTY & piped). Setup Wizard gains a "Guided setup" button that runs it in the integrated terminal. Plan: [docs/plans/done/guided-setup-cli.md](plans/done/guided-setup-cli.md).

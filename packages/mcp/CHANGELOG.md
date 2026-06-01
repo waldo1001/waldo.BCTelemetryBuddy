@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`bctb-setup` — interactive guided connection setup.** A single command that walks you from start to finish (Azure CLI): checks/triggers `az login`, lists your Application Insights resources, you pick one by number, then it writes `.bctb-config.json` into the chosen folder (manual App-ID fallback when `az` is unavailable). Runs in any terminal (`npx -p bc-telemetry-buddy-mcp bctb-setup`) and is what the extension's Setup Wizard "Guided setup" button launches. Built on the existing tested `setup/` logic plus a `createPrompter` helper that works reliably with both TTY and piped input (unit-tested), and a `parseSelection` helper (unit-tested).
+
 ## [3.4.1] - 2026-06-01
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

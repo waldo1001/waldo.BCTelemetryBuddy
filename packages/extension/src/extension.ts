@@ -519,7 +519,7 @@ export function activate(context: vscode.ExtensionContext) {
     mcpClient = new MCPClient(mcpUrl, outputChannel);
 
     // Initialize setup wizard
-    setupWizard = new SetupWizardProvider(context.extensionUri, outputChannel);
+    setupWizard = new SetupWizardProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
 
     // Initialize profile wizard
     profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel);

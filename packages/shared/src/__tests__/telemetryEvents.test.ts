@@ -47,6 +47,10 @@ describe('TelemetryEvents', () => {
             expect(TELEMETRY_EVENTS.EXTENSION.SETUP_POINTER_SHOWN).toBe('TB-EXT-019');
         });
 
+        it('should export the guided setup launch extension event constant', () => {
+            expect(TELEMETRY_EVENTS.EXTENSION.GUIDED_SETUP_LAUNCHED).toBe('TB-EXT-020');
+        });
+
         it('should export all Kusto query event constants', () => {
             expect(TELEMETRY_EVENTS.KUSTO.QUERY_EXECUTED).toBe('TB-KQL-001');
             expect(TELEMETRY_EVENTS.KUSTO.QUERY_FAILED).toBe('TB-KQL-002');

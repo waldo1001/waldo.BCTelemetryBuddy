@@ -6,6 +6,7 @@ import { promisify } from 'util';
 // MCP installer utilities
 import { getMCPStatus, installMCP, isMCPUpdateAvailable } from '../services/mcpInstaller';
 import { VSCodeAuthService } from '../services/vscodeAuthService';
+import { IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
 
 const execAsync = promisify(exec);
 
@@ -17,7 +18,8 @@ export class SetupWizardProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _outputChannel?: vscode.OutputChannel
+        private readonly _outputChannel?: vscode.OutputChannel,
+        private readonly _usageTelemetry?: IUsageTelemetry
     ) {
         if (_outputChannel) {
             this.vscodeAuthService = new VSCodeAuthService(_outputChannel);
@@ -88,6 +90,9 @@ export class SetupWizardProvider {
                     case 'restartVSCode':
                         await vscode.commands.executeCommand('workbench.action.reloadWindow');
                         break;
+                    case 'runGuidedSetup':
+                        await this._runGuidedSetup();
+                        break;
                     case 'manageProfiles':
                         await vscode.commands.executeCommand('bctb.manageProfiles');
                         break;
@@ -111,6 +116,42 @@ export class SetupWizardProvider {
                 disposable.dispose();
             }
         }
+    }
+
+    /**
+     * Launch the interactive guided-setup CLI in VS Code's integrated terminal.
+     * The terminal is a real TTY, so the script's prompts work directly — deterministic,
+     * no dependency on an LLM choosing to call a tool or the MCP being connected.
+     */
+    private async _runGuidedSetup(): Promise<void> {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length === 0) {
+            vscode.window.showErrorMessage(
+                'BC Telemetry Buddy: open a folder first — guided setup writes .bctb-config.json into a workspace folder.'
+            );
+            return;
+        }
+
+        const isMultiRoot = folders.length > 1;
+        let folder = folders[0].uri.fsPath;
+        if (isMultiRoot) {
+            const pick = await vscode.window.showQuickPick(
+                folders.map(f => f.uri.fsPath),
+                { placeHolder: 'Which project folder should the connection be configured for?' }
+            );
+            if (!pick) {
+                return; // user cancelled
+            }
+            folder = pick;
+        }
+
+        this._usageTelemetry?.trackEvent(TELEMETRY_EVENTS.EXTENSION.GUIDED_SETUP_LAUNCHED, {
+            isMultiRoot: String(isMultiRoot)
+        });
+
+        const terminal = vscode.window.createTerminal('BC Telemetry Buddy Setup');
+        terminal.show();
+        terminal.sendText(`npx -y -p bc-telemetry-buddy-mcp@latest bctb-setup --folder "${folder}"`);
     }
 
     private async _validateWorkspace(): Promise<void> {
@@ -714,15 +755,17 @@ export class SetupWizardProvider {
             </div>
 
             <div id="welcomeContent">
-                <div style="margin: 0 0 25px 0; padding: 15px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-textLink-activeForeground); border-radius: 4px;">
-                    <h4 style="margin-top: 0;">💬 Prefer to set up by chatting? (or using Claude / another editor)</h4>
-                    <p style="margin-bottom: 0;">
-                        You don't have to use this wizard. From an AI agent connected to the BC Telemetry Buddy MCP server
-                        — <strong>Claude Code</strong>, <strong>GitHub Copilot agent mode</strong>, or others — just ask:
-                        <em>"help me set up a connection with my BC telemetry"</em>.
-                        It runs the <code>setup-connection</code> prompt (or the <code>get_setup_guide</code> tool) and walks you
-                        through authentication, discovering your Application Insights endpoints, and writing the config —
-                        including into the right project of a multi-root workspace.
+                <div style="margin: 0 0 25px 0; padding: 18px; background: var(--vscode-textBlockQuote-background); border-left: 4px solid var(--vscode-charts-green); border-radius: 4px;">
+                    <h4 style="margin-top: 0;">⚡ Guided setup (recommended)</h4>
+                    <p>
+                        Let Azure CLI walk you through it: it finds your Application Insights resources, you pick one,
+                        and it writes <code>.bctb-config.json</code> into your project — start to finish, in the terminal.
+                        No manual JSON editing.
+                    </p>
+                    <button id="btn-guided-setup">⚡ Start guided setup</button>
+                    <p style="margin-bottom: 0; font-size: 12px; color: var(--vscode-descriptionForeground);">
+                        Requires Azure CLI (<code>az</code>). Prefer to do it yourself? Continue with the manual steps below.
+                        You can also run it from any terminal: <code>npx -p bc-telemetry-buddy-mcp bctb-setup</code>.
                     </p>
                 </div>
 
@@ -1761,6 +1804,14 @@ export class SetupWizardProvider {
             // Step 1 - bottom and top buttons
             document.getElementById('btn-next-1').addEventListener('click', goNext);
             document.getElementById('btn-next-1-top').addEventListener('click', goNext);
+
+            // Guided setup (runs the interactive CLI in a terminal)
+            const btnGuidedSetup = document.getElementById('btn-guided-setup');
+            if (btnGuidedSetup) {
+                btnGuidedSetup.addEventListener('click', () => {
+                    vscode.postMessage({ type: 'runGuidedSetup' });
+                });
+            }
             
             // Step 2 - bottom and top buttons
             document.getElementById('btn-prev-2').addEventListener('click', goPrev);
