@@ -14,6 +14,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { mergeConfig, ProfileInput, AuthFlow } from '../setup/configMerge.js';
+import { validateTargetFolder } from '../setup/targetFolder.js';
 
 const VALID_FLOWS: AuthFlow[] = ['azure_cli', 'vscode_auth', 'device_code', 'client_credentials'];
 
@@ -49,6 +50,12 @@ function main(): void {
         fail(`--authFlow is required and must be one of: ${VALID_FLOWS.join(', ')}`);
     }
     if (!appId) fail('--appId is required (Application Insights Application ID)');
+
+    try {
+        validateTargetFolder(folder, fs);
+    } catch (err) {
+        fail((err as Error).message);
+    }
 
     const input: ProfileInput = {
         connectionName,

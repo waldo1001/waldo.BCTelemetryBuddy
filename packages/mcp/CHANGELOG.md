@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-06-01
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
+### Fixed
+- **`bctb-setup-write-config` crashed with a raw ENOENT stack trace when `--folder` pointed at a non-existent directory.** It now validates the target folder up front (`validateTargetFolder`, unit-tested) and exits with a clear message — `Target folder does not exist: <path>` — instead of an unhandled `fs.writeFileSync` error.
+
 ## [3.4.0] - 2026-06-01
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._
