@@ -6,7 +6,7 @@ eventIds: [AL0000E24, AL0000E25, AL0000E26, AL0000HE7]
 appliesTo: "BC 22.2+"
 author: waldo
 created: 2026-04-05
-updated: 2026-04-05
+updated: 2026-06-02
 ---
 
 ## When to use this
@@ -57,3 +57,12 @@ traces
 - **Large spikes in specific hours** → correlate with business activity (e.g., end-of-day posting, integration syncs)
 - **Jobs with no matching AL0000E26** → job crashed or timed out before finishing; check AL0000HE7 for errors
 - Add `| render timechart` to visualize the trend over time
+
+## Caveats
+
+- **Reused task IDs can inflate duration.** Recurring jobs often keep the same `alJobQueueScheduledTaskId` across many runs within the query window. Because `minif`/`maxif` aggregate per task ID, a single computed duration can span the *earliest* start to the *latest* finish across all of those runs, overstating one run's time. Binning on `startTime` (as above) mitigates this; for fully accurate per-execution durations, pair each start with its *next* finish (sort by timestamp and use `prev()`/`next()`) or also group on a per-run correlation dimension.
+- **Only finished jobs are measured.** Runs that failed (AL0000HE7 / AL0000JRG) or were canceled (AL0000KZV) never emit AL0000E26, so they have no end timestamp and drop out of the duration math — analyze those separately.
+
+## Generalization — the "two-event subtraction" pattern
+
+BC has no single "ran for X seconds" field for most operations; it emits a distinct **start** event and **finish** event and you compute duration by subtracting timestamps. Any scenario with paired start/end events (job queue, sessions, environment updates) can be measured the same way: filter to both events, `summarize startTime = minif(...), endTime = maxif(...)` on a shared correlation ID, then `endTime - startTime` (a `timespan`) or `datetime_diff('millisecond', endTime, startTime)`.
