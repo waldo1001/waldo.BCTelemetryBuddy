@@ -3349,3 +3349,8 @@ Change instructions an business logic to do this."
 ---
 ## 2026-06-01 — Client-agnostic connection setup
 > "I would like the chat participant and the agent we would install, to assist with setting up the configuration file ... It should also work from Claude, which should not require the vscode extension. So in a way, it should all be a prompt, maybe referring to documentation ... may be refer even to scripts."
+
+## 2026-06-02
+- "Cleade gives me an error - here are the logs: …" (MCP cache ENOENT + App Insights metrics-quota flood; later: Claude Desktop "Server disconnected / Could not attach to MCP server").
+- "Please fix this, because I think it's since last version"
+- "implement! tdd"

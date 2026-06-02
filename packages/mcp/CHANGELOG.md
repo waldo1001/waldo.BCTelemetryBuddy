@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`npx -y bc-telemetry-buddy-mcp start` failed to launch the server (`could not determine executable to run`), breaking Claude Desktop and other clients with "Server disconnected".** v3.5.0 added the `bctb-setup*` bins, so the package exposed multiple binaries with none matching the package name — `npx <pkg>` can only auto-select when there is a single bin or one named after the package. Added a `bc-telemetry-buddy-mcp` → `dist/cli.js` bin alias so the documented `npx bc-telemetry-buddy-mcp` invocation resolves again. A regression test (`package-bin.test.ts`) locks the package-name bin in place. See [docs/plans/done/mcp-bin-package-name-alias.md](../../docs/plans/done/mcp-bin-package-name-alias.md).
+
 ## [3.5.0] - 2026-06-01
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

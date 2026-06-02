@@ -2037,3 +2037,8 @@ Keep entries short and focused. This doc is your presentation backbone.
 ## 2026-06-01 — Interactive bctb-setup + wizard button
 **Why:** The MCP-prompt/tool delivery relied on an agent choosing to call a tool and the MCP being connected — fragile (plain Copilot hallucinated instead). 
 **How:** New interactive `bctb-setup` CLI (Azure CLI → discover → pick → write config) over the tested setup/ logic + a robust `createPrompter` (TTY & piped). Setup Wizard gains a "Guided setup" button that runs it in the integrated terminal. Plan: [docs/plans/done/guided-setup-cli.md](plans/done/guided-setup-cli.md).
+
+## 2026-06-02 — MCP package-name bin alias
+- **What:** Added `"bc-telemetry-buddy-mcp": "./dist/cli.js"` to `packages/mcp/package.json` `bin`; new `package-bin.test.ts` regression test.
+- **Why:** v3.5.0 added multiple bins (`bctb-setup*`) with none matching the package name, so `npx -y bc-telemetry-buddy-mcp start` failed with "could not determine executable to run" → Claude Desktop "Server disconnected". Reproduced and verified end-to-end via `npm install -g --prefix`.
+- **How:** Plan → RED (bin key missing) → add alias → GREEN; 741 tests pass, root build clean. See docs/plans/done/mcp-bin-package-name-alias.md.
