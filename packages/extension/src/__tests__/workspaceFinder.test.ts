@@ -125,4 +125,155 @@ describe('findConfigWorkspace', () => {
             configFilePath: undefined,
         });
     });
+
+    // ═══ Priority Folder Tests (Phase 2 Enhancement) ═══
+
+    describe('Priority folder detection (multi-root only)', () => {
+        it('should prioritize Telemetry folder in multi-root workspace', () => {
+            mockFolders(['/App', '/Telemetry', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Telemetry');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Telemetry');
+            expect(result!.configFilePath).toMatch(/Telemetry.*\.bctb-config\.json$/);
+        });
+
+        it('should prioritize Monitoring folder in multi-root workspace', () => {
+            mockFolders(['/App', '/Monitoring', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Monitoring');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Monitoring');
+            expect(result!.configFilePath).toMatch(/Monitoring.*\.bctb-config\.json$/);
+        });
+
+        it('should prioritize Analytics folder in multi-root workspace', () => {
+            mockFolders(['/App', '/Analytics', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Analytics');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Analytics');
+            expect(result!.configFilePath).toMatch(/Analytics.*\.bctb-config\.json$/);
+        });
+
+        it('should prioritize Insights folder in multi-root workspace', () => {
+            mockFolders(['/App', '/Insights', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Insights');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Insights');
+            expect(result!.configFilePath).toMatch(/Insights.*\.bctb-config\.json$/);
+        });
+
+        it('should match TELEMETRY (uppercase) in multi-root workspace', () => {
+            mockFolders(['/App', '/TELEMETRY', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('TELEMETRY');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/TELEMETRY');
+            expect(result!.configFilePath).toMatch(/TELEMETRY.*\.bctb-config\.json$/);
+        });
+
+        it('should match Monitoring (mixed case) in multi-root workspace', () => {
+            mockFolders(['/App', '/MoNiToRiNg', '/Test']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('MoNiToRiNg');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/MoNiToRiNg');
+        });
+
+        it('should prefer Telemetry over Monitoring when both exist', () => {
+            mockFolders(['/App', '/Monitoring', '/Telemetry', '/Test']);
+
+            // Both have config
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Telemetry');
+        });
+
+        it('should prefer Monitoring over Analytics when both exist', () => {
+            mockFolders(['/App', '/Analytics', '/Monitoring', '/Test']);
+
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Monitoring');
+        });
+
+        it('should fall back to first folder when priority folder has no config', () => {
+            mockFolders(['/App', '/Telemetry', '/Test']);
+
+            // Only App has config, Telemetry doesn't
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('App');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/App');
+        });
+
+        it('should skip priority folders in PRIORITY 2 loop', () => {
+            mockFolders(['/Telemetry', '/App', '/Monitoring']);
+
+            // Only Monitoring has config (should find it in priority 1, not loop)
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Monitoring');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Monitoring');
+        });
+
+        it('should return first folder with config when no priority folders exist', () => {
+            mockFolders(['/App', '/Test', '/Database']);
+
+            // App has config
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('App');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/App');
+        });
+
+        it('should NOT apply priority logic in single-folder workspace', () => {
+            mockFolders(['/Telemetry']);
+
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Telemetry');
+            // Should work, but priority logic doesn't activate (only 1 folder)
+        });
+
+        it('should handle priority folder as NOT first in list', () => {
+            mockFolders(['/App', '/Test', '/Monitoring', '/Database']);
+
+            mockedFs.existsSync.mockImplementation((p: fs.PathLike) => {
+                return String(p).includes('Monitoring');
+            });
+
+            const result = findConfigWorkspace();
+            expect(result!.workspacePath).toBe('/Monitoring');
+        });
+    });
 });

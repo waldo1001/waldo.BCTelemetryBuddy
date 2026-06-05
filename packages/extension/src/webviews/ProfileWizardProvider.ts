@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ProfiledConfig, MCPConfig, validateConfig } from '@bctb/shared';
 import { AuthService } from '@bctb/shared';
+import { findConfigWorkspace } from '../services/workspaceFinder';
 
 /**
  * Webview provider for the profile creation/editing wizard
@@ -225,11 +226,11 @@ export class ProfileWizardProvider {
     }
 
     private getConfigPath(): string {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            throw new Error('No workspace folder open');
+        const configResult = findConfigWorkspace();
+        if (!configResult?.workspacePath) {
+            throw new Error('No workspace folder found via findConfigWorkspace()');
         }
-        return path.join(workspaceFolders[0].uri.fsPath, '.bctb-config.json');
+        return path.join(configResult.workspacePath, '.bctb-config.json');
     }
 
     private _getHtmlForWebview() {

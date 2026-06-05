@@ -2464,8 +2464,7 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b — 2026-01-06 14:41
 > "Exclude fields with explicit millisecond indicators (Ms, Milliseconds, InMs, _ms) from timespan detection - if field name indicates milliseconds, it's NOT a timespan"
-
----
+=======
 ### Entry ID: 749c22d6-ea18-4d83-9042-f99aab6c5110 — 2026-01-08 14:45
 > "Fix GitHub Actions labeler workflow permissions issue - Resource not accessible by integration error"
 ### Entry ID: a4a2d36e-0bff-401f-86c8-bffc1dc23cf4 — 2026-01-14 23:10
@@ -3356,40 +3355,11 @@ Change instructions an business logic to do this."
 - "Please fix this, because I think it's since last version"
 - "implement! tdd"
 
-## 2026-06-25 — MCP host-agnostic workspace/knowledge discovery
-
-> [Design brief / bug report] BC Telemetry Buddy — workspace config & knowledge are not loaded under non-VS-Code MCP hosts (Claude Code). Goal: a host-agnostic way for the MCP server to discover the active workspace's `.bctb-config.json` and `.vscode/.bctb/knowledge`, not only when launched by the VS Code extension. (Full brief proposed solutions S1–S5.)
-
-> Usecase - if I would NOT have a config-file in the dir I'm using claude for - what is it going to do. Error? or use the user-config-file?
-
-## 2026-07-17 — Per-workspace connection discovery under Claude Code
-> I have a config file on one of the workspaces … but there seems to be no way for BCTB to pick up the local file, while the rule is simple: if there is a local config: take the local config. Maybe it's because of claude code, because in github copilot, I remember this worked flawlessly. [+ diagnostic prompt: "BC Telemetry Buddy MCP server ignores per-workspace .bctb-config.json when run under Claude Code"] Summarize and analyze what you can do about the problem.
+### Entry ID: ff218313-f301-4a81-8a57-e36ca9c32e96 — 2026-06-05 17:42
+> "pokračuj s implementací (multi-root workspace priority folder detection)"
 
 ---
-**EntryId:** 37C182A9-AC6C-49D6-9D30-8EF134E47574
-**Date:** 2026-07-18
-**Prompt:** I want to update the development process to a full SDD and TDD: spec driven development and test driven development; Even more. I want to have a spec/test driven approach to all pullrequests and to all issues that are outstanding on github. What does that mean to you, and what changes would you add to the repo?
+### Entry ID: b8b02af4-f669-4785-83c3-be9ff61f83fe — 2026-06-05 18:10
+> "Phase 1 complete - All 3 wizards updated to use findConfigWorkspace()"
 
 ---
-**EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
-**Date:** 2026-07-18
-**Prompt:** Review PR #127 functionally (conflicts with workspace-discovery work, tests, UX); create the spec as an issue, link it to the PR, and give the author actionable instructions.
-### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30
-> "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
-
----
-
----
-**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
-**Date:** 2026-07-18
-**Prompt:** PR #129 is blocked by checks — how can we solve this?
-
----
-**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
-**Date:** 2026-07-18
-**Prompt:** Now also look into PR 108 — we need to get it green as well. (Spec + plan approved: "approved")
-
----
-**EntryId:** FFF94154-D24C-4D94-91C2-84AEA19A370B
-**Date:** 2026-07-18
-**Prompt:** Can we do a smoketest before we merge? (then: "go" for the column-name fix)

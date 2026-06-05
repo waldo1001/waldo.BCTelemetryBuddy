@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getMCPStatus, MCPStatus } from '../services/mcpInstaller';
+import { findConfigWorkspace } from '../services/workspaceFinder';
 
 const execAsync = promisify(exec);
 
@@ -404,9 +405,8 @@ export class AgentMonitoringSetupProvider {
     // ═══ Message handlers ═══
 
     private _getWorkspacePath(): string | null {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) { return null; }
-        return workspaceFolders[0].uri.fsPath;
+        const result = findConfigWorkspace(this._outputChannel);
+        return result?.workspacePath || null;
     }
 
     private async _checkPrerequisites(): Promise<void> {

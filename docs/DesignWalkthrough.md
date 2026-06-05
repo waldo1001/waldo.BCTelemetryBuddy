@@ -2043,51 +2043,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **Why:** v3.5.0 added multiple bins (`bctb-setup*`) with none matching the package name, so `npx -y bc-telemetry-buddy-mcp start` failed with "could not determine executable to run" → Claude Desktop "Server disconnected". Reproduced and verified end-to-end via `npm install -g --prefix`.
 - **How:** Plan → RED (bin key missing) → add alias → GREEN; 741 tests pass, root build clean. See docs/plans/done/mcp-bin-package-name-alias.md.
 
-## 2026-06-25 — Host-agnostic workspace & knowledge discovery (MCP)
-
-**Why:** Under non-VS-Code MCP hosts the server only loaded the global `--config`, so `workspacePath` fell back to launch cwd and `get_knowledge` silently returned "not available" — VS-Code-only `BCTB_WORKSPACE_PATH`/`${workspaceFolder}` was the hidden dependency.
-
-**How:** New `resolveWorkspacePath()` (env → explicit → config-dir → cwd, with `${...}` token guard) anchors workspace/knowledge/cache/queries to the loaded config's directory; `${workspaceFolder}` now falls back to that root instead of cwd. Added MCP `roots` fallback (`discoverWorkspaceViaRoots` via `oninitialized`) that loads knowledge from the host's opened workspace when eager load finds nothing — connection stays decoupled, never swapped. `get_knowledge` + a `[KB]` startup log now name the path tried + reason; path-free telemetry `TB-MCP-003`/`004`. Full plan: [docs/plans/done/mcp-workspace-knowledge-discovery.md](plans/done/mcp-workspace-knowledge-discovery.md).
-
-## 2026-07-17 — Per-workspace connection discovery (Claude Code)
-**Why:** Under Claude Code the MCP server is registered once globally with a pinned `--config`, so `switch_profile` only saw the global file's profiles and a customer workspace's own flat `.bctb-config.json` connection was invisible (the VS Code extension "just works" only because it injects `BCTB_WORKSPACE_PATH`). The existing roots capability was deliberately KB-only.
-**How:** Workspace connections are now discovered from `CLAUDE_PROJECT_DIR` (sync, incl. one level down for the TelemetryAnalysis layout) and MCP roots, registered in an in-memory registry, merged into `list_profiles` (`source:"workspace"`) and selectable via `switch_profile`. Default is selectable-only (no silent retarget — cross-tenant safety); opt-in `BCTB_AUTO_WORKSPACE_CONNECTION` auto-activates a single discovered connection. File-profile enumeration anchored to a frozen `baseConfigFilePath` so a workspace switch can't hide global profiles; service re-init made atomic. Telemetry `TB-MCP-006`. See [docs/plans/mcp-workspace-connection-discovery.md](plans/mcp-workspace-connection-discovery.md).
-
----
-**EntryId:** 37C182A9-AC6C-49D6-9D30-8EF134E47574
-**Date:** 2026-07-18
-**Why:** The repo had a rigorously enforced TDD side but no spec layer — issues, PRs, and the dev process were disconnected, with acceptance criteria existing only inside plan files.
-**How:** Added SDD Phase 0 in front of the TDD cycle: docs/specs/ (issue-keyed behavior specs with AC IDs, draft→approved→implemented), /spec-authoring skill, Rule 14 + extended hard gate across the governance chain, Spec-lite path for safe/low-risk fixes, scripts/validate-specs.js + validate-specs CI job, spec-check.yml PR gate (warn mode, fork PRs advisory-only, spec-waived escape hatch), CONTRIBUTING.md, AC fields in issue forms, spec section in PR template, and needs-spec/spec-approved/spec-waived labels with a triage pass over the open backlog. Plan: docs/plans/sdd-process-upgrade.md.
-
----
-**EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
-**Date:** 2026-07-18
-**Why:** PR #127 (multi-root wizard support) had the right intent but shipped a non-compiling test, tests against a nonexistent message interface, an out-of-scope name-based priority heuristic that silently changes the active MCP connection, and no telemetry; CI never ran on it.
-**How:** First application of the SDD flow to an external PR: spec authored as issue #130 + docs/specs/130-multiroot-wizard-support.md (draft), request-changes review posted on #127 scoping it to Phase 1 (unblock multi-root, unify wizards on findConfigWorkspace) with a copy-pasteable remediation prompt; Phase 2 priority detection deferred to a future spec.
-- **2026-04-06** — Add MCP embedded resources support [Entry: 758a5beb-356d-434d-9434-6b07fdedd9ea]
-  - **Why:** Enable external agents to request query results as file resources instead of inline text, allowing code interpreters (Python/pandas) to process large datasets — aligned with Microsoft BC MCP 2026 Wave 1 pattern.
-  - **How:** Added `resultFormat` and `fileFormat` parameters to `query_telemetry` tool. Created `ExportService` in shared package for CSV/JSON file exports. Modified SDK server to return MCP embedded resources (`{type: 'resource'}`) and registered a resource template (`bctb://exports/{filename}`) for `resources/list` and `resources/read` support. Backward compatible — defaults to `text` format. Updated documentation across README, MCP README, shared README, UserGuide, and CLAUDE.md.
-
----
-**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
-**Date:** 2026-07-18
-**Why:** PR #129 (KB article, tenant-activity-footprint) failed only the validate-kb-index check — the contributor added the article without regenerating knowledge-base/index.json.
-**How:** Verified locally in a throwaway worktree that regenerating the index is the only needed change (6→7 articles), then pushed the regenerated index.json to the contributor's fork branch (maintainerCanModify=true), preserving their authorship. Commit 3044f82 on gdrgdev:gdrgdev-add-tenant-activity-footprint.
-
----
-**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
-**Date:** 2026-07-18
-**Why:** PR #108 (MCP embedded resources for query_telemetry) was CONFLICTING (branched at v3.3.4, main moved to v3.6.0), was never green (April CI failure), collided on telemetry ID TB-MCP-113, leaked file:// paths into model context, and relied on Linux-unreliable birthtime for cleanup.
-**How:** Full SDD cycle: spec docs/specs/131-query-telemetry-embedded-resources.md (approved, issue #131) + plan docs/plans/pr108-embedded-resources-remediation.md; resolved all 7 merge conflicts in an isolated worktree keeping main's KB/roots work and the PR's resource machinery; RED-first amendments for AC5-AC8 (bctb:// URIs, mtime cleanup, TB-MCP-117, real capabilities assertion, mock fixes); 1585 tests green + coverage thresholds met; pushed merge+fix commits to DmitryKatson's branch (maintainerCanModify), updated PR body (Closes #131), commented explanation. Commits 8f351eb/ee89e4a/488da5e on the fork branch.
-
----
-**EntryId:** D9D9DD59-8E52-4922-9157-61F62A0E815B
-**Date:** 2026-07-18
-**Why:** PR #108's codecov statuses stayed red after remediation: CI never uploaded packages/shared coverage (exports.ts diff read as 0%), and the handler/resource-callback layers lacked direct tests.
-**How:** Added handler-layer tests for the resultFormat:'resource' branch (AC1-AC3) and resource-template list/read callback tests (AC4) — 4 tests, pushed to the PR branch; added shared-coverage upload (flag: shared) to ci.yml on main and merged it into the PR branch. Result: ALL CHECKS GREEN on PR #108 incl. codecov/patch + codecov/project. Spec 131 Verification table completed; plan pr108-embedded-resources-remediation flipped to done.
-
----
-**EntryId:** FFF94154-D24C-4D94-91C2-84AEA19A370B
-**Date:** 2026-07-18
-**Why:** Pre-merge smoke test of PR #108 (live resource-mode query against real telemetry) passed transport/security checks but exposed empty CSV headers — a pre-existing production bug: parseResult mapped Kusto-native columnName while the App Insights v1 API returns {name,type}, so columns was [null,…] for every query (confirmed on the released server).
-**How:** Spec-lite cycle docs/plans/done/kusto-column-names-fix.md: RED test with v1-shaped columns, one-line shape-tolerant mapping in shared/kusto.ts (columnName ?? name), CHANGELOG entries for mcp+extension, landed on main (559e096), merged into the PR branch, re-smoked: CSV header now carries real column names. Export test data deleted after verification.
+- **2026-06-05** — Priority folder detection for multi-root workspaces [Entry: ff218313-f301-4a81-8a57-e36ca9c32e96]
+  - **Why:** Enable priority folder aliases (telemetry/monitoring/analytics/insights) for enterprise scripted provisioning patterns in multi-root workspaces.
+  - **How:** Added PRIORITY_FOLDER_NAMES constant and findPriorityFolder() helper to workspaceFinder.ts; tests achieve 100% coverage.
+- **2026-06-05** — All 3 wizards updated for multi-root support [Entry: b8b02af4-f669-4785-83c3-be9ff61f83fe]
+  - **Why:** Remove multi-root workspace restriction from all UI wizards
+  - **How:** Updated SetupWizardProvider, AgentMonitoringSetupProvider, ProfileWizardProvider to use findConfigWorkspace() instead of workspaceFolders[0]; removed blocking HTML div and JavaScript logic from SetupWizard; 442 existing tests pass
