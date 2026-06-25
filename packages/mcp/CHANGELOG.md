@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.2] - 2026-06-25
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Fixed
 - **Workspace `.bctb-config.json` and `.vscode/.bctb/knowledge` were ignored under non-VS-Code MCP hosts (Claude Code, Cursor CLI, raw stdio), so `get_knowledge` silently returned "Knowledge Base is not available".** The server depended on the VS Code extension setting `BCTB_WORKSPACE_PATH`; without it, `workspacePath` fell back to the launch cwd (often an unrelated sibling folder) and the Knowledge Base never loaded. The workspace is now resolved host-agnostically: env → explicit `workspacePath` → **the directory of the `--config` file** → cwd, and an unexpanded `${workspaceFolder}` token no longer silently resolves to cwd. See [docs/plans/done/mcp-workspace-knowledge-discovery.md](../../docs/plans/done/mcp-workspace-knowledge-discovery.md).
 
