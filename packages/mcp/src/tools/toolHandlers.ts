@@ -161,6 +161,8 @@ export class ToolHandlers {
     private isStdioMode: boolean;
     public activeProfileName: string | null = null;
     public knowledgeBase: any = null;
+    /** Why the KB eager-load was skipped (set at startup) — surfaced in get_knowledge diagnostics. */
+    public kbSkipReason: string | null = null;
     private kbConsulted: boolean = false;
 
     constructor(
@@ -340,17 +342,23 @@ export class ToolHandlers {
                         this.kbConsulted = true;
                     }
                     if (!this.knowledgeBase) {
+                        const reason = this.kbSkipReason ?? 'unknown';
+                        const via = this.config.workspaceVia ?? 'unknown';
+                        const workspaceTried = this.config.workspacePath;
                         result = {
                             articles: [],
                             count: 0,
-                            message: 'Knowledge Base is not available. It may be disabled or failed to load at startup.',
+                            // Full paths go to the model (it needs them to fix the launch); never to telemetry.
+                            message: `Knowledge Base is not available (reason: ${reason}). Looked for .bctb-config.json + .vscode/.bctb/knowledge under '${workspaceTried}' (workspace resolved via '${via}'). If running outside VS Code, launch the MCP server with --config <workspace>/.bctb-config.json, set BCTB_WORKSPACE_PATH, or use an MCP host that advertises 'roots'.`,
+                            workspaceTried,
+                            resolvedVia: via,
                         };
                         this.services.usageTelemetry.trackEvent(
                             'Mcp.GetKnowledge',
                             cleanTelemetryProperties(createCommonProperties(
                                 TELEMETRY_EVENTS.MCP_TOOLS.GET_KNOWLEDGE, 'mcp',
                                 this.services.sessionId, this.services.installationId, VERSION,
-                                { profileHash, resultCount: 0, kbAvailable: 'false' }
+                                { profileHash, resultCount: 0, kbAvailable: 'false', kbSkipReason: reason, resolvedVia: via }
                             ))
                         );
                     } else {

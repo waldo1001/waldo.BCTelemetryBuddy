@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Workspace `.bctb-config.json` and `.vscode/.bctb/knowledge` were ignored under non-VS-Code MCP hosts (Claude Code, Cursor CLI, raw stdio), so `get_knowledge` silently returned "Knowledge Base is not available".** The server depended on the VS Code extension setting `BCTB_WORKSPACE_PATH`; without it, `workspacePath` fell back to the launch cwd (often an unrelated sibling folder) and the Knowledge Base never loaded. The workspace is now resolved host-agnostically: env → explicit `workspacePath` → **the directory of the `--config` file** → cwd, and an unexpanded `${workspaceFolder}` token no longer silently resolves to cwd. See [docs/plans/done/mcp-workspace-knowledge-discovery.md](../../docs/plans/done/mcp-workspace-knowledge-discovery.md).
+
+### Added
+- **MCP `roots` fallback for workspace knowledge.** When the eager (config-dir-anchored) load finds no workspace knowledge and the MCP client advertises the `roots` capability, the server requests the host's workspace roots after connecting and loads knowledge from the first root containing both `.bctb-config.json` and `.vscode/.bctb/knowledge`. This decouples the connection (from your global `--config`) from the knowledge (from the project you opened). Roots discovery never changes the active connection/profile.
+- **Diagnosable Knowledge Base failures.** `get_knowledge` now reports the path it looked under and the reason (`no-workspace-config`, `no-workspace-path`, `load-failed`) instead of a bare "not available", and the server logs a `[KB]` startup line. New telemetry events `TB-MCP-003` (workspace resolution) and `TB-MCP-004` (roots discovery) carry only path-free counts/enums.
+
 ## [3.5.1] - 2026-06-02
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

@@ -2042,3 +2042,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **What:** Added `"bc-telemetry-buddy-mcp": "./dist/cli.js"` to `packages/mcp/package.json` `bin`; new `package-bin.test.ts` regression test.
 - **Why:** v3.5.0 added multiple bins (`bctb-setup*`) with none matching the package name, so `npx -y bc-telemetry-buddy-mcp start` failed with "could not determine executable to run" → Claude Desktop "Server disconnected". Reproduced and verified end-to-end via `npm install -g --prefix`.
 - **How:** Plan → RED (bin key missing) → add alias → GREEN; 741 tests pass, root build clean. See docs/plans/done/mcp-bin-package-name-alias.md.
+
+## 2026-06-25 — Host-agnostic workspace & knowledge discovery (MCP)
+
+**Why:** Under non-VS-Code MCP hosts the server only loaded the global `--config`, so `workspacePath` fell back to launch cwd and `get_knowledge` silently returned "not available" — VS-Code-only `BCTB_WORKSPACE_PATH`/`${workspaceFolder}` was the hidden dependency.
+
+**How:** New `resolveWorkspacePath()` (env → explicit → config-dir → cwd, with `${...}` token guard) anchors workspace/knowledge/cache/queries to the loaded config's directory; `${workspaceFolder}` now falls back to that root instead of cwd. Added MCP `roots` fallback (`discoverWorkspaceViaRoots` via `oninitialized`) that loads knowledge from the host's opened workspace when eager load finds nothing — connection stays decoupled, never swapped. `get_knowledge` + a `[KB]` startup log now name the path tried + reason; path-free telemetry `TB-MCP-003`/`004`. Full plan: [docs/plans/done/mcp-workspace-knowledge-discovery.md](plans/done/mcp-workspace-knowledge-discovery.md).

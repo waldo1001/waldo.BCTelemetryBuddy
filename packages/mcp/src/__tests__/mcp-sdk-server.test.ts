@@ -308,6 +308,18 @@ describe('MCP SDK Server', () => {
             expect(source).toContain("import { startSdkStdioServer } from './mcpSdkServer.js'");
         });
 
+        test('stdio startup wires a roots-discovery fallback via oninitialized', () => {
+            const source = fs.readFileSync(
+                path.join(__dirname, '../mcpSdkServer.ts'),
+                'utf-8'
+            );
+
+            // Roots fallback is registered only when the eager load found nothing.
+            expect(source).toContain('discoverWorkspaceViaRoots');
+            expect(source).toContain('oninitialized');
+            expect(source).toContain('if (!kbLoad.service)');
+        });
+
         test('SDK server declares protocol 2025-06-18 capabilities', () => {
             const source = fs.readFileSync(
                 path.join(__dirname, '../mcpSdkServer.ts'),

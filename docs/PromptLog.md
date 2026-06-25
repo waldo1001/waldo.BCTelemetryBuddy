@@ -3354,3 +3354,9 @@ Change instructions an business logic to do this."
 - "Cleade gives me an error - here are the logs: …" (MCP cache ENOENT + App Insights metrics-quota flood; later: Claude Desktop "Server disconnected / Could not attach to MCP server").
 - "Please fix this, because I think it's since last version"
 - "implement! tdd"
+
+## 2026-06-25 — MCP host-agnostic workspace/knowledge discovery
+
+> [Design brief / bug report] BC Telemetry Buddy — workspace config & knowledge are not loaded under non-VS-Code MCP hosts (Claude Code). Goal: a host-agnostic way for the MCP server to discover the active workspace's `.bctb-config.json` and `.vscode/.bctb/knowledge`, not only when launched by the VS Code extension. (Full brief proposed solutions S1–S5.)
+
+> Usecase - if I would NOT have a config-file in the dir I'm using claude for - what is it going to do. Error? or use the user-config-file?

@@ -33,10 +33,17 @@ const baseConfig: MCPConfig = {
 } as any;
 
 describe('maybeLoadKnowledgeBase', () => {
+    let consoleErrorSpy: jest.SpyInstance;
+
     beforeEach(() => {
         mockLoadAll.mockClear();
         mockKbCtor.mockClear();
         mockExistsSync.mockReset();
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     it('does not eager-load KB when the workspace has no .bctb-config.json (home-dir fallback scenario)', async () => {
@@ -48,7 +55,7 @@ describe('maybeLoadKnowledgeBase', () => {
 
         const result = await maybeLoadKnowledgeBase(baseConfig);
 
-        expect(result).toBeNull();
+        expect(result.service).toBeNull();
         expect(mockKbCtor).not.toHaveBeenCalled();
         expect(mockLoadAll).not.toHaveBeenCalled();
     });
@@ -60,27 +67,43 @@ describe('maybeLoadKnowledgeBase', () => {
 
         const result = await maybeLoadKnowledgeBase(baseConfig);
 
-        expect(result).not.toBeNull();
+        expect(result.service).not.toBeNull();
+        expect(result.reason).toBe('loaded');
         expect(mockKbCtor).toHaveBeenCalledTimes(1);
         expect(mockLoadAll).toHaveBeenCalledTimes(1);
     });
 
-    it('returns null and swallows KB load failures (non-fatal)', async () => {
+    it('returns a load-failed reason and swallows KB load failures (non-fatal)', async () => {
         mockExistsSync.mockReturnValue(true);
         mockLoadAll.mockRejectedValueOnce(new Error('boom'));
 
         const result = await maybeLoadKnowledgeBase(baseConfig);
 
-        expect(result).toBeNull();
+        expect(result.service).toBeNull();
+        expect(result.reason).toBe('load-failed');
     });
 
-    it('returns null when workspacePath is empty/unset', async () => {
+    it('returns no-workspace-path when workspacePath is empty/unset', async () => {
         mockExistsSync.mockReturnValue(false);
         const configWithoutWorkspace = { ...baseConfig, workspacePath: '' } as MCPConfig;
 
         const result = await maybeLoadKnowledgeBase(configWithoutWorkspace);
 
-        expect(result).toBeNull();
+        expect(result.service).toBeNull();
+        expect(result.reason).toBe('no-workspace-path');
         expect(mockKbCtor).not.toHaveBeenCalled();
+    });
+
+    it('AC5: reports the path it tried and logs a loud diagnostic when the workspace config is missing', async () => {
+        const expectedPath = path.join('/tmp/unrelated-workspace', '.bctb-config.json');
+        mockExistsSync.mockImplementation((p: string) => p !== expectedPath);
+
+        const result = await maybeLoadKnowledgeBase({ ...baseConfig, workspaceVia: 'cwd' } as MCPConfig);
+
+        expect(result.reason).toBe('no-workspace-config');
+        expect(result.workspaceConfigPath).toBe(expectedPath);
+        // Loud, diagnosable: the stderr line must name the path it looked for.
+        const logged = consoleErrorSpy.mock.calls.map(c => c.join(' ')).join('\n');
+        expect(logged).toContain(expectedPath);
     });
 });

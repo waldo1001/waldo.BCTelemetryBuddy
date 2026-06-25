@@ -36,6 +36,10 @@ export interface MCPConfig {
     // Config file path (set by loadConfigFromFile for profile switching)
     configFilePath?: string;
 
+    // How workspacePath was resolved (diagnostics/telemetry; set by loadConfigFromFile)
+    workspaceVia?: 'explicit' | 'env' | 'config-dir' | 'cwd';
+    workspaceTokenStripped?: boolean;
+
     // Knowledge Base
     knowledgeBase?: KBConfig;
 }
@@ -161,6 +165,59 @@ export function validateConfig(config: MCPConfig): string[] {
     return errors;
 }
 
+/** Matches an unexpanded `${...}` variable token (e.g. VS Code's `${workspaceFolder}`). */
+const UNEXPANDED_VAR_TOKEN = /\$\{[^}]+\}/;
+
+/**
+ * How the workspace path was resolved — surfaced for diagnostics/telemetry.
+ */
+export interface WorkspaceResolution {
+    path: string;
+    via: 'explicit' | 'env' | 'config-dir' | 'cwd';
+    tokenStripped: boolean;
+}
+
+/**
+ * Resolve the workspace root host-agnostically (S2/S3).
+ *
+ * Precedence (env first, to keep the VS Code extension path byte-identical):
+ *   1. BCTB_WORKSPACE_PATH (if set and not an unexpanded `${...}` token)  -> 'env'
+ *   2. rawWorkspacePath    (if set and not a token)                       -> 'explicit'
+ *   3. dirname(configFilePath) (if set)                                   -> 'config-dir'
+ *   4. process.cwd()                                                      -> 'cwd'
+ *
+ * Any candidate still containing a `${...}` token is treated as unset and
+ * `tokenStripped` is reported true.
+ */
+export function resolveWorkspacePath(
+    rawWorkspacePath: string | undefined,
+    configFilePath: string | null
+): WorkspaceResolution {
+    const env = process.env.BCTB_WORKSPACE_PATH;
+    const envHasToken = !!env && UNEXPANDED_VAR_TOKEN.test(env);
+
+    // 1. Environment variable wins (the VS Code extension always sets this).
+    if (env && !envHasToken) {
+        return { path: env, via: 'env', tokenStripped: false };
+    }
+
+    const rawHasToken = !!rawWorkspacePath && UNEXPANDED_VAR_TOKEN.test(rawWorkspacePath);
+    const tokenStripped = rawHasToken || envHasToken;
+
+    // 2. Explicit, non-token workspacePath from the config.
+    if (rawWorkspacePath && !rawHasToken) {
+        return { path: rawWorkspacePath, via: 'explicit', tokenStripped };
+    }
+
+    // 3. The directory the config file lives in (the host-agnostic fix).
+    if (configFilePath) {
+        return { path: path.dirname(configFilePath), via: 'config-dir', tokenStripped };
+    }
+
+    // 4. Last resort: the current working directory.
+    return { path: process.cwd(), via: 'cwd', tokenStripped };
+}
+
 /**
  * Load config from file with discovery and profile support
  * Returns null if no config file is found (allows fallback to env vars)
@@ -256,6 +313,9 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
         // Resolve profile inheritance
         const resolvedProfile = resolveProfileInheritance(rawConfig.profiles, profile);
 
+        // Resolve the workspace root host-agnostically (env -> explicit -> config-dir -> cwd).
+        const ws = resolveWorkspacePath(resolvedProfile.workspacePath, filePath);
+
         // Merge with top-level settings (cache, sanitize, references)
         const merged: MCPConfig = {
             ...resolvedProfile as MCPConfig,
@@ -264,7 +324,11 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
             removePII: resolvedProfile.removePII ?? rawConfig.sanitize?.removePII ?? false,
             references: resolvedProfile.references ?? rawConfig.references ?? [],
             port: resolvedProfile.port ?? 52345,
-            workspacePath: resolvedProfile.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd(),
+            // Keep a raw token (e.g. ${workspaceFolder}) so expandEnvironmentVariables can
+            // expand it against ws.path while preserving any suffix; otherwise default to ws.path.
+            workspacePath: resolvedProfile.workspacePath ?? ws.path,
+            workspaceVia: ws.via,
+            workspaceTokenStripped: ws.tokenStripped,
             queriesFolder: resolvedProfile.queriesFolder ?? 'queries',
             connectionName: resolvedProfile.connectionName ?? 'Default',
             tenantId: resolvedProfile.tenantId ?? '',
@@ -274,10 +338,11 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
             configFilePath: filePath!
         };
 
-        return expandEnvironmentVariables(merged);
+        return expandEnvironmentVariables(merged, ws.path);
     }
 
     // Single profile config (backward compatible)
+    const ws = resolveWorkspacePath(rawConfig.workspacePath, filePath);
     const singleConfig: MCPConfig = {
         connectionName: rawConfig.connectionName ?? 'Default',
         tenantId: rawConfig.tenantId ?? '',
@@ -290,13 +355,15 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
         cacheTTLSeconds: rawConfig.cacheTTLSeconds ?? 3600,
         removePII: rawConfig.removePII ?? false,
         port: rawConfig.port ?? 52345,
-        workspacePath: rawConfig.workspacePath ?? process.env.BCTB_WORKSPACE_PATH ?? process.cwd(),
+        workspacePath: rawConfig.workspacePath ?? ws.path,
+        workspaceVia: ws.via,
+        workspaceTokenStripped: ws.tokenStripped,
         queriesFolder: rawConfig.queriesFolder ?? 'queries',
         references: rawConfig.references ?? [],
         configFilePath: filePath!
     };
 
-    return expandEnvironmentVariables(singleConfig);
+    return expandEnvironmentVariables(singleConfig, ws.path);
 }
 
 /**
@@ -351,12 +418,14 @@ function deepMerge(parent: any, child: any): any {
  * Expand environment variables in config (${VAR_NAME})
  * Special handling for VS Code placeholders like ${workspaceFolder}
  */
-function expandEnvironmentVariables(config: any): any {
+function expandEnvironmentVariables(config: any, workspaceRoot?: string): any {
     if (typeof config === 'string') {
         return config.replace(/\$\{([^}]+)\}/g, (_, varName) => {
-            // Special case: ${workspaceFolder} maps to BCTB_WORKSPACE_PATH
+            // Special case: ${workspaceFolder} maps to the resolved workspace root.
+            // Outside VS Code (no BCTB_WORKSPACE_PATH) this anchors to the config-file
+            // directory instead of silently falling back to cwd — the host-agnostic fix.
             if (varName === 'workspaceFolder') {
-                const value = process.env.BCTB_WORKSPACE_PATH || process.cwd();
+                const value = process.env.BCTB_WORKSPACE_PATH || workspaceRoot || process.cwd();
                 console.error(`[Config] Expanding \${workspaceFolder} to: ${value}`);
                 return value;
             }
@@ -365,13 +434,13 @@ function expandEnvironmentVariables(config: any): any {
     }
 
     if (Array.isArray(config)) {
-        return config.map(item => expandEnvironmentVariables(item));
+        return config.map(item => expandEnvironmentVariables(item, workspaceRoot));
     }
 
     if (typeof config === 'object' && config !== null) {
         const result: any = {};
         for (const key in config) {
-            result[key] = expandEnvironmentVariables(config[key]);
+            result[key] = expandEnvironmentVariables(config[key], workspaceRoot);
         }
         return result;
     }

@@ -235,6 +235,38 @@ If Claude Desktop shows connection errors:
 3. Test authentication: Run `az account show` to verify Azure CLI login
 4. Ensure paths use absolute paths with proper escaping
 
+### With Claude Code & other non-VS-Code hosts
+
+Outside VS Code there is no extension to inject `BCTB_WORKSPACE_PATH`, so the server discovers the workspace (and therefore its Knowledge Base, cache, and queries) host-agnostically. **The connection config and the workspace knowledge are independent**: the config you load supplies the connection, and the workspace knowledge is located separately. Resolution order for the workspace folder:
+
+1. **`BCTB_WORKSPACE_PATH`** environment variable, if set.
+2. **An explicit `workspacePath`** in the loaded config (absolute path, not `${workspaceFolder}`).
+3. **The directory of the `--config` file** — so pointing `--config` at a workspace's `.bctb-config.json` auto-anchors knowledge to that folder. *(`${workspaceFolder}` is only expanded by VS Code; outside VS Code it now resolves to this config directory instead of silently falling back to the launch cwd.)*
+4. **The host's workspace roots** — if the MCP client advertises the [`roots`](https://modelcontextprotocol.io/docs/concepts/roots) capability (Claude Code does), the server requests them after connecting and loads workspace knowledge from the first root containing both `.bctb-config.json` and `.vscode/.bctb/knowledge`. This works even when `--config` points at a global config, so your global connection keeps working while knowledge comes from the project you opened.
+
+**Recommended — point `--config` at the workspace config** (project-scoped `.mcp.json` at the workspace root):
+
+```json
+{
+  "mcpServers": {
+    "bc-telemetry-buddy-mcp": {
+      "command": "npx",
+      "args": ["-y", "bc-telemetry-buddy-mcp", "start",
+               "--config", "/abs/path/TelemetryAnalysis/.bctb-config.json"],
+      "env": {}
+    }
+  }
+}
+```
+
+**Or set `BCTB_WORKSPACE_PATH` explicitly** in the server's `env` to override discovery:
+
+```json
+"env": { "BCTB_WORKSPACE_PATH": "/abs/path/TelemetryAnalysis" }
+```
+
+If knowledge can't be located, `get_knowledge` returns a diagnostic naming the exact path it looked under and why (e.g. `reason: no-workspace-config`) — so a missing Knowledge Base is debuggable rather than silent. The server also logs a `[KB]` line to stderr at startup.
+
 ### With Copilot Studio
 
 Register as Custom Action:

@@ -1,4 +1,4 @@
-import { loadConfig, validateConfig, loadConfigFromFile, initConfig, MCPConfig, Reference } from '../config.js';
+import { loadConfig, validateConfig, loadConfigFromFile, initConfig, resolveWorkspacePath, MCPConfig, Reference } from '../config.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -24,6 +24,74 @@ describe('Configuration Module', () => {
     afterAll(() => {
         // Restore original environment
         process.env = originalEnv;
+    });
+
+    describe('resolveWorkspacePath', () => {
+        // Host-agnostic workspace resolution: env -> explicit -> config-dir -> cwd,
+        // treating any unexpanded ${...} token as unset.
+        // See docs/plans/mcp-workspace-knowledge-discovery.md.
+
+        it('AC1: anchors to the config file directory when nothing else is set', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const res = resolveWorkspacePath(undefined, '/abs/TelemetryAnalysis/.bctb-config.json');
+            expect(res.path).toBe(path.dirname('/abs/TelemetryAnalysis/.bctb-config.json'));
+            expect(res.via).toBe('config-dir');
+            expect(res.tokenStripped).toBe(false);
+        });
+
+        it('AC1b: dirname handles a nested config path correctly', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const res = resolveWorkspacePath(undefined, '/a/b/c/.bctb-config.json');
+            expect(res.path).toBe('/a/b/c');
+            expect(res.via).toBe('config-dir');
+        });
+
+        it('AC2: BCTB_WORKSPACE_PATH wins over config-dir (VS Code no-regress)', () => {
+            process.env.BCTB_WORKSPACE_PATH = '/env/workspace';
+            const res = resolveWorkspacePath(undefined, '/abs/TelemetryAnalysis/.bctb-config.json');
+            expect(res.path).toBe('/env/workspace');
+            expect(res.via).toBe('env');
+            expect(res.tokenStripped).toBe(false);
+        });
+
+        it('AC3: an explicit (non-token) workspacePath is preserved', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const res = resolveWorkspacePath('/explicit/ws', '/abs/cfg/.bctb-config.json');
+            expect(res.path).toBe('/explicit/ws');
+            expect(res.via).toBe('explicit');
+            expect(res.tokenStripped).toBe(false);
+        });
+
+        it('AC4: an unexpanded ${workspaceFolder} token falls through to config-dir', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const res = resolveWorkspacePath('${workspaceFolder}', '/abs/TelemetryAnalysis/.bctb-config.json');
+            expect(res.via).toBe('config-dir');
+            expect(res.path).toBe('/abs/TelemetryAnalysis');
+            expect(res.tokenStripped).toBe(true);
+        });
+
+        it('AC4b: a token workspacePath with no config file falls through to cwd', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            const res = resolveWorkspacePath('${workspaceFolder}', null);
+            expect(res.via).toBe('cwd');
+            expect(res.path).toBe(process.cwd());
+            expect(res.tokenStripped).toBe(true);
+        });
+
+        it('AC4c: a BCTB_WORKSPACE_PATH that is itself a token is ignored', () => {
+            process.env.BCTB_WORKSPACE_PATH = '${workspaceFolder}';
+            const res = resolveWorkspacePath(undefined, '/abs/cfg/.bctb-config.json');
+            expect(res.via).toBe('config-dir');
+            expect(res.tokenStripped).toBe(true);
+        });
+
+        it('AC12: falls back to cwd (never throws) when nothing is resolvable', () => {
+            delete process.env.BCTB_WORKSPACE_PATH;
+            expect(() => resolveWorkspacePath(undefined, null)).not.toThrow();
+            const res = resolveWorkspacePath(undefined, null);
+            expect(res.via).toBe('cwd');
+            expect(res.path).toBe(process.cwd());
+        });
     });
 
     describe('loadConfig', () => {
@@ -859,10 +927,10 @@ describe('Configuration Module', () => {
             delete process.env.BCTB_WORKSPACE_PATH;
         });
 
-        it('should expand ${workspaceFolder} to cwd when BCTB_WORKSPACE_PATH not set', () => {
-            // Arrange
+        it('should anchor ${workspaceFolder} to the config-file directory when BCTB_WORKSPACE_PATH not set', () => {
+            // Arrange — outside VS Code, ${workspaceFolder} must NOT silently
+            // resolve to cwd (the historical bug); it anchors to the config dir.
             delete process.env.BCTB_WORKSPACE_PATH;
-            const expectedPath = process.cwd();
 
             const configPath = path.join(testConfigDir, '.bctb-config.json');
             const config = {
@@ -879,9 +947,31 @@ describe('Configuration Module', () => {
             // Act
             const loaded = loadConfigFromFile(configPath);
 
+            // Assert — anchors to dirname(configPath), i.e. testConfigDir
+            expect(loaded).not.toBeNull();
+            expect(loaded!.workspacePath).toBe(testConfigDir);
+        });
+
+        it('should default workspacePath to the config-file directory when omitted and no env', () => {
+            // Arrange — AC1 wiring: a flat config with no workspacePath at all.
+            delete process.env.BCTB_WORKSPACE_PATH;
+
+            const configPath = path.join(testConfigDir, '.bctb-config.json');
+            const config = {
+                connectionName: 'Test',
+                authFlow: 'azure_cli',
+                applicationInsightsAppId: 'test-app-id',
+                kustoClusterUrl: 'https://ade.applicationinsights.io'
+                // no workspacePath
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+            // Act
+            const loaded = loadConfigFromFile(configPath);
+
             // Assert
             expect(loaded).not.toBeNull();
-            expect(loaded!.workspacePath).toBe(expectedPath);
+            expect(loaded!.workspacePath).toBe(testConfigDir);
         });
     });
 

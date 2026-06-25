@@ -26,44 +26,168 @@ import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { KnowledgeBaseService, KBConfig } from '@bctb/shared';
+import { fileURLToPath } from 'url';
+import {
+    KnowledgeBaseService,
+    KBConfig,
+    TELEMETRY_EVENTS,
+    createCommonProperties,
+    cleanTelemetryProperties,
+} from '@bctb/shared';
+
+/**
+ * Why the Knowledge Base eager-load did or didn't happen.
+ */
+export type KbLoadReason = 'loaded' | 'no-workspace-config' | 'load-failed' | 'no-workspace-path';
+
+export interface KbLoadResult {
+    service: KnowledgeBaseService | null;
+    reason: KbLoadReason;
+    /** The workspace-local `.bctb-config.json` path that gates the load. */
+    workspaceConfigPath: string;
+}
 
 /**
  * Eager-load the Knowledge Base at MCP startup — but only when the workspace
  * directory itself contains `.bctb-config.json`. Checking
  * `loadConfigFromFile`'s return value is not enough: it falls back to
  * `~/.bctb/config.json`, and `resolvedConfig.workspacePath` then resolves to
- * `BCTB_WORKSPACE_PATH` / `process.cwd()` — which is the current (unrelated)
- * workspace. Without this direct workspace-local check, the KB cache ends up
- * written into every workspace MCP touches.
+ * `BCTB_WORKSPACE_PATH` / config-dir / `process.cwd()`. Without this direct
+ * workspace-local check, the KB cache ends up written into every workspace
+ * MCP touches.
  *
- * Returns the loaded service, or null when loading was skipped or failed.
- * Failures are non-fatal and logged to stderr.
+ * Returns the loaded service plus a diagnosable reason. When the load is
+ * skipped because the workspace has no `.bctb-config.json`, a loud stderr line
+ * names the path that was tried and how the workspace was resolved — so the
+ * "Knowledge Base is not available" symptom is debuggable rather than silent.
+ * Failures are non-fatal.
  */
 export async function maybeLoadKnowledgeBase(
     resolvedConfig: MCPConfig
-): Promise<KnowledgeBaseService | null> {
+): Promise<KbLoadResult> {
     if (!resolvedConfig.workspacePath) {
-        return null;
+        return { service: null, reason: 'no-workspace-path', workspaceConfigPath: '' };
     }
     const workspaceConfigPath = path.join(resolvedConfig.workspacePath, '.bctb-config.json');
     if (!fs.existsSync(workspaceConfigPath)) {
-        return null;
+        console.error(
+            `[KB] Knowledge Base not loaded: no .bctb-config.json at ${workspaceConfigPath} ` +
+            `(workspace resolved via '${resolvedConfig.workspaceVia ?? 'unknown'}'). ` +
+            `Launch with --config <workspace>/.bctb-config.json, set BCTB_WORKSPACE_PATH, ` +
+            `or use an MCP host that advertises 'roots'.`
+        );
+        return { service: null, reason: 'no-workspace-config', workspaceConfigPath };
     }
     try {
-        const kbConfig: KBConfig = resolvedConfig.knowledgeBase ?? {
-            enabled: true,
-            source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
-            exclude: [],
-            autoRefresh: true,
-            cacheOnly: false,
-        };
-        const kbService = new KnowledgeBaseService(resolvedConfig.workspacePath, kbConfig);
+        const kbService = new KnowledgeBaseService(resolvedConfig.workspacePath, defaultKbConfig(resolvedConfig));
         await kbService.loadAll();
-        return kbService;
+        return { service: kbService, reason: 'loaded', workspaceConfigPath };
     } catch (err: any) {
         console.error(`KB load failed (non-fatal): ${err.message}`);
+        return { service: null, reason: 'load-failed', workspaceConfigPath };
+    }
+}
+
+/** Resolve the KB config for a workspace, falling back to the public defaults. */
+function defaultKbConfig(resolvedConfig: MCPConfig): KBConfig {
+    return resolvedConfig.knowledgeBase ?? {
+        enabled: true,
+        source: 'https://github.com/waldo1001/waldo.BCTelemetryBuddy/tree/main/knowledge-base',
+        exclude: [],
+        autoRefresh: true,
+        cacheOnly: false,
+    };
+}
+
+/**
+ * Locate workspace knowledge via the MCP "roots" capability (S1).
+ *
+ * This is the host-agnostic fallback for clients (e.g. Claude Code) that
+ * advertise their workspace roots but were launched with a global `--config`
+ * (so the eager, config-dir-anchored load found nothing). It is intentionally
+ * scoped to *knowledge only* — it never swaps the active connection/profile,
+ * so a client-supplied root cannot silently retarget which Application Insights
+ * resource is queried.
+ *
+ * Runs from the server's `oninitialized` hook (roots can only be requested
+ * after the client connects). All failures are non-fatal. Telemetry is
+ * path-free: only counts and booleans, never URIs or filesystem paths.
+ */
+export async function discoverWorkspaceViaRoots(
+    server: McpServer,
+    resolvedConfig: MCPConfig,
+    toolHandlers: ToolHandlers
+): Promise<KnowledgeBaseService | null> {
+    // Eager load already won — nothing to do.
+    if (toolHandlers.knowledgeBase) {
         return null;
+    }
+
+    const lowLevel: any = server.server;
+    const caps = lowLevel?.getClientCapabilities?.();
+    if (!caps?.roots) {
+        trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: false, rootsCount: 0, matched: false, kbLoaded: false });
+        return null;
+    }
+
+    let roots: Array<{ uri: string; name?: string }> = [];
+    try {
+        const res = await lowLevel.listRoots();
+        roots = res?.roots ?? [];
+    } catch (err: any) {
+        console.error(`[KB] roots discovery failed (non-fatal): ${err?.message}`);
+        trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: 0, matched: false, kbLoaded: false });
+        return null;
+    }
+
+    for (const root of roots) {
+        if (!root?.uri || !root.uri.startsWith('file://')) {
+            continue;
+        }
+        let rootPath: string;
+        try {
+            rootPath = fileURLToPath(root.uri);
+        } catch {
+            continue;
+        }
+        const cfgPath = path.join(rootPath, '.bctb-config.json');
+        const kbDir = path.join(rootPath, '.vscode', '.bctb', 'knowledge');
+        if (fs.existsSync(cfgPath) && fs.existsSync(kbDir)) {
+            try {
+                const svc = new KnowledgeBaseService(rootPath, defaultKbConfig(resolvedConfig));
+                await svc.loadAll();
+                toolHandlers.knowledgeBase = svc;
+                toolHandlers.kbSkipReason = 'loaded-via-roots';
+                console.error(`[KB] Knowledge Base loaded via MCP roots.`);
+                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: true });
+                return svc;
+            } catch (err: any) {
+                console.error(`[KB] roots KB load failed (non-fatal): ${err?.message}`);
+                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: false });
+                return null;
+            }
+        }
+    }
+
+    trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: false, kbLoaded: false });
+    return null;
+}
+
+function trackRootsDiscovery(
+    toolHandlers: ToolHandlers,
+    props: { clientAdvertisedRoots: boolean; rootsCount: number; matched: boolean; kbLoaded: boolean }
+): void {
+    try {
+        toolHandlers.services.usageTelemetry.trackEvent(
+            'Mcp.RootsDiscovery',
+            cleanTelemetryProperties(createCommonProperties(
+                TELEMETRY_EVENTS.MCP.ROOTS_DISCOVERY, 'mcp',
+                toolHandlers.services.sessionId, toolHandlers.services.installationId, VERSION,
+                props
+            ))
+        );
+    } catch {
+        // Telemetry must never break discovery.
     }
 }
 
@@ -286,13 +410,38 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);
 
-    const kbService = await maybeLoadKnowledgeBase(resolvedConfig);
-    if (kbService) {
-        toolHandlers.knowledgeBase = kbService;
+    const kbLoad = await maybeLoadKnowledgeBase(resolvedConfig);
+    if (kbLoad.service) {
+        toolHandlers.knowledgeBase = kbLoad.service;
     }
+    toolHandlers.kbSkipReason = kbLoad.reason;
 
     // Create SDK server with all tools
     const server = createSdkServer(toolHandlers);
+
+    // If the eager (config-dir-anchored) load found no workspace knowledge, fall
+    // back to MCP roots once the client connects. roots can only be requested
+    // after initialize, so this runs from the oninitialized hook.
+    if (!kbLoad.service) {
+        server.server.oninitialized = () => {
+            void discoverWorkspaceViaRoots(server, resolvedConfig, toolHandlers);
+        };
+    }
+
+    // Emit how the workspace was resolved (path-free) for field diagnostics.
+    services.usageTelemetry.trackEvent(
+        'Mcp.WorkspaceResolved',
+        cleanTelemetryProperties(createCommonProperties(
+            TELEMETRY_EVENTS.MCP.WORKSPACE_RESOLVED, 'mcp',
+            services.sessionId, services.installationId, VERSION,
+            {
+                via: resolvedConfig.workspaceVia ?? (process.env.BCTB_WORKSPACE_PATH ? 'env' : 'cwd'),
+                tokenStripped: resolvedConfig.workspaceTokenStripped ?? false,
+                host: process.env.BCTB_WORKSPACE_PATH ? 'vscode' : 'other',
+                kbSkipReason: kbLoad.reason,
+            }
+        ))
+    );
 
     // Authenticate silently if config is valid
     if (configErrors.length === 0) {

@@ -263,6 +263,34 @@ describe('Knowledge Base MCP Tools', () => {
             expect(result.message).toContain('not available');
         });
 
+        it('AC6: names the workspace path + skip reason in the message, but keeps telemetry path-free', async () => {
+            const services = createMockServices();
+            const handlers = new ToolHandlers(TEST_CONFIG, services, true);
+            handlers.kbSkipReason = 'no-workspace-config';
+            // No knowledgeBase attached
+
+            const result = await handlers.executeToolCall('get_knowledge', {});
+
+            // Model-facing message must name the path tried + reason so the launch can be fixed.
+            expect(result.message).toContain('not available');
+            expect(result.message).toContain('no-workspace-config');
+            expect(result.message).toContain('/test/workspace');
+            expect(result.workspaceTried).toBe('/test/workspace');
+
+            // Telemetry must carry the reason but NEVER a filesystem path.
+            const call = (services.usageTelemetry.trackEvent as jest.Mock).mock.calls
+                .find(c => c[0] === 'Mcp.GetKnowledge');
+            expect(call).toBeDefined();
+            const props = call[1];
+            expect(props.kbSkipReason).toBe('no-workspace-config');
+            for (const v of Object.values(props)) {
+                if (typeof v === 'string') {
+                    expect(v.includes('/')).toBe(false);
+                    expect(v.includes('\\')).toBe(false);
+                }
+            }
+        });
+
         it('should handle search with no results gracefully', async () => {
             const services = createMockServices();
             const handlers = new ToolHandlers(TEST_CONFIG, services, true);

@@ -27,6 +27,14 @@ describe('TelemetryEvents', () => {
             expect(TELEMETRY_EVENTS.MCP.ERROR).toBe('TB-MCP-005');
         });
 
+        it('AC10: should export the workspace-discovery event constants and keep them unique', () => {
+            expect(TELEMETRY_EVENTS.MCP.WORKSPACE_RESOLVED).toBe('TB-MCP-003');
+            expect(TELEMETRY_EVENTS.MCP.ROOTS_DISCOVERY).toBe('TB-MCP-004');
+
+            const mcpIds = Object.values(TELEMETRY_EVENTS.MCP);
+            expect(new Set(mcpIds).size).toBe(mcpIds.length);
+        });
+
         it('should export all MCP tool event constants', () => {
             expect(TELEMETRY_EVENTS.MCP_TOOLS.QUERY_TELEMETRY).toBe('TB-MCP-101');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_SAVED_QUERIES).toBe('TB-MCP-102');
