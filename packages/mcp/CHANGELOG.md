@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Highest blast-radius rating across plans landed but unreleased: `low-risk`._
+## [3.6.0] - 2026-07-18
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
 
 ### Added
 - **Per-workspace connections are now discoverable and selectable under Claude Code (and other roots-advertising hosts).** A workspace's own flat `.bctb-config.json` connection is discovered from `CLAUDE_PROJECT_DIR` (synchronous, checked at the opened folder and one level below — so the `…/<Customer>/TelemetryAnalysis/.bctb-config.json` layout is found) and from the MCP `roots` capability. Discovered connections appear in `list_profiles` tagged `source:"workspace"` and are selectable with `switch_profile <name>` — no global-config edit, no restart. A single globally-registered server can now query any customer workspace you open. See [docs/plans/mcp-workspace-connection-discovery.md](../../docs/plans/mcp-workspace-connection-discovery.md).
