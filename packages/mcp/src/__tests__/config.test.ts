@@ -1,4 +1,4 @@
-import { loadConfig, validateConfig, loadConfigFromFile, initConfig, resolveWorkspacePath, MCPConfig, Reference } from '../config.js';
+import { loadConfig, validateConfig, loadConfigFromFile, initConfig, resolveWorkspacePath, scanDirForWorkspaceConfigs, readWorkspaceConnectionMeta, MCPConfig, Reference } from '../config.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -1027,6 +1027,124 @@ describe('Configuration Module', () => {
             expect(config.cache.ttlSeconds).toBe(3600);
             expect(config.sanitize.removePII).toBe(false);
             expect(Array.isArray(config.references)).toBe(true);
+        });
+    });
+
+    // ---- Per-workspace connection discovery (docs/plans/mcp-workspace-connection-discovery.md) ----
+
+    describe('scanDirForWorkspaceConfigs', () => {
+        let dir: string;
+
+        beforeEach(() => {
+            dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-test-scan-'));
+        });
+        afterEach(() => {
+            if (fs.existsSync(dir)) { fs.rmSync(dir, { recursive: true, force: true }); }
+        });
+
+        it('AC-W1: finds a config directly in the scanned dir', () => {
+            const cfg = path.join(dir, '.bctb-config.json');
+            fs.writeFileSync(cfg, '{}');
+            const found = scanDirForWorkspaceConfigs(dir);
+            expect(found).toContain(cfg);
+        });
+
+        it('AC-W1: finds a config one level down (the TelemetryAnalysis layout)', () => {
+            const sub = path.join(dir, 'TelemetryAnalysis');
+            fs.mkdirSync(sub);
+            const cfg = path.join(sub, '.bctb-config.json');
+            fs.writeFileSync(cfg, '{}');
+            const found = scanDirForWorkspaceConfigs(dir);
+            expect(found).toContain(cfg);
+        });
+
+        it('AC-W1: skips node_modules, .git and dot-directories', () => {
+            for (const bad of ['node_modules', '.git', '.hidden']) {
+                const sub = path.join(dir, bad);
+                fs.mkdirSync(sub);
+                fs.writeFileSync(path.join(sub, '.bctb-config.json'), '{}');
+            }
+            const found = scanDirForWorkspaceConfigs(dir);
+            expect(found).toEqual([]);
+        });
+
+        it('AC-W1: returns [] when no config exists', () => {
+            expect(scanDirForWorkspaceConfigs(dir)).toEqual([]);
+        });
+
+        it('AC-W1: returns [] for a non-existent / unreadable dir without throwing', () => {
+            expect(() => scanDirForWorkspaceConfigs(path.join(dir, 'does-not-exist'))).not.toThrow();
+            expect(scanDirForWorkspaceConfigs(path.join(dir, 'does-not-exist'))).toEqual([]);
+        });
+
+        it('AC-W1: does not descend more than one level', () => {
+            const deep = path.join(dir, 'a', 'b');
+            fs.mkdirSync(deep, { recursive: true });
+            fs.writeFileSync(path.join(deep, '.bctb-config.json'), '{}');
+            expect(scanDirForWorkspaceConfigs(dir)).toEqual([]);
+        });
+    });
+
+    describe('readWorkspaceConnectionMeta', () => {
+        let dir: string;
+
+        beforeEach(() => {
+            dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-test-meta-'));
+        });
+        afterEach(() => {
+            if (fs.existsSync(dir)) { fs.rmSync(dir, { recursive: true, force: true }); }
+        });
+
+        function write(name: string, obj: any): string {
+            const p = path.join(dir, name);
+            fs.writeFileSync(p, JSON.stringify(obj));
+            return p;
+        }
+
+        it('AC-W2: reads a flat single-profile config', () => {
+            const p = write('flat.json', {
+                connectionName: 'Coeck',
+                applicationInsightsAppId: 'ce466ef1-app',
+                kustoClusterUrl: 'https://x.kusto',
+                authFlow: 'azure_cli',
+            });
+            const meta = readWorkspaceConnectionMeta(p);
+            expect(meta).not.toBeNull();
+            expect(meta!.isMultiProfile).toBe(false);
+            expect(meta!.connectionName).toBe('Coeck');
+            expect(meta!.applicationInsightsAppId).toBe('ce466ef1-app');
+            expect(meta!.authFlow).toBe('azure_cli');
+        });
+
+        it('AC-W3: reads a multi-profile config, excludes _base, resolves inherited authFlow', () => {
+            const p = write('multi.json', {
+                profiles: {
+                    _base: { authFlow: 'azure_cli', kustoClusterUrl: 'https://base.kusto' },
+                    prod: { extends: '_base', connectionName: 'Prod', applicationInsightsAppId: 'prod-app' },
+                    test: { extends: '_base', connectionName: 'Test', applicationInsightsAppId: 'test-app' },
+                },
+                defaultProfile: 'prod',
+            });
+            const meta = readWorkspaceConnectionMeta(p);
+            expect(meta).not.toBeNull();
+            expect(meta!.isMultiProfile).toBe(true);
+            const names = (meta!.subProfiles ?? []).map(s => s.name).sort();
+            expect(names).toEqual(['prod', 'test']);          // _base excluded
+            const prod = meta!.subProfiles!.find(s => s.name === 'prod')!;
+            expect(prod.connectionName).toBe('Prod');
+            expect(prod.applicationInsightsAppId).toBe('prod-app');
+            expect(prod.authFlow).toBe('azure_cli');           // inherited from _base
+        });
+
+        it('AC-W2: returns null on parse failure without throwing', () => {
+            const p = path.join(dir, 'bad.json');
+            fs.writeFileSync(p, '{ not valid json');
+            expect(() => readWorkspaceConnectionMeta(p)).not.toThrow();
+            expect(readWorkspaceConnectionMeta(p)).toBeNull();
+        });
+
+        it('AC-W2: returns null for a missing file', () => {
+            expect(readWorkspaceConnectionMeta(path.join(dir, 'nope.json'))).toBeNull();
         });
     });
 });

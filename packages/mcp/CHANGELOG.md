@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Highest blast-radius rating across plans landed but unreleased: `low-risk`._
+
+### Added
+- **Per-workspace connections are now discoverable and selectable under Claude Code (and other roots-advertising hosts).** A workspace's own flat `.bctb-config.json` connection is discovered from `CLAUDE_PROJECT_DIR` (synchronous, checked at the opened folder and one level below — so the `…/<Customer>/TelemetryAnalysis/.bctb-config.json` layout is found) and from the MCP `roots` capability. Discovered connections appear in `list_profiles` tagged `source:"workspace"` and are selectable with `switch_profile <name>` — no global-config edit, no restart. A single globally-registered server can now query any customer workspace you open. See [docs/plans/mcp-workspace-connection-discovery.md](../../docs/plans/mcp-workspace-connection-discovery.md).
+- **Opt-in auto-activation of the local connection.** Set `BCTB_AUTO_WORKSPACE_CONNECTION=true` in the server `env` and, when exactly one workspace connection is discovered, it becomes the active connection at startup (with a loud `[MCP] AUTO-ACTIVATED …` stderr line). Default is OFF; discovery never silently retargets which App Insights resource is queried (cross-tenant safety). More than one discovered connection → no auto-pick.
+- **New telemetry** `TB-MCP-006` (`WorkspaceProfileSwitch`, emitted when a workspace connection is activated) and a `connectionsFound` count added to `TB-MCP-004` (`RootsDiscovery`) — both path-free.
+
+### Fixed
+- **Switching to a workspace connection no longer strands you.** `list_profiles`/`switch_profile` are now anchored to the pinned/global config file (`baseConfigFilePath`), so after selecting a workspace connection the global profiles remain listed and switchable. Profile-switch service re-initialization is now atomic — a mid-switch failure leaves the previous connection fully intact.
+
 ## [3.5.2] - 2026-06-25
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

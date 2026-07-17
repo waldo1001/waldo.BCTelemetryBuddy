@@ -235,7 +235,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'list_profiles',
-        description: 'List all available telemetry profiles in the workspace configuration. Shows the currently active profile and all other available profiles. Each profile represents a different customer/environment with separate credentials and App Insights configuration. Use this to understand which profiles are available before querying data.',
+        description: 'List all available telemetry profiles. Shows the currently active profile plus every other selectable profile. Profiles come from two sources, both selectable with switch_profile by name: (1) profiles defined in the loaded config file (tagged source:"file"); (2) connections discovered from the workspace folder(s) you opened — read from their own .bctb-config.json via CLAUDE_PROJECT_DIR or the MCP roots capability, tagged source:"workspace". Each profile is a separate customer/environment with its own App Insights resource. Call this before querying to confirm which profile is active.',
         inputSchema: {
             type: 'object',
             properties: {}
@@ -249,11 +249,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
     {
         name: 'switch_profile',
-        description: 'Switch to a different telemetry profile. This reloads the configuration with the new profile\'s credentials and App Insights settings. All subsequent queries will use the new profile. Use list_profiles first to see available profiles.',
+        description: 'Switch to a different telemetry profile — a profile from the loaded config OR a workspace connection discovered from a folder you opened (source:"workspace" in list_profiles). Reloads the connection so all subsequent queries target the new App Insights resource. Accepts the exact profile name/key, or a connection name when it is unambiguous. Use list_profiles first. Note: switching a workspace connection retargets which telemetry is queried; for azure_cli it uses your current az login session (the config tenantId is not applied).',
         inputSchema: {
             type: 'object',
             properties: {
-                profileName: { type: 'string', description: 'Name of the profile to switch to (from list_profiles)' }
+                profileName: { type: 'string', description: 'Name/key of the profile to switch to (from list_profiles), or an unambiguous connection name' }
             },
             required: ['profileName']
         },

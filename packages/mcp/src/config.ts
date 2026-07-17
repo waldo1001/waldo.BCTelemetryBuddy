@@ -64,6 +64,25 @@ export interface ProfiledConfig {
     references?: Reference[];
 }
 
+/**
+ * Connection metadata read from a workspace `.bctb-config.json` for discovery
+ * (list_profiles / switch_profile) WITHOUT activating it. Normalizes both the
+ * flat single-profile shape and the multi-profile `{ profiles }` shape.
+ * See docs/plans/mcp-workspace-connection-discovery.md.
+ */
+export interface WorkspaceConnectionMeta {
+    isMultiProfile: boolean;
+    connectionName?: string;
+    applicationInsightsAppId?: string;
+    authFlow?: string;
+    subProfiles?: Array<{
+        name: string;
+        connectionName?: string;
+        applicationInsightsAppId?: string;
+        authFlow?: string;
+    }>;
+}
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -364,6 +383,84 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
     };
 
     return expandEnvironmentVariables(singleConfig, ws.path);
+}
+
+/** Directory names that are never worth scanning for a workspace config. */
+const SCAN_SKIP_DIRS = new Set(['node_modules', '.git', '.vscode', 'bin', 'obj', 'dist', 'out']);
+
+/**
+ * Find workspace `.bctb-config.json` files anchored at `dir`: the file directly
+ * in `dir`, plus one level down (`dir/<child>/.bctb-config.json`) — which covers
+ * the customer/TelemetryAnalysis layout where the config is a subfolder of the
+ * opened workspace root. Bounded: single readdir, no recursion beyond one level,
+ * skips `node_modules`/`.git`/dot-directories. Never throws (returns [] on error).
+ * See docs/plans/mcp-workspace-connection-discovery.md.
+ */
+export function scanDirForWorkspaceConfigs(dir: string): string[] {
+    const found: string[] = [];
+    try {
+        const direct = path.join(dir, '.bctb-config.json');
+        if (fs.existsSync(direct)) {
+            found.push(direct);
+        }
+
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            const name = entry.name;
+            if (name.startsWith('.') || SCAN_SKIP_DIRS.has(name)) continue;
+            const childCfg = path.join(dir, name, '.bctb-config.json');
+            if (fs.existsSync(childCfg)) {
+                found.push(childCfg);
+            }
+        }
+    } catch {
+        // Unreadable/non-existent dir — discovery is best-effort, never fatal.
+        return [];
+    }
+    return found;
+}
+
+/**
+ * Read connection metadata from a workspace `.bctb-config.json` for discovery,
+ * WITHOUT activating it (no env/cwd side-effects, no "No profile specified" throw).
+ * Normalizes both the flat and multi-profile shapes; excludes `_`-prefixed base
+ * profiles and resolves `extends` inheritance so inherited authFlow is populated.
+ * Returns null on any read/parse failure.
+ */
+export function readWorkspaceConnectionMeta(configPath: string): WorkspaceConnectionMeta | null {
+    try {
+        const raw = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as ProfiledConfig & Partial<MCPConfig>;
+
+        if (raw.profiles && Object.keys(raw.profiles).length > 0) {
+            const subProfiles = Object.keys(raw.profiles)
+                .filter(name => !name.startsWith('_'))
+                .map(name => {
+                    let resolved: Partial<MCPConfig>;
+                    try {
+                        resolved = resolveProfileInheritance(raw.profiles as Record<string, any>, name);
+                    } catch {
+                        resolved = raw.profiles![name] ?? {};
+                    }
+                    return {
+                        name,
+                        connectionName: resolved.connectionName,
+                        applicationInsightsAppId: resolved.applicationInsightsAppId,
+                        authFlow: resolved.authFlow,
+                    };
+                });
+            return { isMultiProfile: true, subProfiles };
+        }
+
+        return {
+            isMultiProfile: false,
+            connectionName: raw.connectionName,
+            applicationInsightsAppId: raw.applicationInsightsAppId,
+            authFlow: raw.authFlow,
+        };
+    } catch {
+        return null;
+    }
 }
 
 /**

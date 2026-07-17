@@ -22,9 +22,11 @@ jest.mock('@bctb/shared', () => ({
 }));
 
 const mockExistsSync = jest.fn();
+const mockReaddirSync = jest.fn((..._args: any[]) => [] as any);
 jest.mock('fs', () => ({
     ...jest.requireActual('fs'),
     existsSync: (...args: any[]) => mockExistsSync(...args),
+    readdirSync: (...args: any[]) => mockReaddirSync(...args),
 }));
 
 jest.mock('../version.js', () => ({ VERSION: '0.0.0-test' }));
@@ -42,9 +44,14 @@ const cfg: MCPConfig = {
 } as any;
 
 function fakeToolHandlers(overrides?: any) {
+    const workspaceProfiles = new Map<string, any>();
     return {
         knowledgeBase: null,
         kbSkipReason: null,
+        workspaceProfiles,
+        registerWorkspaceConnection: jest.fn((configPath: string, _root: string, origin: string) => {
+            workspaceProfiles.set(configPath, { key: configPath, configPath, origin });
+        }),
         services: {
             usageTelemetry: { trackEvent: jest.fn() },
             sessionId: 's',
@@ -70,6 +77,8 @@ describe('discoverWorkspaceViaRoots', () => {
         mockLoadAll.mockClear();
         mockKbCtor.mockClear();
         mockExistsSync.mockReset();
+        mockReaddirSync.mockReset();
+        mockReaddirSync.mockReturnValue([]);
         consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     });
 
@@ -162,6 +171,36 @@ describe('discoverWorkspaceViaRoots', () => {
         const svc = await discoverWorkspaceViaRoots(fakeServer({ roots: {} }, listRoots) as any, cfg, th as any);
 
         expect(svc).toBeNull();
+    });
+
+    it('AC-W12: registers workspace connections per root while KB behavior is unchanged', async () => {
+        const listRoots = jest.fn().mockResolvedValue({ roots: [{ uri: 'file:///ws' }] });
+        // /ws has both a config (connection) and the knowledge dir (KB).
+        mockExistsSync.mockImplementation((p: string) => p.startsWith('/ws'));
+        const th = fakeToolHandlers();
+
+        const svc = await discoverWorkspaceViaRoots(fakeServer({ roots: {} }, listRoots) as any, cfg, th as any);
+
+        // Connection collected (Pass 1) …
+        expect(th.registerWorkspaceConnection).toHaveBeenCalledWith(
+            path.join('/ws', '.bctb-config.json'), '/ws', 'roots'
+        );
+        expect(th.workspaceProfiles.size).toBe(1);
+        // … and KB still loaded (Pass 2), byte-identical to before.
+        expect(svc).not.toBeNull();
+        expect(th.knowledgeBase).toBe(svc);
+        const props = rootsEvent(th)[1];
+        expect(props).toMatchObject({ matched: true, kbLoaded: true, connectionsFound: 1 });
+    });
+
+    it('AC-W12: does not register connections when the client advertises no roots', async () => {
+        const listRoots = jest.fn();
+        const th = fakeToolHandlers();
+
+        await discoverWorkspaceViaRoots(fakeServer({}, listRoots) as any, cfg, th as any);
+
+        expect(th.registerWorkspaceConnection).not.toHaveBeenCalled();
+        expect(th.workspaceProfiles.size).toBe(0);
     });
 
     it('telemetry from roots discovery carries no filesystem paths', async () => {

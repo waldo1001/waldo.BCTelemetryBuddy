@@ -267,6 +267,25 @@ Outside VS Code there is no extension to inject `BCTB_WORKSPACE_PATH`, so the se
 
 If knowledge can't be located, `get_knowledge` returns a diagnostic naming the exact path it looked under and why (e.g. `reason: no-workspace-config`) — so a missing Knowledge Base is debuggable rather than silent. The server also logs a `[KB]` line to stderr at startup.
 
+#### Per-workspace connections (`list_profiles` / `switch_profile`)
+
+The workspace folder(s) you open are also scanned for their own `.bctb-config.json` **connections**, so a single globally-registered server can query any customer without editing the global config. Discovered connections show up in `list_profiles` tagged `source:"workspace"` and are selectable with `switch_profile <name>` — no restart, no global-file edit. Two discovery signals feed this:
+
+- **`CLAUDE_PROJECT_DIR`** — Claude Code sets this to the opened project root. The server checks it and one level below it (so `…/<Customer>/TelemetryAnalysis/.bctb-config.json` is found even though the config is a subfolder of the opened root). This is synchronous, so the connection is available on the very first `list_profiles` call.
+- **MCP `roots`** — every advertised root is scanned the same way.
+
+Discovered connections are keyed by the opened folder's name (e.g. `Coeck`), because most customer configs share the same `connectionName`. When two discovered connections share a name, `switch_profile` by that name returns an "ambiguous" error listing the exact keys to use instead.
+
+**Safety — discovery never silently retargets your queries.** By default a workspace connection is only made *selectable*; the active App Insights resource changes only when *you* call `switch_profile`. To make the local connection win automatically on open, opt in with:
+
+```json
+"env": { "BCTB_AUTO_WORKSPACE_CONNECTION": "true" }
+```
+
+When set, and when **exactly one** workspace connection is discovered, the server activates it at startup and prints a loud `[MCP] AUTO-ACTIVATED …` line to stderr. Setting this flag means: *I accept that opening a workspace retargets which App Insights resource is queried.* With more than one connection discovered, it does nothing (ambiguous) and you pick with `switch_profile`.
+
+> **Auth note (`azure_cli`):** switching connection changes the App Insights *resource*, not your identity — `azure_cli` uses your current `az login` session and ignores the config's `tenantId`. If a query returns 403 after switching, run `az login --tenant <tenantId>`.
+
 ### With Copilot Studio
 
 Register as Custom Action:

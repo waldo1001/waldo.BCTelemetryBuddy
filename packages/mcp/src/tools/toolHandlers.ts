@@ -7,7 +7,9 @@
  * Design: Constructor injection of services (DIP), single tool dispatch method (SRP).
  */
 
-import { loadConfigFromFile, validateConfig, MCPConfig } from '../config.js';
+import { loadConfigFromFile, validateConfig, scanDirForWorkspaceConfigs, readWorkspaceConnectionMeta, MCPConfig } from '../config.js';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
     AuthService,
     KustoService,
@@ -58,6 +60,29 @@ export interface QueryResult {
     recommendations?: string[];
     cached: boolean;
 }
+
+/**
+ * A telemetry connection discovered from a workspace `.bctb-config.json` (via
+ * CLAUDE_PROJECT_DIR or MCP roots). It is selectable through switch_profile but
+ * never becomes the active connection unless the user opts in (explicit switch
+ * or BCTB_AUTO_WORKSPACE_CONNECTION). See docs/plans/mcp-workspace-connection-discovery.md.
+ */
+export interface DiscoveredProfile {
+    key: string;
+    connectionName?: string;
+    applicationInsightsAppId?: string;
+    authFlow?: string;
+    configPath: string;
+    subProfileName?: string;
+    source: 'workspace';
+    origin: 'claude-project-dir' | 'roots';
+    realpath: string;
+}
+
+/** Folder names too generic to distinguish a customer — fall back to connectionName. */
+const GENERIC_WORKSPACE_LABELS = new Set([
+    '', '.', 'telemetryanalysis', 'src', 'app', 'test', 'tests', 'workspace', 'repo', 'code'
+]);
 
 /**
  * Services container — initialized from config, injected into ToolHandlers
@@ -165,6 +190,16 @@ export class ToolHandlers {
     public kbSkipReason: string | null = null;
     private kbConsulted: boolean = false;
 
+    /** Connections discovered from workspace `.bctb-config.json` files (CLAUDE_PROJECT_DIR / roots). */
+    public workspaceProfiles: Map<string, DiscoveredProfile> = new Map();
+    /** Whether the active connection comes from the pinned config file or a discovered workspace file. */
+    public activeProfileSource: 'file' | 'workspace' = 'file';
+    /** True when the active workspace connection was auto-activated (opt-in flag), not explicitly switched. */
+    public activeProfileAutoActivated: boolean = false;
+    /** The pinned/global config path, frozen at construction so a workspace switch never hides file profiles. */
+    private baseConfigFilePath: string | null = null;
+    private claudeDirScanned: boolean = false;
+
     constructor(
         config: MCPConfig,
         services: ServerServices,
@@ -175,7 +210,220 @@ export class ToolHandlers {
         this.services = services;
         this.isStdioMode = isStdioMode;
         this.configErrors = configErrors ?? validateConfig(config);
+        // Freeze the file-profile anchor: after switching to a workspace connection,
+        // this.config.configFilePath points at the flat workspace file, but file-based
+        // profile enumeration/switching must keep using the original pinned config.
+        this.baseConfigFilePath = config.configFilePath ?? path.join(config.workspacePath, '.bctb-config.json');
+        this.ensureWorkspaceProfilesDiscovered();
         this.activeProfileName = this.detectInitialProfile();
+    }
+
+    /**
+     * Discover workspace connections from CLAUDE_PROJECT_DIR (synchronous, race-free).
+     * Idempotent — runs its filesystem scan once. The MCP roots fallback registers
+     * additional connections separately via registerWorkspaceConnection('roots').
+     */
+    public ensureWorkspaceProfilesDiscovered(): void {
+        if (this.claudeDirScanned) {
+            return;
+        }
+        this.claudeDirScanned = true;
+
+        const projectDir = process.env.CLAUDE_PROJECT_DIR;
+        if (!projectDir) {
+            return;
+        }
+
+        for (const cfgPath of scanDirForWorkspaceConfigs(projectDir)) {
+            // Never register the pinned/global config itself as a workspace connection.
+            if (this.isBaseConfig(cfgPath)) {
+                continue;
+            }
+            this.registerWorkspaceConnection(cfgPath, projectDir, 'claude-project-dir');
+        }
+    }
+
+    private isBaseConfig(cfgPath: string): boolean {
+        if (!this.baseConfigFilePath) {
+            return false;
+        }
+        try {
+            return fs.realpathSync(cfgPath) === fs.realpathSync(this.baseConfigFilePath);
+        } catch {
+            return path.resolve(cfgPath) === path.resolve(this.baseConfigFilePath);
+        }
+    }
+
+    /** Profile names defined in the pinned/global config file (excludes `_`-prefixed base profiles). */
+    private getFileProfileNames(): string[] {
+        try {
+            if (this.baseConfigFilePath && fs.existsSync(this.baseConfigFilePath)) {
+                const cfg = JSON.parse(fs.readFileSync(this.baseConfigFilePath, 'utf-8'));
+                if (cfg.profiles) {
+                    return Object.keys(cfg.profiles).filter((n: string) => !n.startsWith('_'));
+                }
+            }
+        } catch {
+            // ignore — treated as no file profiles
+        }
+        return [];
+    }
+
+    /**
+     * Register a workspace connection discovered at `configPath` (found while scanning
+     * `scannedRootDir`). Reads metadata WITHOUT activating it; dedups by realpath +
+     * sub-profile; a multi-profile workspace config registers one entry per sub-profile.
+     */
+    public registerWorkspaceConnection(
+        configPath: string,
+        scannedRootDir: string,
+        origin: 'claude-project-dir' | 'roots'
+    ): void {
+        let realpath: string;
+        try {
+            realpath = fs.realpathSync(configPath);
+        } catch {
+            realpath = path.resolve(configPath);
+        }
+
+        const meta = readWorkspaceConnectionMeta(configPath);
+        if (!meta) {
+            return;
+        }
+
+        const fileNames = this.getFileProfileNames();
+
+        const addEntry = (
+            connectionName: string | undefined,
+            appId: string | undefined,
+            authFlow: string | undefined,
+            subProfileName: string | undefined
+        ): void => {
+            // Dedup: same file (by realpath) + same sub-profile already registered (e.g. via CLAUDE_PROJECT_DIR and roots).
+            for (const existing of this.workspaceProfiles.values()) {
+                if (existing.realpath === realpath && (existing.subProfileName ?? '') === (subProfileName ?? '')) {
+                    return;
+                }
+            }
+            const taken = new Set<string>([...this.workspaceProfiles.keys(), ...fileNames]);
+            const key = this.deriveWorkspaceProfileKey(scannedRootDir, configPath, connectionName, subProfileName, appId, taken);
+            this.workspaceProfiles.set(key, {
+                key,
+                connectionName,
+                applicationInsightsAppId: appId,
+                authFlow,
+                configPath,
+                subProfileName,
+                source: 'workspace',
+                origin,
+                realpath
+            });
+        };
+
+        if (meta.isMultiProfile) {
+            for (const sp of meta.subProfiles ?? []) {
+                addEntry(sp.connectionName, sp.applicationInsightsAppId, sp.authFlow, sp.name);
+            }
+        } else {
+            addEntry(meta.connectionName, meta.applicationInsightsAppId, meta.authFlow, undefined);
+        }
+    }
+
+    /**
+     * Derive a stable, unique, human-friendly key for a discovered connection.
+     * Prefers the opened folder's name (the customer), NOT the shared
+     * `TelemetryAnalysis`/`connectionName` (9/10 customers share "iFacto Customers").
+     */
+    private deriveWorkspaceProfileKey(
+        scannedRootDir: string,
+        configPath: string,
+        connectionName: string | undefined,
+        subProfileName: string | undefined,
+        appId: string | undefined,
+        taken: Set<string>
+    ): string {
+        const configDir = path.dirname(configPath);
+        let label: string;
+        if (path.resolve(configDir) === path.resolve(scannedRootDir)) {
+            // Config lives directly in the opened folder.
+            label = path.basename(scannedRootDir);
+        } else {
+            // Config lives one level down. Use the subfolder name unless it's generic
+            // (e.g. TelemetryAnalysis) — then fall back to the opened folder's name.
+            const child = path.basename(configDir);
+            label = GENERIC_WORKSPACE_LABELS.has(child.toLowerCase()) ? path.basename(scannedRootDir) : child;
+        }
+        if (!label || GENERIC_WORKSPACE_LABELS.has(label.toLowerCase())) {
+            label = connectionName || 'workspace';
+        }
+        if (subProfileName) {
+            label = `${label}/${subProfileName}`;
+        }
+
+        if (!taken.has(label)) {
+            return label;
+        }
+        // Collision (with a file profile, another workspace connection, or the 9× "iFacto Customers"
+        // case): disambiguate with a short appId hash, then a counter as a last resort.
+        const suffix = (appId ? hashValue(appId) : hashValue(path.resolve(configPath) + (subProfileName ?? ''))).slice(0, 6);
+        let key = `${label}#${suffix}`;
+        let i = 2;
+        while (taken.has(key)) {
+            key = `${label}#${suffix}-${i++}`;
+        }
+        return key;
+    }
+
+    /** Find a discovered connection by key, or by connectionName when unambiguous. */
+    private matchWorkspaceProfile(name: string): { entry?: DiscoveredProfile; ambiguous?: boolean } | null {
+        if (this.workspaceProfiles.has(name)) {
+            return { entry: this.workspaceProfiles.get(name)! };
+        }
+        const byConn = [...this.workspaceProfiles.values()].filter(e => e.connectionName === name);
+        if (byConn.length === 1) {
+            return { entry: byConn[0] };
+        }
+        if (byConn.length > 1) {
+            return { ambiguous: true };
+        }
+        return null;
+    }
+
+    /**
+     * Atomically activate a resolved config: build all services into locals first,
+     * and commit to `this.*` only after every constructor succeeds. A failure mid-way
+     * leaves the previous connection fully intact.
+     */
+    private applyConfig(
+        newConfig: MCPConfig,
+        source: 'file' | 'workspace',
+        profileName: string,
+        autoActivated: boolean
+    ): { previousProfile: string } {
+        newConfig.port = this.config.port;
+
+        // Build first — if any throws, nothing below runs and state is unchanged.
+        const auth = new AuthService(newConfig, this.services.usageTelemetry);
+        const kusto = new KustoService(newConfig.applicationInsightsAppId, newConfig.kustoClusterUrl, this.services.usageTelemetry);
+        const cache = new CacheService(newConfig.workspacePath, newConfig.cacheTTLSeconds, newConfig.cacheEnabled);
+        const queries = new QueriesService(newConfig.workspacePath, newConfig.queriesFolder);
+        const references = new ReferencesService(newConfig.references, cache as any);
+
+        const previousProfile = this.activeProfileName || this.config.connectionName;
+
+        // Commit.
+        this.config = newConfig;
+        this.configErrors = validateConfig(newConfig);
+        this.activeProfileName = profileName;
+        this.activeProfileSource = source;
+        this.activeProfileAutoActivated = source === 'workspace' ? autoActivated : false;
+        this.services.auth = auth;
+        this.services.kusto = kusto;
+        this.services.cache = cache;
+        this.services.queries = queries;
+        this.services.references = references;
+
+        return { previousProfile };
     }
 
     /**
@@ -1227,20 +1475,16 @@ ${extendStatements}
     }
 
     /**
-     * Detect the initial active profile name
+     * Detect the initial active profile name (from the pinned/global config file).
      */
     detectInitialProfile(): string | null {
-        const fs = require('fs');
-        const path = require('path');
-
         try {
-            const configPath = this.config.configFilePath || path.join(this.config.workspacePath, '.bctb-config.json');
-            if (!fs.existsSync(configPath)) {
+            const configPath = this.baseConfigFilePath;
+            if (!configPath || !fs.existsSync(configPath)) {
                 return null;
             }
 
-            const configData = fs.readFileSync(configPath, 'utf8');
-            const config = JSON.parse(configData);
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
             if (!config.profiles || Object.keys(config.profiles).length === 0) {
                 return null;
@@ -1253,160 +1497,262 @@ ${extendStatements}
     }
 
     /**
-     * Switch to a different profile
+     * Read the profiles defined in the pinned/global config file. Returns the
+     * parsed config plus whether the file exists / is multi-profile. Always keyed
+     * on baseConfigFilePath so a prior workspace switch cannot hide file profiles.
      */
-    switchProfile(profileName: string): any {
-        const fs = require('fs');
-        const path = require('path');
-
+    private readBaseProfiles(): { exists: boolean; isMulti: boolean; names: string[]; parsed: any } {
+        const configPath = this.baseConfigFilePath;
+        if (!configPath || !fs.existsSync(configPath)) {
+            return { exists: false, isMulti: false, names: [], parsed: null };
+        }
         try {
-            const configPath = this.config.configFilePath || path.join(this.config.workspacePath, '.bctb-config.json');
-
-            if (!fs.existsSync(configPath)) {
-                return {
-                    success: false,
-                    error: 'No .bctb-config.json found - cannot switch profiles in single-config mode'
-                };
-            }
-
-            const configData = fs.readFileSync(configPath, 'utf8');
-            const config = JSON.parse(configData);
-
-            if (!config.profiles || Object.keys(config.profiles).length === 0) {
-                return {
-                    success: false,
-                    error: 'Config file has no profiles defined - cannot switch profiles'
-                };
-            }
-
-            const availableProfiles = Object.keys(config.profiles).filter(name => !name.startsWith('_'));
-
-            if (!availableProfiles.includes(profileName)) {
-                return {
-                    success: false,
-                    error: `Profile '${profileName}' not found. Available profiles: ${availableProfiles.join(', ')}`
-                };
-            }
-
-            const newConfig = loadConfigFromFile(configPath, profileName, this.isStdioMode);
-            if (!newConfig) {
-                return {
-                    success: false,
-                    error: `Failed to load configuration for profile '${profileName}'`
-                };
-            }
-
-            newConfig.port = this.config.port;
-            const previousProfile = this.activeProfileName || this.config.connectionName;
-
-            // Update config and reinitialize services
-            this.config = newConfig;
-            this.configErrors = validateConfig(this.config);
-            this.activeProfileName = profileName;
-
-            // Reinitialize services
-            this.services.auth = new AuthService(this.config, this.services.usageTelemetry);
-            this.services.kusto = new KustoService(this.config.applicationInsightsAppId, this.config.kustoClusterUrl, this.services.usageTelemetry);
-            this.services.cache = new CacheService(this.config.workspacePath, this.config.cacheTTLSeconds, this.config.cacheEnabled);
-            this.services.queries = new QueriesService(this.config.workspacePath, this.config.queriesFolder);
-            this.services.references = new ReferencesService(this.config.references, this.services.cache as any);
-
-            if (!this.isStdioMode) {
-                console.error(`[Profile] Switched from '${previousProfile}' to '${profileName}'`);
-                console.error(`[Profile] Connection: ${this.config.connectionName}`);
-                console.error(`[Profile] App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
-            }
-
-            return {
-                success: true,
-                previousProfile,
-                currentProfile: {
-                    name: profileName,
-                    connectionName: this.config.connectionName,
-                    applicationInsightsAppId: this.config.applicationInsightsAppId,
-                    authFlow: this.config.authFlow
-                },
-                message: `Successfully switched to profile '${profileName}' (${this.config.connectionName})`,
-                configValid: this.configErrors.length === 0,
-                configErrors: this.configErrors.length > 0 ? this.configErrors : undefined
-            };
-        } catch (error: any) {
-            return {
-                success: false,
-                error: `Failed to switch profile: ${error.message}`
-            };
+            const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            const hasProfiles = !!parsed.profiles && Object.keys(parsed.profiles).length > 0;
+            const names = hasProfiles ? Object.keys(parsed.profiles).filter((n: string) => !n.startsWith('_')) : [];
+            return { exists: true, isMulti: hasProfiles, names, parsed };
+        } catch {
+            return { exists: true, isMulti: false, names: [], parsed: null };
         }
     }
 
     /**
-     * List all available profiles
+     * Switch to a different profile — a file-based profile from the pinned config,
+     * or a discovered workspace connection (selectable by key or unambiguous
+     * connectionName). Service re-init is atomic (see applyConfig).
+     */
+    switchProfile(profileName: string): any {
+        try {
+            this.ensureWorkspaceProfilesDiscovered();
+            const base = this.readBaseProfiles();
+
+            // 1. File-based profile from the pinned/global config.
+            if (base.isMulti && base.names.includes(profileName)) {
+                const newConfig = loadConfigFromFile(this.baseConfigFilePath!, profileName, this.isStdioMode);
+                if (!newConfig) {
+                    return { success: false, error: `Failed to load configuration for profile '${profileName}'` };
+                }
+                const { previousProfile } = this.applyConfig(newConfig, 'file', profileName, false);
+                this.logProfileSwitch(previousProfile, profileName);
+                return this.buildSwitchResult(previousProfile, profileName, 'file');
+            }
+
+            // 2. Discovered workspace connection.
+            const wsMatch = this.matchWorkspaceProfile(profileName);
+            if (wsMatch?.ambiguous) {
+                const candidates = [...this.workspaceProfiles.values()]
+                    .filter(e => e.connectionName === profileName)
+                    .map(e => e.key);
+                return {
+                    success: false,
+                    error: `Ambiguous connection name '${profileName}' — it matches multiple discovered workspace connections. Use one of these exact names instead: ${candidates.join(', ')}.`
+                };
+            }
+            if (wsMatch?.entry) {
+                const entry = wsMatch.entry;
+                const newConfig = loadConfigFromFile(entry.configPath, entry.subProfileName, this.isStdioMode);
+                if (!newConfig) {
+                    return { success: false, error: `Failed to load workspace configuration for '${entry.key}'` };
+                }
+                const { previousProfile } = this.applyConfig(newConfig, 'workspace', entry.key, false);
+                this.logProfileSwitch(previousProfile, entry.key);
+                this.trackWorkspaceProfileSwitch(entry, previousProfile, false);
+                return this.buildSwitchResult(previousProfile, entry.key, 'workspace');
+            }
+
+            // 3. Not found — tailor the message to what's available.
+            if (!base.exists && this.workspaceProfiles.size === 0) {
+                return { success: false, error: 'No .bctb-config.json found - cannot switch profiles in single-config mode' };
+            }
+            if (base.exists && !base.isMulti && this.workspaceProfiles.size === 0) {
+                return { success: false, error: 'Config file has no profiles defined - cannot switch profiles' };
+            }
+            const available = [...base.names, ...this.workspaceProfiles.keys()];
+            return {
+                success: false,
+                error: `Profile '${profileName}' not found. Available profiles: ${available.join(', ')}`
+            };
+        } catch (error: any) {
+            return { success: false, error: `Failed to switch profile: ${error.message}` };
+        }
+    }
+
+    private logProfileSwitch(previousProfile: string, profileName: string): void {
+        if (!this.isStdioMode) {
+            console.error(`[Profile] Switched from '${previousProfile}' to '${profileName}'`);
+            console.error(`[Profile] Connection: ${this.config.connectionName}`);
+            console.error(`[Profile] App Insights ID: ${this.config.applicationInsightsAppId || '(not set)'}`);
+        }
+    }
+
+    private buildSwitchResult(previousProfile: string, profileName: string, source: 'file' | 'workspace'): any {
+        const result: any = {
+            success: true,
+            previousProfile,
+            source,
+            currentProfile: {
+                name: profileName,
+                connectionName: this.config.connectionName,
+                applicationInsightsAppId: this.config.applicationInsightsAppId,
+                authFlow: this.config.authFlow
+            },
+            message: `Successfully switched to profile '${profileName}' (${this.config.connectionName})`,
+            configValid: this.configErrors.length === 0,
+            configErrors: this.configErrors.length > 0 ? this.configErrors : undefined
+        };
+        if (this.config.authFlow === 'azure_cli') {
+            result.note = "Auth uses your current 'az login' session; the config's tenantId is not used for azure_cli. If queries return 403, run: az login --tenant <tenantId>.";
+        }
+        return result;
+    }
+
+    private trackWorkspaceProfileSwitch(entry: DiscoveredProfile, previousProfile: string, autoActivated: boolean): void {
+        try {
+            const props = createCommonProperties(
+                TELEMETRY_EVENTS.MCP.WORKSPACE_PROFILE_SWITCH,
+                'mcp',
+                this.services.sessionId,
+                this.services.installationId,
+                VERSION,
+                {
+                    origin: entry.origin,
+                    authFlow: entry.authFlow ?? 'unknown',
+                    wasAmbiguousMatch: false,
+                    previousSource: previousProfile === this.config.connectionName ? 'unknown' : 'file',
+                    autoActivated
+                }
+            );
+            this.services.usageTelemetry.trackEvent('Mcp.WorkspaceProfileSwitch', cleanTelemetryProperties(props));
+        } catch {
+            // Telemetry must never break a profile switch.
+        }
+    }
+
+    /**
+     * Auto-activate a single discovered workspace connection (opt-in via
+     * BCTB_AUTO_WORKSPACE_CONNECTION). Returns the activated key, or null when it
+     * did not fire (flag off, not exactly one connection, or already targeting it).
+     */
+    public maybeAutoActivateWorkspaceConnection(): string | null {
+        this.ensureWorkspaceProfilesDiscovered();
+        const flag = process.env.BCTB_AUTO_WORKSPACE_CONNECTION;
+        if (!flag || flag === '0' || flag.toLowerCase() === 'false') {
+            return null;
+        }
+        if (this.workspaceProfiles.size !== 1) {
+            if (this.workspaceProfiles.size > 1) {
+                console.error('[MCP] Multiple workspace connections discovered; not auto-activating (ambiguous). Use switch_profile.');
+            }
+            return null;
+        }
+        const entry = [...this.workspaceProfiles.values()][0];
+        // No-op if the active connection already targets this App Insights resource.
+        if (entry.applicationInsightsAppId && entry.applicationInsightsAppId === this.config.applicationInsightsAppId) {
+            return null;
+        }
+
+        // Activation is best-effort and MUST NOT crash server startup. applyConfig is
+        // atomic, so a mid-activation failure leaves the previous connection intact.
+        try {
+            const newConfig = loadConfigFromFile(entry.configPath, entry.subProfileName, this.isStdioMode);
+            if (!newConfig) {
+                return null;
+            }
+            const { previousProfile } = this.applyConfig(newConfig, 'workspace', entry.key, true);
+            console.error(
+                `[MCP] AUTO-ACTIVATED workspace connection "${entry.connectionName ?? entry.key}" ` +
+                `(BCTB_AUTO_WORKSPACE_CONNECTION=on). Queries now target a workspace App Insights resource, not the global default.`
+            );
+            this.trackWorkspaceProfileSwitch(entry, previousProfile, true);
+            return entry.key;
+        } catch (err: any) {
+            console.error(`[MCP] Auto-activation of workspace connection "${entry.key}" failed (non-fatal): ${err?.message}. Active connection unchanged; use switch_profile to select it manually.`);
+            return null;
+        }
+    }
+
+    /**
+     * List all available profiles — file-based profiles from the pinned config
+     * MERGED with discovered workspace connections (tagged source:'workspace').
      */
     listProfiles(): any {
-        const fs = require('fs');
-        const path = require('path');
-
         try {
-            const configPath = this.config.configFilePath || path.join(this.config.workspacePath, '.bctb-config.json');
+            this.ensureWorkspaceProfilesDiscovered();
+            const base = this.readBaseProfiles();
 
-            if (!fs.existsSync(configPath)) {
+            const currentProfileName = this.activeProfileName || process.env.BCTB_PROFILE || base.parsed?.defaultProfile || 'default';
+
+            const fileProfiles = (base.isMulti ? base.names : []).map((name: string) => {
+                const pc = base.parsed.profiles[name] ?? {};
+                return {
+                    name,
+                    connectionName: pc.connectionName || name,
+                    isActive: this.activeProfileSource === 'file' && name === currentProfileName,
+                    applicationInsightsAppId: pc.applicationInsightsAppId,
+                    authFlow: pc.authFlow,
+                    extends: pc.extends,
+                    source: 'file' as const
+                };
+            });
+
+            const wsProfiles = [...this.workspaceProfiles.values()].map(e => ({
+                name: e.key,
+                connectionName: e.connectionName || e.key,
+                isActive: this.activeProfileSource === 'workspace' && e.key === this.activeProfileName,
+                applicationInsightsAppId: e.applicationInsightsAppId,
+                authFlow: e.authFlow,
+                source: 'workspace' as const,
+                origin: e.origin
+            }));
+
+            const all = [...fileProfiles, ...wsProfiles];
+
+            // Nothing selectable anywhere → single mode (backward compatible).
+            if (all.length === 0) {
                 return {
                     profileMode: 'single',
                     currentProfile: {
                         name: 'default',
                         connectionName: this.config.connectionName,
-                        isActive: true
+                        isActive: true,
+                        source: 'file'
                     },
                     availableProfiles: [],
-                    message: 'Single profile mode - using workspace settings or environment variables'
+                    message: base.exists
+                        ? 'Single profile mode - config file has no profiles object'
+                        : 'Single profile mode - using workspace settings or environment variables'
                 };
             }
 
-            const configData = fs.readFileSync(configPath, 'utf8');
-            const config = JSON.parse(configData);
-
-            if (!config.profiles || Object.keys(config.profiles).length === 0) {
-                return {
-                    profileMode: 'single',
-                    currentProfile: {
-                        name: 'default',
-                        connectionName: config.connectionName || this.config.connectionName,
-                        isActive: true
-                    },
-                    availableProfiles: [],
-                    message: 'Single profile mode - config file has no profiles object'
+            let currentProfile: any = all.find(p => p.isActive);
+            if (!currentProfile) {
+                // Active connection is the base flat/default one (not a named profile).
+                currentProfile = {
+                    name: this.activeProfileName || currentProfileName,
+                    connectionName: this.config.connectionName,
+                    isActive: true,
+                    source: this.activeProfileAutoActivated ? 'workspace-auto' : this.activeProfileSource
                 };
+            } else if (currentProfile.source === 'workspace' && this.activeProfileAutoActivated) {
+                currentProfile = { ...currentProfile, source: 'workspace-auto' };
             }
 
-            const currentProfileName = this.activeProfileName || process.env.BCTB_PROFILE || config.defaultProfile || 'default';
-
-            const profiles = Object.entries(config.profiles)
-                .filter(([name]) => !name.startsWith('_'))
-                .map(([name, profileConfig]: [string, any]) => ({
-                    name,
-                    connectionName: profileConfig.connectionName || name,
-                    isActive: name === currentProfileName,
-                    applicationInsightsAppId: profileConfig.applicationInsightsAppId,
-                    authFlow: profileConfig.authFlow,
-                    extends: profileConfig.extends
-                }));
-
-            const currentProfile = profiles.find(p => p.isActive);
+            const usage: any = {
+                summary: 'This server exposes multiple telemetry connections (customer/environment profiles).',
+                switchingInstructions: 'To switch, call switch_profile with the profile name. In VS Code you can also use the status bar or command palette.',
+                noteForQueries: 'All queries execute against the currently active profile. Call list_profiles to confirm which profile is active before running queries.'
+            };
+            if (wsProfiles.length > 0) {
+                usage.workspaceConnections = 'Entries tagged source:"workspace" are connections discovered from the folder(s) you opened (not from the global config). Select one with switch_profile using its name. These are separate App Insights resources — switching retargets which telemetry is queried.';
+            }
 
             return {
                 profileMode: 'multi',
-                currentProfile: currentProfile || {
-                    name: currentProfileName,
-                    connectionName: this.config.connectionName,
-                    isActive: true
-                },
-                availableProfiles: profiles.filter(p => !p.isActive),
-                totalProfiles: profiles.length,
-                message: `Multi-profile configuration with ${profiles.length} profile(s). Currently using: ${currentProfileName}`,
-                usage: {
-                    summary: 'This workspace has multiple telemetry profiles configured for different customers/environments',
-                    switchingInstructions: 'To switch profiles, use the switch_profile tool with the profile name. In VS Code, you can also use the status bar or command palette.',
-                    noteForQueries: 'All queries execute against the currently active profile. Use list_profiles to confirm which profile is active before running queries.'
-                }
+                currentProfile,
+                availableProfiles: all.filter(p => !(p as any).isActive),
+                totalProfiles: all.length,
+                message: `${all.length} profile(s) available (${fileProfiles.length} from config, ${wsProfiles.length} discovered from workspace). Currently using: ${currentProfile.name}`,
+                usage
             };
         } catch (error: any) {
             return {

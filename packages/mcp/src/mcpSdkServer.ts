@@ -17,7 +17,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { loadConfig, loadConfigFromFile, validateConfig, MCPConfig } from './config.js';
+import { loadConfig, loadConfigFromFile, validateConfig, scanDirForWorkspaceConfigs, MCPConfig } from './config.js';
 import { TOOL_DEFINITIONS } from './tools/toolDefinitions.js';
 import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInstructions.js';
 import { SETUP_PROMPT_CONTENT } from './tools/setupInstructions.js';
@@ -136,10 +136,30 @@ export async function discoverWorkspaceViaRoots(
         roots = res?.roots ?? [];
     } catch (err: any) {
         console.error(`[KB] roots discovery failed (non-fatal): ${err?.message}`);
-        trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: 0, matched: false, kbLoaded: false });
+        trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: 0, matched: false, kbLoaded: false, connectionsFound: toolHandlers.workspaceProfiles?.size ?? 0 });
         return null;
     }
 
+    // Pass 1 — collect selectable workspace CONNECTIONS from every root. This is
+    // side-effect-free w.r.t. the active connection (registry only); the active
+    // App Insights target is never changed here (cross-tenant safety). Auto-activate,
+    // if opted in, happens separately in startSdkStdioServer.
+    for (const root of roots) {
+        if (!root?.uri || !root.uri.startsWith('file://')) {
+            continue;
+        }
+        let rootPath: string;
+        try {
+            rootPath = fileURLToPath(root.uri);
+        } catch {
+            continue;
+        }
+        for (const cfgPath of scanDirForWorkspaceConfigs(rootPath)) {
+            toolHandlers.registerWorkspaceConnection(cfgPath, rootPath, 'roots');
+        }
+    }
+
+    // Pass 2 — locate workspace KNOWLEDGE (first matching root wins), unchanged.
     for (const root of roots) {
         if (!root?.uri || !root.uri.startsWith('file://')) {
             continue;
@@ -159,23 +179,23 @@ export async function discoverWorkspaceViaRoots(
                 toolHandlers.knowledgeBase = svc;
                 toolHandlers.kbSkipReason = 'loaded-via-roots';
                 console.error(`[KB] Knowledge Base loaded via MCP roots.`);
-                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: true });
+                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: true, connectionsFound: toolHandlers.workspaceProfiles?.size ?? 0 });
                 return svc;
             } catch (err: any) {
                 console.error(`[KB] roots KB load failed (non-fatal): ${err?.message}`);
-                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: false });
+                trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: true, kbLoaded: false, connectionsFound: toolHandlers.workspaceProfiles?.size ?? 0 });
                 return null;
             }
         }
     }
 
-    trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: false, kbLoaded: false });
+    trackRootsDiscovery(toolHandlers, { clientAdvertisedRoots: true, rootsCount: roots.length, matched: false, kbLoaded: false, connectionsFound: toolHandlers.workspaceProfiles?.size ?? 0 });
     return null;
 }
 
 function trackRootsDiscovery(
     toolHandlers: ToolHandlers,
-    props: { clientAdvertisedRoots: boolean; rootsCount: number; matched: boolean; kbLoaded: boolean }
+    props: { clientAdvertisedRoots: boolean; rootsCount: number; matched: boolean; kbLoaded: boolean; connectionsFound?: number }
 ): void {
     try {
         toolHandlers.services.usageTelemetry.trackEvent(
@@ -419,12 +439,19 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
     // Create SDK server with all tools
     const server = createSdkServer(toolHandlers);
 
+    // Opt-in: auto-activate a single workspace connection discovered synchronously
+    // via CLAUDE_PROJECT_DIR (default OFF; loud + only when exactly one is found).
+    // Never fires silently — see docs/plans/mcp-workspace-connection-discovery.md.
+    toolHandlers.maybeAutoActivateWorkspaceConnection();
+
     // If the eager (config-dir-anchored) load found no workspace knowledge, fall
     // back to MCP roots once the client connects. roots can only be requested
-    // after initialize, so this runs from the oninitialized hook.
+    // after initialize, so this runs from the oninitialized hook. It also collects
+    // selectable workspace connections and (if opted in) auto-activates the single one.
     if (!kbLoad.service) {
         server.server.oninitialized = () => {
-            void discoverWorkspaceViaRoots(server, resolvedConfig, toolHandlers);
+            void discoverWorkspaceViaRoots(server, resolvedConfig, toolHandlers)
+                .then(() => { toolHandlers.maybeAutoActivateWorkspaceConnection(); });
         };
     }
 

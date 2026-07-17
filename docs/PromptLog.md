@@ -3360,3 +3360,6 @@ Change instructions an business logic to do this."
 > [Design brief / bug report] BC Telemetry Buddy — workspace config & knowledge are not loaded under non-VS-Code MCP hosts (Claude Code). Goal: a host-agnostic way for the MCP server to discover the active workspace's `.bctb-config.json` and `.vscode/.bctb/knowledge`, not only when launched by the VS Code extension. (Full brief proposed solutions S1–S5.)
 
 > Usecase - if I would NOT have a config-file in the dir I'm using claude for - what is it going to do. Error? or use the user-config-file?
+
+## 2026-07-17 — Per-workspace connection discovery under Claude Code
+> I have a config file on one of the workspaces … but there seems to be no way for BCTB to pick up the local file, while the rule is simple: if there is a local config: take the local config. Maybe it's because of claude code, because in github copilot, I remember this worked flawlessly. [+ diagnostic prompt: "BC Telemetry Buddy MCP server ignores per-workspace .bctb-config.json when run under Claude Code"] Summarize and analyze what you can do about the problem.

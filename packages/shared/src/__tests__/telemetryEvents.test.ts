@@ -35,6 +35,14 @@ describe('TelemetryEvents', () => {
             expect(new Set(mcpIds).size).toBe(mcpIds.length);
         });
 
+        it('AC-W16: should export the workspace-profile-switch event constant, unique and distinct from ERROR', () => {
+            expect(TELEMETRY_EVENTS.MCP.WORKSPACE_PROFILE_SWITCH).toBe('TB-MCP-006');
+            expect(TELEMETRY_EVENTS.MCP.WORKSPACE_PROFILE_SWITCH).not.toBe(TELEMETRY_EVENTS.MCP.ERROR);
+
+            const mcpIds = Object.values(TELEMETRY_EVENTS.MCP);
+            expect(new Set(mcpIds).size).toBe(mcpIds.length);
+        });
+
         it('should export all MCP tool event constants', () => {
             expect(TELEMETRY_EVENTS.MCP_TOOLS.QUERY_TELEMETRY).toBe('TB-MCP-101');
             expect(TELEMETRY_EVENTS.MCP_TOOLS.GET_SAVED_QUERIES).toBe('TB-MCP-102');

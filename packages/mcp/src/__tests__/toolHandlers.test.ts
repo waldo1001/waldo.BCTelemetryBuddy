@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import * as crypto from 'crypto';
 
 // Mock shared modules
@@ -63,7 +64,7 @@ jest.mock('@bctb/shared', () => ({
     })),
     TELEMETRY_CONNECTION_STRING: '',
     TELEMETRY_EVENTS: {
-        MCP: { SERVER_STARTED: 'Mcp.ServerStarted', ERROR: 'Mcp.Error' },
+        MCP: { SERVER_STARTED: 'Mcp.ServerStarted', ERROR: 'Mcp.Error', WORKSPACE_PROFILE_SWITCH: 'Mcp.WorkspaceProfileSwitch' },
         MCP_TOOLS: { QUERY_TELEMETRY: 'Mcp.Tools.QueryTelemetry' }
     },
     createCommonProperties: jest.fn().mockReturnValue({}),
@@ -163,6 +164,9 @@ function createHandlersWithServices(
 describe('ToolHandlers', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Isolate discovery from the ambient host (e.g. running the suite inside Claude Code,
+        // which sets CLAUDE_PROJECT_DIR). Individual tests set it explicitly when needed.
+        delete process.env.CLAUDE_PROJECT_DIR;
     });
 
     // ─── initializeServices ──────────────────────────────────────────────
@@ -1129,6 +1133,329 @@ describe('ToolHandlers', () => {
 
             expect(result.success).toBe(false);
             expect(result.error).toContain('No .bctb-config.json found');
+        });
+    });
+
+    // ─── workspace-discovered profiles (Claude Code) ──────────────────────
+    //     docs/plans/mcp-workspace-connection-discovery.md
+
+    describe('workspace-discovered profiles (Claude Code)', () => {
+        const originalEnv = process.env;
+        let projectDir: string;   // simulates CLAUDE_PROJECT_DIR
+        let globalCfgDir: string; // holds the pinned global multi-profile config
+
+        beforeEach(() => {
+            process.env = { ...originalEnv };
+            delete process.env.CLAUDE_PROJECT_DIR;
+            delete process.env.BCTB_PROFILE;
+            delete process.env.BCTB_WORKSPACE_PATH;
+            delete process.env.BCTB_AUTO_WORKSPACE_CONNECTION;
+            projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-ws-proj-'));
+            globalCfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-ws-glob-'));
+        });
+
+        afterEach(() => {
+            process.env = originalEnv;
+            fs.rmSync(projectDir, { recursive: true, force: true });
+            fs.rmSync(globalCfgDir, { recursive: true, force: true });
+        });
+
+        /** Pinned global multi-profile config (like ~/.config/.../config.json). */
+        function writeGlobalConfig(): string {
+            const p = path.join(globalCfgDir, 'config.json');
+            fs.writeFileSync(p, JSON.stringify({
+                defaultProfile: 'ifacto-customers',
+                profiles: {
+                    _base: { authFlow: 'azure_cli', kustoClusterUrl: 'https://ade.applicationinsights.io' },
+                    'ifacto-customers': { extends: '_base', connectionName: 'iFacto Customers', applicationInsightsAppId: 'GLOBAL-IFACTO' },
+                    'bctb-usage': { extends: '_base', connectionName: 'BCTB Usage', applicationInsightsAppId: 'GLOBAL-BCTB' }
+                }
+            }));
+            return p;
+        }
+
+        /**
+         * Create a customer workspace under projectDir and return the folder that
+         * CLAUDE_PROJECT_DIR should point at (the customer root). When `sub` is set
+         * the config lives one level below the root (the Coeck/TelemetryAnalysis layout).
+         */
+        function makeCustomerWorkspace(customer: string, connectionName: string, appId: string, sub: string | null = 'TelemetryAnalysis'): string {
+            const root = path.join(projectDir, customer);
+            const dir = sub ? path.join(root, sub) : root;
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, '.bctb-config.json'), JSON.stringify({
+                connectionName, applicationInsightsAppId: appId, kustoClusterUrl: 'https://ade.applicationinsights.io', authFlow: 'azure_cli'
+            }));
+            return root;
+        }
+
+        it('AC-W4: derives a stable, unique key per discovered connection', () => {
+            const { handlers } = createHandlersWithServices();
+            const d = (root: string, cfg: string, conn: string, sub: string | undefined, appId: string, taken: Set<string>) =>
+                (handlers as any).deriveWorkspaceProfileKey(root, cfg, conn, sub, appId, taken);
+
+            // config directly in the opened folder -> folder basename
+            expect(d('/x/Coeck', '/x/Coeck/.bctb-config.json', 'Coeck', undefined, 'app1', new Set())).toBe('Coeck');
+            // config one level down in a generic subfolder -> opened-folder basename (the Coeck layout)
+            expect(d('/x/Coeck', '/x/Coeck/TelemetryAnalysis/.bctb-config.json', 'Coeck', undefined, 'app1', new Set())).toBe('Coeck');
+            // config one level down in a meaningful subfolder -> that subfolder name
+            expect(d('/x/parent', '/x/parent/CustA/.bctb-config.json', 'iFacto Customers', undefined, 'appA', new Set())).toBe('CustA');
+            // generic root + generic child -> falls back to connectionName
+            expect(d('/x/TelemetryAnalysis', '/x/TelemetryAnalysis/.bctb-config.json', 'iFacto Customers', undefined, 'appI', new Set())).toBe('iFacto Customers');
+            // collision with an existing/file profile name -> appId hash suffix (hashValue mocked -> 'abc123def456')
+            expect(d('/x/Coeck', '/x/Coeck/.bctb-config.json', 'Coeck', undefined, 'app1', new Set(['Coeck']))).toBe('Coeck#abc123');
+            // sub-profile name appended
+            expect(d('/x/Multi', '/x/Multi/TelemetryAnalysis/.bctb-config.json', 'Multi Prod', 'prod', 'app1', new Set())).toBe('Multi/prod');
+        });
+
+        it('AC-W5: discovers a workspace config one level below CLAUDE_PROJECT_DIR (idempotent)', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.workspaceProfiles.size).toBe(1);
+            handlers.ensureWorkspaceProfilesDiscovered(); // second call must not duplicate
+            expect(handlers.workspaceProfiles.size).toBe(1);
+
+            const entry = [...handlers.workspaceProfiles.values()][0];
+            expect(entry.key).toBe('Coeck');
+            expect(entry.connectionName).toBe('Coeck');
+            expect(entry.applicationInsightsAppId).toBe('ce466ef1');
+            expect(entry.source).toBe('workspace');
+            expect(entry.origin).toBe('claude-project-dir');
+        });
+
+        it('AC-W6: list_profiles merges workspace connections with the global profiles', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            const result = handlers.listProfiles();
+            expect(result.profileMode).toBe('multi');
+            const names = [result.currentProfile, ...result.availableProfiles].map((p: any) => p.name);
+            expect(names).toContain('ifacto-customers');
+            expect(names).toContain('bctb-usage');
+
+            const ws = result.availableProfiles.find((p: any) => p.source === 'workspace');
+            expect(ws).toBeDefined();
+            expect(ws.connectionName).toBe('Coeck');
+            expect(ws.isActive).toBe(false);
+            expect(result.usage.workspaceConnections).toBeDefined();
+        });
+
+        it('AC-W7: surfaces workspace connections even when the base config is flat/single', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const flatBase = path.join(globalCfgDir, 'flat.json');
+            fs.writeFileSync(flatBase, JSON.stringify({ connectionName: 'Global Flat', applicationInsightsAppId: 'FLAT', authFlow: 'azure_cli', kustoClusterUrl: 'https://ade.applicationinsights.io' }));
+            const { handlers } = createHandlersWithServices({ configFilePath: flatBase } as any);
+
+            const result = handlers.listProfiles();
+            const ws = result.availableProfiles.find((p: any) => p.source === 'workspace');
+            expect(ws).toBeDefined();
+            expect(ws.connectionName).toBe('Coeck');
+        });
+
+        it('AC-W8: switch_profile selects a workspace connection and rebuilds services', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            const result = handlers.switchProfile('Coeck');
+            expect(result.success).toBe(true);
+            expect(result.source).toBe('workspace');
+            expect(result.currentProfile.connectionName).toBe('Coeck');
+            expect(handlers.activeProfileSource).toBe('workspace');
+            expect(handlers.config.applicationInsightsAppId).toBe('ce466ef1');
+        });
+
+        it('AC-W9: after a workspace switch, global profiles remain listable and switchable (no strand)', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.switchProfile('Coeck').success).toBe(true);
+
+            const list = handlers.listProfiles();
+            const names = [list.currentProfile, ...list.availableProfiles].map((p: any) => p.name);
+            expect(names).toContain('ifacto-customers');
+            expect(names).toContain('bctb-usage');
+
+            const back = handlers.switchProfile('bctb-usage');
+            expect(back.success).toBe(true);
+            expect(back.currentProfile.connectionName).toBe('BCTB Usage');
+            expect(handlers.activeProfileSource).toBe('file');
+            expect(handlers.config.applicationInsightsAppId).toBe('GLOBAL-BCTB');
+        });
+
+        it('AC-W10: switch_profile by connectionName errors when ambiguous, leaving state unchanged', () => {
+            // Two customers directly one level below a shared parent, same connectionName.
+            fs.mkdirSync(path.join(projectDir, 'CustA'));
+            fs.writeFileSync(path.join(projectDir, 'CustA', '.bctb-config.json'), JSON.stringify({ connectionName: 'iFacto Customers', applicationInsightsAppId: 'APP-A', kustoClusterUrl: 'https://ade', authFlow: 'azure_cli' }));
+            fs.mkdirSync(path.join(projectDir, 'CustB'));
+            fs.writeFileSync(path.join(projectDir, 'CustB', '.bctb-config.json'), JSON.stringify({ connectionName: 'iFacto Customers', applicationInsightsAppId: 'APP-B', kustoClusterUrl: 'https://ade', authFlow: 'azure_cli' }));
+            process.env.CLAUDE_PROJECT_DIR = projectDir;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.workspaceProfiles.size).toBe(2);
+            const beforeAppId = handlers.config.applicationInsightsAppId;
+            const result = handlers.switchProfile('iFacto Customers');
+            expect(result.success).toBe(false);
+            expect(result.error.toLowerCase()).toContain('ambiguous');
+            expect(handlers.config.applicationInsightsAppId).toBe(beforeAppId);
+        });
+
+        it('AC-W11: a service constructor failure mid-switch leaves state unchanged (atomic)', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            const beforeAppId = handlers.config.applicationInsightsAppId;
+            const beforeSource = handlers.activeProfileSource;
+            const beforeName = handlers.activeProfileName;
+
+            const shared = require('@bctb/shared');
+            (shared.KustoService as jest.Mock).mockImplementationOnce(() => { throw new Error('boom'); });
+
+            const result = handlers.switchProfile('Coeck');
+            expect(result.success).toBe(false);
+            expect(handlers.config.applicationInsightsAppId).toBe(beforeAppId);
+            expect(handlers.activeProfileSource).toBe(beforeSource);
+            expect(handlers.activeProfileName).toBe(beforeName);
+        });
+
+        it('AC-W15: a multi-profile workspace config registers one entry per sub-profile', () => {
+            const root = path.join(projectDir, 'Multi');
+            const dir = path.join(root, 'TelemetryAnalysis');
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, '.bctb-config.json'), JSON.stringify({
+                defaultProfile: 'prod',
+                profiles: {
+                    _base: { authFlow: 'azure_cli', kustoClusterUrl: 'https://ade' },
+                    prod: { extends: '_base', connectionName: 'Multi Prod', applicationInsightsAppId: 'MULTI-PROD' },
+                    test: { extends: '_base', connectionName: 'Multi Test', applicationInsightsAppId: 'MULTI-TEST' }
+                }
+            }));
+            process.env.CLAUDE_PROJECT_DIR = root;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.workspaceProfiles.size).toBe(2);
+            const conns = [...handlers.workspaceProfiles.values()].map((e: any) => e.connectionName).sort();
+            expect(conns).toEqual(['Multi Prod', 'Multi Test']);
+
+            const r = handlers.switchProfile('Multi Prod');
+            expect(r.success).toBe(true);
+            expect(handlers.config.applicationInsightsAppId).toBe('MULTI-PROD');
+        });
+
+        it('AC-W14 (unset): discovery never changes the active connection without the opt-in flag', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            delete process.env.BCTB_AUTO_WORKSPACE_CONNECTION;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            // Discovered, but the active connection is untouched (still the one the server booted with).
+            expect(handlers.workspaceProfiles.size).toBe(1);
+            expect(handlers.activeProfileSource).toBe('file');
+            expect(handlers.config.applicationInsightsAppId).toBe('test-app-id');
+        });
+
+        it('AC-W14 (set, one): opt-in flag auto-activates the single discovered connection, loudly', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            process.env.BCTB_AUTO_WORKSPACE_CONNECTION = '1';
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+            const errSpy = jest.spyOn(console, 'error').mockImplementation();
+
+            const activated = handlers.maybeAutoActivateWorkspaceConnection();
+
+            expect(activated).toBe('Coeck');
+            expect(handlers.activeProfileSource).toBe('workspace');
+            expect(handlers.activeProfileAutoActivated).toBe(true);
+            expect(handlers.config.applicationInsightsAppId).toBe('ce466ef1');
+            expect(errSpy.mock.calls.flat().join(' ')).toContain('AUTO-ACTIVATED');
+            errSpy.mockRestore();
+        });
+
+        it('AC-W14 (crash-safe): a failure during auto-activation is non-fatal and leaves state unchanged', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            process.env.BCTB_AUTO_WORKSPACE_CONNECTION = '1';
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            const beforeAppId = handlers.config.applicationInsightsAppId;
+            const beforeSource = handlers.activeProfileSource;
+            const errSpy = jest.spyOn(console, 'error').mockImplementation();
+
+            // A service constructor blows up during activation — must NOT crash startup.
+            const shared = require('@bctb/shared');
+            (shared.KustoService as jest.Mock).mockImplementationOnce(() => { throw new Error('boom'); });
+
+            let activated: any;
+            expect(() => { activated = handlers.maybeAutoActivateWorkspaceConnection(); }).not.toThrow();
+            expect(activated).toBeNull();
+            expect(handlers.config.applicationInsightsAppId).toBe(beforeAppId);
+            expect(handlers.activeProfileSource).toBe(beforeSource);
+            errSpy.mockRestore();
+        });
+
+        it('AC-W14 (set, many): opt-in flag does NOT auto-activate when more than one is discovered', () => {
+            fs.mkdirSync(path.join(projectDir, 'CustA'));
+            fs.writeFileSync(path.join(projectDir, 'CustA', '.bctb-config.json'), JSON.stringify({ connectionName: 'A', applicationInsightsAppId: 'APP-A', kustoClusterUrl: 'https://ade', authFlow: 'azure_cli' }));
+            fs.mkdirSync(path.join(projectDir, 'CustB'));
+            fs.writeFileSync(path.join(projectDir, 'CustB', '.bctb-config.json'), JSON.stringify({ connectionName: 'B', applicationInsightsAppId: 'APP-B', kustoClusterUrl: 'https://ade', authFlow: 'azure_cli' }));
+            process.env.CLAUDE_PROJECT_DIR = projectDir;
+            process.env.BCTB_AUTO_WORKSPACE_CONNECTION = 'true';
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.workspaceProfiles.size).toBe(2);
+            const activated = handlers.maybeAutoActivateWorkspaceConnection();
+            expect(activated).toBeNull();
+            expect(handlers.activeProfileSource).toBe('file');
+        });
+
+        it('AC-W14 (no-op): does not retarget when the single discovered appId already matches the active one', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'same-app');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            process.env.BCTB_AUTO_WORKSPACE_CONNECTION = '1';
+            // Active connection already targets the same App Insights resource.
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig(), applicationInsightsAppId: 'same-app' } as any);
+
+            const activated = handlers.maybeAutoActivateWorkspaceConnection();
+            expect(activated).toBeNull();
+            expect(handlers.activeProfileSource).toBe('file');
+        });
+
+        it('AC-W13: registering the same config via CLAUDE_PROJECT_DIR and roots dedups to one entry', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+            expect(handlers.workspaceProfiles.size).toBe(1);
+
+            // The MCP roots path would register the same file again — must dedup by realpath.
+            const cfgPath = path.join(coeckRoot, 'TelemetryAnalysis', '.bctb-config.json');
+            handlers.registerWorkspaceConnection(cfgPath, coeckRoot, 'roots');
+            expect(handlers.workspaceProfiles.size).toBe(1);
+        });
+
+        it('AC-W17: workspace-profile-switch telemetry carries no filesystem paths', () => {
+            const coeckRoot = makeCustomerWorkspace('Coeck', 'Coeck', 'ce466ef1');
+            process.env.CLAUDE_PROJECT_DIR = coeckRoot;
+            const { handlers } = createHandlersWithServices({ configFilePath: writeGlobalConfig() } as any);
+
+            expect(handlers.switchProfile('Coeck').success).toBe(true);
+
+            const shared = require('@bctb/shared');
+            const call = (shared.createCommonProperties as jest.Mock).mock.calls
+                .find((c: any[]) => c[0] === 'Mcp.WorkspaceProfileSwitch');
+            expect(call).toBeDefined();
+            const options = call![5] || {};
+            for (const v of Object.values(options)) {
+                if (typeof v === 'string') {
+                    expect(v.includes('/')).toBe(false);
+                    expect(v.includes('\\')).toBe(false);
+                }
+            }
         });
     });
 });
