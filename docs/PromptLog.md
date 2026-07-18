@@ -2464,7 +2464,8 @@ Change instructions an business logic to do this."
 ---
 ### Entry ID: 00cb93ac-1fc3-4d1b-8bee-56e03e1b839b — 2026-01-06 14:41
 > "Exclude fields with explicit millisecond indicators (Ms, Milliseconds, InMs, _ms) from timespan detection - if field name indicates milliseconds, it's NOT a timespan"
-=======
+
+---
 ### Entry ID: 749c22d6-ea18-4d83-9042-f99aab6c5110 — 2026-01-08 14:45
 > "Fix GitHub Actions labeler workflow permissions issue - Resource not accessible by integration error"
 ### Entry ID: a4a2d36e-0bff-401f-86c8-bffc1dc23cf4 — 2026-01-14 23:10
@@ -3373,3 +3374,7 @@ Change instructions an business logic to do this."
 **EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
 **Date:** 2026-07-18
 **Prompt:** Review PR #127 functionally (conflicts with workspace-discovery work, tests, UX); create the spec as an issue, link it to the PR, and give the author actionable instructions.
+### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30
+> "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
+
+---

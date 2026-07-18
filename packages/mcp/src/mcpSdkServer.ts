@@ -14,14 +14,15 @@
  * with the VS Code extension Command Palette (MCPClient/axios).
  */
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { loadConfig, loadConfigFromFile, validateConfig, scanDirForWorkspaceConfigs, MCPConfig } from './config.js';
 import { TOOL_DEFINITIONS } from './tools/toolDefinitions.js';
 import { SERVER_INSTRUCTIONS, WORKFLOW_PROMPT_CONTENT } from './tools/serverInstructions.js';
 import { SETUP_PROMPT_CONTENT } from './tools/setupInstructions.js';
-import { ToolHandlers, initializeServices } from './tools/toolHandlers.js';
+import { ToolHandlers, ToolCallResult, initializeServices } from './tools/toolHandlers.js';
+import { ExportService } from '@bctb/shared';
 import { VERSION } from './version.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
@@ -288,7 +289,7 @@ function buildZodShape(toolDef: typeof TOOL_DEFINITIONS[0]): Record<string, z.Zo
  * Create and configure the SDK-based MCP server with all tools registered.
  * Returns the McpServer instance ready to be connected to a transport.
  */
-export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
+export function createSdkServer(toolHandlers: ToolHandlers, exportService?: ExportService): McpServer {
     const server = new McpServer(
         {
             name: 'BC Telemetry Buddy',
@@ -303,6 +304,7 @@ export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
                 prompts: {
                     listChanged: true
                 },
+                resources: {},
                 logging: {}
             }
         }
@@ -348,6 +350,45 @@ export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
         })
     );
 
+    // Register resource template for exported telemetry data files
+    if (exportService) {
+        server.registerResource(
+            'telemetry-export',
+            new ResourceTemplate('bctb://exports/{filename}', {
+                list: async () => {
+                    const entries = exportService.listExports();
+                    return {
+                        resources: entries.map(entry => ({
+                            uri: `bctb://exports/${entry.filename}`,
+                            name: entry.filename,
+                            mimeType: entry.mimeType
+                        }))
+                    };
+                }
+            }),
+            {
+                description: 'Exported telemetry query results. Use resultFormat: "resource" on query_telemetry to generate exports.'
+            },
+            async (uri: URL, variables: { filename?: string }) => {
+                const filename = variables.filename;
+                if (!filename) {
+                    throw new Error('Filename is required');
+                }
+                const result = exportService.readExport(filename);
+                if (!result) {
+                    throw new Error(`Export file not found: ${filename}`);
+                }
+                return {
+                    contents: [{
+                        uri: uri.href,
+                        mimeType: result.mimeType,
+                        text: result.content
+                    }]
+                };
+            }
+        );
+    }
+
     // Register all tools from the single source of truth
     for (const toolDef of TOOL_DEFINITIONS) {
         const zodShape = buildZodShape(toolDef);
@@ -367,6 +408,30 @@ export function createSdkServer(toolHandlers: ToolHandlers): McpServer {
             async (params: any): Promise<CallToolResult> => {
                 try {
                     const result = await toolHandlers.executeToolCall(toolDef.name, params);
+
+                    // Handle embedded resource response (resultFormat: 'resource')
+                    if (result?.asResource && result.filePath) {
+                        const toolCallResult = result as ToolCallResult;
+                        const fileContent = fs.readFileSync(toolCallResult.filePath!, 'utf-8');
+                        return {
+                            content: [
+                                {
+                                    type: 'text' as const,
+                                    text: toolCallResult.summary || 'Results exported as file resource.'
+                                },
+                                {
+                                    type: 'resource' as const,
+                                    resource: {
+                                        uri: toolCallResult.fileUri!,
+                                        mimeType: toolCallResult.mimeType!,
+                                        text: fileContent
+                                    }
+                                }
+                            ]
+                        };
+                    }
+
+                    // Default: inline text response (backward compatible)
                     return {
                         content: [
                             {
@@ -430,14 +495,17 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);
 
+    // Clean up expired exports on startup
+    services.exports.cleanupExpired();
+
     const kbLoad = await maybeLoadKnowledgeBase(resolvedConfig);
     if (kbLoad.service) {
         toolHandlers.knowledgeBase = kbLoad.service;
     }
     toolHandlers.kbSkipReason = kbLoad.reason;
 
-    // Create SDK server with all tools
-    const server = createSdkServer(toolHandlers);
+    // Create SDK server with all tools and resource template
+    const server = createSdkServer(toolHandlers, services.exports);
 
     // Opt-in: auto-activate a single workspace connection discovered synchronously
     // via CLAUDE_PROJECT_DIR (default OFF; loud + only when exactly one is found).

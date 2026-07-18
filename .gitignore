@@ -59,4 +59,5 @@ logs/
 Thumbs.db
 .bctb-config.json
 .vscode/.bctb/cache/*.json
-
+.vscode/.bctb/exports/
+packages/shared/.cache/
