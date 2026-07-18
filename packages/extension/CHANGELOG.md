@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-07-18
+
+_Highest blast-radius rating across all plans landed in this release: `safe`._
+
 ### Fixed
 - **Query result column names are populated again** (shared parsing accepted only the Kusto-native column shape, not the App Insights v1 API's `{name, type}` — headers rendered empty).
 

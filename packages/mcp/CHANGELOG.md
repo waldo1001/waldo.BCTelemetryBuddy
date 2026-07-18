@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-07-18
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Added
 - **MCP Embedded Resources for `query_telemetry`**: New `resultFormat` (`text` | `resource`) and `fileFormat` (`json` | `csv`) parameters. When `resultFormat: "resource"`, query results are returned as an MCP embedded resource file (CSV or JSON) with a brief text summary in model context — enabling agents with code interpreters to process large datasets. Aligned with Microsoft BC MCP 2026 Wave 1 pattern. Spec: [docs/specs/131-query-telemetry-embedded-resources.md](../../docs/specs/131-query-telemetry-embedded-resources.md).
 - **Resource template** `bctb://exports/{filename}`: Clients can list and read exported files via `resources/list` and `resources/read`. Embedded and listed resources always use the `bctb://` scheme (never `file://` absolute paths).
