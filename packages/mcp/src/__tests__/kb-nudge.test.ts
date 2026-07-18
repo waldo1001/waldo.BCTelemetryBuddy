@@ -135,6 +135,7 @@ function createMockServices(): ServerServices {
         } as any,
         references: { getAllExternalQueries: jest.fn().mockResolvedValue([]) } as any,
         usageTelemetry: { trackEvent: jest.fn(), trackException: jest.fn(), flush: jest.fn() } as any,
+        exports: { exportJson: jest.fn(), exportCsv: jest.fn(), listExports: jest.fn().mockReturnValue([]), readExport: jest.fn(), cleanupExpired: jest.fn().mockReturnValue(0) } as any,
         installationId: 'test-id',
         sessionId: 'test-session',
     };

@@ -42,6 +42,13 @@ jest.mock('@bctb/shared', () => ({
     ReferencesService: jest.fn().mockImplementation(() => ({
         getAllExternalQueries: jest.fn().mockResolvedValue([{ name: 'ext-query' }])
     })),
+    ExportService: jest.fn().mockImplementation(() => ({
+        exportJson: jest.fn(),
+        exportCsv: jest.fn(),
+        listExports: jest.fn().mockReturnValue([]),
+        readExport: jest.fn(),
+        cleanupExpired: jest.fn().mockReturnValue(0)
+    })),
     sanitizeObject: jest.fn((obj: any) => obj),
     lookupEventCategory: jest.fn().mockResolvedValue({
         category: 'Performance',
@@ -142,6 +149,7 @@ function createMockServices(overrides?: Partial<ServerServices>): ServerServices
             trackException: jest.fn(),
             flush: jest.fn().mockResolvedValue(undefined)
         } as any,
+        exports: { exportJson: jest.fn(), exportCsv: jest.fn(), listExports: jest.fn().mockReturnValue([]), readExport: jest.fn(), cleanupExpired: jest.fn().mockReturnValue(0) } as any,
         installationId: 'test-installation-id',
         sessionId: 'test-session-id',
         ...overrides

@@ -524,7 +524,7 @@ describe('MCP SDK Server', () => {
                 data: { type: 'table', columns: ['a'], rows: [['b']], summary: 'test' },
                 asResource: true,
                 filePath: path.join(__dirname, '../mcpSdkServer.ts'), // Use a real file for readFileSync
-                fileUri: 'file:///test/export.csv',
+                fileUri: 'bctb://exports/export.csv',
                 mimeType: 'text/csv',
                 summary: 'Query returned 1 row(s) with 1 column(s). Results exported as CSV file.'
             });
@@ -543,17 +543,24 @@ describe('MCP SDK Server', () => {
             expect(result.content[0].type).toBe('text');
             expect(result.content[0].text).toContain('Query returned 1 row(s)');
             expect(result.content[1].type).toBe('resource');
-            expect(result.content[1].resource).toHaveProperty('uri', 'file:///test/export.csv');
+            // AC7 (spec 131): the embedded resource URI is the bctb:// form,
+            // never a file:// absolute path.
+            expect(result.content[1].resource).toHaveProperty('uri', 'bctb://exports/export.csv');
             expect(result.content[1].resource).toHaveProperty('mimeType', 'text/csv');
             expect(result.content[1].resource).toHaveProperty('text');
         });
 
         test('server capabilities include resources', () => {
-            const source = fs.readFileSync(
-                path.join(__dirname, '../mcpSdkServer.ts'),
-                'utf-8'
-            );
-            expect(source).toContain('resources: {}');
+            const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+            const { createSdkServer } = require('../mcpSdkServer.js');
+            const { ToolHandlers } = require('../tools/toolHandlers.js');
+
+            const handlers = new ToolHandlers(mockConfig, createMockServices(), true, []);
+            createSdkServer(handlers);
+
+            // Assert the actual capabilities argument, not the source text (AC5).
+            const ctorOptions = McpServer.mock.calls[0][1];
+            expect(ctorOptions.capabilities).toHaveProperty('resources');
         });
     });
 

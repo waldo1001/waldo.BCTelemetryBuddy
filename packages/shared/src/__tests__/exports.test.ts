@@ -105,7 +105,9 @@ describe('ExportService', () => {
             const result = service.exportJson(data, 'query_telemetry');
 
             expect(result.filePath).toMatch(/query_telemetry_.*\.json$/);
-            expect(result.fileUri).toMatch(/^file:\/\//);
+            // AC7 (spec 131): resource URIs use the bctb:// scheme — never file://
+            // absolute paths, which would leak the local filesystem layout.
+            expect(result.fileUri).toBe(`bctb://exports/${result.filename}`);
             expect(result.mimeType).toBe('application/json');
             expect(result.filename).toMatch(/query_telemetry_.*\.json$/);
             expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
@@ -138,7 +140,7 @@ describe('ExportService', () => {
             const result = service.exportCsv(columns, rows, 'query_telemetry');
 
             expect(result.filePath).toMatch(/query_telemetry_.*\.csv$/);
-            expect(result.fileUri).toMatch(/^file:\/\//);
+            expect(result.fileUri).toBe(`bctb://exports/${result.filename}`);
             expect(result.mimeType).toBe('text/csv');
             expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
                 result.filePath,
@@ -165,9 +167,13 @@ describe('ExportService', () => {
                 'query_telemetry_20260406_120100_efgh5678.json',
                 'other.txt'
             ] as any);
+            // AC6 (spec 131): mtime, not birthtime — birthtime is unreliable/zero
+            // on some Linux filesystems.
             mockedFs.statSync.mockReturnValue({
-                birthtime: new Date('2026-04-06T12:00:00Z'),
-                birthtimeMs: new Date('2026-04-06T12:00:00Z').getTime(),
+                mtime: new Date('2026-04-06T12:00:00Z'),
+                mtimeMs: new Date('2026-04-06T12:00:00Z').getTime(),
+                birthtime: new Date(0),
+                birthtimeMs: 0,
                 size: 1024
             } as any);
 
@@ -175,6 +181,8 @@ describe('ExportService', () => {
             const result = service.listExports();
 
             expect(result).toHaveLength(2);
+            expect(result[0].createdAt.getTime()).toBe(new Date('2026-04-06T12:00:00Z').getTime());
+            expect(result[0].uri).toMatch(/^bctb:\/\/exports\//);
             expect(result[0].mimeType).toMatch(/text\/csv|application\/json/);
             expect(result[1].mimeType).toMatch(/text\/csv|application\/json/);
         });
@@ -236,7 +244,10 @@ describe('ExportService', () => {
             mockedFs.statSync.mockImplementation(() => {
                 callCount++;
                 return {
-                    birthtimeMs: callCount === 1 ? oldTime : newTime
+                    // birthtimeMs deliberately 0 (Linux ext4 without statx):
+                    // cleanup must key on mtimeMs (AC6, spec 131).
+                    mtimeMs: callCount === 1 ? oldTime : newTime,
+                    birthtimeMs: 0
                 } as any;
             });
             mockedFs.unlinkSync.mockReturnValue(undefined);

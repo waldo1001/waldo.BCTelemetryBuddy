@@ -111,7 +111,10 @@ export class ExportService {
 
         return {
             filePath,
-            fileUri: `file://${filePath}`,
+            // bctb:// scheme, not file:// — the URI is model-visible and must not
+            // leak the local filesystem layout; it also routes resources/read to
+            // the registered telemetry-export template.
+            fileUri: `bctb://exports/${filename}`,
             mimeType: 'application/json',
             filename
         };
@@ -132,7 +135,7 @@ export class ExportService {
 
         return {
             filePath,
-            fileUri: `file://${filePath}`,
+            fileUri: `bctb://exports/${filename}`,
             mimeType: 'text/csv',
             filename
         };
@@ -162,9 +165,12 @@ export class ExportService {
                     const mimeType = filename.endsWith('.csv') ? 'text/csv' : 'application/json';
                     entries.push({
                         filename,
-                        uri: `file://${filePath}`,
+                        uri: `bctb://exports/${filename}`,
                         mimeType,
-                        createdAt: stat.birthtime,
+                        // mtime, not birthtime — birthtime is zero on some Linux
+                        // filesystems; export files are never rewritten, so mtime
+                        // is their creation time.
+                        createdAt: stat.mtime,
                         sizeBytes: stat.size
                     });
                 } catch {
@@ -226,7 +232,7 @@ export class ExportService {
 
                 try {
                     const stat = fs.statSync(filePath);
-                    if (now - stat.birthtimeMs > maxAgeMs) {
+                    if (now - stat.mtimeMs > maxAgeMs) {
                         fs.unlinkSync(filePath);
                         cleaned++;
                     }
