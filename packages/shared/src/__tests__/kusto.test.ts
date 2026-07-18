@@ -344,6 +344,30 @@ describe('KustoService', () => {
             expect(parsed.summary).toBe('Returned 3 row(s) with 2 column(s)');
         });
 
+        it('should map column names from the App Insights v1 API shape ({name, type})', () => {
+            // The v1 REST API (api.applicationinsights.io/v1/apps/{app}/query) returns
+            // columns as {name, type}, not the Kusto-native {columnName, dataType}.
+            // AC1 of docs/plans/kusto-column-names-fix.md.
+            const result = {
+                tables: [
+                    {
+                        tableName: 'PrimaryResult',
+                        columns: [
+                            { name: 'timestamp', type: 'datetime' },
+                            { name: 'message', type: 'string' }
+                        ],
+                        rows: [['2026-07-18T00:00:00Z', 'hello']]
+                    }
+                ]
+            } as any;
+
+            const parsed = service.parseResult(result);
+
+            expect(parsed.columns).toEqual(['timestamp', 'message']);
+            expect(parsed.rows).toEqual([['2026-07-18T00:00:00Z', 'hello']]);
+            expect(parsed.summary).toBe('Returned 1 row(s) with 2 column(s)');
+        });
+
         it('should handle empty result (no tables)', () => {
             // Arrange
             const result: KustoQueryResult = { tables: [] };

@@ -3378,3 +3378,13 @@ Change instructions an business logic to do this."
 > "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
 
 ---
+
+---
+**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
+**Date:** 2026-07-18
+**Prompt:** PR #129 is blocked by checks — how can we solve this?
+
+---
+**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
+**Date:** 2026-07-18
+**Prompt:** Now also look into PR 108 — we need to get it green as well. (Spec + plan approved: "approved")

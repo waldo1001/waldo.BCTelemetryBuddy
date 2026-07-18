@@ -15,9 +15,14 @@ export interface KustoTable {
 }
 
 export interface KustoColumn {
-    columnName: string;
-    dataType: string;
-    columnType: string;
+    // Kusto-native shape ({columnName, dataType, columnType}); the App Insights
+    // v1 REST API (api.applicationinsights.io) returns {name, type} instead —
+    // both shapes must be accepted wherever columns are read.
+    columnName?: string;
+    dataType?: string;
+    columnType?: string;
+    name?: string;
+    type?: string;
 }
 
 /**
@@ -205,7 +210,7 @@ export class KustoService {
         }
 
         const primaryTable = result.tables[0];
-        const columns = primaryTable.columns?.map(col => col.columnName) ?? [];
+        const columns = primaryTable.columns?.map(col => col.columnName ?? col.name ?? '') ?? [];
         const rows = primaryTable.rows ?? [];
 
         const summary = `Returned ${rows.length} row(s) with ${columns.length} column(s)`;
