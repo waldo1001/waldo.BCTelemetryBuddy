@@ -3373,3 +3373,13 @@ Change instructions an business logic to do this."
 **EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
 **Date:** 2026-07-18
 **Prompt:** Review PR #127 functionally (conflicts with workspace-discovery work, tests, UX); create the spec as an issue, link it to the PR, and give the author actionable instructions.
+
+---
+**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
+**Date:** 2026-07-18
+**Prompt:** PR #129 is blocked by checks — how can we solve this?
+
+---
+**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
+**Date:** 2026-07-18
+**Prompt:** Now also look into PR 108 — we need to get it green as well. (Spec + plan approved: "approved")

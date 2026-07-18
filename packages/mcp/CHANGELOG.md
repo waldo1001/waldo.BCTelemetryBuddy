@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`query_telemetry` responses now contain real column names.** The App Insights v1 API returns columns as `{name, type}`, but parsing mapped the Kusto-native `columnName` field — so the `columns` array was `[null, …]` for every query. Both shapes are now accepted. (Found by the PR #108 embedded-resources smoke test: CSV exports had an empty header row.)
+
 ## [3.6.0] - 2026-07-18
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

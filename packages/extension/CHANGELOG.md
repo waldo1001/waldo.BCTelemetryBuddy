@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Query result column names are populated again** (shared parsing accepted only the Kusto-native column shape, not the App Insights v1 API's `{name, type}` — headers rendered empty).
+
 ## [3.4.1] - 2026-06-02
 
 _Maintenance release — no functional changes to the extension. Version aligned with the MCP v3.5.1 `npx` bin-resolution fix._

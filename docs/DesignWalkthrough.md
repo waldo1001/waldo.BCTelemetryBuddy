@@ -2064,3 +2064,21 @@ Keep entries short and focused. This doc is your presentation backbone.
 **Date:** 2026-07-18
 **Why:** PR #127 (multi-root wizard support) had the right intent but shipped a non-compiling test, tests against a nonexistent message interface, an out-of-scope name-based priority heuristic that silently changes the active MCP connection, and no telemetry; CI never ran on it.
 **How:** First application of the SDD flow to an external PR: spec authored as issue #130 + docs/specs/130-multiroot-wizard-support.md (draft), request-changes review posted on #127 scoping it to Phase 1 (unblock multi-root, unify wizards on findConfigWorkspace) with a copy-pasteable remediation prompt; Phase 2 priority detection deferred to a future spec.
+
+---
+**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
+**Date:** 2026-07-18
+**Why:** PR #129 (KB article, tenant-activity-footprint) failed only the validate-kb-index check — the contributor added the article without regenerating knowledge-base/index.json.
+**How:** Verified locally in a throwaway worktree that regenerating the index is the only needed change (6→7 articles), then pushed the regenerated index.json to the contributor's fork branch (maintainerCanModify=true), preserving their authorship. Commit 3044f82 on gdrgdev:gdrgdev-add-tenant-activity-footprint.
+
+---
+**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
+**Date:** 2026-07-18
+**Why:** PR #108 (MCP embedded resources for query_telemetry) was CONFLICTING (branched at v3.3.4, main moved to v3.6.0), was never green (April CI failure), collided on telemetry ID TB-MCP-113, leaked file:// paths into model context, and relied on Linux-unreliable birthtime for cleanup.
+**How:** Full SDD cycle: spec docs/specs/131-query-telemetry-embedded-resources.md (approved, issue #131) + plan docs/plans/pr108-embedded-resources-remediation.md; resolved all 7 merge conflicts in an isolated worktree keeping main's KB/roots work and the PR's resource machinery; RED-first amendments for AC5-AC8 (bctb:// URIs, mtime cleanup, TB-MCP-117, real capabilities assertion, mock fixes); 1585 tests green + coverage thresholds met; pushed merge+fix commits to DmitryKatson's branch (maintainerCanModify), updated PR body (Closes #131), commented explanation. Commits 8f351eb/ee89e4a/488da5e on the fork branch.
+
+---
+**EntryId:** D9D9DD59-8E52-4922-9157-61F62A0E815B
+**Date:** 2026-07-18
+**Why:** PR #108's codecov statuses stayed red after remediation: CI never uploaded packages/shared coverage (exports.ts diff read as 0%), and the handler/resource-callback layers lacked direct tests.
+**How:** Added handler-layer tests for the resultFormat:'resource' branch (AC1-AC3) and resource-template list/read callback tests (AC4) — 4 tests, pushed to the PR branch; added shared-coverage upload (flag: shared) to ci.yml on main and merged it into the PR branch. Result: ALL CHECKS GREEN on PR #108 incl. codecov/patch + codecov/project. Spec 131 Verification table completed; plan pr108-embedded-resources-remediation flipped to done.
