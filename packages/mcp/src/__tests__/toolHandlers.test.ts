@@ -419,6 +419,88 @@ describe('ToolHandlers', () => {
             expect(result).toHaveProperty('type');
         });
 
+        // Spec 131 — resource export branch (AC1/AC2/AC3/AC8 at the handler layer)
+        describe('query_telemetry resultFormat: resource (spec 131)', () => {
+            function createResourceHandlers() {
+                return createHandlersWithServices({}, {
+                    exports: {
+                        exportCsv: jest.fn().mockReturnValue({
+                            filePath: '/ws/.vscode/.bctb/exports/q.csv',
+                            fileUri: 'bctb://exports/q.csv',
+                            mimeType: 'text/csv',
+                            filename: 'q.csv'
+                        }),
+                        exportJson: jest.fn().mockReturnValue({
+                            filePath: '/ws/.vscode/.bctb/exports/q.json',
+                            fileUri: 'bctb://exports/q.json',
+                            mimeType: 'application/json',
+                            filename: 'q.json'
+                        }),
+                        listExports: jest.fn().mockReturnValue([]),
+                        readExport: jest.fn(),
+                        cleanupExpired: jest.fn().mockReturnValue(0)
+                    } as any
+                });
+            }
+
+            test('AC2: exports CSV, returns ToolCallResult with bctb:// URI, tracks telemetry, cleans up', async () => {
+                const { handlers, services } = createResourceHandlers();
+
+                const result: any = await handlers.executeToolCall('query_telemetry', {
+                    kql: 'traces | take 10',
+                    useContext: false,
+                    includeExternal: false,
+                    resultFormat: 'resource'
+                });
+
+                expect(services.exports.exportCsv).toHaveBeenCalledWith(['col1'], [['val1']], 'query_telemetry');
+                expect(result.asResource).toBe(true);
+                expect(result.fileUri).toBe('bctb://exports/q.csv');
+                expect(result.mimeType).toBe('text/csv');
+                expect(result.summary).toContain('1 row(s) with 1 column(s)');
+                expect(result.summary).toContain('CSV');
+                // createCommonProperties is mocked to {} at module level in this file;
+                // the property mapping itself is covered by shared's telemetry tests.
+                expect(services.usageTelemetry.trackEvent).toHaveBeenCalledWith(
+                    'Mcp.ResourceExported',
+                    expect.anything()
+                );
+                expect(services.exports.cleanupExpired).toHaveBeenCalled();
+            });
+
+            test('AC3: fileFormat json exports the full result envelope as JSON', async () => {
+                const { handlers, services } = createResourceHandlers();
+
+                const result: any = await handlers.executeToolCall('query_telemetry', {
+                    kql: 'traces | take 10',
+                    useContext: false,
+                    includeExternal: false,
+                    resultFormat: 'resource',
+                    fileFormat: 'json'
+                });
+
+                expect(services.exports.exportJson).toHaveBeenCalled();
+                expect(services.exports.exportCsv).not.toHaveBeenCalled();
+                expect(result.asResource).toBe(true);
+                expect(result.mimeType).toBe('application/json');
+            });
+
+            test('AC1: default resultFormat leaves the inline result untouched and never exports', async () => {
+                const { handlers, services } = createResourceHandlers();
+
+                const result: any = await handlers.executeToolCall('query_telemetry', {
+                    kql: 'traces | take 10',
+                    useContext: false,
+                    includeExternal: false
+                });
+
+                expect(result.asResource).toBeUndefined();
+                expect(result).toHaveProperty('type');
+                expect(services.exports.exportCsv).not.toHaveBeenCalled();
+                expect(services.exports.exportJson).not.toHaveBeenCalled();
+            });
+        });
+
         test('dispatches get_event_schema requires eventId', async () => {
             const { handlers } = createHandlersWithServices();
 

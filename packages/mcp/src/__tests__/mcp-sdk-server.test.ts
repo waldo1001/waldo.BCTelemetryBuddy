@@ -511,6 +511,42 @@ describe('MCP SDK Server', () => {
             expect(mockInstance.registerResource).not.toHaveBeenCalled();
         });
 
+        test('resource template list and read callbacks serve exports with bctb:// URIs (AC4)', async () => {
+            const { McpServer, ResourceTemplate } = require('@modelcontextprotocol/sdk/server/mcp.js');
+            const { createSdkServer } = require('../mcpSdkServer.js');
+            const { ToolHandlers } = require('../tools/toolHandlers.js');
+
+            const exportService = {
+                listExports: jest.fn().mockReturnValue([
+                    { filename: 'a.csv', mimeType: 'text/csv', uri: 'bctb://exports/a.csv' }
+                ]),
+                readExport: jest.fn().mockImplementation((f: string) =>
+                    f === 'a.csv' ? { content: 'x,y', mimeType: 'text/csv' } : null
+                )
+            } as any;
+            const handlers = new ToolHandlers(mockConfig, createMockServices(), true, []);
+            createSdkServer(handlers, exportService);
+
+            // list callback (captured from the ResourceTemplate constructor)
+            const listCb = ResourceTemplate.mock.calls[0][1].list;
+            const listed = await listCb();
+            expect(listed.resources).toHaveLength(1);
+            expect(listed.resources[0].uri).toBe('bctb://exports/a.csv');
+
+            // read callback (4th arg of registerResource)
+            const mockInstance = McpServer.mock.results[0].value;
+            const readCb = mockInstance.registerResource.mock.calls[0][3];
+            const res = await readCb(new URL('bctb://exports/a.csv'), { filename: 'a.csv' });
+            expect(res.contents[0].text).toBe('x,y');
+            expect(res.contents[0].mimeType).toBe('text/csv');
+
+            // not-found and missing-filename error paths
+            await expect(readCb(new URL('bctb://exports/nope.csv'), { filename: 'nope.csv' }))
+                .rejects.toThrow('Export file not found');
+            await expect(readCb(new URL('bctb://exports/'), {}))
+                .rejects.toThrow('Filename is required');
+        });
+
         test('tool callback returns embedded resource when result has asResource flag', async () => {
             const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
             const { createSdkServer } = require('../mcpSdkServer.js');
