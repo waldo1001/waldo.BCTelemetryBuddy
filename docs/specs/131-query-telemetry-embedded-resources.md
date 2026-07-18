@@ -1,7 +1,7 @@
 ---
 spec: 131-query-telemetry-embedded-resources
 issue: 131
-status: approved
+status: implemented
 created: 2026-07-18
 approved: 2026-07-18
 plans: [docs/plans/pr108-embedded-resources-remediation.md]
