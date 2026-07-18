@@ -39,16 +39,18 @@ MCP clients (Claude Code, Copilot agent mode, any resources-capable host); packa
 One dedicated MCP tool event per export (see AC8). Exact renumbered ID assigned in the plan.
 
 ## Verification
+All tests green on the PR #108 branch (CI run of 2026-07-18, all checks incl. codecov). Status flips to `implemented` when the PR merges.
+
 | AC | Test | Status |
 |---|---|---|
-| AC1 | planned | planned |
-| AC2 | planned | planned |
-| AC3 | planned | planned |
-| AC4 | planned | planned |
-| AC5 | planned | planned |
-| AC6 | planned | planned |
-| AC7 | planned | planned |
-| AC8 | planned | planned |
+| AC1 | `packages/mcp/src/__tests__/toolHandlers.test.ts` — "AC1: default resultFormat leaves the inline result untouched and never exports" | verified |
+| AC2 | `toolHandlers.test.ts` — "AC2: exports CSV, returns ToolCallResult with bctb:// URI, tracks telemetry, cleans up"; `mcp-sdk-server.test.ts` — "tool callback returns embedded resource when result has asResource flag" | verified |
+| AC3 | `toolHandlers.test.ts` — "AC3: fileFormat json exports the full result envelope as JSON" | verified |
+| AC4 | `mcp-sdk-server.test.ts` — "resource template list and read callbacks serve exports with bctb:// URIs (AC4)"; `packages/shared/src/__tests__/exports.test.ts` — path-traversal test | verified |
+| AC5 | `mcp-sdk-server.test.ts` — "server capabilities include resources" (real constructor-args assertion) + register/no-register template tests | verified |
+| AC6 | `exports.test.ts` — "should delete expired files" (mtimeMs-keyed, birthtimeMs deliberately 0) + listing createdAt from mtime | verified |
+| AC7 | `exports.test.ts` — bctb:// fileUri assertions on exportJson/exportCsv; `mcp-sdk-server.test.ts` — resource block URI `bctb://exports/export.csv` | verified |
+| AC8 | `toolHandlers.test.ts` — AC2 test asserts `Mcp.ResourceExported`; `TELEMETRY_EVENTS.MCP_TOOLS.RESOURCE_EXPORTED = 'TB-MCP-117'` | verified |
 
 ## Links
 - Issue: #131
