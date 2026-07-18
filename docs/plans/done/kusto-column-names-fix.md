@@ -1,6 +1,6 @@
 ---
 topic: kusto-column-names-fix
-status: approved
+status: done
 created: 2026-07-18
 spec: spec-lite
 ---

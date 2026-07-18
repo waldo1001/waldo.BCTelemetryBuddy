@@ -2082,3 +2082,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 **Date:** 2026-07-18
 **Why:** PR #108's codecov statuses stayed red after remediation: CI never uploaded packages/shared coverage (exports.ts diff read as 0%), and the handler/resource-callback layers lacked direct tests.
 **How:** Added handler-layer tests for the resultFormat:'resource' branch (AC1-AC3) and resource-template list/read callback tests (AC4) — 4 tests, pushed to the PR branch; added shared-coverage upload (flag: shared) to ci.yml on main and merged it into the PR branch. Result: ALL CHECKS GREEN on PR #108 incl. codecov/patch + codecov/project. Spec 131 Verification table completed; plan pr108-embedded-resources-remediation flipped to done.
+
+---
+**EntryId:** FFF94154-D24C-4D94-91C2-84AEA19A370B
+**Date:** 2026-07-18
+**Why:** Pre-merge smoke test of PR #108 (live resource-mode query against real telemetry) passed transport/security checks but exposed empty CSV headers — a pre-existing production bug: parseResult mapped Kusto-native columnName while the App Insights v1 API returns {name,type}, so columns was [null,…] for every query (confirmed on the released server).
+**How:** Spec-lite cycle docs/plans/done/kusto-column-names-fix.md: RED test with v1-shaped columns, one-line shape-tolerant mapping in shared/kusto.ts (columnName ?? name), CHANGELOG entries for mcp+extension, landed on main (559e096), merged into the PR branch, re-smoked: CSV header now carries real column names. Export test data deleted after verification.

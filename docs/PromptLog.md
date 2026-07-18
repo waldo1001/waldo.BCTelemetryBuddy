@@ -3383,3 +3383,8 @@ Change instructions an business logic to do this."
 **EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
 **Date:** 2026-07-18
 **Prompt:** Now also look into PR 108 — we need to get it green as well. (Spec + plan approved: "approved")
+
+---
+**EntryId:** FFF94154-D24C-4D94-91C2-84AEA19A370B
+**Date:** 2026-07-18
+**Prompt:** Can we do a smoketest before we merge? (then: "go" for the column-name fix)
