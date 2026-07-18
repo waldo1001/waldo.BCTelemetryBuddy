@@ -1,6 +1,6 @@
 {
-  "generated": "2026-05-30",
-  "count": 6,
+  "generated": "2026-07-18",
+  "count": 7,
   "articles": [
     {
       "id": "database-wait-statistics",
@@ -145,6 +145,36 @@
       "author": "waldo",
       "created": "2026-04-05",
       "updated": "2026-04-05"
+    },
+    {
+      "id": "tenant-activity-footprint",
+      "title": "Tenant Activity Footprint: What Users Actually Do",
+      "category": "query-pattern",
+      "tags": [
+        "usage",
+        "footprint",
+        "pages",
+        "reports",
+        "user-activity",
+        "clientType",
+        "behavioral-analysis",
+        "client-actions",
+        "excel",
+        "financial-reports"
+      ],
+      "eventIds": [
+        "CL0001",
+        "CL0003",
+        "RT0006",
+        "RT0004",
+        "RT0056",
+        "AL0000O76",
+        "AL0000OKU"
+      ],
+      "appliesTo": "BC 24.0+",
+      "author": "Gerardo Renteria",
+      "created": "2026-06-22",
+      "updated": "2026-06-23"
     }
   ]
 }
