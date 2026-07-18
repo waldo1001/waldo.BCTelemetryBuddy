@@ -2058,3 +2058,9 @@ Keep entries short and focused. This doc is your presentation backbone.
 **Date:** 2026-07-18
 **Why:** The repo had a rigorously enforced TDD side but no spec layer — issues, PRs, and the dev process were disconnected, with acceptance criteria existing only inside plan files.
 **How:** Added SDD Phase 0 in front of the TDD cycle: docs/specs/ (issue-keyed behavior specs with AC IDs, draft→approved→implemented), /spec-authoring skill, Rule 14 + extended hard gate across the governance chain, Spec-lite path for safe/low-risk fixes, scripts/validate-specs.js + validate-specs CI job, spec-check.yml PR gate (warn mode, fork PRs advisory-only, spec-waived escape hatch), CONTRIBUTING.md, AC fields in issue forms, spec section in PR template, and needs-spec/spec-approved/spec-waived labels with a triage pass over the open backlog. Plan: docs/plans/sdd-process-upgrade.md.
+
+---
+**EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
+**Date:** 2026-07-18
+**Why:** PR #127 (multi-root wizard support) had the right intent but shipped a non-compiling test, tests against a nonexistent message interface, an out-of-scope name-based priority heuristic that silently changes the active MCP connection, and no telemetry; CI never ran on it.
+**How:** First application of the SDD flow to an external PR: spec authored as issue #130 + docs/specs/130-multiroot-wizard-support.md (draft), request-changes review posted on #127 scoping it to Phase 1 (unblock multi-root, unify wizards on findConfigWorkspace) with a copy-pasteable remediation prompt; Phase 2 priority detection deferred to a future spec.

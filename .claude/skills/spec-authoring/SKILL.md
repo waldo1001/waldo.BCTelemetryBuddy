@@ -55,7 +55,8 @@ INTAKE → DRAFT → REVIEW (STOP) → APPROVE → HANDOFF
    ```bash
    node scripts/validate-specs.js docs/specs/<N>-<topic>.md
    ```
-5. Do **not** touch issue labels yet — that happens at approval.
+5. **Commit and push the draft spec immediately** (standing Rule 11 exception — see copilot-instructions.md): a spec-only commit touching nothing outside `docs/specs/`. Status gates implementation, not visibility; the spec must be on GitHub to be reviewable and linkable.
+6. Do **not** touch issue labels yet — that happens at approval.
 
 ## Phase 3: REVIEW — STOP
 
@@ -67,7 +68,7 @@ Approval requires the explicit words "go", "approved", "proceed", "looks good", 
 
 Only after explicit approval:
 
-1. Flip frontmatter: `status: approved`, set `approved: YYYY-MM-DD`.
+1. Flip frontmatter: `status: approved`, set `approved: YYYY-MM-DD`. Commit and push the flip (spec-only commit, same standing exception).
 2. Update the issue:
    ```bash
    gh issue edit <N> --repo waldo1001/waldo.BCTelemetryBuddy --add-label spec-approved --remove-label needs-spec

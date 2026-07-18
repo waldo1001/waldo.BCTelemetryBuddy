@@ -306,6 +306,10 @@ When testing the MCP server without Claude Desktop or VSCode, use the MCP Inspec
 - Package managers: `npm install`, `npm ci` (when explicitly needed)
 - Verification commands: checking file contents, running local servers
 
+**Workflow exceptions (standing authorization, no separate request needed):**
+- **Spec commits (Rule 14):** committing and pushing changes that touch ONLY `docs/specs/**` is part of the `/spec-authoring` workflow — a draft spec is committed as soon as it is written, and the `approved`/`implemented` status flips are committed when they happen. A spec must be on GitHub to be reviewable and linkable from issues/PRs. The commit must contain nothing outside `docs/specs/` (run `git status` first; if anything else is staged or dirty in the same commit path, fall back to asking).
+- **Plan archival (`git mv` in Phase 9):** renaming a done plan into `docs/plans/done/` — already sanctioned by the TDD workflow.
+
 **Rationale:**
 - User maintains full control over repository commits and pushes
 - User needs to review changes before they become part of git history

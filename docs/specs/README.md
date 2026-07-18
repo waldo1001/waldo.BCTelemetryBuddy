@@ -49,7 +49,7 @@ plans: []
 draft  →  approved  →  implemented
 ```
 
-- **draft** — just written. **No plan may be written from a draft spec, and no code from either.** Iterate here with the user.
+- **draft** — just written. **No plan may be written from a draft spec, and no code from either.** Iterate here with the user. Commit draft specs to `main` as soon as they are written — the status field gates implementation, not visibility; a spec must be on GitHub to be reviewable and linkable from issues/PRs. Spec-only commits are a standing Rule 11 exception (see copilot-instructions.md): agents commit and push them without asking, provided the commit touches nothing outside `docs/specs/`.
 - **approved** — the user has explicitly said "go", "approved", "proceed", "looks good", or "yes". **Silence is not approval.** Flip the frontmatter, set `approved:`, and apply the `spec-approved` label to the issue (removing `needs-spec`) at the same moment. AC IDs are frozen from this point — changing intended behavior means amending the spec and re-approving.
 - **implemented** — every acceptance criterion is verified by a green test (Verification table complete). Flipped in Phase 9 (DOCUMENT) of the final TDD cycle for this spec, alongside the plan's `done` flip.
 

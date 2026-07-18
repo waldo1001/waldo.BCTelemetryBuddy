@@ -3368,3 +3368,8 @@ Change instructions an business logic to do this."
 **EntryId:** 37C182A9-AC6C-49D6-9D30-8EF134E47574
 **Date:** 2026-07-18
 **Prompt:** I want to update the development process to a full SDD and TDD: spec driven development and test driven development; Even more. I want to have a spec/test driven approach to all pullrequests and to all issues that are outstanding on github. What does that mean to you, and what changes would you add to the repo?
+
+---
+**EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
+**Date:** 2026-07-18
+**Prompt:** Review PR #127 functionally (conflicts with workspace-discovery work, tests, UX); create the spec as an issue, link it to the PR, and give the author actionable instructions.
