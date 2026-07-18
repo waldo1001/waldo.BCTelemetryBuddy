@@ -24,8 +24,9 @@ All instructions, rules, logging requirements, TDD workflow, and behavioral stan
 - Rule 11: Never execute git commands without explicit user request
 - Rule 12: Release workflow automation
 - Rule 13: Always add telemetry for new features and tools (event IDs + trackEvent calls)
+- Rule 14: Spec-driven development — approved spec (`docs/specs/`) before plan, plan before code
 - **Mandatory Skills** — load `.claude/skills/tdd-workflow/SKILL.md` before any code change
-- **Default TDD Workflow** — the 6-phase design → test → implement cycle that applies to ALL code changes
+- **Default SDD + TDD Workflow** — spec → design → test → implement cycle that applies to ALL code changes
 - **Project Architecture Reference** — packages layout, test locations, test commands
 
 ## Skills
@@ -33,12 +34,13 @@ All instructions, rules, logging requirements, TDD workflow, and behavioral stan
 Before any code change, explicitly load and follow the skill(s) under `.claude/skills/`:
 
 ```
+.claude/skills/spec-authoring/SKILL.md ← mandatory when picking up an issue (SDD Phase 0)
 .claude/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
 .claude/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
 .claude/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
 
-In Claude Code these are also invocable as slash commands: `/tdd-workflow`, `/security-scan`, `/release`.
+In Claude Code these are also invocable as slash commands: `/spec-authoring`, `/tdd-workflow`, `/security-scan`, `/release`.
 
 Load skills using `read_file` before generating any code or tests.
 
@@ -46,12 +48,13 @@ Load skills using `read_file` before generating any code or tests.
 
 The `tdd-workflow` skill deep-links into:
 
-- [docs/tdd/methodology.md](docs/tdd/methodology.md) — the 9-phase cycle (PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT)
+- [docs/tdd/methodology.md](docs/tdd/methodology.md) — the cycle (SPEC → PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT)
 - [docs/tdd/testability-patterns.md](docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
 - [docs/tdd/coverage-policy.md](docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+- [docs/specs/README.md](docs/specs/README.md) — spec-file naming, template, and status lifecycle (SDD Phase 0)
 - [docs/plans/README.md](docs/plans/README.md) — plan-file naming and status lifecycle
 
-**Hard rule:** no source-code edits until a plan file exists under `docs/plans/` and the user has **explicitly** approved it. Silence is not approval.
+**Hard rule:** no plan until an approved spec exists under `docs/specs/` (or a qualifying `## Spec-lite` section is embedded in the plan — see Rule 14); no source-code edits until a plan file exists under `docs/plans/` and the user has **explicitly** approved it. Silence is not approval.
 
 **Every plan must predict its own blast radius.** Required section: rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. `risky`/`breaking` ratings must also list the migration path and version-bump implications. A plan missing this section cannot be submitted for approval — see [docs/plans/README.md](docs/plans/README.md#required-sections).
 

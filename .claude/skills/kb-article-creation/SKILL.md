@@ -13,6 +13,8 @@ You are creating a new knowledge base article for BC Telemetry Buddy. This skill
 - User asks to create a new KB article for any BC telemetry event
 - User provides a validation report and wants the article written
 
+> KB issues are **exempt from the SDD spec flow** (Rule 14) — they produce `knowledge-base/**` content, not code. Do not write a `docs/specs/` file for them; this skill is their entire workflow.
+
 ## Workflow Phases
 
 ```

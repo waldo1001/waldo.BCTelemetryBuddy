@@ -1,0 +1,171 @@
+# Spec Check — SDD policy gate for pull requests.
+#
+# Requires PRs that touch product source (packages/*/src/**) to carry:
+#   (a) test changes in the same PR, and
+#   (b) a spec reference: a docs/specs/ file in the diff, a "Spec:" or
+#       "Spec-lite:" line in the PR body, or "Closes #N" where issue N is
+#       labeled spec-approved.
+#
+# Fork PRs NEVER fail — they get an advisory comment instead. A maintainer
+# can skip the check entirely with the `spec-waived` label.
+#
+# SECURITY NOTE: this workflow uses pull_request_target (needed so fork PRs
+# get a token that can post comments) but by design it NEVER checks out or
+# executes PR code — all data comes from the GitHub API.
+name: Spec Check
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: spec-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # 'warn' = advisory for everyone (rollout mode) | 'enforce' = fail internal PRs
+  SPEC_CHECK_MODE: warn
+
+jobs:
+  spec-check:
+    name: Spec / test linkage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check spec and test linkage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const MARKER = '<!-- spec-check-report -->';
+            const mode = process.env.SPEC_CHECK_MODE;
+            const labels = pr.labels.map(l => l.name);
+
+            // Upserts a single spec-check comment per PR (identified by MARKER).
+            // Pass-state comments are only created if a problem comment already
+            // exists (to show resolution) — clean PRs get no comment at all.
+            async function upsertComment(body, { createIfMissing }) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                ...context.repo, issue_number: pr.number, per_page: 100,
+              });
+              const existing = comments.find(c => c.body && c.body.includes(MARKER));
+              const full = `${MARKER}\n${body}`;
+              if (existing) {
+                await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body: full });
+              } else if (createIfMissing) {
+                await github.rest.issues.createComment({ ...context.repo, issue_number: pr.number, body: full });
+              }
+            }
+
+            // 1. Maintainer waiver
+            if (labels.includes('spec-waived')) {
+              await upsertComment('✅ **Spec check waived** by maintainer (`spec-waived` label).', { createIfMissing: false });
+              return;
+            }
+
+            // 2. Changed files
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              ...context.repo, pull_number: pr.number, per_page: 100,
+            });
+            const paths = files.map(f => f.filename);
+
+            const isTest = p =>
+              /^packages\/[^/]+\/src\/__tests__\//.test(p) ||
+              /\.test\.ts$/.test(p) ||
+              /^packages\/extension\/src\/test\//.test(p);
+            const isGenerated = p => /(^|\/)(version\.ts|telemetryConfig\.generated\.ts)$/.test(p);
+            const isSource = p =>
+              /^packages\/(shared|mcp|extension)\/src\//.test(p) && !isTest(p) && !isGenerated(p);
+
+            const sourceFiles = paths.filter(isSource);
+            if (sourceFiles.length === 0) {
+              await upsertComment('✅ **Spec check passed** — no product source changes (docs/KB/CI/config only), spec not required.', { createIfMissing: false });
+              return;
+            }
+
+            const hasTests = paths.some(isTest);
+
+            // 3. Spec reference — any one of four forms
+            const specFileRe = /^docs\/specs\/\d+-[a-z0-9][a-z0-9-]*\.md$/;
+            const specInPr = paths.some(p => specFileRe.test(p));
+
+            // Does a repo path exist on the PR's base branch?
+            async function existsOnBase(filePath) {
+              try {
+                await github.rest.repos.getContent({ ...context.repo, path: filePath, ref: pr.base.ref });
+                return true;
+              } catch { return false; }
+            }
+            async function baseFileContains(filePath, needle) {
+              try {
+                const res = await github.rest.repos.getContent({ ...context.repo, path: filePath, ref: pr.base.ref });
+                return Buffer.from(res.data.content, 'base64').toString('utf-8').includes(needle);
+              } catch { return false; }
+            }
+
+            const body = pr.body || '';
+            let hasSpec = specInPr;
+
+            // (b) "Spec: docs/specs/<nr>-<topic>.md" in body — file in diff or on base branch
+            if (!hasSpec) {
+              const m = body.match(/^\s*Spec:\s*(docs\/specs\/\d+-[a-z0-9][a-z0-9-]*\.md)\s*$/mi);
+              if (m) hasSpec = paths.includes(m[1]) || await existsOnBase(m[1]);
+            }
+
+            // (c) "Spec-lite: docs/plans/<topic>.md" in body — plan must contain "## Spec-lite"
+            if (!hasSpec) {
+              const m = body.match(/^\s*Spec-lite:\s*(docs\/plans\/(?:done\/)?[a-z0-9][a-z0-9-]*\.md)\s*$/mi);
+              if (m) {
+                const inDiff = files.find(f => f.filename === m[1]);
+                hasSpec = (inDiff && (inDiff.patch || '').includes('## Spec-lite'))
+                  || await baseFileContains(m[1], '## Spec-lite');
+              }
+            }
+
+            // (d) closing keyword on an issue labeled spec-approved (or knowledge-base)
+            if (!hasSpec) {
+              for (const m of body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi)) {
+                try {
+                  const issue = await github.rest.issues.get({ ...context.repo, issue_number: Number(m[1]) });
+                  const issueLabels = issue.data.labels.map(l => typeof l === 'string' ? l : l.name);
+                  if (issueLabels.includes('spec-approved') || issueLabels.includes('knowledge-base')) {
+                    hasSpec = true;
+                    break;
+                  }
+                } catch { /* unknown issue reference — ignore */ }
+              }
+            }
+
+            // 4. Verdict
+            const problems = [];
+            if (!hasTests) problems.push('**No test changes** — source files under `packages/*/src/` changed, but no test files did.');
+            if (!hasSpec)  problems.push('**No spec reference** — add a `Spec: docs/specs/<issue>-<topic>.md` or `Spec-lite: docs/plans/<topic>.md` line to the PR body, include the spec file in this PR, or link an issue labeled `spec-approved` with `Closes #N`.');
+
+            if (problems.length === 0) {
+              await upsertComment('✅ **Spec check passed** — spec reference and tests found.', { createIfMissing: false });
+              return;
+            }
+
+            const internal = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(pr.author_association);
+            const enforced = internal && mode === 'enforce';
+            const header = enforced
+              ? '❌ **Spec check failed** — this repo follows spec-driven + test-driven development.'
+              : '⚠️ **Spec check (advisory)** — this repo follows spec-driven + test-driven development. This will not block your PR, but a maintainer will need to resolve it before merge.';
+
+            await upsertComment([
+              header,
+              '',
+              ...problems.map(p => `- ${p}`),
+              '',
+              'See [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) and [docs/specs/README.md](../blob/main/docs/specs/README.md).',
+              'A maintainer can skip this check with the `spec-waived` label.',
+            ].join('\n'), { createIfMissing: true });
+
+            const summary = problems.map(p => p.replace(/\*\*/g, '')).join(' ');
+            if (enforced) core.setFailed(summary);
+            else core.warning(`spec-check (advisory): ${summary}`);

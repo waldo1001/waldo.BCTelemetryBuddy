@@ -3,6 +3,18 @@
 ## Description
 <!-- Provide a clear and concise description of what this PR does -->
 
+## Spec (required for changes under packages/*/src)
+<!-- One of the following. See CONTRIBUTING.md and docs/specs/README.md. -->
+Spec: docs/specs/<issue-nr>-<topic>.md
+<!-- or, for a qualifying safe/low-risk bugfix/refactor: -->
+<!-- Spec-lite: docs/plans/<topic>.md -->
+<!-- or link an issue that carries the spec-approved label under Related Issues below (Closes #NNN) -->
+
+### Acceptance criteria covered
+<!-- Copy the AC lines from the spec that this PR implements -->
+- [ ] AC1: 
+- [ ] AC2: 
+
 ## Type of Change
 <!-- Check all that apply -->
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
@@ -48,6 +60,8 @@ Related to #
 ## Checklist
 <!-- Ensure all items are checked before submitting -->
 - [ ] My code follows the SOLID principles and project coding standards
+- [ ] An approved spec exists and is linked above (or Spec-lite / `spec-waived` applies)
+- [ ] Tests trace to the spec's AC IDs
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code where necessary
 - [ ] My changes generate no new warnings or errors

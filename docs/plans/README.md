@@ -22,7 +22,9 @@ Examples:
 
 **Do not** prefix with dates, sprint numbers, or issue IDs. Topic-first naming makes the folder scannable — you can find a plan six months later by guessing the topic.
 
-One plan file per TDD cycle. If a change needs two cycles, write two plan files.
+> Specs under [docs/specs/](../specs/README.md) are deliberately the opposite — keyed by issue number, because the GitHub issue is their intake record. The plan links to its spec via frontmatter; the plan filename stays topic-first.
+
+One plan file per TDD cycle. If a change needs two cycles, write two plan files (they can share one spec).
 
 ---
 
@@ -35,8 +37,11 @@ Every plan file starts with YAML frontmatter:
 topic: <short kebab-case topic, same as filename>
 status: draft
 created: YYYY-MM-DD
+spec: docs/specs/<issue-nr>-<topic>.md   # or "spec-lite" if embedded in this plan
 ---
 ```
+
+The `spec:` field is required (Rule 14): either the path to an **approved** spec file, or the literal `spec-lite` when a qualifying `## Spec-lite` section is embedded below. Never write a plan from a `draft` spec.
 
 ### Status lifecycle
 
@@ -56,9 +61,20 @@ If a plan is abandoned, delete the file rather than leaving it as `draft` foreve
 
 ## Required sections
 
-Copy the 10 sections below into every plan. See [docs/tdd/methodology.md §Phase 1](../tdd/methodology.md) for the full prose version.
+Copy the sections below into every plan. See [docs/tdd/methodology.md §Phase 1](../tdd/methodology.md) for the full prose version.
 
 ```markdown
+## Spec
+- Spec file: docs/specs/<issue-nr>-<topic>.md (status must be `approved`)
+- AC IDs covered by this cycle: AC1, AC3
+
+— OR, for a qualifying safe/low-risk bugfix/refactor/chore —
+
+## Spec-lite
+- Intent: <1–2 lines>
+- **AC1:** Given <precondition>, When <action>, Then <observable outcome>
+- Eligibility: <bugfix|refactor|chore>, blast radius <safe|low-risk>
+
 ## Task
 One sentence. If you can't state it in one sentence, split it.
 
@@ -77,7 +93,8 @@ Function signatures, tool schema (for MCP tools), command contribution (for exte
 Existing services/modules this relies on.
 
 ## RED test list
-- AC1: <behavior in one sentence>
+AC IDs must be the spec's AC IDs (or the Spec-lite's) — do not invent a parallel numbering.
+- AC1: <behavior in one sentence, from the spec>
   - test file: packages/<pkg>/src/__tests__/<file>.test.ts
   - test name: "<reads like a spec line>"
   - seams touched: auth | kusto | cache | queries | telemetry | vscode | none
@@ -129,6 +146,7 @@ Plan files are **not** a replacement for `docs/PromptLog.md` or `docs/DesignWalk
 |---|---|---|---|
 | `docs/PromptLog.md` | Every user prompt | Verbatim prompt | FAST APPEND, every request |
 | `docs/DesignWalkthrough.md` | Every significant change | 1–3 line Why/How | FAST APPEND, every significant change |
+| `docs/specs/<issue>-<topic>.md` | One per issue | WHAT/WHY: behavior + acceptance criteria | Phase 0 (SPEC) — see [docs/specs/README.md](../specs/README.md) |
 | `docs/plans/<topic>.md` | One per TDD cycle | Full plan: scope, interface, tests, risks | Phase 1 of the cycle |
 
 The DesignWalkthrough entry for a change should reference the plan file path so the short entry can be expanded to the full plan.

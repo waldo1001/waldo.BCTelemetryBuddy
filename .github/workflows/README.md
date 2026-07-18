@@ -18,8 +18,31 @@ This directory contains CI/CD workflows for the BC Telemetry Buddy project.
   - Multi-platform validation
 - **lint** — TypeScript compilation and linting checks
 - **build** — Builds all packages and creates `.vsix` artifact
+- **validate-kb-index** — Fails if `knowledge-base/index.json` is stale
+- **validate-specs** — Fails if any `docs/specs/*.md` file violates the spec structure (`node scripts/validate-specs.js`, see [docs/specs/README.md](../../docs/specs/README.md))
 
 **Coverage Requirements:** 70% for all metrics (configured in `jest.config.js`)
+
+### 📋 Spec Check (`spec-check.yml`)
+
+**Triggers:** `pull_request_target` (opened/synchronize/reopened/edited/labeled/unlabeled) on `main`/`develop`
+
+**Purpose:** Enforces the SDD policy (Rule 14) on PRs. If a PR changes files under `packages/*/src/**` (excluding tests and generated files), it must contain:
+1. **Test changes** in the same PR, and
+2. **A spec reference** — a `docs/specs/` file in the diff, a `Spec:`/`Spec-lite:` line in the PR body, or `Closes #N` where issue N is labeled `spec-approved`.
+
+**Pass/warn/fail matrix:**
+
+| PR author | Problems found | `SPEC_CHECK_MODE: warn` | `SPEC_CHECK_MODE: enforce` |
+|---|---|---|---|
+| Anyone, `spec-waived` label | — | pass | pass |
+| Anyone, no source changes | — | pass | pass |
+| Internal (owner/member/collaborator) | yes | warning comment | **check fails** |
+| External (fork) | yes | warning comment | warning comment (never fails) |
+
+The mode is a single `env` line in the workflow. One comment per PR, updated in place (no spam). Applying/removing `spec-waived` re-runs the check without a new push.
+
+**Security note:** the workflow uses `pull_request_target` so fork PRs get a token that can post comments — but by design it **never checks out or executes PR code**; all data comes from the GitHub API (same posture as `pr-label.yml`).
 
 ### 🚀 Release (`release.yml`)
 

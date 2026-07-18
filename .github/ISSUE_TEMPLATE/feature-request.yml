@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest a new feature or enhancement
 title: "[Feature]: "
-labels: ["enhancement", "needs-triage"]
+labels: ["enhancement", "needs-triage", "needs-spec"]
 body:
   - type: markdown
     attributes:
@@ -25,6 +25,17 @@ body:
       placeholder: Add a command that allows users to...
     validations:
       required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Observable outcomes that define "done". These seed the spec (docs/specs/) written when the issue is picked up.
+      placeholder: |
+        - Given <precondition>, When <action>, Then <observable outcome>
+        - Given ..., When ..., Then ...
+    validations:
+      required: false
 
   - type: textarea
     id: alternatives

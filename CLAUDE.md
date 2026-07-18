@@ -10,10 +10,11 @@ Read `AGENTS.md` first. It covers logging rules, TDD workflow, SOLID principles,
 
 **You may NOT write or edit any source code file until you have:**
 
-1. Written a plan file under [docs/plans/](docs/plans/) following [docs/plans/README.md](docs/plans/README.md)
-2. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. A plan without this section is not a plan and must not be posted for approval.
-3. Posted the plan file path in chat
-4. Received **explicit** user approval ("go", "approved", "proceed", "looks good", "yes")
+1. Confirmed an **approved spec** exists under [docs/specs/](docs/specs/) for this work (Rule 14 — or written a `## Spec-lite` section into the plan for a qualifying `safe`/`low-risk` bugfix/refactor/chore). No plan from a `draft` spec.
+2. Written a plan file under [docs/plans/](docs/plans/) following [docs/plans/README.md](docs/plans/README.md)
+3. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. A plan without this section is not a plan and must not be posted for approval.
+4. Posted the plan file path in chat
+5. Received **explicit** user approval ("go", "approved", "proceed", "looks good", "yes")
 
 **Silence is not approval.** If the user has not spoken, you do not have approval.
 
@@ -23,13 +24,15 @@ The plan phase is the cheapest point at which to catch a wrong approach. A 30-se
 
 **Every new feature or tool MUST also include telemetry** (event IDs in `telemetryEvents.ts` + `trackEvent` calls). This is part of the definition of done — not optional.
 
-## The 9-phase TDD cycle
+## The SDD + TDD cycle
 
-Every code change follows: **PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT**.
+Every code change follows: **SPEC (Phase 0, once per issue) → PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT**.
 
-Full details live in three places:
+Full details live in these places:
 
+- [.claude/skills/spec-authoring/SKILL.md](.claude/skills/spec-authoring/SKILL.md) — Phase 0: GitHub issue → approved spec
 - [.claude/skills/tdd-workflow/SKILL.md](.claude/skills/tdd-workflow/SKILL.md) — actionable phase index + component checklists
+- [docs/specs/README.md](docs/specs/README.md) — spec template, naming, status lifecycle
 - [docs/tdd/methodology.md](docs/tdd/methodology.md) — the cycle in prose
 - [docs/tdd/testability-patterns.md](docs/tdd/testability-patterns.md) — mocking catalog, seams, conventions
 - [docs/tdd/coverage-policy.md](docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement

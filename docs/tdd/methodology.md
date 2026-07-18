@@ -1,17 +1,33 @@
-# TDD Methodology — BC Telemetry Buddy
+# SDD + TDD Methodology — BC Telemetry Buddy
 
 > **Source of truth for rules:** [.github/copilot-instructions.md](../../.github/copilot-instructions.md).
-> This file holds the **how** of the TDD cycle. For *why we do this* and the project-wide rules (logging, git, telemetry), read copilot-instructions.md.
+> This file holds the **how** of the cycle. For *why we do this* and the project-wide rules (logging, git, telemetry, SDD), read copilot-instructions.md.
 
 Every code change in this workspace — new feature, bug fix, refactor — follows the cycle below. The cycle is the default; it is not opt-in.
 
 ---
 
-## The 9-phase cycle
+## Phase 0 — SPEC (once per issue, before any cycle)
+
+Before the first plan, an **approved behavior spec** must exist: WHAT is changing and WHY, with acceptance criteria — the executable definition of the work. Rule 14 in copilot-instructions.md.
+
+- Specs live at `docs/specs/<issue-nr>-<topic>.md`, keyed by GitHub issue (the issue is the intake; the spec is the source of truth). Template, frontmatter, and naming: [docs/specs/README.md](../specs/README.md).
+- Acceptance criteria are Given/When/Then bullets with stable IDs (`AC1..ACn`). They freeze at approval; plans and tests reference them by ID.
+- Lifecycle: `draft → approved → implemented`. **Post the spec path in chat and STOP for approval — silence is not approval.** Never write a plan from a `draft` spec.
+- One spec per issue; a spec may span multiple plans/TDD cycles. It flips to `implemented` only when every AC is verified by a green test.
+- **Spec-lite**: a bug fix, refactor, or chore rated `safe`/`low-risk` may embed a `## Spec-lite` section in the plan file instead of a full spec — see [docs/specs/README.md](../specs/README.md).
+- **Knowledge-base issues are exempt** — they follow [.claude/skills/kb-article-creation/SKILL.md](../../.claude/skills/kb-article-creation/SKILL.md) and produce content, not code.
+
+Use the [`/spec-authoring`](../../.claude/skills/spec-authoring/SKILL.md) skill to turn an issue into a spec.
+
+---
+
+## The cycle — Phase 0 (SPEC) + Phases 1–9 (TDD)
 
 The skill [.claude/skills/tdd-workflow/SKILL.md](../../.claude/skills/tdd-workflow/SKILL.md) is the actionable index. This doc explains the phases in prose.
 
-1. **PLAN** — write a committed markdown plan file, stop, wait for approval
+0. **SPEC** — approved behavior spec with acceptance criteria (see above); once per issue
+1. **PLAN** — write a committed markdown plan file linked to the spec, stop, wait for approval
 2. **FRAME** — post a ≤150-word framing of where this step sits in the project
 3. **WRITE TESTS** — write the failing test(s) that encode the requirement
 4. **PROVE RED** — run the test, observe the failure, confirm the failure is about behavior (not plumbing)
@@ -36,6 +52,7 @@ Write a markdown plan file at `docs/plans/<topic>.md` (flat naming — no date o
 topic: <short kebab-case topic>
 status: draft
 created: YYYY-MM-DD
+spec: docs/specs/<issue-nr>-<topic>.md   # or "spec-lite" when embedded below
 ---
 ```
 
@@ -43,6 +60,7 @@ created: YYYY-MM-DD
 
 ### Required sections
 
+0. **Spec** — link to the approved spec and list which of its AC IDs this cycle covers — or, for a qualifying `safe`/`low-risk` bugfix/refactor/chore, a `## Spec-lite` section (Intent + ACs + eligibility). See [docs/specs/README.md](../specs/README.md).
 1. **Task** — one sentence. If you can't state it in one sentence, split it.
 2. **Scope boundary** — what is IN this change and what is explicitly OUT. Be ruthless: a plan is one TDD cycle, not a sprint.
 3. **Files to create / touch** — exact paths under `packages/shared`, `packages/mcp`, `packages/extension`, or `docs/`.
@@ -116,6 +134,8 @@ describe('ClassUnderTest', () => {
 ```
 
 See [testability-patterns.md](testability-patterns.md) for the full mocking catalog (vscode namespace, fs, MSAL, Kusto, etc).
+
+Test names read like the spec's AC lines, and each RED test cites the AC ID it verifies (in the test name or a comment) — that traceability is what makes the spec executable.
 
 **What to test, in priority order:**
 
@@ -231,6 +251,7 @@ Only on PASS, continue to Phase 9.
 2. **Component CHANGELOG**: update `packages/<component>/CHANGELOG.md` if the change is user-visible.
 3. **UserGuide**: update `docs/UserGuide.md` if user-facing behavior changed.
 4. **Plan file**: flip the frontmatter of the Phase 1 plan from `status: approved` → `status: done` **and** `git mv` it from `docs/plans/<topic>.md` to `docs/plans/done/<topic>.md`. Only in-flight (`draft` / `approved`) plans should live in the top-level folder; this is a rename, not a destructive op, and is part of the standard workflow.
+5. **Spec file**: fill the spec's Verification table with the real test file + test name for each AC this cycle covered. When all ACs of the spec are verified across its plans, flip the spec's frontmatter `status: approved` → `status: implemented` (specs stay in `docs/specs/` — no file move).
 
 Docs that are not updated at the moment of the change will never be updated. This step is not optional.
 
@@ -240,15 +261,15 @@ Finally, tell the user: "Changes ready — please review and commit when ready."
 
 ## Bug fixes and refactors — same cycle, different emphasis
 
-- **Bug fix**: Phase 3 starts with a regression test that reproduces the bug. Phase 4 confirms the test fails against the current (broken) code. Phase 6 fixes the bug. If the fix reveals that a *previously passing* test encoded the wrong behavior, update that test — and explain why in the plan file.
-- **Refactor**: The Phase 1 plan explicitly states "no behavior change". Existing tests are the safety net; you do not add new tests unless the refactor surfaces a missing one. Phases 4 and 5 usually collapse (no new scaffolding). Phase 7 is the main gate.
+- **Bug fix**: Phase 3 starts with a regression test that reproduces the bug. Phase 4 confirms the test fails against the current (broken) code. Phase 6 fixes the bug. If the fix reveals that a *previously passing* test encoded the wrong behavior, update that test — and explain why in the plan file. Bug fixes normally use **Spec-lite** — the regression test is the executable acceptance criterion. If the fix changes *intended* behavior, write or amend a full spec instead.
+- **Refactor**: The Phase 1 plan explicitly states "no behavior change". Existing tests are the safety net; you do not add new tests unless the refactor surfaces a missing one. Phases 4 and 5 usually collapse (no new scaffolding). Phase 7 is the main gate. Refactors use **Spec-lite** ("no behavior change" *is* the spec).
 
 ---
 
 ## Behavioral rules (hard)
 
 1. Never write implementation code before a failing test.
-2. Never skip Phase 1. A plan file must exist and be approved.
+2. Never skip Phase 0 or Phase 1. An approved spec (or qualifying Spec-lite) and an approved plan must both exist. Never write a plan from a `draft` spec.
 3. Never mark a phase done without running the tests or skill.
 4. Never mark something as done with failing tests.
 5. If a test is hard to write, the **code** is wrong — fix the seam, not the test.

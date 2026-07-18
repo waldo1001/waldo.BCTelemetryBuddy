@@ -401,6 +401,20 @@ When adding a new extension service, command, or webview provider:
 
 ---
 
+### 14. Spec-driven development (SDD) — every change starts from an approved spec
+
+**Every code change is driven by a spec: WHAT/WHY + acceptance criteria, approved before any plan or code exists.** The spec is Phase 0 of the development cycle; the plan (Phase 1) describes the HOW.
+
+- **Full spec**: `docs/specs/<issue-nr>-<topic>.md`, status `draft → approved → implemented`. One spec per GitHub issue (create the issue first if none exists). See [docs/specs/README.md](../docs/specs/README.md) for the template and lifecycle.
+- **Acceptance criteria** are Given/When/Then bullets with stable IDs (`AC1..ACn`). Plans reference the spec via frontmatter (`spec:`) and reuse its AC IDs in the RED test list — never invent a parallel numbering.
+- **Spec-lite**: a bug fix, refactor, or chore rated `safe` or `low-risk` may embed a `## Spec-lite` section (Intent + ACs + eligibility) directly in the plan file instead. New user-observable features/enhancements and anything `risky`/`breaking` ALWAYS need a full spec file.
+- **Knowledge-base issues are exempt** — they produce `knowledge-base/**` content, not code, and follow `.claude/skills/kb-article-creation/SKILL.md`.
+- **Never write a plan from a `draft` spec.** AC IDs freeze at approval; behavior changes mean amending and re-approving the spec.
+- **CI enforces this on PRs** (`.github/workflows/spec-check.yml`): changes under `packages/*/src/**` require test changes plus a spec reference (spec file in the diff, `Spec:`/`Spec-lite:` line in the PR body, or `Closes #N` on a `spec-approved` issue). Spec structure is validated by `node scripts/validate-specs.js` (the `validate-specs` CI job).
+- Use the `/spec-authoring` skill (`.claude/skills/spec-authoring/SKILL.md`) to turn an issue into a spec.
+
+---
+
 ### 12. Release workflow automation
 
 **AUTOMATED RELEASE PROCESS** - Use the release script for streamlined releases:
@@ -542,29 +556,30 @@ You:
 **BEFORE making any code change**, load and follow the TDD skill:
 
 ```
+.claude/skills/spec-authoring/SKILL.md ← mandatory when picking up a feature/bug issue (SDD Phase 0)
 .claude/skills/tdd-workflow/SKILL.md   ← mandatory for all code changes
 .claude/skills/security-scan/SKILL.md  ← invoked from Phase 8 of tdd-workflow and before every release
 .claude/skills/release/SKILL.md        ← mandatory for version bumps / publishes
 ```
 
-In Claude Code these are auto-discovered as slash commands: `/tdd-workflow`, `/security-scan`, `/release`.
+In Claude Code these are auto-discovered as slash commands: `/spec-authoring`, `/tdd-workflow`, `/security-scan`, `/release`.
 
 The `tdd-workflow` skill deep-links into the reference docs under [docs/tdd/](../docs/tdd/):
 
-- [methodology.md](../docs/tdd/methodology.md) — the 9-phase cycle in prose
+- [methodology.md](../docs/tdd/methodology.md) — the cycle in prose (Phase 0 SPEC + Phases 1–9)
 - [testability-patterns.md](../docs/tdd/testability-patterns.md) — mocking catalog, seams, conventions
 - [coverage-policy.md](../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
 
-Plan files live under [docs/plans/](../docs/plans/) — see [docs/plans/README.md](../docs/plans/README.md) for the naming and status-lifecycle convention.
+Spec files live under [docs/specs/](../docs/specs/) — see [docs/specs/README.md](../docs/specs/README.md) for the template, naming, and status lifecycle. Plan files live under [docs/plans/](../docs/plans/) — see [docs/plans/README.md](../docs/plans/README.md) for the naming and status-lifecycle convention.
 
 ---
 
-## Default TDD Workflow — Apply to ALL code changes in this repo
+## Default SDD + TDD Workflow — Apply to ALL code changes in this repo
 
-Every code change follows a strict 9-phase cycle. This is not an opt-in mode — it is the default way we work.
+Every code change follows a strict cycle: **Phase 0 (SPEC, once per issue) + Phases 1–9 (TDD, per cycle)**. This is not an opt-in mode — it is the default way we work.
 
 ```
-PLAN → FRAME → WRITE TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT
+SPEC → PLAN → FRAME → WRITE TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY PASS → SECURITY SCAN → DOCUMENT
 ```
 
 Full phase details, component checklists, and quick commands live in [.claude/skills/tdd-workflow/SKILL.md](../.claude/skills/tdd-workflow/SKILL.md). This section is the **rules layer** — the *how* of each phase is in the skill and the methodology doc.
@@ -575,10 +590,11 @@ Full phase details, component checklists, and quick commands live in [.claude/sk
 
 **YOU MAY NOT WRITE OR EDIT ANY SOURCE CODE FILE until you have:**
 
-1. Written a plan file under [docs/plans/](../docs/plans/) following [docs/plans/README.md](../docs/plans/README.md)
-2. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. `risky`/`breaking` ratings must also list the migration path and version-bump implications. A plan missing this section is not a plan and must not be submitted for approval.
-3. Posted the plan file path in chat
-4. Received **explicit** user approval — the exact words "go", "approved", "proceed", "looks good", or "yes"
+1. Confirmed an **approved spec** exists under [docs/specs/](../docs/specs/) for this work (`status: approved` — Rule 14), OR the plan contains a `## Spec-lite` section and the change qualifies (bugfix/refactor/chore rated `safe` or `low-risk`). **No plan may be written from a `draft` spec.**
+2. Written a plan file under [docs/plans/](../docs/plans/) following [docs/plans/README.md](../docs/plans/README.md)
+3. Filled in the **Blast radius / breakage prediction** section of that plan — rating (`safe` | `low-risk` | `risky` | `breaking`), justification, who/what could break, and how a regression would be detected. `risky`/`breaking` ratings must also list the migration path and version-bump implications. A plan missing this section is not a plan and must not be submitted for approval.
+4. Posted the plan file path in chat
+5. Received **explicit** user approval — the exact words "go", "approved", "proceed", "looks good", or "yes"
 
 **Silence is not approval.** If the user has not spoken, you do not have approval.
 
@@ -598,7 +614,8 @@ This is a **blocking rule**. "I know what to do" is not an exception. "It's a sm
 
 | # | Phase | Produces | Gate |
 |---|---|---|---|
-| 1 | **PLAN** | Committed file under `docs/plans/<topic>.md` | **STOP for approval.** Silence is not approval. |
+| 0 | **SPEC** | Approved `docs/specs/<issue>-<topic>.md` (or `## Spec-lite` in the plan) | **STOP for approval.** Silence is not approval. Once per issue. |
+| 1 | **PLAN** | Committed file under `docs/plans/<topic>.md`, linked to the spec | **STOP for approval.** Silence is not approval. |
 | 2 | **FRAME** | ≤150-word framing in chat | — |
 | 3 | **WRITE TESTS** | Failing test(s) in `__tests__/` | Must include telemetry assertions (Rule 13) |
 | 4 | **PROVE RED** | `RED confirmed: <failure>` line in chat | Failure must be about behavior, not plumbing |
@@ -611,7 +628,7 @@ This is a **blocking rule**. "I know what to do" is not an exception. "It's a sm
 ### TDD Behavioral Rules
 
 1. **NEVER write implementation code first** — always tests first
-2. **NEVER skip Phase 1** — write the plan file and wait for *explicit* approval; silence is not approval
+2. **NEVER skip Phase 0 or Phase 1** — spec then plan, each with *explicit* approval; silence is not approval
 3. **NEVER skip Phase 4** — PROVE RED with a real behavior-level failure message
 4. **NEVER skip Phase 8** — SECURITY SCAN before DOCUMENT; a finding blocks the cycle
 5. **NEVER mark something as done without running tests**
@@ -620,6 +637,7 @@ This is a **blocking rule**. "I know what to do" is not an exception. "It's a sm
 8. **Show test output** to the user at each verify step
 9. **If a test reveals a bug** in existing code, fix the bug (not the test)
 10. **Keep functions small** — extract helpers when a function exceeds 20 lines
+11. **RED test AC IDs must be the spec's AC IDs** — traceability from spec to test is what makes the spec executable
 
 ---
 

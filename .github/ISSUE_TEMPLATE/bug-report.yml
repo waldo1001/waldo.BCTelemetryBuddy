@@ -40,6 +40,16 @@ body:
       required: true
 
   - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria (optional)
+      description: If omitted, the Expected Behavior above becomes the acceptance criterion for the regression test.
+      placeholder: |
+        - Given <precondition>, When <action>, Then <observable outcome>
+    validations:
+      required: false
+
+  - type: textarea
     id: actual
     attributes:
       label: Actual Behavior

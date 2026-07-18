@@ -217,17 +217,18 @@ BC Telemetry Buddy respects this setting - when VS Code telemetry is disabled, n
 
 ## Contributing
 
-We welcome contributions! Please:
-1. Fork the repository
-2. Create a feature branch
+We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** — all changes follow our spec-driven + test-driven flow (issue → spec → plan → tests → implementation). In short:
+
+1. Open or find an issue (fill in the Acceptance Criteria field if you can)
+2. Fork the repository and create a feature branch
 3. Follow our coding standards:
    - SOLID principles and clean code practices
    - Minimum 70% test coverage (enforced by CI)
    - TypeScript strict mode
    - Comprehensive JSDoc comments for public APIs
-4. Write tests for all new features
+4. Write tests for all new features (the `Spec Check` workflow verifies spec + test linkage on every PR)
 5. Update documentation (UserGuide.md, component CHANGELOGs)
-6. Submit a pull request with tests and documentation
+6. Submit a pull request referencing the issue/spec, with tests and documentation
 
 See [.github/copilot-instructions.md](.github/copilot-instructions.md) for detailed development guidelines and workflow instructions.
 

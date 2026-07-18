@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: 'Test-Driven Development workflow for BC Telemetry Buddy. Enforces the 9-phase PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT cycle. Use when: adding features, fixing bugs, refactoring code, implementing new MCP tools, extension commands, or shared-lib modules. Mandatory before any code change.'
+description: 'Test-Driven Development workflow for BC Telemetry Buddy. Enforces the PLAN → FRAME → TESTS → PROVE RED → SCAFFOLD → IMPLEMENT → VERIFY → SECURITY SCAN → DOCUMENT cycle. Requires an approved spec (SDD Phase 0 — /spec-authoring) before the PLAN phase. Use when: adding features, fixing bugs, refactoring code, implementing new MCP tools, extension commands, or shared-lib modules. Mandatory before any code change.'
 ---
 
 # /tdd-workflow — BC Telemetry Buddy TDD enforcer
@@ -20,10 +20,11 @@ You are about to make a code change in BC Telemetry Buddy. This skill forces you
 
 Re-read these before you write anything:
 
-1. [docs/tdd/methodology.md](../../../docs/tdd/methodology.md) — the 9-phase cycle in prose
-2. [docs/tdd/testability-patterns.md](../../../docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
-3. [docs/tdd/coverage-policy.md](../../../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
-4. [.github/copilot-instructions.md](../../../.github/copilot-instructions.md) — project-wide rules (logging, git, telemetry)
+1. [docs/tdd/methodology.md](../../../docs/tdd/methodology.md) — the cycle in prose (Phase 0 SPEC + Phases 1–9)
+2. [docs/specs/README.md](../../../docs/specs/README.md) — spec template, naming, status lifecycle — plus the approved spec for this work
+3. [docs/tdd/testability-patterns.md](../../../docs/tdd/testability-patterns.md) — mocking catalog, seams, package conventions
+4. [docs/tdd/coverage-policy.md](../../../docs/tdd/coverage-policy.md) — thresholds, exclusions, enforcement
+5. [.github/copilot-instructions.md](../../../.github/copilot-instructions.md) — project-wide rules (logging, git, telemetry, SDD)
 
 If the task is a bug fix or refactor, also read the "Bug fixes and refactors" section at the bottom of [methodology.md](../../../docs/tdd/methodology.md).
 
@@ -33,8 +34,9 @@ If the task is a bug fix or refactor, also read the "Bug fixes and refactors" se
 
 **You may NOT write or edit any source-code file until you have:**
 
-1. Written a plan file under [docs/plans/](../../../docs/plans/) and posted its path in chat
-2. Received explicit user approval ("go", "approved", "proceed", "looks good", "yes")
+1. Confirmed an **approved spec** exists under [docs/specs/](../../../docs/specs/) for this work (Rule 14), OR embedded a qualifying `## Spec-lite` section in the plan (bugfix/refactor/chore rated `safe`/`low-risk`). **A `draft` spec blocks the plan.**
+2. Written a plan file under [docs/plans/](../../../docs/plans/) and posted its path in chat
+3. Received explicit user approval ("go", "approved", "proceed", "looks good", "yes")
 
 **Silence is not approval.** If the user has not spoken, you do not have approval. "It's a small change" is not an exception. "I know what to do" is not an exception. "The user asked me to just do it" is not an exception unless they explicitly say "skip the design phase".
 
@@ -42,11 +44,12 @@ The design phase is the cheapest point at which to catch a wrong approach. A 30-
 
 ---
 
-## The 9-phase cycle
+## The cycle — Phase 0 (SPEC) + Phases 1–9 (TDD)
 
 | # | Phase | What it produces | Where it lives |
 |---|---|---|---|
-| 1 | **PLAN** | Committed markdown plan file | `docs/plans/<topic>.md` |
+| 0 | **SPEC** | Approved spec (or `## Spec-lite` in the plan) | `docs/specs/<issue>-<topic>.md` |
+| 1 | **PLAN** | Committed markdown plan file, linked to the spec | `docs/plans/<topic>.md` |
 | 2 | **FRAME** | ≤150-word framing of the step | Chat only |
 | 3 | **WRITE TESTS** | Failing test(s) in `__tests__/` | Test file |
 | 4 | **PROVE RED** | `RED confirmed: <failure>` line | Chat + terminal |
@@ -60,9 +63,13 @@ Details for each phase are in [methodology.md](../../../docs/tdd/methodology.md)
 
 ---
 
+## Phase 0 — SPEC (before any plan)
+
+If no approved spec exists for this work, **stop and run [`/spec-authoring`](../spec-authoring/SKILL.md) first** (it takes the GitHub issue number and produces `docs/specs/<issue>-<topic>.md`). For a qualifying `safe`/`low-risk` bugfix/refactor/chore, embed a `## Spec-lite` section in the plan instead. Knowledge-base issues bypass this entirely via `/kb-article-creation`.
+
 ## Phase 1 — PLAN (file, then STOP)
 
-Write `docs/plans/<topic>.md` with the frontmatter and sections from [methodology.md §Phase 1](../../../docs/tdd/methodology.md). See [docs/plans/README.md](../../../docs/plans/README.md) for the file-naming convention, status lifecycle, and **required sections** (including the `Blast radius / breakage prediction` section added below).
+Write `docs/plans/<topic>.md` with the frontmatter and sections from [methodology.md §Phase 1](../../../docs/tdd/methodology.md). Set the `spec:` frontmatter field and copy the AC IDs from the spec into the RED test list. See [docs/plans/README.md](../../../docs/plans/README.md) for the file-naming convention, status lifecycle, and **required sections** (including the `Blast radius / breakage prediction` section added below).
 
 **Blast radius is mandatory.** Every plan must include a rating of `safe` | `low-risk` | `risky` | `breaking`, with justification, who/what could break, and how a regression would be detected. If the rating is `risky` or `breaking`, the plan must also spell out the migration path and version-bump implications *before* asking for approval. Do not post the plan for approval without this section filled in.
 
@@ -128,6 +135,7 @@ Run the [`/security-scan`](../security-scan/SKILL.md) skill. A finding **blocks*
 2. `packages/<component>/CHANGELOG.md` if user-visible
 3. `docs/UserGuide.md` if user-facing behavior changed
 4. Flip plan file `status: approved` → `status: done` **and** `git mv docs/plans/<topic>.md docs/plans/done/<topic>.md` so only in-flight plans live in the top-level folder. A `done` plan in `docs/plans/` is a bug.
+5. Update the spec's Verification table (AC ↔ test file + name); when all ACs are verified across the spec's plans, flip the spec `status: approved` → `status: implemented` (no file move — specs stay in `docs/specs/`).
 
 Then: "Changes ready — please review and commit when ready." Never run git commands without explicit request (Rule 11). Note: the `git mv` in step 4 is part of the workflow and does not need separate authorization — it's a rename, not a destructive op.
 
@@ -137,7 +145,8 @@ Then: "Changes ready — please review and commit when ready." Never run git com
 
 When adding a new MCP tool, follow this exact sequence:
 
-- [ ] **Phase 1 (PLAN):** Plan file in `docs/plans/` covering tool name, description, `inputSchema`, `annotations`, handler logic, telemetry event ID
+- [ ] **Phase 0 (SPEC):** Approved spec exists (or `## Spec-lite` embedded in the plan); AC IDs known
+- [ ] **Phase 1 (PLAN):** Plan file in `docs/plans/` covering tool name, description, `inputSchema`, `annotations`, handler logic, telemetry event ID; `spec:` frontmatter set
 - [ ] **Phase 3 (TESTS):** Test `TOOL_DEFINITIONS` contains the tool; test handler dispatch; test business logic per AC; test `usageTelemetry.trackEvent` is called with correct event name and properties
 - [ ] **Phase 4 (PROVE RED):** Run the test file, confirm behavior-level failure
 - [ ] **Phase 5 (SCAFFOLD):** Add tool to `TOOL_DEFINITIONS`, add empty handler case throwing `not implemented`; add `TOOL_NAME: 'TB-MCP-1xx'` to `TELEMETRY_EVENTS.MCP_TOOLS` in `packages/shared/src/telemetryEvents.ts`
@@ -148,7 +157,8 @@ When adding a new MCP tool, follow this exact sequence:
 
 ## Extension Service / Command Checklist
 
-- [ ] **Phase 1 (PLAN):** Service interface, dependencies, command palette entry, telemetry event names
+- [ ] **Phase 0 (SPEC):** Approved spec exists (or `## Spec-lite` embedded in the plan); AC IDs known
+- [ ] **Phase 1 (PLAN):** Service interface, dependencies, command palette entry, telemetry event names; `spec:` frontmatter set
 - [ ] **Phase 3 (TESTS):** Mock `vscode` namespace and `@bctb/shared`; test service logic; test `trackOperationWithTelemetry` or `trackEvent` is called for key operations
 - [ ] **Phase 4 (PROVE RED):** Behavior-level failure confirmed
 - [ ] **Phase 5 (SCAFFOLD):** Empty service class / command registration
@@ -159,7 +169,8 @@ When adding a new MCP tool, follow this exact sequence:
 
 ## Shared Library Checklist
 
-- [ ] **Phase 1 (PLAN):** Types, interfaces, function signatures, which packages will consume this
+- [ ] **Phase 0 (SPEC):** Approved spec exists (or `## Spec-lite` embedded in the plan); AC IDs known
+- [ ] **Phase 1 (PLAN):** Types, interfaces, function signatures, which packages will consume this; `spec:` frontmatter set
 - [ ] **Phase 3 (TESTS):** Mock external deps (axios, fs, MSAL); tests in `packages/shared/src/__tests__/`
 - [ ] **Phase 4 (PROVE RED):** Behavior-level failure confirmed
 - [ ] **Phase 5 (SCAFFOLD):** Module with type stubs; export from `src/index.ts`

@@ -3363,3 +3363,8 @@ Change instructions an business logic to do this."
 
 ## 2026-07-17 — Per-workspace connection discovery under Claude Code
 > I have a config file on one of the workspaces … but there seems to be no way for BCTB to pick up the local file, while the rule is simple: if there is a local config: take the local config. Maybe it's because of claude code, because in github copilot, I remember this worked flawlessly. [+ diagnostic prompt: "BC Telemetry Buddy MCP server ignores per-workspace .bctb-config.json when run under Claude Code"] Summarize and analyze what you can do about the problem.
+
+---
+**EntryId:** 37C182A9-AC6C-49D6-9D30-8EF134E47574
+**Date:** 2026-07-18
+**Prompt:** I want to update the development process to a full SDD and TDD: spec driven development and test driven development; Even more. I want to have a spec/test driven approach to all pullrequests and to all issues that are outstanding on github. What does that mean to you, and what changes would you add to the repo?
