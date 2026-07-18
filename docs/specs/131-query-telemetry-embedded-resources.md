@@ -1,10 +1,10 @@
 ---
 spec: 131-query-telemetry-embedded-resources
 issue: 131
-status: draft
+status: approved
 created: 2026-07-18
-approved:
-plans: []
+approved: 2026-07-18
+plans: [docs/plans/pr108-embedded-resources-remediation.md]
 ---
 
 # Spec: query_telemetry embedded resources (CSV/JSON export files via MCP resources)
