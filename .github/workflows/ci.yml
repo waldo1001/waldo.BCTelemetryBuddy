@@ -50,6 +50,18 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Run shared tests with coverage
+        run: npm run test:coverage --workspace=packages/shared
+
+      - name: Upload shared coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./packages/shared/coverage/coverage-final.json
+          flags: shared
+          name: shared-${{ matrix.node-version }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   test-extension:
     name: Test VSCode Extension
     runs-on: ${{ matrix.os }}
