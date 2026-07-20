@@ -599,7 +599,6 @@ describe('AgentMonitoringSetupProvider', () => {
                 { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
             ];
 
-            const telemetryConfig = '/workspace/Telemetry/.bctb-config.json';
             (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
                 p.includes('Telemetry') && p.includes('.bctb-config.json')
             );
@@ -624,7 +623,6 @@ describe('AgentMonitoringSetupProvider', () => {
                 { uri: { fsPath: '/workspace/Test' }, name: 'Test' },
             ];
 
-            const appConfig = '/workspace/App/.bctb-config.json';
             (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
                 p.includes('App') && p.includes('.bctb-config.json')
             );

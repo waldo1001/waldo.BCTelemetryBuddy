@@ -96,7 +96,6 @@ describe('SetupWizardProvider - Multi-root workspace support', () => {
             { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
         ];
 
-        const telemetryConfig = '/workspace/Telemetry/.bctb-config.json';
         (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
             p.includes('Telemetry') && p.includes('.bctb-config.json')
         );
