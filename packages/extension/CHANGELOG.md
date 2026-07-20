@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Multi-root workspace support in all wizards** — Setup, Profile, and Agent Monitoring wizards now use `findConfigWorkspace()` to intelligently discover config across workspace folders instead of assuming `workspaceFolders[0]`. Resolves issue #130 (AC1-AC5). Includes telemetry tracking for workspace resolution outcomes (`WIZARD_WORKSPACE_RESOLVED` event).
+
 ## [3.4.2] - 2026-07-18
 
 _Highest blast-radius rating across all plans landed in this release: `safe`._

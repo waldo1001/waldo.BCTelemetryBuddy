@@ -56,6 +56,14 @@ export class SetupWizardProvider {
             }
         );
 
+        // Track workspace resolution outcome (AC5 from issue #130)
+        const resolutionOutcome = this._classifyResolution();
+        this._usageTelemetry?.trackEvent('Wizard.WorkspaceResolved', {
+            eventId: TELEMETRY_EVENTS.EXTENSION.WIZARD_WORKSPACE_RESOLVED,
+            wizard: 'setup',
+            outcome: resolutionOutcome,
+        });
+
         this._panel.webview.html = this._getHtmlForWebview();
 
         this._panel.webview.onDidReceiveMessage(
@@ -442,6 +450,26 @@ export class SetupWizardProvider {
                 error: errorMessage
             });
         }
+    }
+
+    /**
+     * Classify workspace resolution outcome for telemetry (AC5).
+     * Returns 'singleRoot', 'multiRootResolved', or 'fallback'.
+     */
+    private _classifyResolution(): 'singleRoot' | 'multiRootResolved' | 'fallback' {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length <= 1) {
+            return 'singleRoot';
+        }
+
+        const configResult = findConfigWorkspace();
+        if (!configResult?.workspacePath) {
+            return 'fallback';
+        }
+
+        // Multi-root: check if we resolved to non-first folder (multiRootResolved)
+        // or fell back to first folder (fallback)
+        return folders[0].uri.fsPath === configResult.workspacePath ? 'fallback' : 'multiRootResolved';
     }
 
     private _getHtmlForWebview(): string {

@@ -522,10 +522,10 @@ export function activate(context: vscode.ExtensionContext) {
     setupWizard = new SetupWizardProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
 
     // Initialize profile wizard
-    profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel);
+    profileWizard = new ProfileWizardProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
 
     // Initialize agent monitoring setup wizard
-    agentMonitoringWizard = new AgentMonitoringSetupProvider(context.extensionUri, outputChannel);
+    agentMonitoringWizard = new AgentMonitoringSetupProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
     outputChannel.appendLine('✓ ProfileWizardProvider initialized');
 
     // Initialize migration service

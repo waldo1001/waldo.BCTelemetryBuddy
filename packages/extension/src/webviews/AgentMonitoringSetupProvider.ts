@@ -14,6 +14,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getMCPStatus, MCPStatus } from '../services/mcpInstaller';
 import { findConfigWorkspace } from '../services/workspaceFinder';
+import { IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
 
 const execAsync = promisify(exec);
 
@@ -307,7 +308,8 @@ export class AgentMonitoringSetupProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _outputChannel?: vscode.OutputChannel
+        private readonly _outputChannel?: vscode.OutputChannel,
+        private readonly _usageTelemetry?: IUsageTelemetry
     ) { }
 
     public dispose() {
@@ -340,6 +342,14 @@ export class AgentMonitoringSetupProvider {
         );
 
         this._panel.webview.html = this._getHtmlForWebview();
+
+        // Track workspace resolution outcome (AC5 from issue #130)
+        const resolutionOutcome = this._classifyResolution();
+        this._usageTelemetry?.trackEvent('Wizard.WorkspaceResolved', {
+            eventId: TELEMETRY_EVENTS.EXTENSION.WIZARD_WORKSPACE_RESOLVED,
+            wizard: 'agentMonitoring',
+            outcome: resolutionOutcome,
+        });
 
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
@@ -403,6 +413,24 @@ export class AgentMonitoringSetupProvider {
     }
 
     // ═══ Message handlers ═══
+
+    /**
+     * Classify workspace resolution outcome for telemetry (AC5).
+     * Returns 'singleRoot', 'multiRootResolved', or 'fallback'.
+     */
+    private _classifyResolution(): 'singleRoot' | 'multiRootResolved' | 'fallback' {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length <= 1) {
+            return 'singleRoot';
+        }
+
+        const configResult = findConfigWorkspace(this._outputChannel);
+        if (!configResult?.workspacePath) {
+            return 'fallback';
+        }
+
+        return folders[0].uri.fsPath === configResult.workspacePath ? 'fallback' : 'multiRootResolved';
+    }
 
     private _getWorkspacePath(): string | null {
         const result = findConfigWorkspace(this._outputChannel);

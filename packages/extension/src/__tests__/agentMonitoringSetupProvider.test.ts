@@ -600,7 +600,9 @@ describe('AgentMonitoringSetupProvider', () => {
             ];
 
             const telemetryConfig = '/workspace/Telemetry/.bctb-config.json';
-            (fs.existsSync as jest.Mock).mockImplementation((p: string) => p === telemetryConfig);
+            (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p.includes('Telemetry') && p.includes('.bctb-config.json')
+            );
             (fs.readFileSync as jest.Mock).mockReturnValue('{"agents":{"llm":"azure-openai"}}');
             (getMCPStatus as jest.Mock).mockResolvedValue({ installed: false, version: null, inPath: false, globalPath: null });
 
@@ -623,7 +625,9 @@ describe('AgentMonitoringSetupProvider', () => {
             ];
 
             const appConfig = '/workspace/App/.bctb-config.json';
-            (fs.existsSync as jest.Mock).mockImplementation((p: string) => p === appConfig);
+            (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p.includes('App') && p.includes('.bctb-config.json')
+            );
             (getMCPStatus as jest.Mock).mockResolvedValue({ installed: false, version: null, inPath: false, globalPath: null });
 
             await provider.show();

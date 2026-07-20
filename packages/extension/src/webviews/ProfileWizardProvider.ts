@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ProfiledConfig, MCPConfig, validateConfig } from '@bctb/shared';
+import { ProfiledConfig, MCPConfig, validateConfig, IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
 import { AuthService } from '@bctb/shared';
 import { findConfigWorkspace } from '../services/workspaceFinder';
 
@@ -16,7 +16,8 @@ export class ProfileWizardProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        outputChannel: vscode.OutputChannel
+        outputChannel: vscode.OutputChannel,
+        private readonly _usageTelemetry?: IUsageTelemetry
     ) {
         this.outputChannel = outputChannel;
     }
@@ -52,6 +53,14 @@ export class ProfileWizardProvider {
             );
 
             this._panel.webview.html = this._getHtmlForWebview();
+
+            // Track workspace resolution outcome (AC5 from issue #130)
+            const resolutionOutcome = this._classifyResolution();
+            this._usageTelemetry?.trackEvent('Wizard.WorkspaceResolved', {
+                eventId: TELEMETRY_EVENTS.EXTENSION.WIZARD_WORKSPACE_RESOLVED,
+                wizard: 'profile',
+                outcome: resolutionOutcome,
+            });
 
             this._panel.webview.onDidReceiveMessage(
                 async (message) => {
@@ -223,6 +232,24 @@ export class ProfileWizardProvider {
             }
             throw error;
         }
+    }
+
+    /**
+     * Classify workspace resolution outcome for telemetry (AC5).
+     * Returns 'singleRoot', 'multiRootResolved', or 'fallback'.
+     */
+    private _classifyResolution(): 'singleRoot' | 'multiRootResolved' | 'fallback' {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length <= 1) {
+            return 'singleRoot';
+        }
+
+        const configResult = findConfigWorkspace();
+        if (!configResult?.workspacePath) {
+            return 'fallback';
+        }
+
+        return folders[0].uri.fsPath === configResult.workspacePath ? 'fallback' : 'multiRootResolved';
     }
 
     private getConfigPath(): string {

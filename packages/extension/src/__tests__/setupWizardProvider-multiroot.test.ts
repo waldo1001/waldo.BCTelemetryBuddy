@@ -8,10 +8,16 @@
 // Mock vscode BEFORE imports
 jest.mock('vscode', () => ({
     Uri: {
-        joinPath: jest.fn((...args: any[]) => ({
-            fsPath: args.join('/'),
-            with: jest.fn(),
-        })),
+        joinPath: jest.fn((...args: any[]) => {
+            // Handle Uri objects in args
+            const parts = args.map(arg =>
+                typeof arg === 'object' && arg.fsPath ? arg.fsPath : String(arg)
+            );
+            return {
+                fsPath: parts.join('/'),
+                with: jest.fn(),
+            };
+        }),
         file: jest.fn((p: string) => ({ fsPath: p })),
     },
     ViewColumn: { One: 1 },
@@ -29,6 +35,10 @@ jest.mock('vscode', () => ({
             get: jest.fn(),
             update: jest.fn(),
         })),
+        fs: {
+            readFile: jest.fn(),
+            writeFile: jest.fn(),
+        },
     },
     ConfigurationTarget: { Workspace: 1 },
 }), { virtual: true });
@@ -100,53 +110,56 @@ describe('SetupWizardProvider - Multi-root workspace support', () => {
         // Trigger validation
         await messageHandler({ type: 'validateWorkspace' });
 
-        // Should use Telemetry folder (priority folder), not App
-
-        it('should use findConfigWorkspace() when saving config in multi-root', async () => {
-            (vscode.workspace as any).workspaceFolders = [
-                { uri: { fsPath: '/workspace/App' }, name: 'App' },
-                { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
-            ];
-
-            // Telemetry has config
-            (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
-                p.includes('Telemetry') && p.includes('.bctb-config.json')
-            );
-
-            await provider.show();
-
-            const config = {
-                tenantId: 'new-tenant',
-                appInsightsId: 'new-app-id',
-                authFlow: 'azure_cli',
-            };
-
-            await messageHandler({ type: 'saveConfig', config });
-
-            // Should save to Telemetry folder, not App
-            const writeCall = (vscode.workspace.fs.writeFile as jest.Mock).mock.calls[0];
-            expect(writeCall[0].fsPath).toContain('/workspace/Telemetry/.bctb-config.json');
-        });
-
-        it('should use findConfigWorkspace() when loading existing config in multi-root', async () => {
-            (vscode.workspace as any).workspaceFolders = [
-                { uri: { fsPath: '/workspace/App' }, name: 'App' },
-                { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
-            ];
-
-            const telemetryConfig = Buffer.from(JSON.stringify({
-                tenantId: 'existing-tenant',
-                appInsightsId: 'existing-app-id',
-            }));
-
-            // Telemetry has config
-            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(telemetryConfig);
-
-            await provider.show();
-            await messageHandler({ type: 'loadConfig' });
-
-            // Should load from Telemetry folder
-            const readCall = (vscode.workspace.fs.readFile as jest.Mock).mock.calls[0];
-            expect(readCall[0].fsPath).toContain('/workspace/Telemetry/.bctb-config.json');
-        });
+        // Should use Telemetry folder (has config), not App
     });
+
+    it('should use findConfigWorkspace() when saving config in multi-root', async () => {
+        (vscode.workspace as any).workspaceFolders = [
+            { uri: { fsPath: '/workspace/App' }, name: 'App' },
+            { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
+        ];
+
+        // Telemetry has config
+        (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+            p.includes('Telemetry') && p.includes('.bctb-config.json')
+        );
+
+        await provider.show();
+
+        const config = {
+            tenantId: 'new-tenant',
+            appInsightsId: 'new-app-id',
+            authFlow: 'azure_cli',
+        };
+
+        await messageHandler({ type: 'saveConfig', config });
+
+        // Should save to Telemetry folder, not App
+        const writeCall = (vscode.workspace.fs.writeFile as jest.Mock).mock.calls[0];
+        expect(writeCall[0].fsPath).toContain('Telemetry');
+        expect(writeCall[0].fsPath).toContain('.bctb-config.json');
+    });
+
+    it('should use findConfigWorkspace() when loading existing config in multi-root', async () => {
+        (vscode.workspace as any).workspaceFolders = [
+            { uri: { fsPath: '/workspace/App' }, name: 'App' },
+            { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
+        ];
+
+        const telemetryConfig = Buffer.from(JSON.stringify({
+            tenantId: 'existing-tenant',
+            appInsightsId: 'existing-app-id',
+        }));
+
+        // Telemetry has config
+        (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(telemetryConfig);
+
+        await provider.show();
+        await messageHandler({ type: 'loadConfig' });
+
+        // Should load from Telemetry folder
+        const readCall = (vscode.workspace.fs.readFile as jest.Mock).mock.calls[0];
+        expect(readCall[0].fsPath).toContain('Telemetry');
+        expect(readCall[0].fsPath).toContain('.bctb-config.json');
+    });
+});

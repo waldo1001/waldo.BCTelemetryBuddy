@@ -3,6 +3,9 @@
  * 
  * ProfileWizardProvider is excluded from main coverage (webview component),
  * but we need to ensure findConfigWorkspace() is used instead of workspaceFolders[0].
+ * 
+ * Tests AC2 from issue #130: Profile wizard reads/writes the .bctb-config.json from 
+ * the folder resolved by findConfigWorkspace() in multi-root scenarios.
  */
 
 // Mock vscode BEFORE imports  
@@ -24,6 +27,9 @@ jest.mock('vscode', () => ({
             { uri: { fsPath: '/workspace/Monitoring' }, name: 'Monitoring' },
         ],
     },
+    commands: {
+        executeCommand: jest.fn(),
+    },
 }), { virtual: true });
 
 jest.mock('fs', () => ({
@@ -36,7 +42,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { ProfileWizardProvider } from '../webviews/ProfileWizardProvider';
 
-describe('ProfileWizardProvider - Multi-root workspace support', () => {
+describe('ProfileWizardProvider - Multi-root workspace support (AC2)', () => {
     let provider: ProfileWizardProvider;
     let mockPanel: any;
     let messageHandler: (msg: any) => Promise<void>;
@@ -72,78 +78,86 @@ describe('ProfileWizardProvider - Multi-root workspace support', () => {
         provider = new ProfileWizardProvider(mockExtensionUri, mockOutputChannel);
     });
 
-    it('should use findConfigWorkspace() for config path resolution in multi-root', async () => {
-        // Multi-root workspace with Monitoring priority folder
+    it('should write to the config in the folder resolved by findConfigWorkspace() in multi-root', async () => {
+        // Multi-root workspace: App (first), Monitoring (second, has config)
         (vscode.workspace as any).workspaceFolders = [
             { uri: { fsPath: '/workspace/App' }, name: 'App' },
             { uri: { fsPath: '/workspace/Monitoring' }, name: 'Monitoring' },
         ];
 
-        const monitoringConfig = '/workspace/Monitoring/.bctb-config.json';
+        // Only Monitoring has config (not the first folder)
         (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
             p.includes('Monitoring') && p.includes('.bctb-config.json')
         );
-        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
-            profiles: {
-                'customer-a': {
-                    tenantId: 'tenant-a',
-                    appInsightsId: 'app-a',
-                },
-            },
-        }));
 
-        await provider.show();
-        await messageHandler({ type: 'loadProfiles' });
-
-        // Should use Monitoring folder, not App
-        expect(fs.readFileSync).toHaveBeenCalledWith(monitoringConfig, 'utf-8');
-    });
-
-    it('should save profile to correct workspace path in multi-root', async () => {
-        (vscode.workspace as any).workspaceFolders = [
-            { uri: { fsPath: '/workspace/App' }, name: 'App' },
-            { uri: { fsPath: '/workspace/Monitoring' }, name: 'Monitoring' },
-        ];
-
-        (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
-            p.includes('Monitoring') && p.includes('.bctb-config.json')
-        );
-        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
-            profiles: {},
-        }));
+        // No existing config yet (create new)
+        (fs.readFileSync as jest.Mock).mockImplementation(() => {
+            const error: any = new Error('ENOENT');
+            error.code = 'ENOENT';
+            throw error;
+        });
 
         await provider.show();
 
         const newProfile = {
+            profileName: 'customer-a',
+            tenantId: 'tenant-a',
+            appInsightsId: 'app-a',
+            authFlow: 'azure_cli',
+        };
+
+        await messageHandler({ type: 'save', profile: newProfile });
+
+        // Should save to Monitoring folder (findConfigWorkspace result), not App
+        const writeCall = (fs.writeFileSync as jest.Mock).mock.calls[0];
+        expect(writeCall[0]).toContain('Monitoring');
+        expect(writeCall[0]).toContain('.bctb-config.json');
+    });
+
+    it('should read from the config in the folder resolved by findConfigWorkspace() in multi-root', async () => {
+        // Multi-root workspace: App (first), Monitoring (second, has config)
+        (vscode.workspace as any).workspaceFolders = [
+            { uri: { fsPath: '/workspace/App' }, name: 'App' },
+            { uri: { fsPath: '/workspace/Monitoring' }, name: 'Monitoring' },
+        ];
+
+        // Only Monitoring has config
+        (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+            p.includes('Monitoring') && p.includes('.bctb-config.json')
+        );
+
+        const existingConfig = {
+            profiles: {
+                'existing-profile': {
+                    tenantId: 'existing-tenant',
+                    appInsightsId: 'existing-app',
+                },
+            },
+            defaultProfile: 'existing-profile',
+        };
+
+        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(existingConfig));
+
+        await provider.show();
+
+        // Add new profile to existing config
+        const newProfile = {
             profileName: 'customer-b',
             tenantId: 'tenant-b',
             appInsightsId: 'app-b',
+            authFlow: 'azure_cli',
         };
 
-        await messageHandler({ type: 'saveProfile', profile: newProfile });
+        await messageHandler({ type: 'save', profile: newProfile });
 
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-            expect.stringContaining('/workspace/Monitoring/.bctb-config.json'),
-            expect.any(String)
-        );
-    });
+        // Should read from Monitoring folder first (findConfigWorkspace result)
+        const readCall = (fs.readFileSync as jest.Mock).mock.calls[0];
+        expect(readCall[0]).toContain('Monitoring');
+        expect(readCall[0]).toContain('.bctb-config.json');
 
-    it('should handle multi-root workspace without priority folder', async () => {
-        (vscode.workspace as any).workspaceFolders = [
-            { uri: { fsPath: '/workspace/App' }, name: 'App' },
-            { uri: { fsPath: '/workspace/Test' }, name: 'Test' },
-        ];
-
-        // No priority folder, should use first with config (App)
-        const appConfig = '/workspace/App/.bctb-config.json';
-        (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
-            p.includes('App') && p.includes('.bctb-config.json')
-        );
-        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ profiles: {} }));
-
-        await provider.show();
-        await messageHandler({ type: 'loadProfiles' });
-
-        expect(fs.readFileSync).toHaveBeenCalledWith(appConfig, 'utf-8');
+        // Should write back to same location
+        const writeCall = (fs.writeFileSync as jest.Mock).mock.calls[0];
+        expect(writeCall[0]).toContain('Monitoring');
+        expect(writeCall[0]).toContain('.bctb-config.json');
     });
 });
