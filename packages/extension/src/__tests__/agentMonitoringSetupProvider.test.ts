@@ -590,4 +590,54 @@ describe('AgentMonitoringSetupProvider', () => {
             expect(mockPanel.dispose).toHaveBeenCalled();
         });
     });
+
+    describe('Multi-root workspace support', () => {
+        it('should use findConfigWorkspace() instead of workspaceFolders[0] in multi-root workspace', async () => {
+            // Mock multi-root workspace with Telemetry folder containing config
+            (vscode.workspace as any).workspaceFolders = [
+                { uri: { fsPath: '/workspace/App' }, name: 'App' },
+                { uri: { fsPath: '/workspace/Telemetry' }, name: 'Telemetry' },
+            ];
+
+            (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p.includes('Telemetry') && p.includes('.bctb-config.json')
+            );
+            (fs.readFileSync as jest.Mock).mockReturnValue('{"agents":{"llm":"azure-openai"}}');
+            (getMCPStatus as jest.Mock).mockResolvedValue({ installed: false, version: null, inPath: false, globalPath: null });
+
+            await provider.show();
+            await messageHandler({ type: 'checkPrerequisites' });
+
+            expect(mockPanel.webview.postMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'prerequisites',
+                    workspacePath: '/workspace/Telemetry', // Should use Telemetry, not App
+                    hasConfig: true,
+                })
+            );
+        });
+
+        it('should handle multi-root workspace without priority folder', async () => {
+            (vscode.workspace as any).workspaceFolders = [
+                { uri: { fsPath: '/workspace/App' }, name: 'App' },
+                { uri: { fsPath: '/workspace/Test' }, name: 'Test' },
+            ];
+
+            (fs.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p.includes('App') && p.includes('.bctb-config.json')
+            );
+            (getMCPStatus as jest.Mock).mockResolvedValue({ installed: false, version: null, inPath: false, globalPath: null });
+
+            await provider.show();
+            await messageHandler({ type: 'checkPrerequisites' });
+
+            expect(mockPanel.webview.postMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'prerequisites',
+                    workspacePath: '/workspace/App', // First folder with config
+                    hasConfig: true,
+                })
+            );
+        });
+    });
 });

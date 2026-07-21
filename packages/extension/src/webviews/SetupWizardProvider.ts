@@ -7,6 +7,7 @@ import { promisify } from 'util';
 import { getMCPStatus, installMCP, isMCPUpdateAvailable } from '../services/mcpInstaller';
 import { VSCodeAuthService } from '../services/vscodeAuthService';
 import { IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
+import { findConfigWorkspace } from '../services/workspaceFinder';
 
 const execAsync = promisify(exec);
 
@@ -54,6 +55,14 @@ export class SetupWizardProvider {
                 retainContextWhenHidden: true,
             }
         );
+
+        // Track workspace resolution outcome (AC5 from issue #130)
+        const resolutionOutcome = this._classifyResolution();
+        this._usageTelemetry?.trackEvent('Wizard.WorkspaceResolved', {
+            eventId: TELEMETRY_EVENTS.EXTENSION.WIZARD_WORKSPACE_RESOLVED,
+            wizard: 'setup',
+            outcome: resolutionOutcome,
+        });
 
         this._panel.webview.html = this._getHtmlForWebview();
 
@@ -157,13 +166,13 @@ export class SetupWizardProvider {
     private async _validateWorkspace(): Promise<void> {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         const hasWorkspace = workspaceFolders && workspaceFolders.length > 0;
-        const isMultiRoot = workspaceFolders && workspaceFolders.length > 1;
+        const configResult = findConfigWorkspace();
+        const workspacePath = configResult?.workspacePath || null;
 
         this._panel?.webview.postMessage({
             type: 'workspaceValidation',
             hasWorkspace,
-            isMultiRoot,
-            workspacePath: hasWorkspace ? workspaceFolders[0].uri.fsPath : null
+            workspacePath
         });
     }
 
@@ -204,13 +213,13 @@ export class SetupWizardProvider {
     }
 
     private async _loadConfig(): Promise<void> {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            console.log('No workspace folders found');
+        const configResult = findConfigWorkspace();
+        if (!configResult?.workspacePath) {
+            console.log('No workspace found via findConfigWorkspace()');
             return;
         }
 
-        const folderUri = workspaceFolders[0].uri;
+        const folderUri = vscode.Uri.file(configResult.workspacePath);
 
         // First try to load from .bctb-config.json file
         const configFilePath = vscode.Uri.joinPath(folderUri, '.bctb-config.json');
@@ -407,12 +416,12 @@ export class SetupWizardProvider {
 
     private async _saveConfig(config: any): Promise<void> {
         try {
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (!workspaceFolders || workspaceFolders.length === 0) {
-                throw new Error('No workspace folder found');
+            const configResult = findConfigWorkspace();
+            if (!configResult?.workspacePath) {
+                throw new Error('No workspace folder found via findConfigWorkspace()');
             }
 
-            const folderUri = workspaceFolders[0].uri;
+            const folderUri = vscode.Uri.file(configResult.workspacePath);
             const configFilePath = vscode.Uri.joinPath(folderUri, '.bctb-config.json');
 
             // Format JSON with proper indentation
@@ -441,6 +450,26 @@ export class SetupWizardProvider {
                 error: errorMessage
             });
         }
+    }
+
+    /**
+     * Classify workspace resolution outcome for telemetry (AC5).
+     * Returns 'singleRoot', 'multiRootResolved', or 'fallback'.
+     */
+    private _classifyResolution(): 'singleRoot' | 'multiRootResolved' | 'fallback' {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length <= 1) {
+            return 'singleRoot';
+        }
+
+        const configResult = findConfigWorkspace();
+        if (!configResult?.workspacePath) {
+            return 'fallback';
+        }
+
+        // Multi-root: check if we resolved to non-first folder (multiRootResolved)
+        // or fell back to first folder (fallback)
+        return folders[0].uri.fsPath === configResult.workspacePath ? 'fallback' : 'multiRootResolved';
     }
 
     private _getHtmlForWebview(): string {
@@ -739,19 +768,6 @@ export class SetupWizardProvider {
                     <li>Open a folder (File → Open Folder)</li>
                     <li>Run the Setup Wizard again</li>
                 </ol>
-            </div>
-
-            <div id="multirootError" style="display: none; background-color: var(--vscode-inputValidation-errorBackground); border: 1px solid var(--vscode-inputValidation-errorBorder); color: var(--vscode-errorForeground); padding: 15px; margin: 20px 0; border-radius: 4px;">
-                <h3 style="margin-top: 0;">⚠️ Multi-Root Workspaces Not Supported</h3>
-                <p><strong>BC Telemetry Buddy does not support multi-root workspaces.</strong></p>
-                <p>You currently have multiple folders open in this workspace. Settings must be saved to a single folder's <code>.vscode/settings.json</code> file, which is not possible with multi-root workspaces.</p>
-                <p><strong>To proceed:</strong></p>
-                <ol>
-                    <li>Close this workspace</li>
-                    <li>Open a single folder (File → Open Folder)</li>
-                    <li>Run the Setup Wizard again</li>
-                </ol>
-                <p>If you need different BC Telemetry configurations for different projects, open each project as a separate single-folder workspace.</p>
             </div>
 
             <div id="welcomeContent">
@@ -1223,26 +1239,17 @@ export class SetupWizardProvider {
 
             function handleWorkspaceValidation(message) {
                 const hasWorkspace = message.hasWorkspace || false;
-                const isMultiRoot = message.isMultiRoot || false;
                 const noWorkspaceError = document.getElementById('noWorkspaceError');
-                const errorDiv = document.getElementById('multirootError');
                 const welcomeContent = document.getElementById('welcomeContent');
                 const nextButton = document.getElementById('btn-next-1');
 
-                // Check no workspace first
+                // Check no workspace
                 if (!hasWorkspace) {
                     if (noWorkspaceError) noWorkspaceError.style.display = 'block';
-                    if (errorDiv) errorDiv.style.display = 'none';
-                    if (welcomeContent) welcomeContent.style.display = 'none';
-                    if (nextButton) nextButton.disabled = true;
-                } else if (isMultiRoot) {
-                    if (noWorkspaceError) noWorkspaceError.style.display = 'none';
-                    if (errorDiv) errorDiv.style.display = 'block';
                     if (welcomeContent) welcomeContent.style.display = 'none';
                     if (nextButton) nextButton.disabled = true;
                 } else {
                     if (noWorkspaceError) noWorkspaceError.style.display = 'none';
-                    if (errorDiv) errorDiv.style.display = 'none';
                     if (welcomeContent) welcomeContent.style.display = 'block';
                     if (nextButton) nextButton.disabled = false;
                 }
