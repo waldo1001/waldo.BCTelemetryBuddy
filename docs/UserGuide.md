@@ -259,41 +259,32 @@ The extension will:
 
 ## Multi-Root Workspace Support
 
-**⚠️ BC Telemetry Buddy does NOT support multi-root workspaces.**
+BC Telemetry Buddy supports both **single-root** and **multi-root** workspaces (since extension v3.4.3).
 
-### Single-Root Workspaces (Supported)
+### How the config folder is chosen
 
-BC Telemetry Buddy works with **single-root workspaces only** (one folder open). Settings are saved to `.vscode/settings.json` in the workspace folder.
+All wizards (Setup, Profile, Agent Monitoring) discover your configuration the same way:
 
-### Multi-Root Workspaces (Not Supported)
+1. Each workspace folder is scanned **in order** for a `.bctb-config.json` file.
+2. The **first folder containing a config file** becomes the active BCTB folder.
+3. If **no folder** has a config file yet, the **first workspace folder** is used (this is where the Setup Wizard will create the config).
 
-If you have multiple folders open in a multi-root workspace (`.code-workspace` file), the Setup Wizard will display an error and prevent configuration.
+In a single-root workspace this is simply your one open folder — behavior is unchanged.
 
-**Why?** 
-- The MCP server requires settings to be stored in a folder's `.vscode/settings.json` file
-- Multi-root workspaces use workspace files (`.code-workspace`) which are not supported
-- This ensures clear, predictable configuration without ambiguity about which settings apply
+The scan is logged to the **BC Telemetry Buddy** output channel (`[Config Discovery]` lines), so you can always see which folder was picked and why.
 
-**Need different telemetry connections for different projects?**
-
-Open each project as a **separate single-root workspace**:
-1. Close the multi-root workspace
-2. Open each project individually (File → Open Folder)
-3. Configure each workspace independently with its own telemetry connection
-4. Switch between workspaces as needed
-
-**Example - Correct Setup:**
+**Example - Multi-root workspace:**
 
 ```
-❌ DON'T: Multi-root workspace
 MyMultiRootWorkspace.code-workspace
-├── ProjectA/
+├── ProjectA/                    (no config)
 └── ProjectB/
-
-✅ DO: Separate single-root workspaces
-Workspace 1: C:\Projects\ProjectA\ (with .vscode/settings.json)
-Workspace 2: C:\Projects\ProjectB\ (with .vscode/settings.json)
+    └── .bctb-config.json        ← ProjectB becomes the active BCTB folder
 ```
+
+### One connection per workspace
+
+Only **one** `.bctb-config.json` is active at a time — the first one found. If several folders each have their own config and you want to switch between them, either reorder the folders in your `.code-workspace` file, or open the projects as separate windows (File → Open Folder) so each uses its own connection.
 
 ---
 

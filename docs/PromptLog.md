@@ -3363,3 +3363,30 @@ Change instructions an business logic to do this."
 > "Phase 1 complete - All 3 wizards updated to use findConfigWorkspace()"
 
 ---
+**EntryId:** DCBCA6D8-AEE6-4E8E-A6C4-CEC9E53AEC45
+**Date:** 2026-07-18
+**Prompt:** Review PR #127 functionally (conflicts with workspace-discovery work, tests, UX); create the spec as an issue, link it to the PR, and give the author actionable instructions.
+### Entry ID: 758a5beb-356d-434d-9434-6b07fdedd9ea — 2026-04-06 14:30
+> "Ok, now i want to implement resources support for this mcp. I want to add option for the external agent to set parameter to return data not as text but as file. Something similar to what new bc mcp introduced. So that external agent can also its own code interpreter to deal with big returned data"
+
+---
+
+---
+**EntryId:** D4A37E3D-FF0F-4D39-B06C-79E9EA5DDD9E
+**Date:** 2026-07-18
+**Prompt:** PR #129 is blocked by checks — how can we solve this?
+
+---
+**EntryId:** 0861424B-3694-46AF-9E83-3D7F1393D395
+**Date:** 2026-07-18
+**Prompt:** Now also look into PR 108 — we need to get it green as well. (Spec + plan approved: "approved")
+
+---
+**EntryId:** FFF94154-D24C-4D94-91C2-84AEA19A370B
+**Date:** 2026-07-18
+**Prompt:** Can we do a smoketest before we merge? (then: "go" for the column-name fix)
+
+---
+**EntryId:** C94A27FC-610B-461B-B77D-E34DB16AA984
+**Date:** 2026-07-18
+**Prompt:** /release minor release

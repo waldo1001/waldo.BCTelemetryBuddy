@@ -1,6 +1,6 @@
 ---
 topic: main-transitive-vuln-remediation
-status: approved
+status: done
 created: 2026-07-21
 spec: spec-lite
 ---
