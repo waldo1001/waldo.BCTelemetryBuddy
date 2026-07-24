@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Thanks to [@stedvo-kmits](https://github.com/stedvo-kmits) for this excellent contribution!** 🙏
 
 ### Security
-- **Dependency updates** — bumped `axios` to `^1.18.1` (clears advisory range 1.0.0–1.17.0) and pinned patched versions of the transitive dependencies `hono`, `protobufjs`, `form-data`, `tmp`, `qs`, `@grpc/grpc-js`, and `markdown-it` (all within their current major lines). Remaining deferred advisories are tracked in [docs/security/dependency-debt.md](../../docs/security/dependency-debt.md).
+- **Dependency updates** — bumped `axios` to `^1.18.1` (clears advisory range 1.0.0–1.17.0) and pinned patched versions of the transitive dependencies `hono`, `protobufjs`, `form-data`, `tmp`, `qs`, `@grpc/grpc-js`, and `markdown-it` (all within their current major lines). The pre-release scan additionally cleared new high advisories in `@nevware21/ts-utils` (ships in the extension bundle via `@vscode/extension-telemetry`), `fast-uri`, `undici`, `js-yaml`, and `brace-expansion` with in-range lockfile bumps. Remaining deferred advisories are tracked in [docs/security/dependency-debt.md](../../docs/security/dependency-debt.md).
+- **Removed a committed telemetry cache file** (`.vscode/.bctb/cache/`) from the repository — it contained query results with customer identifiers and should always have been gitignored (the ignore rule already existed; the file predated it).
 
 ## [3.4.2] - 2026-07-18
 

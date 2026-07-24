@@ -14,3 +14,30 @@
 #
 # # Fake App Insights app ID used in setup-wizard screenshots
 # 11111111-1111-1111-1111-111111111111
+
+# Synthetic example entry-ID used in .github/copilot-instructions.md prompt-log
+# format examples (sequential hex a1b2c3d4..., not a real tenant/app GUID)
+a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+# Sequential fake App Insights instrumentation key used in
+# packages/mcp/src/__tests__/mcpTelemetry.test.ts (unit test connection string)
+12345678-1234-1234-1234-123456789012
+
+# Sequential fake tenant ID used in config examples
+# (.vscode/settings.json comments, MIGRATION.md, packages/extension/README.md)
+12345678-1234-1234-1234-123456789abc
+
+# Sequential fake App Insights app ID used in the same config examples
+87654321-4321-4321-4321-cba987654321
+
+# Nil GUID used as <input> placeholder text in wizard webviews
+# (AgentMonitoringSetupProvider, ProfileWizardProvider)
+00000000-0000-0000-0000-000000000000
+
+# Repeated-digit fake tenant/app-id and client-id in SetupWizardProvider example JSON
+11111111-1111-1111-1111-111111111111
+22222222-2222-2222-2222-222222222222
+
+# Microsoft's well-known PUBLIC Azure CLI first-party application (client) ID,
+# used as the device-code fallback clientId in packages/shared/src/auth.ts
+04b07795-8ddb-461a-bbee-02f9e1bf7b46

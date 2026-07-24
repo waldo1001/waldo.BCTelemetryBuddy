@@ -8,7 +8,7 @@
     
     Prerequisites:
     - Node.js 18+ installed
-    - Azure CLI authenticated: az login --tenant ff451c7f-142b-409f-9382-67e0f65e6286
+    - Azure CLI authenticated: az login --tenant <your-tenant-id>
     - Customer workspace with .bctb-config.json at the configured path
 
 .PARAMETER WorkspacePath

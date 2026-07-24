@@ -2,10 +2,11 @@
 
 Register of known transitive-dependency advisories on `main` that are **not** currently
 remediated, why they're deferred, and when to revisit. Companion to the remediation in
-[docs/plans/main-transitive-vuln-remediation.md](../plans/main-transitive-vuln-remediation.md).
+[docs/plans/done/main-transitive-vuln-remediation.md](../plans/done/main-transitive-vuln-remediation.md).
 
-- **Last reviewed:** 2026-07-21 (`npm audit`)
-- **Snapshot at review:** 40 moderate+ advisories remaining (8 high, 30 moderate, 2 low) — down from 50 before remediation.
+- **Last reviewed:** 2026-07-24 (`npm audit`, pre-release scan for extension v3.4.3)
+- **Snapshot at review:** 44 advisories remaining (4 high, 36 moderate, 4 low across the three packages, with overlap) — all four highs are the deferred OpenTelemetry cluster below; `packages/shared` and `packages/extension` have **zero high**.
+- Previous review 2026-07-21: 40 moderate+ (8 high, 30 moderate, 2 low) — down from 50 before remediation.
 - These are **latent**: `dependency-review-action` only runs on PRs and only flags the PR *diff*, so `main`'s unchanged transitive deps block no CI. A PR that regenerates the lockfile can surface any of these (that is exactly what happened on PR #127).
 
 ## Remediated (this pass)
@@ -24,6 +25,19 @@ Pinned to patched versions within the existing major line — see the `overrides
 | @grpc/grpc-js | ^1.14.4 | 1.14.0–1.14.3 |
 | markdown-it | ^14.3.0 | ≤14.1.1 (also cleared `linkify-it` transitively) |
 | axios | ^1.18.1 (direct-dep bump) | 1.0.0–1.17.0 |
+
+## Remediated (2026-07-24 pass, pre-release v3.4.3)
+
+New high advisories published after the 2026-07-21 review, cleared with in-range lockfile
+bumps (`npm update <pkg> --package-lock-only`, no overrides needed):
+
+| Package | → Version | Path (runtime?) |
+|---|---|---|
+| @nevware21/ts-utils | 0.16.0 | @vscode/extension-telemetry → extension **runtime** (ships in .vsix) |
+| fast-uri | 3.1.4 | @modelcontextprotocol/sdk → MCP **runtime** |
+| undici | 7.28.0 | @vscode/vsce (dev-only) — in-range fix landed, removed from deferred table below |
+| js-yaml | 3.15.0 / 4.3.0 | ts-jest, @vscode/vsce (dev-only) |
+| brace-expansion | 1.1.16 / 5.0.8 | rimraf, @vscode/vsce (dev-only) |
 
 ## Deferred
 
@@ -57,7 +71,6 @@ per-dependency testing beyond this pass's scope (the "safe subset" was chosen de
 |---|---|---|
 | uuid | <11.1.1 | in-tree 8.3.2; v10+ is ESM-only — API-breaking bump |
 | @azure/msal-node | ≤5.1.4 | fix is msal-node 5.4.1 (major); it's a direct dep of `packages/shared` |
-| undici | 7.0.0–7.27.2 | fix likely in 8.x (major) |
 | fast-uri | ≤3.1.1 | under `ajv`; fix may require 4.x (major) |
 | brace-expansion | <1.1.16 \|\| ≥3.0.0 <5.0.7 | two separate major lines in-tree (1.x + 5.x) |
 | js-yaml | ≤3.14.2 \|\| 4.0.0–4.2.0 | two major lines in-tree (3.x + 4.x) |
