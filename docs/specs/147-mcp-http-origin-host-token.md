@@ -4,7 +4,7 @@ issue: 147
 status: approved
 created: 2026-10-23
 approved: 2026-10-23
-plans: []
+plans: [docs/plans/mcp-http-origin-host-token.md]
 ---
 
 # MCP HTTP mode: block browser callers and add a local auth token
