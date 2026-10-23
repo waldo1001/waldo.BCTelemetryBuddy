@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -79,6 +80,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -130,6 +132,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -168,6 +171,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -211,6 +215,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
 
       - name: Check knowledge-base/index.json is not stale
         run: |
@@ -229,6 +234,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
 
       - name: Validate docs/specs structure
         run: node scripts/validate-specs.js
