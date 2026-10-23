@@ -2117,3 +2117,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#137 npm Trusted Publishing + Node 24 actions (2026-10-23)**
   - **Why:** NPM_TOKEN expired once (E404 PUT) and npm deprecates bypass-2FA publish tokens; actions/* still ran on Node 20.
   - **How:** publish jobs get `id-token: write` + npm ≥11.5.1, token removed; verify step retries 5 min then fails; all actions/* on node24 majors; `release-workflow-consistency.test.ts` guards it.
+- **#141 msal-node 3 → 7 (2026-10-23)**
+  - **Why:** last runtime audit findings (moderate uuid via msal-node 3).
+  - **How:** range bump only; v5–v7 breaking changes do not touch the PCA device-code / CCA client-credential APIs used; verified with a real-Entra smoke (device code cancelled, AADSTS700016) identical on v3 and v7.

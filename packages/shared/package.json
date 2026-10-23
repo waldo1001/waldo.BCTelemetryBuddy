@@ -15,7 +15,7 @@
         "test:watch": "jest --watch"
     },
     "dependencies": {
-        "@azure/msal-node": "^3.8.0",
+        "@azure/msal-node": "^7.1.1",
         "axios": "^1.20.0",
         "lru-cache": "^10.1.0"
     },

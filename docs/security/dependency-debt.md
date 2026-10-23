@@ -55,6 +55,14 @@ Every fix stayed within its current major; no `--force` was used.
 | @grpc/grpc-js | 1.14.6 | OpenTelemetry exporter → MCP **runtime** |
 | OpenTelemetry / Azure Monitor cluster | sdk-node 0.221.0, @azure/monitor-opentelemetry 1.20.1, applicationinsights 3.17.0 | MCP **runtime**. Deferred #1 is resolved: patched releases now exist. |
 
+## Remediated (2026-10-23, #141)
+| Package | → Version | Path (runtime?) |
+|---|---|---|
+| @azure/msal-node | ^7.1.1 (direct, 3 → 7) | shared → MCP + extension **runtime**. Removes the `uuid` dependency. |
+| uuid | removed from the tree | was 8.3.2 via msal-node 3 (moderate GHSA-w5hq-g745-h8pq) |
+
+After this, `npm audit --omit=dev` reports **0 vulnerabilities of any severity** in shared, mcp and extension.
+
 ## Deferred
 
 ### 1. ~~OpenTelemetry / Azure Monitor / applicationinsights cluster (~30)~~ — resolved 2026-10-23 (#135)
@@ -85,8 +93,6 @@ per-dependency testing beyond this pass's scope (the "safe subset" was chosen de
 
 | Package | Advisory range | Note |
 |---|---|---|
-| uuid | <11.1.1 | in-tree 8.3.2; v10+ is ESM-only — API-breaking bump |
-| @azure/msal-node | ≤5.1.4 | fix is msal-node 5.4.1 (major); it's a direct dep of `packages/shared` |
 | fast-uri | ≤3.1.1 | under `ajv`; fix may require 4.x (major) |
 | brace-expansion | <1.1.16 \|\| ≥3.0.0 <5.0.7 | two separate major lines in-tree (1.x + 5.x) |
 | js-yaml | ≤3.14.2 \|\| 4.0.0–4.2.0 | two major lines in-tree (3.x + 4.x) |
