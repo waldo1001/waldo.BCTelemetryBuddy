@@ -2132,3 +2132,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#147 MCP HTTP mode Origin / Host / token guard (2026-10-23)**
   - **Why:** `Access-Control-Allow-Origin: *` let any web page call `localhost:52346` and read telemetry, even after #145's loopback bind; DNS rebinding worked without CORS.
   - **How:** `packages/mcp/src/httpGuard.ts` before `express.json()` (Origin → 403, non-loopback Host on a loopback bind → 403, optional `BCTB_HTTP_TOKEN` Bearer → 401, constant-time; TB-MCP-009/010); extension `services/httpToken.ts` keeps one token per installation in SecretStorage, passes it to the spawned server and `MCPClient` sends + redacts it. AC4 amended: Node itself refuses Host-less requests with 400. Plan: docs/plans/done/mcp-http-origin-host-token.md
+- **VS Code engine floor 1.96 → 1.101 (2026-10-23)**
+  - **Why:** `activate()` calls `vscode.lm.registerMcpServerDefinitionProvider` (stable from 1.101.0) since c39b4ea; real VS Code runs via @vscode/test-electron showed 1.96.0 "not a function", 1.100.3 "CANNOT use API proposal", 1.101.0 OK.
+  - **How:** `engines.vscode`, `@types/vscode` and the integration-test pin → 1.101; `vscode-engine-floor.test.ts` keeps them in step. Plan: docs/plans/done/vscode-engine-floor.md

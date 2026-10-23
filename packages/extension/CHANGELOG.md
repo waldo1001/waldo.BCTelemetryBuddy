@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The Command Palette MCP server only answers this extension** ([#147](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/147)). The extension creates a random token once per installation, keeps it in VS Code SecretStorage, starts its MCP server with it and sends it on every request. Together with the bundled server's new `Origin` / `Host` checks, a web page in your browser can no longer query your telemetry through `localhost:52346`. The token never appears in the output channel. If SecretStorage is unavailable (for example a locked keyring on Linux), a token for the current session is used instead.
 
 ### Fixed
+- **Minimum VS Code is now 1.101.0** (was declared 1.96.0). Since October 2025 the extension registers its MCP server through an API that is stable only from VS Code 1.101.0: on 1.96–1.100 it could not activate at all (verified on 1.96.0 and 1.100.3). The Marketplace now offers this version only where it runs.
 - The Command Palette server's readiness check now goes to the server the extension just started (port 52346) instead of the `bctb.mcp.url` server.
 
 ## [3.4.6] - 2026-10-23

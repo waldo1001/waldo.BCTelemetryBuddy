@@ -7,7 +7,7 @@
     "license": "MIT",
     "icon": "images/waldo.png",
     "engines": {
-        "vscode": "^1.96.0"
+        "vscode": "^1.101.0"
     },
     "categories": [
         "Other",
@@ -316,7 +316,7 @@
     "devDependencies": {
         "@types/jest": "^30.0.0",
         "@types/node": "^22.18.11",
-        "@types/vscode": "^1.96.0",
+        "@types/vscode": "^1.101.0",
         "@vscode/test-electron": "^2.3.0",
         "@vscode/vsce": "^3.2.1",
         "esbuild": "^0.27.0",

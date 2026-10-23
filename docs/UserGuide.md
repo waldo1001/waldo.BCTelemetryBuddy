@@ -98,7 +98,7 @@ For the current published versions and per-release notes, see [packages/extensio
 Before installing BC Telemetry Buddy, ensure you have:
 
 ### Required
-- **Visual Studio Code** 1.96.0 or later
+- **Visual Studio Code** 1.101.0 or later
 - **Node.js** 22.23.4+, 24.22.1+ or 26.12.1+ (older versions miss the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); the MCP server warns at startup when it runs on one)
 - **npm** 9.0.0 or later
 - **Azure Application Insights** access for your Business Central environment

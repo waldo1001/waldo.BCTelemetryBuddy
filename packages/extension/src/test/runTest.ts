@@ -12,7 +12,7 @@ async function main() {
         // Download VS Code, unzip it and run the integration test
         // Pin to minimum supported version to catch accidental use of newer APIs
         await runTests({
-            version: '1.96.0',
+            version: '1.101.0',
             extensionDevelopmentPath,
             extensionTestsPath,
             launchArgs: [
