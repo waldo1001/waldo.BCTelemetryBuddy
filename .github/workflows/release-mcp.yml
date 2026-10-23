@@ -38,6 +38,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
           cache: 'npm'
       
       - name: Install dependencies
@@ -161,6 +162,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
       
@@ -230,6 +232,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
+          check-latest: true
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
       

@@ -2123,3 +2123,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#140 Codecov upload stability (2026-10-23)**
   - **Why:** codecov/project failed on a dep-only PR (7/10 uploads merged); shared coverage never uploaded (no json reporter).
   - **How:** codecov.yml (after_n_builds 10, 0.5% project threshold, carryforward flags) + shared `json` reporter; consistency test derives upload count from ci.yml.
+- **CI setup-node `check-latest: true` (2026-10-23)**
+  - **Why:** `22.x` without check-latest used the runner's cached Node v22.23.3, which lacks the Oct 2026 Node.js security fixes; builds and releases ran below the floor #134 set for users.
+  - **How:** `check-latest: true` on all 13 `actions/setup-node` steps; `node-floor-consistency.test.ts` AC8 fails on any step without it. Plan: docs/plans/done/ci-node-check-latest.md
