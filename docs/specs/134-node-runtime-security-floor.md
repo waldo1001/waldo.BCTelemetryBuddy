@@ -1,10 +1,10 @@
 ---
 spec: 134-node-runtime-security-floor
 issue: 134
-status: approved
+status: implemented
 created: 2026-10-23
 approved: 2026-10-23
-plans: []
+plans: [docs/plans/done/node-runtime-security-floor.md]
 ---
 
 # Spec: Node.js runtime security floor (drop EOL Node 20, warn on unpatched runtimes)
@@ -80,18 +80,21 @@ When the MCP server starts, in stdio or HTTP mode, through `cli.ts` or the bundl
 - This tells the maintainer how many real installs run unpatched Node, which helps decide when to raise the floor or move it from a warning to a refusal.
 
 ## Verification
+All green locally on 2026-10-23 (mcp 826/826, shared 329/329, extension 470/470; `runtimeSecurity.ts` 97% lines).
+
 | AC | Test | Status |
 |---|---|---|
-| AC1 | planned | planned |
-| AC2 | planned | planned |
-| AC3 | planned | planned |
-| AC4 | planned | planned |
-| AC5 | planned | planned |
-| AC6 | planned | planned |
-| AC7 | planned | planned |
+| AC1 | `packages/mcp/src/__tests__/runtime-security.test.ts` — "AC1: classifies %s as %o" (16 cases) | verified |
+| AC2 | `runtime-security.test.ts` — "AC2: unpatched runtime writes exactly one warning line to stderr and nothing to stdout", "AC2: EOL runtime warning says the line is end-of-life", "startup wiring" ×2 | verified |
+| AC3 | `runtime-security.test.ts` — "AC3: unpatched runtime fires one Mcp.RuntimeUnpatched event with nodeVersion + reason only"; `TELEMETRY_EVENTS.MCP.RUNTIME_UNPATCHED = 'TB-MCP-007'` | verified |
+| AC4 | `runtime-security.test.ts` — "AC4: patched runtime warns nothing and tracks nothing" | verified |
+| AC5 | `runtime-security.test.ts` — "AC5: unknown version …", "AC5: never throws when warn, track or commonProps throw", "AC5: still warns when telemetry throws" | verified |
+| AC6 | `packages/mcp/src/__tests__/node-floor-consistency.test.ts` — "AC6: no workflow uses Node < 22; CI matrices are [22.x, 24.x]; release/codeql use 22.x" | verified |
+| AC7 | `node-floor-consistency.test.ts` — "AC7: root and mcp engines.node equal the floor-derived range" | verified |
 
 ## Links
 - Issue: #134
 - Advisory: https://nodejs.org/en/blog/vulnerability/october-2026-security-releases
-- Plan(s): (to be added)
+- Plan(s): docs/plans/done/node-runtime-security-floor.md
 - PR(s): (to be added)
+- Follow-up: #135 (pre-existing runtime npm-audit findings, found by the Phase 8 scan)

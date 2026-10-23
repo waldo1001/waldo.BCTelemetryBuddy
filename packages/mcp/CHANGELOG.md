@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Node.js runtime security floor** ([#134](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/134)): the server now writes a one-line warning to stderr at startup when it runs on a Node.js version without the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) (CVE-2026-111497 Brotli RCE, TLS hostname bypasses). That covers Node.js < 22.23.4, < 24.22.1 or < 26.12.1, and end-of-life lines (≤ 20, 23, 25). It only warns: startup is never blocked, and stdout (the stdio protocol) is never touched. Spec: [docs/specs/134-node-runtime-security-floor.md](../../docs/specs/134-node-runtime-security-floor.md).
+- `engines.node` is now `^22.23.4 || ^24.22.1 || >=26.12.1`. npm shows an `EBADENGINE` warning when you install on an older Node.js.
+- **Telemetry**: `TB-MCP-007` (`RUNTIME_UNPATCHED`), fired once per start on an unpatched runtime with `nodeVersion` and `reason` (`eol` | `below-patched`).
+
+### Changed
+- CI and release workflows dropped Node.js 20 (end-of-life). Tests now run on 22.x and 24.x.
+
 ## [3.7.0] - 2026-07-18
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

@@ -23,6 +23,7 @@ import type { SavedQuery } from '@bctb/shared';
 import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
 import { VERSION } from './version.js';
+import { reportRuntimeSecurity } from './runtimeSecurity.js';
 import * as https from 'https';
 import { createMCPUsageTelemetry, getMCPInstallationId } from './mcpTelemetry.js';
 import * as crypto from 'crypto';
@@ -181,6 +182,18 @@ export class MCPServer {
             if (!this.isStdioMode) {
                 console.error('ℹ️  Usage Telemetry disabled\n');
             }
+        }
+
+        // Warn on an unpatched Node.js runtime (stdio mode reports this in startSdkStdioServer)
+        if (!this.isStdioMode) {
+            reportRuntimeSecurity({
+                warn: line => console.error(line),
+                track: (name, props) => this.usageTelemetry.trackEvent(name, props),
+                commonProps: () => cleanTelemetryProperties(createCommonProperties(
+                    TELEMETRY_EVENTS.MCP.RUNTIME_UNPATCHED, 'mcp',
+                    this.sessionId, this.installationId, VERSION
+                ))
+            });
         }
 
         // Determine initial active profile name from config file

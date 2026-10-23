@@ -81,6 +81,12 @@ Some of these report `npm fix: true` (in-range) and may turn out to be cleanly f
 **candidates for a follow-up "aggressive" pass** with per-dep build+test verification, not fixed
 here by design.
 
+## Open — tracked in #135 (found 2026-10-23, #134 security scan)
+New runtime advisories since the 2026-07-24 pass, on `main` and not caused by #134. They are tracked in
+[#135](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/135):
+proxy-addr (**critical**, via express), axios ≤1.19.0 (direct), follow-redirects, @modelcontextprotocol/sdk
+≤1.31.0 (direct), fast-uri ≤3.1.7, ip-address, @grpc/grpc-js 1.14.0–1.14.4. The OpenTelemetry cluster stays under Deferred #1.
+
 ## Recommended follow-ups
 - Add a scheduled `npm audit` (or Dependabot) job so `main`'s transitive advisories surface
   continuously instead of only when a PR happens to regenerate the lockfile.
