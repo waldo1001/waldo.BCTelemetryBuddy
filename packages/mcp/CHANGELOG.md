@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Runtime dependency security fixes ([#135](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/135)), all within the current major versions: `proxy-addr` 2.0.8 (critical, via `express` ^4.22.3), `axios` ^1.20.0, `follow-redirects` 1.16.1, `@modelcontextprotocol/sdk` ^1.32.1, `fast-uri` 3.1.9, `ip-address` 10.7.4, `@grpc/grpc-js` 1.14.6, and the OpenTelemetry / Azure Monitor stack (`applicationinsights` 3.17.0). `npm audit --omit=dev` now reports no high or critical findings.
+
 ## [3.7.1] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Runtime dependency security fixes ([#135](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/135)): `axios` ^1.20.0 (with `follow-redirects` 1.16.1) and `fast-uri` 3.1.9. The bundled MCP server also picks up its fixes (`proxy-addr`, MCP SDK 1.32.1, OpenTelemetry).
+
 ## [3.4.4] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._
