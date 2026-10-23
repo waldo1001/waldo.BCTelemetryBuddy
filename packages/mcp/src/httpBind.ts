@@ -34,6 +34,22 @@ export function resolveHttpHost(envHost: string | undefined, configHost: string 
     return { host: DEFAULT_HTTP_HOST, source: 'default' };
 }
 
+/**
+ * BCTB_PORT wins over the config port, like BCTB_HOST over `host`: the extension
+ * starts its Command Palette server with BCTB_PORT=52346 even when a
+ * .bctb-config.json sets (or defaults) another port.
+ */
+export function resolveHttpPort(envPort: string | undefined, configPort: number): number {
+    const value = envPort?.trim();
+    if (value && /^\d{1,5}$/.test(value)) {
+        const port = Number(value);
+        if (port <= 65535) {
+            return port;
+        }
+    }
+    return configPort;
+}
+
 export function classifyHost(host: string): HostKind {
     const h = host.trim().toLowerCase();
     if (h === 'localhost' || h === '::1' || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) {

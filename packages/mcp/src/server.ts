@@ -24,7 +24,7 @@ import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
 import { VERSION } from './version.js';
 import { reportRuntimeSecurity } from './runtimeSecurity.js';
-import { classifyHost, formatListenUrl, listenHttp, reportHttpBind, resolveHttpHost, HostKind } from './httpBind.js';
+import { classifyHost, formatListenUrl, listenHttp, reportHttpBind, resolveHttpHost, resolveHttpPort, HostKind } from './httpBind.js';
 import { createHttpGuard, normalizeToken } from './httpGuard.js';
 import * as https from 'https';
 import type * as http from 'http';
@@ -1499,7 +1499,7 @@ ${extendStatements}
         this.httpToken = normalizeToken(process.env.BCTB_HTTP_TOKEN);
 
         // Rejects (host:port in the message) when the address cannot be bound — spec #145 AC8
-        this.httpServer = await listenHttp(this.app, host, this.config.port);
+        this.httpServer = await listenHttp(this.app, host, resolveHttpPort(process.env.BCTB_PORT, this.config.port));
         const port = (this.httpServer.address() as AddressInfo).port;
 
         console.error(`\n✓ MCP Server v${VERSION} listening on ${formatListenUrl(host, port)}`);

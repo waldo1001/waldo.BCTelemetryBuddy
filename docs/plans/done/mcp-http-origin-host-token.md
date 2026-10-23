@@ -101,3 +101,9 @@ constructor(baseUrl: string, outputChannel: vscode.OutputChannel, token?: string
 ## Out-of-scope follow-ups
 - `bctb.mcp.token` setting for hand-started servers reached through `bctb.mcp.url`.
 - Consider retiring HTTP mode once command-palette commands use stdio.
+
+## Amendment (2026-10-23, after PR #148 opened)
+End-to-end check (real `MCPClient` + `httpToken` bundled, real built server spawned with the extension's env) showed: with a `.bctb-config.json` the server ignored `BCTB_PORT` and listened on the config port (default 52345), while the extension's Command Palette client expects 52346. Before this PR the readiness check accidentally used the `bctb.mcp.url` client (52345), so it worked by luck; creating the 52346 client first (this PR) would have broken Command Palette queries for every config-file user.
+- Fix: `BCTB_PORT` overrides the config port in HTTP mode (same rule as `BCTB_HOST`), via `resolveHttpPort(envPort, configPort)` in `httpBind.ts`, used by `startHTTP()`. Invalid values (non-integer, < 0, > 65535) fall back to the config port.
+- Tests: `http-bind.test.ts` "resolveHttpPort …" + "startHTTP listens on BCTB_PORT over the config port".
+- Blast radius: `low-risk` on its own (only users who set `BCTB_PORT` *and* a config `port` see a change: env now wins); stays inside this PR's `risky` rating.
