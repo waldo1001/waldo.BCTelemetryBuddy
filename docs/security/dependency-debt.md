@@ -39,9 +39,25 @@ bumps (`npm update <pkg> --package-lock-only`, no overrides needed):
 | js-yaml | 3.15.0 / 4.3.0 | ts-jest, @vscode/vsce (dev-only) |
 | brace-expansion | 1.1.16 / 5.0.8 | rimraf, @vscode/vsce (dev-only) |
 
+## Remediated (2026-10-23 pass, #135)
+Found by the #134 security scan. Afterwards, `npm audit --omit=dev` shows **0 high and 0 critical** in shared, mcp and extension.
+Every fix stayed within its current major; no `--force` was used.
+
+| Package | → Version | Path (runtime?) |
+|---|---|---|
+| proxy-addr | 2.0.8 | express → MCP **runtime** (was **critical**) |
+| express | ^4.22.3 (direct) | MCP **runtime** |
+| axios | ^1.20.0 (direct) | shared, extension → MCP + extension **runtime** |
+| follow-redirects | 1.16.1 | axios → **runtime** |
+| @modelcontextprotocol/sdk | ^1.32.1 (direct) | MCP **runtime** |
+| fast-uri | 3.1.9 | MCP SDK → ajv → **runtime** |
+| ip-address | 10.7.4 | MCP **runtime** |
+| @grpc/grpc-js | 1.14.6 | OpenTelemetry exporter → MCP **runtime** |
+| OpenTelemetry / Azure Monitor cluster | sdk-node 0.221.0, @azure/monitor-opentelemetry 1.20.1, applicationinsights 3.17.0 | MCP **runtime**. Deferred #1 is resolved: patched releases now exist. |
+
 ## Deferred
 
-### 1. OpenTelemetry / Azure Monitor / applicationinsights cluster (~30)
+### 1. ~~OpenTelemetry / Azure Monitor / applicationinsights cluster (~30)~~ — resolved 2026-10-23 (#135)
 
 All pulled transitively by the direct dependency `applicationinsights@^3.12.0`
 (`packages/mcp`, required for Rule 13 telemetry). Advisories:
@@ -80,12 +96,6 @@ per-dependency testing beyond this pass's scope (the "safe subset" was chosen de
 Some of these report `npm fix: true` (in-range) and may turn out to be cleanly fixable — they are
 **candidates for a follow-up "aggressive" pass** with per-dep build+test verification, not fixed
 here by design.
-
-## Open — tracked in #135 (found 2026-10-23, #134 security scan)
-New runtime advisories since the 2026-07-24 pass, on `main` and not caused by #134. They are tracked in
-[#135](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/135):
-proxy-addr (**critical**, via express), axios ≤1.19.0 (direct), follow-redirects, @modelcontextprotocol/sdk
-≤1.31.0 (direct), fast-uri ≤3.1.7, ip-address, @grpc/grpc-js 1.14.0–1.14.4. The OpenTelemetry cluster stays under Deferred #1.
 
 ## Recommended follow-ups
 - Add a scheduled `npm audit` (or Dependabot) job so `main`'s transitive advisories surface

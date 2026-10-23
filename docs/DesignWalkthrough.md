@@ -2111,3 +2111,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#134 implemented (2026-10-23)**
   - **Why:** make unpatched Node runtimes visible; stop testing on EOL Node 20.
   - **How:** `packages/mcp/src/runtimeSecurity.ts` (floor table + classifier + never-throwing reporter), wired into stdio (`startSdkStdioServer`) and HTTP (`MCPServer`, HTTP-only guard); `TB-MCP-007`; engines + workflows guarded by `node-floor-consistency.test.ts`. Phase 8 surfaced latent runtime audit findings → #135.
+- **#135 runtime dependency remediation (2026-10-23)**
+  - **Why:** runtime advisories on main (critical proxy-addr, axios, MCP SDK, OTel cluster) surfaced by the #134 scan.
+  - **How:** direct range bumps (axios ^1.20.0, MCP SDK ^1.32.1, express ^4.22.3) + `npm audit fix --omit=dev` (no --force); all in-major; OTel Deferred #1 resolved. Gotcha: audit fix --omit=dev prunes devDeps from node_modules → npm ci.
