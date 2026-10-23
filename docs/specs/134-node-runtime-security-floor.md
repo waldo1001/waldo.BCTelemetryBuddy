@@ -1,9 +1,9 @@
 ---
 spec: 134-node-runtime-security-floor
 issue: 134
-status: draft
+status: approved
 created: 2026-10-23
-approved:
+approved: 2026-10-23
 plans: []
 ---
 
