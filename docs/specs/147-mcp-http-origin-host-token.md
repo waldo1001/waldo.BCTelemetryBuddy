@@ -1,9 +1,9 @@
 ---
 spec: 147-mcp-http-origin-host-token
 issue: 147
-status: draft
+status: approved
 created: 2026-10-23
-approved:
+approved: 2026-10-23
 plans: []
 ---
 
