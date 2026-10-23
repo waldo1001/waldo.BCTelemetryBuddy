@@ -1,9 +1,9 @@
 ---
 spec: 145-mcp-http-localhost-bind
 issue: 145
-status: draft
+status: approved
 created: 2026-10-23
-approved:
+approved: 2026-10-23
 plans: []
 ---
 
