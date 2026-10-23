@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-10-23
+
+_Highest blast-radius rating across all plans landed in this release: `risky`._
+
 ### Security
 - **HTTP mode refuses browser, DNS-rebinding and unauthenticated requests** ([#147](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/147)). The `Access-Control-Allow-Origin: *` header is gone. A request with an `Origin` header gets `403 origin_not_allowed`. While listening on loopback, a `Host` other than `localhost` / `127.x.x.x` / `[::1]` gets `403 host_not_allowed`. Until now any web page open in your browser could call `http://localhost:52346/rpc` and read your telemetry. Spec: [docs/specs/147-mcp-http-origin-host-token.md](../../docs/specs/147-mcp-http-origin-host-token.md).
 - **Optional token**: when `BCTB_HTTP_TOKEN` is set, every HTTP request needs `Authorization: Bearer <token>`, otherwise `401 unauthorized`. Without it, startup prints that no token is required. The VS Code extension sets it for the server it starts.
