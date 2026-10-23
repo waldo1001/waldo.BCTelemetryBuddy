@@ -2126,3 +2126,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **CI setup-node `check-latest: true` (2026-10-23)**
   - **Why:** `22.x` without check-latest used the runner's cached Node v22.23.3, which lacks the Oct 2026 Node.js security fixes; builds and releases ran below the floor #134 set for users.
   - **How:** `check-latest: true` on all 13 `actions/setup-node` steps; `node-floor-consistency.test.ts` AC8 fails on any step without it. Plan: docs/plans/done/ci-node-check-latest.md
+- **#145 MCP HTTP mode binds to 127.0.0.1 by default (2026-10-23)**
+  - **Why:** `app.listen(port)` without a host exposed the unauthenticated HTTP mode (with the user's App Insights access) to the whole network; found in the Oct 2026 Node.js CVE review (#144).
+  - **How:** `packages/mcp/src/httpBind.ts` (resolve `BCTB_HOST` → config `host` → `127.0.0.1`, classify, promise-based `listenHttp`, never-throwing warn + `TB-MCP-008`), wired into `MCPServer.startHTTP()`; `host` in config + schema. BREAKING for remote HTTP clients: `BCTB_HOST=0.0.0.0`. Plan: docs/plans/done/mcp-http-localhost-bind.md

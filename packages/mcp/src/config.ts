@@ -23,6 +23,7 @@ export interface MCPConfig {
 
     // Server
     port: number;
+    host?: string; // HTTP mode bind address (spec #145); BCTB_HOST wins
 
     // Workspace
     workspacePath: string;
@@ -343,6 +344,7 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
             removePII: resolvedProfile.removePII ?? rawConfig.sanitize?.removePII ?? false,
             references: resolvedProfile.references ?? rawConfig.references ?? [],
             port: resolvedProfile.port ?? 52345,
+            host: resolvedProfile.host ?? rawConfig.host,
             // Keep a raw token (e.g. ${workspaceFolder}) so expandEnvironmentVariables can
             // expand it against ws.path while preserving any suffix; otherwise default to ws.path.
             workspacePath: resolvedProfile.workspacePath ?? ws.path,
@@ -374,6 +376,7 @@ export function loadConfigFromFile(configPath?: string, profileName?: string, si
         cacheTTLSeconds: rawConfig.cacheTTLSeconds ?? 3600,
         removePII: rawConfig.removePII ?? false,
         port: rawConfig.port ?? 52345,
+        host: rawConfig.host,
         workspacePath: rawConfig.workspacePath ?? ws.path,
         workspaceVia: ws.via,
         workspaceTokenStripped: ws.tokenStripped,

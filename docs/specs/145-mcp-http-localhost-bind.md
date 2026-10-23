@@ -1,10 +1,10 @@
 ---
 spec: 145-mcp-http-localhost-bind
 issue: 145
-status: approved
+status: implemented
 created: 2026-10-23
 approved: 2026-10-23
-plans: []
+plans: [docs/plans/done/mcp-http-localhost-bind.md]
 ---
 
 # MCP HTTP mode: bind to localhost by default
@@ -47,18 +47,18 @@ Consumers: the VS Code extension's command-palette mode (spawns the bundled serv
 ## Verification
 | AC | Test | Status |
 |---|---|---|
-| AC1 | planned | planned |
-| AC2 | planned | planned |
-| AC3 | planned | planned |
-| AC4 | planned | planned |
-| AC5 | planned | planned |
-| AC6 | planned | planned |
-| AC7 | planned | planned |
-| AC8 | planned | planned |
-| AC9 | planned | planned |
+| AC1 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC1: defaults to 127.0.0.1", "AC1: listens on 127.0.0.1 when no host is configured" | verified |
+| AC2 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC2: a request to localhost reaches the default 127.0.0.1 listener" | verified |
+| AC3 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC3: BCTB_HOST overrides config host", "AC3: BCTB_HOST overrides the config host" | verified |
+| AC4 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC4: profile host wins over top-level host", "AC4: top-level host applies when the profile has none", "AC4: single-profile config reads host" | verified |
+| AC5 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC5: env value %p counts as unset", "AC5: config value %p counts as unset" | verified |
+| AC6 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC6: %s:%d -> %s", "AC6: the startup line names the listen URL" | verified |
+| AC7 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC7: %s warns once and tracks once without the address", "AC7: loopback %s neither warns nor tracks", "AC7: a wildcard host logs the exposure warning once" | verified |
+| AC8 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC8: rejects naming host and port when the host cannot be bound", "AC8: an unbindable host rejects with host and port" | verified |
+| AC9 | `packages/mcp/src/__tests__/http-bind.test.ts` — "AC9: stdio startServer never resolves or binds an HTTP host" | verified |
 
 ## Links
 - Issue: #145
-- Plan(s): (to be added)
+- Plan(s): docs/plans/done/mcp-http-localhost-bind.md
 - PR(s): (to be added)
 - Found during: #144 (Node.js October 2026 CVE review)

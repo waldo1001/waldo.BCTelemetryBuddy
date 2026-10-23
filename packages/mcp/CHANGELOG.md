@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **HTTP mode listens on `127.0.0.1` by default** ([#145](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/145)). Before, `bctb-mcp start --http` (and the extension's Command Palette mode) listened on every network interface, so anyone on the same network could reach the unauthenticated server and query your telemetry. The startup line now shows the address: `listening on http://127.0.0.1:52345`. Spec: [docs/specs/145-mcp-http-localhost-bind.md](../../docs/specs/145-mcp-http-localhost-bind.md).
+- **BREAKING (HTTP mode from another machine or container only):** if you reach HTTP mode from Docker, WSL2 or another host, set `BCTB_HOST=0.0.0.0` (or `"host": "0.0.0.0"` in `.bctb-config.json`, top-level or per profile) to listen on all interfaces again. A non-loopback address prints a warning at startup. stdio mode is unchanged.
+- An address the machine cannot bind now stops the server with `Cannot listen on <host>:<port> (<code>)` and exit code 1, instead of an unhandled error.
+- **Telemetry**: `TB-MCP-008` (`HTTP_NON_LOOPBACK_BIND`), once per start when HTTP mode listens on a non-loopback address, with `hostSource` (`env` | `config`) and `hostKind` (`wildcard` | `specific`). The address itself is never sent.
+
 ## [3.7.3] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._
