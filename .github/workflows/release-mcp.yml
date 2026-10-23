@@ -32,10 +32,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: 'npm'
@@ -72,7 +72,7 @@ jobs:
           echo "✓ CLI file verified"
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mcp-release-artifacts
           path: |
@@ -92,12 +92,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: mcp-release-artifacts
           path: ./artifacts
@@ -147,19 +147,25 @@ jobs:
   publish-npm:
     name: Publish to NPM
     runs-on: ubuntu-latest
+    permissions:  # npm Trusted Publishing (OIDC): no npm token needed
+      contents: read
+      id-token: write
     needs: create-github-release
     if: github.event.inputs.prerelease != 'true'  # Only publish stable releases to 'latest'
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+      
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@^11.5.1  # OIDC publish needs npm >= 11.5.1; Node 22 ships npm 10
       
       - name: Install dependencies
         run: npm ci
@@ -182,8 +188,6 @@ jobs:
           npm pack --dry-run
       
       - name: Publish to NPM
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/mcp
           NPM_TAG="${{ github.event.inputs.npm_tag || 'latest' }}"
@@ -192,37 +196,45 @@ jobs:
       
       - name: Verify NPM publication
         run: |
-          # Wait a few seconds for NPM to update
-          sleep 10
-          
-          # Check if package is available
+          # The registry can take several minutes to list a new version
           PACKAGE_NAME="bc-telemetry-buddy-mcp"
           VERSION="${{ needs.create-github-release.outputs.version || github.ref_name }}"
           VERSION="${VERSION#mcp-v}"
           
           echo "Verifying package: $PACKAGE_NAME@$VERSION"
-          if npm view "$PACKAGE_NAME@$VERSION" version; then
-            echo "✓ Package successfully published to NPM"
-          else
-            echo "⚠️  Package verification failed (may take a few minutes to propagate)"
-          fi
+          for attempt in $(seq 1 20); do
+            if npm view "$PACKAGE_NAME@$VERSION" version >/dev/null 2>&1; then
+              echo "✓ Package successfully published to NPM (attempt $attempt)"
+              exit 0
+            fi
+            echo "Not visible yet (attempt $attempt/20), retrying in 15s..."
+            sleep 15
+          done
+          echo "::error::$PACKAGE_NAME@$VERSION not visible on npm after 5 minutes"
+          exit 1
 
   publish-npm-prerelease:
     name: Publish Pre-release to NPM
     runs-on: ubuntu-latest
+    permissions:  # npm Trusted Publishing (OIDC): no npm token needed
+      contents: read
+      id-token: write
     needs: create-github-release
     if: github.event.inputs.prerelease == 'true'
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+      
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@^11.5.1  # OIDC publish needs npm >= 11.5.1; Node 22 ships npm 10
       
       - name: Install dependencies
         run: npm ci
@@ -239,8 +251,6 @@ jobs:
         run: npm run build --workspace=packages/mcp
       
       - name: Publish pre-release to NPM
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/mcp
           NPM_TAG="${{ github.event.inputs.npm_tag || 'beta' }}"

@@ -142,6 +142,8 @@ After a successful push, show the user:
 - For extension: VS Code Marketplace link: `https://marketplace.visualstudio.com/items?itemName=waldoBC.bc-telemetry-buddy`
 - For MCP: npm link: `https://www.npmjs.com/package/bc-telemetry-buddy-mcp`
 
+**MCP publishing uses npm Trusted Publishing (OIDC), not a token.** If "Publish to NPM" fails with `E404 Not Found - PUT`, the trusted-publisher config on npmjs.com doesn't match (user `waldo1001`, repo `waldo.BCTelemetryBuddy`, workflow `release-mcp.yml`). Don't chase `NPM_TOKEN`; it no longer exists. See docs/ReleaseGuide.md. npm can take about 4 minutes to list a new version; the workflow's verification step retries for 5 minutes.
+
 ## Important Notes
 
 - The `scripts/release.ps1` PowerShell script exists but **cannot release both components at once** and has CHANGELOG regex issues. This skill replaces it for Claude Code usage.
