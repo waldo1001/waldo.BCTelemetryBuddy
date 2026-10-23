@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.4] - 2026-10-23
+
+_Highest blast-radius rating across all plans landed in this release: `low-risk`._
+
 ### Security
 - **Bundled MCP server warns about unpatched Node.js** ([#134](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/134)): the extension starts the bundled MCP server with the `node` on your PATH. When that Node.js is missing the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) (below 22.23.4, 24.22.1 or 26.12.1, or end-of-life), the server now logs a warning in its output. It only warns; nothing is blocked.
 
