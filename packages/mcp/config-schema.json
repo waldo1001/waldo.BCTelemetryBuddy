@@ -60,6 +60,11 @@
             "type": "string",
             "description": "Workspace path (use ${workspaceFolder} for current workspace)"
         },
+        "host": {
+            "type": "string",
+            "description": "HTTP mode only: address to listen on. Default 127.0.0.1 (this machine only). 0.0.0.0 exposes the unauthenticated server to your network. BCTB_HOST overrides it.",
+            "default": "127.0.0.1"
+        },
         "queriesFolder": {
             "type": "string",
             "description": "Folder for saved queries",
@@ -308,6 +313,10 @@
                 "workspacePath": {
                     "type": "string",
                     "description": "Workspace path"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "HTTP mode only: address to listen on (overrides the top-level host). Default 127.0.0.1."
                 },
                 "queriesFolder": {
                     "type": "string",

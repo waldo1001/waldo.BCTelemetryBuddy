@@ -24,7 +24,10 @@ import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
 import { VERSION } from './version.js';
 import { reportRuntimeSecurity } from './runtimeSecurity.js';
+import { formatListenUrl, listenHttp, reportHttpBind, resolveHttpHost } from './httpBind.js';
 import * as https from 'https';
+import type * as http from 'http';
+import type { AddressInfo } from 'net';
 import { createMCPUsageTelemetry, getMCPInstallationId } from './mcpTelemetry.js';
 import * as crypto from 'crypto';
 import { startSdkStdioServer } from './mcpSdkServer.js';
@@ -80,6 +83,7 @@ export class MCPServer {
     protected queries: QueriesService;
     protected references: ReferencesService;
     protected configErrors: string[];
+    private httpServer?: http.Server;
     protected usageTelemetry: IUsageTelemetry; // Usage telemetry (tracks MCP usage)
     protected sessionId: string; // Session identifier for this server instance
     protected installationId: string; // Installation identifier from workspace
@@ -1484,12 +1488,22 @@ ${extendStatements}
      * Start the server in HTTP mode (for legacy MCPClient)
      */
     async startHTTP(): Promise<void> {
-        const port = this.config.port;
+        const { host, source } = resolveHttpHost(process.env.BCTB_HOST, this.config.host);
 
-        this.app.listen(port, () => {
-            console.error(`\n✓ MCP Server v${VERSION} listening on port ${port}`);
-            console.error(`Ready to receive requests\n`);
-        });
+        // Rejects (host:port in the message) when the address cannot be bound — spec #145 AC8
+        this.httpServer = await listenHttp(this.app, host, this.config.port);
+        const port = (this.httpServer.address() as AddressInfo).port;
+
+        console.error(`\n✓ MCP Server v${VERSION} listening on ${formatListenUrl(host, port)}`);
+        reportHttpBind({
+            warn: line => console.error(line),
+            track: (name, props) => this.usageTelemetry.trackEvent(name, props),
+            commonProps: () => cleanTelemetryProperties(createCommonProperties(
+                TELEMETRY_EVENTS.MCP.HTTP_NON_LOOPBACK_BIND, 'mcp',
+                this.sessionId, this.installationId, VERSION
+            ))
+        }, host, source, port);
+        console.error(`Ready to receive requests\n`);
 
         // Only authenticate if configuration is complete
         if (this.configErrors.length === 0) {

@@ -759,10 +759,12 @@ The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, q
 5. **Execution**: Authentication → KQL query → cache → response
 
 **HTTP mode (VS Code extension Command Palette):**
-1. **Startup**: CLI → `new MCPServer(config, 'http')` → Express server on configured port
+1. **Startup**: CLI → `new MCPServer(config, 'http')` → Express server on `127.0.0.1:<port>` (this machine only)
 2. **Tool Request**: Extension sends JSON-RPC via HTTP POST to `/rpc`
 3. **Execution**: Same business logic methods on MCPServer class
 4. **Response**: JSON-RPC response over HTTP
+
+HTTP mode has **no authentication**, so it listens on `127.0.0.1` by default ([#145](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/145)). Clients that use `http://localhost:<port>` keep working. To listen on another interface (Docker, WSL2, another machine), set `BCTB_HOST` (wins) or `"host"` in `.bctb-config.json` (top-level or per profile), e.g. `BCTB_HOST=0.0.0.0`. The server then prints a warning at startup, because anyone who can reach that port can query your telemetry.
 
 ### Embedded Resources (MCP Resource Support)
 
