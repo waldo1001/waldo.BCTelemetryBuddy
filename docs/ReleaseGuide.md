@@ -76,9 +76,7 @@ The `scripts/release.ps1` PowerShell script automates the release process for ei
    npm test
    ```
 
-4. **NPM token configured** (for MCP releases)
-   - Repository secret: `NPM_TOKEN`
-   - Organization: `@bctb` or similar
+4. **npm Trusted Publisher configured** (for MCP releases). No secret is needed; see [CI-CD-Setup.md](CI-CD-Setup.md#npm-publishing-mcp-no-token)
 
 ### Release Extension
 
@@ -269,14 +267,14 @@ git push origin :refs/tags/vX.Y.Z  # or :refs/tags/mcp-vX.Y.Z
 .\scripts\release.ps1 -Component <component> -BumpType <type>
 ```
 
-### "NPM_TOKEN invalid"
+### npm publish fails with `E404 Not Found - PUT` (or `ENEEDAUTH`)
 
-MCP release requires valid NPM token:
+The MCP publishes through npm Trusted Publishing (OIDC). An E404 on the PUT means npm didn't accept the workflow's identity. Check:
 
-1. Generate token at https://www.npmjs.com/settings/YOUR_USERNAME/tokens
-2. Token type: **Automation** (for CI/CD)
-3. Add to GitHub Secrets: `Settings > Secrets > Actions > NPM_TOKEN`
-4. Re-run workflow
+1. On npmjs.com, the package's Trusted Publisher: user `waldo1001`, repo `waldo.BCTelemetryBuddy`, workflow `release-mcp.yml`. The values are case-sensitive, and an entry that never published within 2 days has expired.
+2. The publish job still has `permissions: id-token: write`, and the "Upgrade npm for Trusted Publishing" step ran (npm ≥ 11.5.1).
+3. `packages/mcp/package.json` `repository.url` still points to this repo.
+4. Re-run only the failed job: `gh run rerun <run-id> --failed`. The tag and GitHub release stay as they are.
 
 ### "Tests failed"
 

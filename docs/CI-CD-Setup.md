@@ -89,7 +89,6 @@ Configure these in **Settings → Secrets and variables → Actions**:
 |--------|---------|----------|--------------|
 | `AI_CONNECTION_STRING` | Azure Application Insights telemetry | Azure Portal | **Release builds** |
 | `VSCE_PAT` | VS Code Marketplace publishing | https://marketplace.visualstudio.com/manage | Extension releases |
-| `NPM_TOKEN` | NPM registry publishing | https://www.npmjs.com/ | MCP releases |
 | `CODECOV_TOKEN` | Coverage reports (optional) | https://codecov.io/ | CI (optional) |
 | `OVSX_PAT` | Open VSX publishing (optional) | https://open-vsx.org/ | Extension releases (optional) |
 
@@ -127,11 +126,10 @@ See `Instructions/Telemetry-Design-and-Implementation.md` for full design detail
 3. Click "New Token" → Name: "GitHub Actions" → Organization: All accessible organizations → Scopes: **Marketplace → Manage**
 3. Copy token and add to GitHub repository secrets as `VSCE_PAT`
 
-### Steps to Get `NPM_TOKEN`:
-1. Sign in to https://www.npmjs.com/
-2. Click profile → **Access Tokens** → **Generate New Token**
-3. Type: **"Automation"** (for CI/CD)
-4. Copy token and add to GitHub secrets as `NPM_TOKEN`
+### npm publishing (MCP): no token
+MCP releases publish through npm **Trusted Publishing (OIDC)**: no secret. On npmjs.com → package `bc-telemetry-buddy-mcp` → **Settings → Trusted Publisher → GitHub Actions**: user `waldo1001`, repository `waldo.BCTelemetryBuddy`, workflow `release-mcp.yml`, environment empty. The publish jobs request `id-token: write` and upgrade to npm ≥ 11.5.1 (Node 22 ships npm 10, which can't publish over OIDC). Provenance is attached automatically (the repo is public).
+
+A new trusted-publisher configuration has to complete a publish within **2 days** or it expires, so configure it right before a release. After the first successful OIDC publish, set the package's **Publishing access** to *Require two-factor authentication and disallow tokens* (#137).
 
 See **`docs/GitHub-Secrets-Setup.md`** for complete instructions for all secrets.
 

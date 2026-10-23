@@ -2114,3 +2114,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#135 runtime dependency remediation (2026-10-23)**
   - **Why:** runtime advisories on main (critical proxy-addr, axios, MCP SDK, OTel cluster) surfaced by the #134 scan.
   - **How:** direct range bumps (axios ^1.20.0, MCP SDK ^1.32.1, express ^4.22.3) + `npm audit fix --omit=dev` (no --force); all in-major; OTel Deferred #1 resolved. Gotcha: audit fix --omit=dev prunes devDeps from node_modules → npm ci.
+- **#137 npm Trusted Publishing + Node 24 actions (2026-10-23)**
+  - **Why:** NPM_TOKEN expired once (E404 PUT) and npm deprecates bypass-2FA publish tokens; actions/* still ran on Node 20.
+  - **How:** publish jobs get `id-token: write` + npm ≥11.5.1, token removed; verify step retries 5 min then fails; all actions/* on node24 majors; `release-workflow-consistency.test.ts` guards it.
