@@ -314,3 +314,60 @@ describe('config host (spec #145 AC4)', () => {
         expect(loadConfigFromFile(write({ ...profile }), undefined, true)?.host).toBeUndefined();
     });
 });
+
+describe('resolveHttpPort (plan amendment, #147)', () => {
+    const { resolveHttpPort } = require('../httpBind');
+
+    it.each([
+        ['52346', 52345, 52346],
+        [' 8080 ', 52345, 8080],
+        ['0', 52345, 0],
+        [undefined, 52345, 52345],
+        ['', 52345, 52345],
+        ['abc', 52345, 52345],
+        ['80.5', 52345, 52345],
+        ['-1', 52345, 52345],
+        ['65536', 52345, 52345]
+    ])('BCTB_PORT %p with config port %p -> %p', (envPort, configPort, expected) => {
+        expect(resolveHttpPort(envPort, configPort)).toBe(expected);
+    });
+});
+
+describe('startHTTP port override (plan amendment, #147)', () => {
+    const originalEnv = process.env;
+    let server: MCPServer | undefined;
+    let tempDir: string;
+
+    beforeEach(() => {
+        process.env = { ...originalEnv };
+        delete process.env.BCTB_HOST;
+        jest.spyOn(console, 'error').mockImplementation();
+        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bctb-http-port-'));
+    });
+
+    afterEach(async () => {
+        if (server && (server as any).httpServer) {
+            await new Promise(resolve => (server as any).httpServer.close(resolve));
+        }
+        process.removeAllListeners('SIGINT');
+        process.removeAllListeners('SIGTERM');
+        process.env = originalEnv;
+        jest.restoreAllMocks();
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    });
+
+    it('startHTTP listens on BCTB_PORT over the config port', async () => {
+        const probe = await listenHttp(express(), '127.0.0.1', 0);
+        const freePort = (probe.address() as AddressInfo).port;
+        await new Promise(resolve => probe.close(resolve));
+
+        process.env.BCTB_PORT = String(freePort);
+        server = new MCPServer({
+            connectionName: 'c', tenantId: 't', authFlow: 'azure_cli', applicationInsightsAppId: 'a',
+            kustoClusterUrl: 'https://ade.applicationinsights.io', cacheEnabled: false, cacheTTLSeconds: 3600,
+            removePII: false, port: 1, workspacePath: tempDir, queriesFolder: 'queries', references: []
+        }, 'http');
+        await server.startHTTP();
+        expect(((server as any).httpServer.address() as AddressInfo).port).toBe(freePort);
+    });
+});

@@ -71,16 +71,30 @@ export class MCPClient {
     private outputChannel: vscode.OutputChannel;
     private requestId: number = 1;
 
-    constructor(baseUrl: string, outputChannel: vscode.OutputChannel) {
+    private token?: string;
+
+    /**
+     * @param token HTTP-mode shared secret (spec #147), sent as a Bearer token; never logged
+     */
+    constructor(baseUrl: string, outputChannel: vscode.OutputChannel, token?: string) {
         this.outputChannel = outputChannel;
+        this.token = token?.trim() || undefined;
 
         this.client = axios.create({
             baseURL: baseUrl,
             timeout: 60000,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...(this.token ? { Authorization: `Bearer ${this.token}` } : {})
             }
         });
+    }
+
+    /**
+     * Write to the output channel with the token redacted
+     */
+    private log(line: string): void {
+        this.outputChannel.appendLine(this.token ? line.split(this.token).join('***') : line);
     }
 
     /**
@@ -95,7 +109,7 @@ export class MCPClient {
         };
 
         try {
-            this.outputChannel.appendLine(`[MCP Client] ${method} -> ${JSON.stringify(params || {})}`);
+            this.log(`[MCP Client] ${method} -> ${JSON.stringify(params || {})}`);
 
             const response = await this.client.post<JSONRPCResponse>('/rpc', request);
 
@@ -104,15 +118,15 @@ export class MCPClient {
                 const errorCode = response.data.error.code || -1;
                 const errorData = response.data.error.data ? JSON.stringify(response.data.error.data) : '';
 
-                this.outputChannel.appendLine(`[MCP Client] ${method} <- JSON-RPC Error (code ${errorCode}): ${errorMessage}`);
+                this.log(`[MCP Client] ${method} <- JSON-RPC Error (code ${errorCode}): ${errorMessage}`);
                 if (errorData) {
-                    this.outputChannel.appendLine(`[MCP Client] Error data: ${errorData}`);
+                    this.log(`[MCP Client] Error data: ${errorData}`);
                 }
 
                 throw new Error(errorMessage);
             }
 
-            this.outputChannel.appendLine(`[MCP Client] ${method} <- Success`);
+            this.log(`[MCP Client] ${method} <- Success`);
 
             return response.data.result as T;
         } catch (err: any) {
@@ -123,16 +137,16 @@ export class MCPClient {
                 const url = err.config?.url;
                 const baseURL = err.config?.baseURL;
 
-                this.outputChannel.appendLine(`[MCP Client] ${method} <- Axios Error (status ${status || 'unknown'}): ${message}`);
-                this.outputChannel.appendLine(`[MCP Client] Error code: ${err.code || 'none'}`);
-                this.outputChannel.appendLine(`[MCP Client] Base URL: ${baseURL}`);
+                this.log(`[MCP Client] ${method} <- Axios Error (status ${status || 'unknown'}): ${message}`);
+                this.log(`[MCP Client] Error code: ${err.code || 'none'}`);
+                this.log(`[MCP Client] Base URL: ${baseURL}`);
                 if (url) {
-                    this.outputChannel.appendLine(`[MCP Client] Request URL: ${url}`);
+                    this.log(`[MCP Client] Request URL: ${url}`);
                 }
                 if (err.response?.data) {
-                    this.outputChannel.appendLine(`[MCP Client] Response data: ${JSON.stringify(err.response.data)}`);
+                    this.log(`[MCP Client] Response data: ${JSON.stringify(err.response.data)}`);
                 } else {
-                    this.outputChannel.appendLine(`[MCP Client] No response received - connection error?`);
+                    this.log(`[MCP Client] No response received - connection error?`);
                 }
 
                 // Provide more helpful error message
@@ -146,10 +160,10 @@ export class MCPClient {
             }
 
             // Other error type - log full error object
-            this.outputChannel.appendLine(`[MCP Client] ${method} <- Unexpected Error: ${err.message || String(err)}`);
-            this.outputChannel.appendLine(`[MCP Client] Error type: ${err.constructor.name}`);
+            this.log(`[MCP Client] ${method} <- Unexpected Error: ${err.message || String(err)}`);
+            this.log(`[MCP Client] Error type: ${err.constructor.name}`);
             if (err.stack) {
-                this.outputChannel.appendLine(`[MCP Client] Stack: ${err.stack}`);
+                this.log(`[MCP Client] Stack: ${err.stack}`);
             }
 
             throw err;

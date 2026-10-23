@@ -24,7 +24,8 @@ import type { ExternalQuery } from '@bctb/shared';
 import type { EventCategoryInfo } from '@bctb/shared';
 import { VERSION } from './version.js';
 import { reportRuntimeSecurity } from './runtimeSecurity.js';
-import { formatListenUrl, listenHttp, reportHttpBind, resolveHttpHost } from './httpBind.js';
+import { classifyHost, formatListenUrl, listenHttp, reportHttpBind, resolveHttpHost, resolveHttpPort, HostKind } from './httpBind.js';
+import { createHttpGuard, normalizeToken } from './httpGuard.js';
 import * as https from 'https';
 import type * as http from 'http';
 import type { AddressInfo } from 'net';
@@ -84,6 +85,9 @@ export class MCPServer {
     protected references: ReferencesService;
     protected configErrors: string[];
     private httpServer?: http.Server;
+    // Strictest until startHTTP() knows the real bind address
+    private httpBindKind: HostKind = 'loopback';
+    private httpToken?: string;
     protected usageTelemetry: IUsageTelemetry; // Usage telemetry (tracks MCP usage)
     protected sessionId: string; // Session identifier for this server instance
     protected installationId: string; // Installation identifier from workspace
@@ -218,20 +222,22 @@ export class MCPServer {
      * Setup Express middleware
      */
     private setupMiddleware(): void {
+        // Refuse browser (Origin), DNS-rebinding (Host) and unauthenticated requests
+        // before any body is parsed — spec #147. No CORS: the extension is a Node client.
+        this.app.use(createHttpGuard({
+            bindKind: () => this.httpBindKind,
+            token: () => this.httpToken,
+            log: line => console.error(line),
+            onReject: reason => this.usageTelemetry.trackEvent('Mcp.HttpRequestRejected', {
+                ...cleanTelemetryProperties(createCommonProperties(
+                    TELEMETRY_EVENTS.MCP.HTTP_REQUEST_REJECTED, 'mcp',
+                    this.sessionId, this.installationId, VERSION
+                )),
+                reason
+            })
+        }));
+
         this.app.use(express.json());
-
-        // CORS for VSCode extension
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
-            res.header('Access-Control-Allow-Origin', '*');
-            res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-            if (req.method === 'OPTIONS') {
-                res.sendStatus(200);
-            } else {
-                next();
-            }
-        });
 
         // Request logging with sanitized path to prevent log injection
         this.app.use((req: Request, res: Response, next: NextFunction) => {
@@ -1489,9 +1495,11 @@ ${extendStatements}
      */
     async startHTTP(): Promise<void> {
         const { host, source } = resolveHttpHost(process.env.BCTB_HOST, this.config.host);
+        this.httpBindKind = classifyHost(host);
+        this.httpToken = normalizeToken(process.env.BCTB_HTTP_TOKEN);
 
         // Rejects (host:port in the message) when the address cannot be bound — spec #145 AC8
-        this.httpServer = await listenHttp(this.app, host, this.config.port);
+        this.httpServer = await listenHttp(this.app, host, resolveHttpPort(process.env.BCTB_PORT, this.config.port));
         const port = (this.httpServer.address() as AddressInfo).port;
 
         console.error(`\n✓ MCP Server v${VERSION} listening on ${formatListenUrl(host, port)}`);
@@ -1502,7 +1510,22 @@ ${extendStatements}
                 TELEMETRY_EVENTS.MCP.HTTP_NON_LOOPBACK_BIND, 'mcp',
                 this.sessionId, this.installationId, VERSION
             ))
-        }, host, source, port);
+        }, host, source, port, this.httpToken !== undefined);
+        if (!this.httpToken) {
+            console.error('ℹ️  No token required (BCTB_HTTP_TOKEN not set): any local process can call this server.');
+        }
+        try {
+            this.usageTelemetry.trackEvent('Mcp.HttpModeStarted', {
+                ...cleanTelemetryProperties(createCommonProperties(
+                    TELEMETRY_EVENTS.MCP.HTTP_MODE_STARTED, 'mcp',
+                    this.sessionId, this.installationId, VERSION
+                )),
+                tokenRequired: this.httpToken !== undefined,
+                hostKind: this.httpBindKind
+            });
+        } catch {
+            // Ignore: telemetry must never break startup
+        }
         console.error(`Ready to receive requests\n`);
 
         // Only authenticate if configuration is complete

@@ -34,6 +34,22 @@ export function resolveHttpHost(envHost: string | undefined, configHost: string 
     return { host: DEFAULT_HTTP_HOST, source: 'default' };
 }
 
+/**
+ * BCTB_PORT wins over the config port, like BCTB_HOST over `host`: the extension
+ * starts its Command Palette server with BCTB_PORT=52346 even when a
+ * .bctb-config.json sets (or defaults) another port.
+ */
+export function resolveHttpPort(envPort: string | undefined, configPort: number): number {
+    const value = envPort?.trim();
+    if (value && /^\d{1,5}$/.test(value)) {
+        const port = Number(value);
+        if (port <= 65535) {
+            return port;
+        }
+    }
+    return configPort;
+}
+
 export function classifyHost(host: string): HostKind {
     const h = host.trim().toLowerCase();
     if (h === 'localhost' || h === '::1' || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) {
@@ -49,8 +65,11 @@ export function formatListenUrl(host: string, port: number): string {
     return `http://${host.includes(':') ? `[${host}]` : host}:${port}`;
 }
 
-export function formatExposureWarning(url: string): string {
-    return `⚠️  HTTP mode is listening on ${url}, reachable from other machines on that interface. HTTP mode has no authentication: anyone who can reach it can query your telemetry. Unset BCTB_HOST / "host" to listen on ${DEFAULT_HTTP_HOST} only.`;
+export function formatExposureWarning(url: string, tokenRequired: boolean = false): string {
+    const auth = tokenRequired
+        ? 'Requests need the BCTB_HTTP_TOKEN bearer token, and travel unencrypted.'
+        : 'HTTP mode has no authentication: anyone who can reach it can query your telemetry. Set BCTB_HTTP_TOKEN to require a token.';
+    return `⚠️  HTTP mode is listening on ${url}, reachable from other machines on that interface. ${auth} Unset BCTB_HOST / "host" to listen on ${DEFAULT_HTTP_HOST} only.`;
 }
 
 /**
@@ -77,14 +96,14 @@ export function listenHttp(app: { listen: (port: number, host: string) => http.S
  * Warns (stderr) and tracks telemetry when bound to a non-loopback host.
  * Never throws: reporting must not affect server startup.
  */
-export function reportHttpBind(deps: HttpBindDeps, host: string, source: HostSource, port?: number): HostKind {
+export function reportHttpBind(deps: HttpBindDeps, host: string, source: HostSource, port?: number, tokenRequired: boolean = false): HostKind {
     const kind = classifyHost(host);
     if (kind === 'loopback') {
         return kind;
     }
 
     try {
-        deps.warn(formatExposureWarning(port === undefined ? host : formatListenUrl(host, port)));
+        deps.warn(formatExposureWarning(port === undefined ? host : formatListenUrl(host, port), tokenRequired));
     } catch {
         // Ignore: warning output must never break startup
     }
