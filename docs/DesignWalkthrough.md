@@ -2120,3 +2120,6 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **#141 msal-node 3 → 7 (2026-10-23)**
   - **Why:** last runtime audit findings (moderate uuid via msal-node 3).
   - **How:** range bump only; v5–v7 breaking changes do not touch the PCA device-code / CCA client-credential APIs used; verified with a real-Entra smoke (device code cancelled, AADSTS700016) identical on v3 and v7.
+- **#140 Codecov upload stability (2026-10-23)**
+  - **Why:** codecov/project failed on a dep-only PR (7/10 uploads merged); shared coverage never uploaded (no json reporter).
+  - **How:** codecov.yml (after_n_builds 10, 0.5% project threshold, carryforward flags) + shared `json` reporter; consistency test derives upload count from ci.yml.

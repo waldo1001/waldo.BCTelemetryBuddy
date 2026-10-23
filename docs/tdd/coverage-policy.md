@@ -87,3 +87,13 @@ cd packages/<pkg> && npm run test:coverage
 ```
 
 HTML report lands in `packages/<pkg>/coverage/lcov-report/index.html`. Open it in a browser to see per-file coverage with line-level highlighting. This is the fastest way to find the exact untested lines when the Jest summary isn't specific enough.
+
+## Codecov (CI)
+
+CI uploads `coverage-final.json` per package to Codecov with the flags `mcp`, `shared` and `extension`, so every package's Jest config must include the `json` reporter. [`codecov.yml`](../../codecov.yml) sets three things (#140):
+
+- **`after_n_builds: 10`.** Codecov waits for every upload in the `ci.yml` matrix before it reports. Without this, a status computed from 7 of 10 uploads misses the OS-specific branches and shows a false drop. `codecov-config-consistency.test.ts` derives the count from `ci.yml`, so a matrix change that isn't reflected in `codecov.yml` fails locally.
+- **Project threshold 0.5%.** Real regressions fail, but rounding and runner variance don't. Patch coverage stays at `target: auto`.
+- **Carryforward flags.** A missing upload reuses that flag's last report instead of counting as 0%.
+
+`codecov/project` is informational, not a required check. The local Jest thresholds above are the gate.

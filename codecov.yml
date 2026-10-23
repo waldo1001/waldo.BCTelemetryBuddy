@@ -1,0 +1,36 @@
+# Codecov configuration — see docs/tdd/coverage-policy.md (#140)
+# after_n_builds must equal the coverage uploads ci.yml produces:
+#   test-mcp: 2 uploads (mcp + shared) × 2 node versions = 4
+#   test-extension: 1 upload × 3 OS × 2 node versions = 6
+# codecov-config-consistency.test.ts derives this from ci.yml and fails on drift.
+codecov:
+  notify:
+    after_n_builds: 10
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
+    patch:
+      default:
+        target: auto
+
+comment:
+  layout: "condensed_header, condensed_files, condensed_footer"
+  after_n_builds: 10
+
+flag_management:
+  default_rules:
+    carryforward: true
+  individual_flags:
+    - name: mcp
+      paths:
+        - packages/mcp/src/
+    - name: shared
+      paths:
+        - packages/shared/src/
+    - name: extension
+      paths:
+        - packages/extension/src/
