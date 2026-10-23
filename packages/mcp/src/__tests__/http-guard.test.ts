@@ -94,6 +94,14 @@ describe('httpGuard helpers', () => {
         expect(tokenMatches(header, TOKEN)).toBe(expected);
     });
 
+    it('AC6: a huge whitespace-padded Authorization header is refused quickly (no ReDoS)', () => {
+        const header = 'Bearer ' + ' '.repeat(100_000) + 'x';
+        const started = Date.now();
+        expect(tokenMatches(header, TOKEN)).toBe(false);
+        expect(tokenMatches('Bearer ' + ' '.repeat(100_000), TOKEN)).toBe(false);
+        expect(Date.now() - started).toBeLessThan(200);
+    });
+
     it.each([[undefined, undefined], ['', undefined], ['   ', undefined], [' abc ', 'abc']])('AC7: normalizeToken(%p) = %p', (value, expected) => {
         expect(normalizeToken(value)).toBe(expected);
     });

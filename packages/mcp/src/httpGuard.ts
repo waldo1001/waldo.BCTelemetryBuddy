@@ -47,12 +47,17 @@ function digest(value: string): Buffer {
 }
 
 export function tokenMatches(header: string | undefined, token: string): boolean {
-    const match = /^bearer\s+(.+)$/i.exec(header?.trim() ?? '');
-    if (!match) {
+    // Plain string parsing, no regex on the user-supplied header (CodeQL js/polynomial-redos)
+    const value = header?.trim() ?? '';
+    if (value.slice(0, 7).toLowerCase() !== 'bearer ') {
+        return false;
+    }
+    const presented = value.slice(7).trim();
+    if (!presented) {
         return false;
     }
     // Equal-length digests: constant-time compare without leaking the token length
-    return crypto.timingSafeEqual(digest(match[1]), digest(token));
+    return crypto.timingSafeEqual(digest(presented), digest(token));
 }
 
 export function createHttpGuard(opts: HttpGuardOptions): RequestHandler {
