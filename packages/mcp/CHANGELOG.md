@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- `@azure/msal-node` 3 → 7.1.1 ([#141](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/141)) for the `device_code` and `client_credentials` auth flows. This removes the vulnerable `uuid` 8.3.2 (moderate). Auth behavior is unchanged, and the runtime npm audit is now fully clean.
+
 ## [3.7.2] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `low-risk`._

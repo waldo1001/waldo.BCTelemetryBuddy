@@ -3399,3 +3399,5 @@ Change instructions an business logic to do this."
 > "go"
 
 > "Solve 135 and 137 now"
+
+> "\"What else came up:\" - solve all"
