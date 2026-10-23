@@ -764,7 +764,12 @@ The MCP server uses `@bctb/shared` for core functionality (auth, kusto, cache, q
 3. **Execution**: Same business logic methods on MCPServer class
 4. **Response**: JSON-RPC response over HTTP
 
-HTTP mode has **no authentication**, so it listens on `127.0.0.1` by default ([#145](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/145)). Clients that use `http://localhost:<port>` keep working. To listen on another interface (Docker, WSL2, another machine), set `BCTB_HOST` (wins) or `"host"` in `.bctb-config.json` (top-level or per profile), e.g. `BCTB_HOST=0.0.0.0`. The server then prints a warning at startup, because anyone who can reach that port can query your telemetry.
+HTTP mode has **no user authentication**, so it listens on `127.0.0.1` by default ([#145](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/145)). Clients that use `http://localhost:<port>` keep working. To listen on another interface (Docker, WSL2, another machine), set `BCTB_HOST` (wins) or `"host"` in `.bctb-config.json` (top-level or per profile), e.g. `BCTB_HOST=0.0.0.0`. The server then prints a warning at startup, because anyone who can reach that port can query your telemetry.
+
+HTTP mode also refuses ([#147](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/147)):
+- **browser requests**: any request with an `Origin` header gets `403`, and there are no CORS headers, so a web page cannot call the server;
+- **DNS rebinding**: while listening on loopback, a `Host` other than `localhost`, `127.x.x.x` or `[::1]` gets `403`;
+- **requests without the token**, when `BCTB_HTTP_TOKEN` is set: every request needs `Authorization: Bearer <token>`, otherwise `401`. The VS Code extension sets this automatically for the server it starts. Set it yourself when you expose HTTP mode with `BCTB_HOST`.
 
 ### Embedded Resources (MCP Resource Support)
 

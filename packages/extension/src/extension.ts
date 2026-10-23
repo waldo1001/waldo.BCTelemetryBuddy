@@ -20,6 +20,7 @@ import { resolveMcpServer } from './services/mcpResolver';
 import { VSCodeAuthService } from './services/vscodeAuthService';
 import { buildMcpEnv } from './services/mcpEnvBuilder';
 import { findConfigWorkspace, getActiveWorkspacePath } from './services/workspaceFinder';
+import { getOrCreateHttpToken, withHttpToken } from './services/httpToken';
 import {
     VSCodeUsageTelemetry,
     TelemetryLevelFilter,
@@ -517,6 +518,13 @@ export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('bctb', folderUri);
     const mcpUrl = config.get<string>('mcp.url', 'http://localhost:52345');
     mcpClient = new MCPClient(mcpUrl, outputChannel);
+    // Re-create with the installation's HTTP-mode token once SecretStorage answers (spec #147);
+    // leave it alone if a spawned command-palette server already owns mcpClient
+    void getOrCreateHttpToken(context.secrets, line => outputChannel.appendLine(line)).then(token => {
+        if (!mcpProcess) {
+            mcpClient = new MCPClient(mcpUrl, outputChannel, token);
+        }
+    });
 
     // Initialize setup wizard
     setupWizard = new SetupWizardProvider(context.extensionUri, outputChannel, usageTelemetry ?? undefined);
@@ -986,10 +994,14 @@ async function startMCP(): Promise<void> {
     // Use launcher.js to force CommonJS module semantics (avoids VSIX .cjs installation issues)
     const mcpServerPath = path.join(extensionContext.extensionPath, 'mcp', 'dist', 'launcher.js');
 
+    // Shared secret: the server refuses requests without it (spec #147). Same token in every
+    // window, so a server reused on EADDRINUSE accepts this window's requests too.
+    const httpToken = await getOrCreateHttpToken(extensionContext.secrets, line => outputChannel.appendLine(line));
+
     // Spawn MCP process
     outputChannel.appendLine(`Spawning: node ${mcpServerPath}`);
     const proc = child_process.spawn('node', [mcpServerPath], {
-        env: { ...process.env, ...env },
+        env: { ...process.env, ...withHttpToken(env, httpToken) },
         cwd: workspacePath
     });
 
@@ -1034,11 +1046,12 @@ async function startMCP(): Promise<void> {
 
     mcpProcess = { process: proc, port, workspacePath };
 
+    // Initialize HTTP client for command palette commands before the readiness check,
+    // so the health check goes to this server with its token
+    mcpClient = new MCPClient(`http://localhost:${port}`, outputChannel, httpToken);
+
     // Wait for MCP to be ready
     await waitForMCPReady(port);
-
-    // Initialize HTTP client for command palette commands
-    mcpClient = new MCPClient(`http://localhost:${port}`, outputChannel);
 
     outputChannel.appendLine('✓ MCP server started successfully');
     outputChannel.appendLine('✓ Command palette commands now available');

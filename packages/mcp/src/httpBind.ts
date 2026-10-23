@@ -49,8 +49,11 @@ export function formatListenUrl(host: string, port: number): string {
     return `http://${host.includes(':') ? `[${host}]` : host}:${port}`;
 }
 
-export function formatExposureWarning(url: string): string {
-    return `⚠️  HTTP mode is listening on ${url}, reachable from other machines on that interface. HTTP mode has no authentication: anyone who can reach it can query your telemetry. Unset BCTB_HOST / "host" to listen on ${DEFAULT_HTTP_HOST} only.`;
+export function formatExposureWarning(url: string, tokenRequired: boolean = false): string {
+    const auth = tokenRequired
+        ? 'Requests need the BCTB_HTTP_TOKEN bearer token, and travel unencrypted.'
+        : 'HTTP mode has no authentication: anyone who can reach it can query your telemetry. Set BCTB_HTTP_TOKEN to require a token.';
+    return `⚠️  HTTP mode is listening on ${url}, reachable from other machines on that interface. ${auth} Unset BCTB_HOST / "host" to listen on ${DEFAULT_HTTP_HOST} only.`;
 }
 
 /**
@@ -77,14 +80,14 @@ export function listenHttp(app: { listen: (port: number, host: string) => http.S
  * Warns (stderr) and tracks telemetry when bound to a non-loopback host.
  * Never throws: reporting must not affect server startup.
  */
-export function reportHttpBind(deps: HttpBindDeps, host: string, source: HostSource, port?: number): HostKind {
+export function reportHttpBind(deps: HttpBindDeps, host: string, source: HostSource, port?: number, tokenRequired: boolean = false): HostKind {
     const kind = classifyHost(host);
     if (kind === 'loopback') {
         return kind;
     }
 
     try {
-        deps.warn(formatExposureWarning(port === undefined ? host : formatListenUrl(host, port)));
+        deps.warn(formatExposureWarning(port === undefined ? host : formatListenUrl(host, port), tokenRequired));
     } catch {
         // Ignore: warning output must never break startup
     }

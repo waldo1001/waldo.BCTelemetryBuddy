@@ -56,6 +56,51 @@ describe('MCPClient', () => {
                 })
             }));
         });
+
+        it('AC11: no Authorization header without a token (spec #147)', () => {
+            const headers = (mockedAxios.create.mock.calls[0][0] as any).headers;
+            expect(headers).not.toHaveProperty('Authorization');
+        });
+
+        it('AC11: sends Authorization: Bearer <token> when created with a token (spec #147)', () => {
+            mockedAxios.create.mockClear();
+            new MCPClient('http://localhost:52346', mockOutputChannel as any, 'tok-123');
+            expect(mockedAxios.create).toHaveBeenCalledWith(expect.objectContaining({
+                headers: expect.objectContaining({
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer tok-123'
+                })
+            }));
+        });
+
+        it('AC11: a blank token sends no Authorization header (spec #147)', () => {
+            mockedAxios.create.mockClear();
+            new MCPClient('http://localhost:52346', mockOutputChannel as any, '  ');
+            expect((mockedAxios.create.mock.calls[0][0] as any).headers).not.toHaveProperty('Authorization');
+        });
+    });
+
+    describe('token never logged (spec #147 AC12)', () => {
+        it('AC12: error logging never contains the token', async () => {
+            const secret = 'super-secret-token-value';
+            mockedAxios.create.mockClear();
+            const tokenClient = new MCPClient('http://localhost:52346', mockOutputChannel as any, secret);
+            const axiosError: any = new Error(`Request failed: Authorization Bearer ${secret}`);
+            axiosError.isAxiosError = true;
+            axiosError.code = 'ERR_BAD_REQUEST';
+            axiosError.config = { url: '/rpc', baseURL: 'http://localhost:52346', headers: { Authorization: `Bearer ${secret}` } };
+            axiosError.response = { status: 401, data: { error: 'unauthorized' } };
+            axiosError.stack = `Error: Bearer ${secret}\n    at x`;
+            (axios.isAxiosError as any) = jest.fn().mockReturnValue(true);
+            mockAxiosInstance.post.mockRejectedValue(axiosError);
+            mockOutputChannel.appendLine.mockClear();
+
+            await expect(tokenClient.queryTelemetry({ query: 'test', queryType: 'kql' })).rejects.toThrow();
+
+            const logged = mockOutputChannel.appendLine.mock.calls.map(c => String(c[0])).join('\n');
+            expect(logged.length).toBeGreaterThan(0);
+            expect(logged).not.toContain(secret);
+        });
     });
 
     describe('healthCheck', () => {
