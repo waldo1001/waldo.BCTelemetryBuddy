@@ -42,7 +42,7 @@ bctb-mcp --version
 
 ### Prerequisites
 
-- **Node.js 18+** installed
+- **Node.js 22.23.4+, 24.22.1+ or 26.12.1+** installed (the server warns at startup on an older, unpatched Node.js)
 - **Application Insights** set up for Business Central telemetry
 - **Azure authentication** configured (see Authentication section below)
 
@@ -638,7 +638,7 @@ bctb-mcp start
 ## Development
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22.23.4+, 24.22.1+ or 26.12.1+
 - npm 9+
 - Azure CLI (for `azure_cli` auth flow)
 

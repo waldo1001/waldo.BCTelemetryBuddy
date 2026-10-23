@@ -9,7 +9,7 @@ This directory contains CI/CD workflows for the BC Telemetry Buddy project.
 **Triggers:** Push to `main`/`develop`, pull requests, manual
 
 **Jobs:**
-- **test-mcp** — Tests MCP backend on Node.js 18.x and 20.x
+- **test-mcp** — Tests MCP backend on Node.js 22.x and 24.x
   - Runs unit tests with coverage
   - Uploads coverage to Codecov
 - **test-extension** — Tests VSCode extension on Ubuntu, Windows, macOS
@@ -162,7 +162,7 @@ Configure in **Settings → Branches → Branch protection rules** for `main`:
 
 - ✅ Require pull request reviews before merging
 - ✅ Require status checks to pass:
-  - `Test MCP Backend` (Node 18.x, 20.x)
+  - `Test MCP Backend` (Node 22.x, 24.x)
   - `Test VSCode Extension` (Ubuntu, Windows, macOS)
   - `Lint & Format Check`
   - `Build All Packages`

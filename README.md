@@ -130,7 +130,7 @@ This is a monorepo containing:
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.23.4+, 24.22.1+ or 26.12.1+
 - npm 9+
 
 ### Build
@@ -165,7 +165,7 @@ npm run dev --workspace=packages/extension
 
 This project uses GitHub Actions for continuous integration and deployment:
 
-- **CI**: Automated testing on Node.js 18.x/20.x across Ubuntu/Windows/macOS
+- **CI**: Automated testing on Node.js 22.x/24.x across Ubuntu/Windows/macOS
 - **Security**: CodeQL analysis and dependency scanning
 - **Release**: Automated publishing to VS Code Marketplace and GitHub Releases
 

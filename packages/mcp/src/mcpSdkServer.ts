@@ -24,6 +24,7 @@ import { SETUP_PROMPT_CONTENT } from './tools/setupInstructions.js';
 import { ToolHandlers, ToolCallResult, initializeServices } from './tools/toolHandlers.js';
 import { ExportService } from '@bctb/shared';
 import { VERSION } from './version.js';
+import { reportRuntimeSecurity } from './runtimeSecurity.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -491,6 +492,16 @@ export async function startSdkStdioServer(config?: MCPConfig): Promise<void> {
 
     // Initialize services
     const services = initializeServices(resolvedConfig, true);
+
+    // Warn on an unpatched Node.js runtime (stderr only — stdout carries the protocol)
+    reportRuntimeSecurity({
+        warn: line => console.error(line),
+        track: (name, props) => services.usageTelemetry.trackEvent(name, props),
+        commonProps: () => cleanTelemetryProperties(createCommonProperties(
+            TELEMETRY_EVENTS.MCP.RUNTIME_UNPATCHED, 'mcp',
+            services.sessionId, services.installationId, VERSION
+        ))
+    });
 
     // Create tool handlers
     const toolHandlers = new ToolHandlers(resolvedConfig, services, true, configErrors);

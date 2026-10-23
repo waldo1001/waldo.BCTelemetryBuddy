@@ -2104,3 +2104,10 @@ Keep entries short and focused. This doc is your presentation backbone.
 **Date:** 2026-07-18
 **Why:** Ship the day's merged work: MCP embedded resources (spec 131 / PR #108) + the column-name parsing fix (affects every query response and the extension webview headers).
 **How:** /release with scope MCP minor (3.6.0→3.7.0) + extension patch (3.4.1→3.4.2). Risk questionnaire: no concerns (opt-in feature, no migrations, no dep/auth changes, path-free telemetry, docs shipped). Blast-radius validation: highest rating low-risk → bumps permitted. 1590 tests green pre-release. Commit 9cafaa8, tags v3.4.2 + mcp-v3.7.0 pushed; CI publishing to npm and Marketplace.
+
+- **#134 Node runtime security floor (spec draft, 2026-10-23)**
+  - **Why:** Node.js Oct 2026 security release (CVE-2026-111497 Brotli RCE + TLS bypasses); repo still on EOL Node 20, no engines on MCP package, no runtime check.
+  - **How:** drop 20.x in CI, engines ^22.23.4 || ^24.22.1 || >=26.12.1, MCP startup stderr warning + telemetry on unpatched runtime (warn, never refuse).
+- **#134 implemented (2026-10-23)**
+  - **Why:** make unpatched Node runtimes visible; stop testing on EOL Node 20.
+  - **How:** `packages/mcp/src/runtimeSecurity.ts` (floor table + classifier + never-throwing reporter), wired into stdio (`startSdkStdioServer`) and HTTP (`MCPServer`, HTTP-only guard); `TB-MCP-007`; engines + workflows guarded by `node-floor-consistency.test.ts`. Phase 8 surfaced latent runtime audit findings → #135.

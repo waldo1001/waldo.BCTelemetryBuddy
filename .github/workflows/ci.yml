@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
+        node-version: [22.x, 24.x]
 
     steps:
       - name: Checkout code
@@ -69,7 +69,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [20.x, 22.x]
+        node-version: [22.x, 24.x]
 
     steps:
       - name: Checkout code
@@ -129,7 +129,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: "npm"
 
       - name: Install dependencies
@@ -167,7 +167,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: "npm"
 
       - name: Install dependencies
@@ -210,7 +210,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
 
       - name: Check knowledge-base/index.json is not stale
         run: |
@@ -228,7 +228,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
 
       - name: Validate docs/specs structure
         run: node scripts/validate-specs.js
