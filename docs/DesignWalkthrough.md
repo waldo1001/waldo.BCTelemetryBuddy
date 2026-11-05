@@ -2139,3 +2139,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-11-05** — Cleared runtime npm audit highs (zod, follow-redirects, @azure/identity) [Entry: d6bf044d-11aa-4e84-9f1d-264ced61d858]
   - **Why:** The #150 security scan failed on 4 high advisories in runtime dependencies on main, published after the 2026-10-23 pass.
   - **How:** zod ^4.6.7 direct bump plus in-range lockfile updates, which drop identity's nested msal-node 6.0.1; tool schemas checked byte-identical. Plan: docs/plans/done/deps-runtime-audit-highs.md
+
+- **2026-11-05** — azure_cli auth honours the configured tenantId (#150) [Entry: 11969eb3-7c0a-4c87-a8cb-f9a5a7e60146]
+  - **Why:** Tokens came from the default az tenant, so cross-tenant App Insights resources failed with 403 InvalidAuthenticationTokenTenant and the error blamed the App ID.
+  - **How:** One shared acquireAzureCliToken() with an allowlisted --tenant (zero GUID = unset), tenant-naming 401/403 messages, tenant scrubbing in RateLimitedUsageTelemetry. Spec docs/specs/150-azure-cli-tenant.md, plan docs/plans/done/azure-cli-tenant.md.

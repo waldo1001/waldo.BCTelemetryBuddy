@@ -2,10 +2,7 @@ import { ConfidentialClientApplication, DeviceCodeRequest, PublicClientApplicati
 import { MCPConfig } from './config.js';
 import { IUsageTelemetry } from './usageTelemetry.js';
 import { TELEMETRY_EVENTS } from './telemetryEvents.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { acquireAzureCliToken, resolveAzureCliTenant } from './azureCliToken.js';
 
 /**
  * Authentication result containing access token and user info
@@ -67,30 +64,17 @@ export class AuthService {
     }
 
     /**
-     * Azure CLI flow - uses cached credentials from 'az login'
+     * Azure CLI flow - uses cached credentials from 'az login', for the configured tenant if any
      * No interactive login required if user already logged in via Azure CLI
      */
     private async authenticateAzureCLI(): Promise<AuthResult> {
+        let tenantScoped = false;
+
         try {
             console.error('[MCP] Using Azure CLI authentication (az account get-access-token)...');
 
-            // Get access token from Azure CLI
-            // Use --resource flag to get token for Application Insights API
-            // PYTHONWARNINGS=ignore suppresses urllib3/LibreSSL noise on macOS Python 3.9
-            const { stdout, stderr } = await execAsync(
-                'az account get-access-token --resource https://api.applicationinsights.io',
-                { env: { ...process.env, PYTHONWARNINGS: 'ignore' } }
-            );
-
-            if (stderr) {
-                console.error('Azure CLI stderr:', stderr);
-            }
-
-            const tokenResponse = JSON.parse(stdout);
-
-            if (!tokenResponse.accessToken) {
-                throw new Error('No access token returned from Azure CLI');
-            }
+            tenantScoped = resolveAzureCliTenant(this.config.tenantId) !== undefined;
+            const tokenResponse = await acquireAzureCliToken(this.config.tenantId);
 
             this.authResult = {
                 authenticated: true,
@@ -104,7 +88,8 @@ export class AuthService {
             console.error(`[MCP]   Tenant: ${tokenResponse.tenant || 'N/A'}`);
 
             this.usageTelemetry?.trackEvent(TELEMETRY_EVENTS.AUTH.AUTHENTICATION_COMPLETED, {
-                authFlow: 'azure_cli'
+                authFlow: 'azure_cli',
+                tenantScoped: String(tenantScoped)
             });
 
             return this.authResult;
@@ -114,14 +99,18 @@ export class AuthService {
             if (error.message.includes('az: command not found') || error.message.includes('not recognized')) {
                 console.error('\n⚠️  Azure CLI is not installed or not in PATH');
                 console.error('Install from: https://docs.microsoft.com/cli/azure/install-azure-cli\n');
-            } else if (error.message.includes('az login')) {
+            } else if (!tenantScoped && error.message.includes('az login')) {
                 console.error('\n⚠️  You need to login first using: az login');
                 console.error('Run "az login" in your terminal and try again.\n');
             }
 
             this.authResult = { authenticated: false };
             if (error instanceof Error) {
-                this.usageTelemetry?.trackException(error, { eventId: TELEMETRY_EVENTS.AUTH.FAILED, authFlow: 'azure_cli' });
+                this.usageTelemetry?.trackException(error, {
+                    eventId: TELEMETRY_EVENTS.AUTH.FAILED,
+                    authFlow: 'azure_cli',
+                    tenantScoped: String(tenantScoped)
+                });
             }
             throw error;
         }

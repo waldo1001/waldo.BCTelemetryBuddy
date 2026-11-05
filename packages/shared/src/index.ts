@@ -1,5 +1,6 @@
 // Core services
 export * from './auth.js';
+export * from './azureCliToken.js';
 export * from './kusto.js';
 export * from './cache.js';
 export * from './queries.js';

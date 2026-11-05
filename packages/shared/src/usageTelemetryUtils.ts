@@ -6,6 +6,47 @@
 
 import * as crypto from 'crypto';
 
+const GUID_PATTERN = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+
+const registeredRedactions = new Set<string>();
+
+/**
+ * Registers a value that must never reach telemetry, such as a tenant in domain form, which no
+ * generic pattern can recognise without also mangling API hosts.
+ */
+export function registerTelemetryRedaction(value: string): void {
+    registeredRedactions.add(value);
+}
+
+/** Replaces every registered value, in any casing. */
+export function redactRegistered(text: string): string {
+    let redacted = text;
+    for (const value of registeredRedactions) {
+        const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        redacted = redacted.replace(new RegExp(escaped, 'gi'), '<tenant>');
+    }
+    return redacted;
+}
+
+/**
+ * Returns an error that is safe to hand to a telemetry sink, which sends the message and stack as
+ * they are. The original object is returned when there is nothing to scrub.
+ */
+export function scrubErrorForTelemetry(error: Error): Error {
+    const scrub = (text: string) => redactRegistered(text).replace(GUID_PATTERN, '<guid>');
+
+    const message = scrub(error.message);
+    const stack = error.stack === undefined ? undefined : scrub(error.stack);
+    if (message === error.message && stack === error.stack) {
+        return error;
+    }
+
+    const scrubbed = new Error(message);
+    scrubbed.name = error.name;
+    scrubbed.stack = stack;
+    return scrubbed;
+}
+
 /**
  * Generate a pseudonymous GUID for installation tracking
  */
@@ -26,7 +67,8 @@ export function hashValue(value: string): string {
  * Keeps only repo-relative paths for debugging
  */
 export function sanitizeStackTrace(stack: string, repoRoot?: string): string {
-    let sanitized = stack;
+    // A stack's first line is the error message
+    let sanitized = stack.replace(GUID_PATTERN, '<guid>');
 
     // Remove absolute file paths - keep only relative to repo
     if (repoRoot) {
@@ -86,7 +128,7 @@ export function sanitizeErrorMessage(message: string): string {
     sanitized = sanitized.replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '<ip>');
 
     // Remove GUIDs (except in well-known contexts like app IDs)
-    sanitized = sanitized.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<guid>');
+    sanitized = sanitized.replace(GUID_PATTERN, '<guid>');
 
     return sanitized;
 }

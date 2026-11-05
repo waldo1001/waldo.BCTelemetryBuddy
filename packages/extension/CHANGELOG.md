@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`azure_cli` uses the configured `tenantId`** in Run KQL, the Setup Wizard's Test Connection and the Profile Wizard's Test Auth ([#150](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/150)). Tokens were always requested for your default `az` tenant, so a resource in another tenant failed with 403, and Test Connection blamed the App ID. With no `tenantId`, or the all-zero GUID the wizard writes, nothing changes.
+- Test Connection's 401/403 message now names the tenant the token was issued for.
+
+### Changed
+- **Configs that worked only because `tenantId` was ignored now fail, with an error that says how to fix it**: an outdated or wrong `tenantId` under `azure_cli`, a placeholder such as `your-tenant-id` (the `azure_cli` example in the User Guide used to show it), an alias such as `common`, or managed identity / Cloud Shell sessions with `tenantId` set. Set the resource's tenant and run `az login --tenant <tenantId>`, or remove `tenantId`.
+
 ### Security
 - **Runtime dependency advisory cleared**: `follow-redirects` 1.16.2 (GHSA-mrwp-f3q8-3g9p), used through `axios`. The bundled MCP server also takes this release's MCP dependency fixes. `npm audit --omit=dev` reports 0 vulnerabilities.
 

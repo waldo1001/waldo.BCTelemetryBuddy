@@ -87,7 +87,7 @@ npx -p bc-telemetry-buddy-mcp bctb-setup-write-config \\
   "$schema": "https://raw.githubusercontent.com/waldo1001/waldo.BCTelemetryBuddy/main/packages/mcp/config-schema.json",
   "connectionName": "<friendly name>",
   "authFlow": "azure_cli",
-  "tenantId": "<tenant-id, or 00000000-0000-0000-0000-000000000000 for azure_cli/vscode_auth>",
+  "tenantId": "<tenant-id of the Application Insights resource; azure_cli requests its token for this tenant. Use 00000000-0000-0000-0000-000000000000 for the default az tenant, or for vscode_auth>",
   "applicationInsightsAppId": "<application-insights-app-id>",
   "kustoClusterUrl": "https://api.applicationinsights.io",
   "cacheEnabled": true,

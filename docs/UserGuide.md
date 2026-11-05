@@ -331,7 +331,7 @@ BC Telemetry Buddy supports four authentication methods:
 **How it works:**
 1. Login with Azure CLI, specifying the tenant: `az login --tenant {tenant-id}`
 2. The MCP server uses your existing Azure CLI credentials automatically
-3. **No additional configuration needed** - just set `authFlow` to `azure_cli`
+3. Set `authFlow` to `azure_cli`, and `tenantId` if the resource isn't in your default `az` tenant
 
 **Benefits:**
 - ✅ No Azure app registration required
@@ -344,20 +344,26 @@ BC Telemetry Buddy supports four authentication methods:
 ```json
 {
   "authFlow": "azure_cli",
-  "tenantId": "your-tenant-id"
+  "tenantId": "12345678-1234-1234-1234-123456789abc"
 }
 ```
+
+**How `tenantId` is used:** the token is requested with `az account get-access-token --tenant <tenantId>`, so your default `az` tenant can stay as it is. Set `tenantId` to the tenant of the Application Insights resource: its GUID, or a domain such as `contoso.onmicrosoft.com`. Leave it out, or use the all-zero GUID, to use your default `az` tenant.
+
+Any other value stops authentication with an error, including placeholders such as `your-tenant-id` and aliases such as `common`.
+
+**If it fails after upgrading:** earlier versions ignored `tenantId` for `azure_cli`, so an outdated value did no harm. Either set the correct tenant and run `az login --tenant <tenantId>`, or remove `tenantId`. Managed identity and Cloud Shell sessions must remove it, because `az` doesn't support `--tenant` there.
 
 **For guest users:**
 ```bash
 # Login to the specific tenant you want to query
-az login --tenant 557836c7-47a0-4a3a-af9b-f5af2dacc8b0
+az login --tenant 12345678-1234-1234-1234-123456789abc
 
 # Verify you're in the correct tenant
 az account show
 ```
 
-**Note:** You don't need to specify `clientId` or `clientSecret` when using Azure CLI auth. The `tenantId` is optional but recommended for documentation purposes.
+**Note:** You don't need to specify `clientId` or `clientSecret` when using Azure CLI auth.
 
 ### Device Code Flow (Alternative for Guest Users)
 

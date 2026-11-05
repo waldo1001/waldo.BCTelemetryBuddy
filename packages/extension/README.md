@@ -124,7 +124,7 @@ The extension reads configuration from `.bctb-config.json` in your workspace roo
 ```
 
 **Authentication Flows:**
-- `azure_cli` (recommended): Uses existing `az login` session - no additional credentials needed
+- `azure_cli` (recommended): Uses existing `az login` session - no additional credentials needed. The token is requested for `tenantId`, so that must be the tenant of your Application Insights resource (its GUID or a domain). Leave it out, or use the all-zero GUID, to use your default `az` tenant
 - `device_code`: Browser-based authentication - prompts when needed
 - `client_credentials`: Service principal with client ID + secret (use environment variables for secrets)
 

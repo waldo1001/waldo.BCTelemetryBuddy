@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`azure_cli` uses the configured `tenantId`** ([#150](https://github.com/waldo1001/waldo.BCTelemetryBuddy/issues/150)). Tokens were always requested for your default `az` tenant, so an Application Insights resource in another tenant failed with 403 `InvalidAuthenticationTokenTenant`, and the message pointed at the App ID. The token is now requested with `--tenant <tenantId>`, so your default `az` tenant can stay as it is. With no `tenantId`, or the all-zero GUID, nothing changes. Spec: [docs/specs/150-azure-cli-tenant.md](../../docs/specs/150-azure-cli-tenant.md).
+- A 401/403 from Application Insights now names the tenant the token was issued for.
+- The `switch_profile` note and the setup instructions no longer say `tenantId` is ignored for `azure_cli`.
+
+### Changed
+- **Configs that worked only because `tenantId` was ignored now fail, with an error that says how to fix it.** Affected: an outdated or wrong `tenantId` under `azure_cli`; a placeholder such as `your-tenant-id` or an alias such as `common` (accepted values are a tenant GUID or a domain such as `contoso.onmicrosoft.com`); and managed identity or Cloud Shell sessions with `tenantId` set, where `az` doesn't support `--tenant`. Fix: set the resource's tenant and run `az login --tenant <tenantId>`, or remove `tenantId` to keep the default `az` tenant.
+- `tenantId` is checked against that allowlist before any shell command runs, because on Windows `az` is `az.cmd` and needs a shell.
+
 ### Security
+- Error messages and stacks sent to usage telemetry no longer contain GUIDs, and a tenant read from config or a token is never sent in any form, including domains. Exception groups based on message text or `stackHash` may change once.
 - **Runtime dependency advisories cleared**: `zod` 4.6.7 (GHSA-mrhx-c7xc-m3w5), `follow-redirects` 1.16.2 (GHSA-mrwp-f3q8-3g9p), and `@azure/identity` 4.14.1, which drops its private `@azure/msal-node` 6.0.1 copy (GHSA-xcx6-jx8p-x3h5). All within current majors. Tool schemas sent to MCP clients are unchanged. `npm audit --omit=dev` reports 0 vulnerabilities.
 
 ## [3.8.0] - 2026-10-23
