@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Runtime dependency advisory cleared**: `follow-redirects` 1.16.2 (GHSA-mrwp-f3q8-3g9p), used through `axios`. The bundled MCP server also takes this release's MCP dependency fixes. `npm audit --omit=dev` reports 0 vulnerabilities.
+
 ## [3.5.0] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `risky`._
