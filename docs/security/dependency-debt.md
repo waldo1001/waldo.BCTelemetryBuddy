@@ -4,7 +4,8 @@ Register of known transitive-dependency advisories on `main` that are **not** cu
 remediated, why they're deferred, and when to revisit. Companion to the remediation in
 [docs/plans/done/main-transitive-vuln-remediation.md](../plans/done/main-transitive-vuln-remediation.md).
 
-- **Last reviewed:** 2026-07-24 (`npm audit`, pre-release scan for extension v3.4.3)
+- **Last reviewed:** 2026-11-05 (`npm audit --omit=dev`, security scan for #150): runtime 0 after the 2026-11-05 pass below
+- Earlier full review: 2026-07-24 (`npm audit`, pre-release scan for extension v3.4.3)
 - **Snapshot at review:** 44 advisories remaining (4 high, 36 moderate, 4 low across the three packages, with overlap) — all four highs are the deferred OpenTelemetry cluster below; `packages/shared` and `packages/extension` have **zero high**.
 - Previous review 2026-07-21: 40 moderate+ (8 high, 30 moderate, 2 low) — down from 50 before remediation.
 - These are **latent**: `dependency-review-action` only runs on PRs and only flags the PR *diff*, so `main`'s unchanged transitive deps block no CI. A PR that regenerates the lockfile can surface any of these (that is exactly what happened on PR #127).
@@ -62,6 +63,20 @@ Every fix stayed within its current major; no `--force` was used.
 | uuid | removed from the tree | was 8.3.2 via msal-node 3 (moderate GHSA-w5hq-g745-h8pq) |
 
 After this, `npm audit --omit=dev` reports **0 vulnerabilities of any severity** in shared, mcp and extension.
+
+## Remediated (2026-11-05 pass)
+Found by the security scan for #150. These advisories were published after the 2026-10-23 pass; `main`'s lockfile had not changed. Every fix stays within its current major; no `overrides`, no `--force`.
+
+| Package | → Version | Advisory | Path (runtime?) |
+|---|---|---|---|
+| zod | ^4.6.7 (direct, was ^4.3.6) | GHSA-mrhx-c7xc-m3w5, high, <4.6.6 | MCP **runtime**, directly and via `@modelcontextprotocol/sdk` |
+| follow-redirects | 1.16.2 | GHSA-mrwp-f3q8-3g9p, high, >=1.16.0 <=1.16.1 | axios → MCP + extension **runtime** |
+| @azure/identity | 4.14.1 | (carries the next row) | applicationinsights → MCP **runtime** |
+| @azure/msal-node (nested copy) | 6.0.1 removed | GHSA-xcx6-jx8p-x3h5, high, >=5.0.0-beta.0 <7.1.0 | identity 4.14.1 needs `^7.1.0`, met by the top-level 7.1.1 already used by `packages/shared` |
+
+Checked: all 16 MCP tool input schemas, as listed to clients, are byte-identical on zod 4.3.6 and 4.6.7. Test counts are unchanged.
+
+After this, `npm audit --omit=dev` again reports **0 vulnerabilities of any severity** in shared, mcp and extension. The full tree still has 19 (8 low, 5 moderate, 5 high, 1 critical), all in dev-only tooling that ships in neither the `.vsix` nor the npm package. They were not reviewed one by one in this pass.
 
 ## Deferred
 
