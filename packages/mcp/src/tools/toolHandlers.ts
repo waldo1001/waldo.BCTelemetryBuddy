@@ -1666,7 +1666,7 @@ ${extendStatements}
             configErrors: this.configErrors.length > 0 ? this.configErrors : undefined
         };
         if (this.config.authFlow === 'azure_cli') {
-            result.note = "Auth uses your current 'az login' session; the config's tenantId is not used for azure_cli. If queries return 403, run: az login --tenant <tenantId>.";
+            result.note = "Auth uses your current 'az login' session and requests the token for this profile's tenantId when one is set; without one, your default az tenant is used. If queries return 403, check that tenantId is the resource's tenant, then run: az login --tenant <tenantId>.";
         }
         return result;
     }

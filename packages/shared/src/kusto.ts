@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { IUsageTelemetry, NoOpUsageTelemetry } from './usageTelemetry.js';
+import { tenantFromToken, tokenTenantHint } from './azureCliToken.js';
 
 /**
  * Kusto query result structure
@@ -124,7 +125,7 @@ export class KustoService {
 
                 // Track the exception with full context
                 const queryError = status === 401 || status === 403
-                    ? new Error(`Authentication failed: ${message}. Check your credentials and permissions.`)
+                    ? new Error(`Authentication failed: ${message}. ${tokenTenantHint(tenantFromToken(accessToken))}Check your credentials and permissions.`)
                     : status === 400
                         ? new Error(`Invalid query: ${message}`)
                         : status === 429

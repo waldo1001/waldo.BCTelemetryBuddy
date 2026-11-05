@@ -5,7 +5,7 @@
  * IMPORTANT: This is separate from TelemetryService which queries BC telemetry data.
  */
 
-import { createErrorProperties } from './usageTelemetryUtils.js';
+import { createErrorProperties, redactRegistered, scrubErrorForTelemetry } from './usageTelemetryUtils.js';
 
 /**
  * Core interface for tracking usage telemetry events
@@ -110,7 +110,12 @@ export class RateLimitedUsageTelemetry implements IUsageTelemetry {
 
     trackException(error: Error, properties?: Record<string, string>): void {
         // Enrich with sanitized stack, category, and hash — caller props win on overlap
-        const enriched = { ...createErrorProperties(error), ...properties };
+        const enriched: Record<string, string> = { ...createErrorProperties(error), ...properties };
+        for (const [key, value] of Object.entries(enriched)) {
+            if (typeof value === 'string') {
+                enriched[key] = redactRegistered(value);
+            }
+        }
 
         const errorKey = `${error.name}:${enriched.stackHash || ''}`;
 
@@ -155,7 +160,7 @@ export class RateLimitedUsageTelemetry implements IUsageTelemetry {
 
         try {
             this.incrementEventCount();
-            this.innerTelemetry.trackException(error, enriched);
+            this.innerTelemetry.trackException(scrubErrorForTelemetry(error), enriched);
         } catch {
             // Swallow
         }

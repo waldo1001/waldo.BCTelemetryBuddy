@@ -6,7 +6,7 @@ import { promisify } from 'util';
 // MCP installer utilities
 import { getMCPStatus, installMCP, isMCPUpdateAvailable } from '../services/mcpInstaller';
 import { VSCodeAuthService } from '../services/vscodeAuthService';
-import { IUsageTelemetry, TELEMETRY_EVENTS } from '@bctb/shared';
+import { acquireAzureCliToken, IUsageTelemetry, TELEMETRY_EVENTS, tenantFromToken, tokenTenantHint } from '@bctb/shared';
 import { findConfigWorkspace } from '../services/workspaceFinder';
 
 const execAsync = promisify(exec);
@@ -335,8 +335,10 @@ export class SetupWizardProvider {
     }
 
     private async _testConnection(config: { tenantId: string; appInsightsId: string; clusterUrl: string; authFlow?: string }): Promise<void> {
+        let accessToken: string | undefined;
+        let tokenTenant: string | undefined;
+
         try {
-            let accessToken: string;
 
             // Get access token based on authFlow
             if (config.authFlow === 'vscode_auth') {
@@ -351,17 +353,9 @@ export class SetupWizardProvider {
                 accessToken = token;
             } else {
                 // Default to Azure CLI for backward compatibility and other auth methods
-                const { promisify } = await import('util');
-                const { exec } = await import('child_process');
-                const execAsync = promisify(exec);
-
-                const tokenResult = await execAsync('az account get-access-token --resource https://api.applicationinsights.io');
-                const tokenData = JSON.parse(tokenResult.stdout);
-                accessToken = tokenData.accessToken;
-
-                if (!accessToken) {
-                    throw new Error('Failed to get access token from Azure CLI');
-                }
+                const token = await acquireAzureCliToken(config.tenantId);
+                accessToken = token.accessToken;
+                tokenTenant = token.tenant;
             }
 
             // Execute test KQL query
@@ -394,7 +388,8 @@ export class SetupWizardProvider {
                 const message = error.response.data?.error?.message || error.message;
 
                 if (status === 401 || status === 403) {
-                    errorMessage = `Authentication failed: ${message}. Check your App ID and permissions.`;
+                    const tenant = tokenTenant ?? (accessToken ? tenantFromToken(accessToken) : undefined);
+                    errorMessage = `Authentication failed: ${message}. ${tokenTenantHint(tenant)}Check your App ID and permissions.`;
                 } else if (status === 400) {
                     errorMessage = `Invalid request: ${message}`;
                 } else if (status === 404) {

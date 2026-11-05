@@ -284,7 +284,7 @@ Discovered connections are keyed by the opened folder's name (e.g. `Coeck`), bec
 
 When set, and when **exactly one** workspace connection is discovered, the server activates it at startup and prints a loud `[MCP] AUTO-ACTIVATED …` line to stderr. Setting this flag means: *I accept that opening a workspace retargets which App Insights resource is queried.* With more than one connection discovered, it does nothing (ambiguous) and you pick with `switch_profile`.
 
-> **Auth note (`azure_cli`):** switching connection changes the App Insights *resource*, not your identity — `azure_cli` uses your current `az login` session and ignores the config's `tenantId`. If a query returns 403 after switching, run `az login --tenant <tenantId>`.
+> **Auth note (`azure_cli`):** switching connection changes the App Insights *resource*, not your identity — `azure_cli` uses your current `az login` session and requests the token for the profile's `tenantId` when one is set (with none, or the all-zero GUID, your default `az` tenant is used). If a query returns 403 after switching, check that `tenantId` is the resource's tenant, then run `az login --tenant <tenantId>`.
 
 ### With Copilot Studio
 

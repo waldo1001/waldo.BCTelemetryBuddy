@@ -247,7 +247,7 @@ export function expandEnvironmentVariables(config: any): any {
 export function validateConfig(config: MCPConfig): string[] {
     const errors: string[] = [];
 
-    // Azure CLI and VS Code auth don't need tenantId (use current login session)
+    // Azure CLI and VS Code auth don't need tenantId (without one, they use the current login session's tenant)
     if (config.authFlow !== 'azure_cli' && config.authFlow !== 'vscode_auth' && !config.tenantId) {
         errors.push('BCTB_TENANT_ID is required (unless using azure_cli or vscode_auth auth flow)');
     }

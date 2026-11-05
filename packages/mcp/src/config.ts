@@ -154,7 +154,7 @@ export function validateConfig(config: MCPConfig): string[] {
         errors.push('workspacePath is required - set it in your config file or via BCTB_WORKSPACE_PATH environment variable');
     }
 
-    // Azure CLI doesn't need tenantId (uses current az login session)
+    // Azure CLI doesn't need tenantId (without one, it uses the default tenant of the az login session)
     if (config.authFlow !== 'azure_cli' && !config.tenantId) {
         errors.push('BCTB_TENANT_ID is required (unless using azure_cli auth flow)');
     }
