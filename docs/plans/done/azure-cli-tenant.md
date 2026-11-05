@@ -1,6 +1,6 @@
 ---
 topic: azure-cli-tenant
-status: approved
+status: done
 created: 2026-11-05
 spec: docs/specs/150-azure-cli-tenant.md
 ---

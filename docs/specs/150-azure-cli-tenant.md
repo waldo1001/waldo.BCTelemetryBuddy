@@ -1,10 +1,10 @@
 ---
 spec: 150-azure-cli-tenant
 issue: 150
-status: approved
+status: implemented
 created: 2026-11-05
 approved: 2026-11-05
-plans: [docs/plans/azure-cli-tenant.md]
+plans: [docs/plans/done/azure-cli-tenant.md]
 ---
 
 # azure_cli auth honours the configured tenantId
@@ -121,19 +121,25 @@ No new feature surface, so no new event ID. Existing `azure_cli` auth events gai
 
 ## Verification
 
+Shared tests: `packages/shared/src/__tests__/azure-cli-tenant.test.ts`. Wizard tests: `packages/extension/src/__tests__/setupWizard-tenant.test.ts`. MCP tests: `packages/mcp/src/__tests__/azure-cli-tenant-docs.test.ts`.
+
 | AC | Test | Status |
 |---|---|---|
-| AC1 | planned | planned |
-| AC2 | planned | planned |
-| AC3 | planned | planned |
-| AC4 | planned | planned |
-| AC5 | planned | planned |
-| AC6 | planned | planned |
-| AC7 | planned | planned |
-| AC8 | planned | planned |
-| AC9 | planned | planned |
-| AC10 | planned | planned |
-| AC11 | planned | planned |
+| AC1 | shared "AC1: passes --tenant for a GUID tenantId", "AC1: accepts an upper-case GUID…" | verified |
+| AC2 | wizard "AC2 + AC6: the stub receives tenant and resource…" | verified |
+| AC3 | shared "AC3: command is byte-identical to today for …" (5 cases), "AC3: leaves the az error untouched…"; wizard "AC3: omits --tenant for …" (2 cases) | verified |
+| AC4 | shared "AC4: passes --tenant for a domain tenantId"; wizard "AC4: passes a domain tenant" | verified |
+| AC5 | shared "AC5: starts no process…" (18 cases); wizard "AC5: never starts a process…" (3 cases, marker-file check) | verified |
+| AC6 | wizard "AC2 + AC6…", "AC6: the JSON from az becomes the bearer token" (real exec, stub `az`; Windows via CI `test-extension` matrix) | verified (Windows by stub only) |
+| AC7 | shared "AC7: names the tenant…", 4 "AC7 edge" cases | verified |
+| AC8 | shared "AC8: names the tenant from the token on 401/403"; wizard "AC8: a 403 names the tenant…" | verified |
+| AC9 | shared "AC9: message is exactly today…" (5 cases); wizard "AC9: a 403 is exactly today's message…" | verified |
+| AC10 | shared "AC10: …" (6 cases) and the 3 `tenantScoped` tests | verified |
+| AC11 | mcp "AC11: …" (3 cases); README and UserGuide reviewed by hand | verified |
+
+Mutation check: 17 mutants of the fix, all killed (`docs/plans/done/azure-cli-tenant.md`).
+
+Manual cross-tenant check, 2026-11-05, local `az` session, built code: for a resource in a non-default tenant, `print 1` returned 403 `InvalidAuthenticationTokenTenant` without `--tenant`, and 200 with it, the token's `tid` matching the resource tenant. A second tenant's `az` session had expired (`AADSTS700082`); the new error message named it and the fix. A domain tenant was accepted by real `az`, but not used for a query. Not tested: a real `az.cmd` on Windows, managed identity, Cloud Shell.
 
 Where the tests run: CI runs `packages/shared` tests on Ubuntu only (`test-mcp` job) and `packages/extension` tests on Ubuntu, Windows and macOS. The extension's Jest maps `@bctb/shared` to the real built `dist`, so the AC6 stub-`az` test lives in the extension package and exercises the real shared code on all three platforms. On Windows the stub is an `az.cmd`.
 
@@ -143,5 +149,5 @@ Manual check, outside the AC table: with an `az` session that spans several tena
 
 - Issue: #150
 - Related: #104 (different root cause for the reported symptom)
-- Plan(s): to be added after approval
+- Plan(s): docs/plans/done/azure-cli-tenant.md
 - PR(s): to be added

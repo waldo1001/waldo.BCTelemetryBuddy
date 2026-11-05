@@ -3410,3 +3410,23 @@ Change instructions an business logic to do this."
 > "Approved" (plan docs/plans/deps-runtime-audit-highs.md)
 
 ---
+### Entry ID: 11969eb3-7c0a-4c87-a8cb-f9a5a7e60146 — 2026-11-05 15:43
+> "Fix GitHub issue #150: azure_cli auth ignores tenantId from .bctb-config.json. Pass --tenant on every azure_cli token path, keep behaviour without tenantId, no shell injection, name the tenant in the auth error; reproduce first, mutate the fix; verify the device_code and wizard claims and #104; open a PR, do not merge, release or comment on the issue."
+
+---
+### Entry ID: e9f73dd9-a9a0-482e-957d-4184b5a1d5cb — 2026-11-05 15:43
+> "Review it again with fable before I approve it"
+
+---
+### Entry ID: 2379da33-5de6-4287-89aa-5c502ff74e5e — 2026-11-05 15:43
+> "Approved" (spec docs/specs/150-azure-cli-tenant.md)
+
+---
+### Entry ID: 4949f0e0-165f-454b-a311-94b840ccd61c — 2026-11-05 15:43
+> "Approved" (plan docs/plans/azure-cli-tenant.md)
+
+---
+### Entry ID: 884bb8ad-b826-49de-a15a-272a22e99952 — 2026-11-05 15:43
+> "Merged, continue" (#151 merged; finish the #150 PR)
+
+---
