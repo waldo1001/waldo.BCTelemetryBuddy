@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Runtime dependency advisories cleared**: `zod` 4.6.7 (GHSA-mrhx-c7xc-m3w5), `follow-redirects` 1.16.2 (GHSA-mrwp-f3q8-3g9p), and `@azure/identity` 4.14.1, which drops its private `@azure/msal-node` 6.0.1 copy (GHSA-xcx6-jx8p-x3h5). All within current majors. Tool schemas sent to MCP clients are unchanged. `npm audit --omit=dev` reports 0 vulnerabilities.
+
 ## [3.8.0] - 2026-10-23
 
 _Highest blast-radius rating across all plans landed in this release: `risky`._
