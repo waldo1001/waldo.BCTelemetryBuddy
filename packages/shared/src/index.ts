@@ -1,6 +1,8 @@
 // Core services
 export * from './auth.js';
-export * from './azureCliToken.js';
+// Named on purpose: the module's command builder and tenant parser stay internal
+export { acquireAzureCliToken, tenantFromToken, tokenTenantHint } from './azureCliToken.js';
+export type { AzureCliToken } from './azureCliToken.js';
 export * from './kusto.js';
 export * from './cache.js';
 export * from './queries.js';

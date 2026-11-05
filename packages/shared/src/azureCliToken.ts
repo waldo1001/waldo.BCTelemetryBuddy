@@ -51,7 +51,8 @@ export function resolveAzureCliTenant(tenantId?: unknown): string | undefined {
     return tenant;
 }
 
-export function buildAzureCliTokenCommand(tenant?: string): string {
+/** Only for a tenant that came out of resolveAzureCliTenant; not exported, so no caller can skip that. */
+function buildAzureCliTokenCommand(tenant?: string): string {
     const tenantArgument = tenant ? `--tenant ${tenant} ` : '';
     return `az account get-access-token ${tenantArgument}--resource ${RESOURCE}`;
 }

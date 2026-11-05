@@ -2143,3 +2143,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-11-05** — azure_cli auth honours the configured tenantId (#150) [Entry: 11969eb3-7c0a-4c87-a8cb-f9a5a7e60146]
   - **Why:** Tokens came from the default az tenant, so cross-tenant App Insights resources failed with 403 InvalidAuthenticationTokenTenant and the error blamed the App ID.
   - **How:** One shared acquireAzureCliToken() with an allowlisted --tenant (zero GUID = unset), tenant-naming 401/403 messages, tenant scrubbing in RateLimitedUsageTelemetry. Spec docs/specs/150-azure-cli-tenant.md, plan docs/plans/done/azure-cli-tenant.md.
+
+- **2026-11-05** — CodeQL follow-up: private az command builder, regex-free tenant scrub [Entry: c1893f68-8276-4e39-9a22-6e3eab043c9c]
+  - **Why:** #152 added CodeQL alerts 379-383; an exported builder accepted unchecked strings, and the scrub fed values into a dynamic RegExp.
+  - **How:** Named exports from @bctb/shared, position-wise case-insensitive replace (safe for characters like I-dot that change length when lower-cased). Plan: docs/plans/done/codeql-azure-cli-token.md
