@@ -360,3 +360,14 @@ describe('redactRegistered edge cases (CodeQL follow-up)', () => {
         expect(redactRegistered('nothing to scrub')).toBe('nothing to scrub');
     });
 });
+
+describe('redactRegistered input bound (CodeQL alert 384)', () => {
+    it('AC1: returns String(input) for an array-like object without iterating', () => {
+        const small = { length: 3, 0: 'a', 1: 'b', 2: 'c' } as unknown as string;
+        // Asserted first, so on unguarded code this fails before the huge case can hang.
+        expect(redactRegistered(small)).toBe('[object Object]');
+
+        const huge = { length: 1e12 } as unknown as string;
+        expect(redactRegistered(huge)).toBe('[object Object]');
+    });
+});
