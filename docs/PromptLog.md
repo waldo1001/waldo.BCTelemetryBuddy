@@ -3430,3 +3430,15 @@ Change instructions an business logic to do this."
 > "Merged, continue" (#151 merged; finish the #150 PR)
 
 ---
+### Entry ID: fcda4959-379f-40a5-9849-a80a8e455419 — 2026-11-05 16:37
+> "Merged: https://github.com/waldo1001/waldo.BCTelemetryBuddy/pull/152"
+
+---
+### Entry ID: cd4d49cc-3daf-4c79-918e-c245267e3fd0 — 2026-11-05 16:37
+> "Yes, fix them" (the CodeQL alerts on the azure_cli token code)
+
+---
+### Entry ID: c1893f68-8276-4e39-9a22-6e3eab043c9c — 2026-11-05 16:37
+> "Approved" (plan docs/plans/codeql-azure-cli-token.md)
+
+---

@@ -18,12 +18,33 @@ export function registerTelemetryRedaction(value: string): void {
     registeredRedactions.add(value);
 }
 
-/** Replaces every registered value, in any casing. */
+/**
+ * Replaces every registered value, in any casing, matching it literally.
+ *
+ * Compares at each position of the original text rather than searching a lower-cased copy: some
+ * characters change length when lower-cased (İ becomes two code units), which would shift every
+ * later offset and could let a value through. Registered values are ASCII (validated tenants and
+ * GUID `tid` claims), so a match spans exactly value.length code units of the original.
+ */
 export function redactRegistered(text: string): string {
     let redacted = text;
     for (const value of registeredRedactions) {
-        const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        redacted = redacted.replace(new RegExp(escaped, 'gi'), '<tenant>');
+        const needle = value.toLowerCase();
+        if (!needle) {
+            continue; // an empty needle matches everywhere and would never advance
+        }
+        let result = '';
+        let i = 0;
+        while (i < redacted.length) {
+            if (redacted.slice(i, i + needle.length).toLowerCase() === needle) {
+                result += '<tenant>';
+                i += needle.length;
+            } else {
+                result += redacted[i];
+                i++;
+            }
+        }
+        redacted = result;
     }
     return redacted;
 }

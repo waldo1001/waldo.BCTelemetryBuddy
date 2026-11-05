@@ -12,7 +12,7 @@ import { KustoService } from '../kusto.js';
 import { MCPConfig } from '../config.js';
 import { IUsageTelemetry, RateLimitedUsageTelemetry } from '../usageTelemetry.js';
 import { TELEMETRY_EVENTS } from '../telemetryEvents.js';
-import { registerTelemetryRedaction } from '../usageTelemetryUtils.js';
+import { redactRegistered, registerTelemetryRedaction } from '../usageTelemetryUtils.js';
 
 jest.mock('@azure/msal-node');
 jest.mock('axios');
@@ -313,5 +313,50 @@ describe('telemetry', () => {
         await new AuthService(config(GUID_TENANT), new RateLimitedUsageTelemetry(inner)).authenticate().catch(e => e);
 
         expect(inner.trackException.mock.calls[0][1]).toMatchObject({ tenantScoped: 'true' });
+    });
+});
+
+describe('public surface and literal scrubbing (CodeQL follow-up)', () => {
+    it('AC1: the package does not export a raw command builder', async () => {
+        const shared: Record<string, unknown> = await import('../index.js');
+
+        expect(shared.buildAzureCliTokenCommand).toBeUndefined();
+        expect(shared.resolveAzureCliTenant).toBeUndefined();
+    });
+
+    it('AC1: the package still exports the token functions', async () => {
+        const shared: Record<string, unknown> = await import('../index.js');
+
+        expect(typeof shared.acquireAzureCliToken).toBe('function');
+        expect(typeof shared.tenantFromToken).toBe('function');
+        expect(typeof shared.tokenTenantHint).toBe('function');
+    });
+
+    it("AC2: matches a registered value's dots literally", () => {
+        registerTelemetryRedaction('literal.dots.example');
+
+        expect(redactRegistered('literalXdotsYexample and literal.dots.example'))
+            .toBe('literalXdotsYexample and <tenant>');
+    });
+
+    it('AC2: replaces every occurrence in any casing', () => {
+        registerTelemetryRedaction('every.case.example');
+
+        expect(redactRegistered('every.case.example, EVERY.Case.Example, every.case.example!'))
+            .toBe('<tenant>, <tenant>, <tenant>!');
+    });
+
+    it('AC3: scrubs correctly after a character that changes length when lower-cased', () => {
+        registerTelemetryRedaction('shift.case.example');
+
+        expect(redactRegistered('İİİ tenant shift.case.example ends')).toBe('İİİ tenant <tenant> ends');
+    });
+});
+
+describe('redactRegistered edge cases (CodeQL follow-up)', () => {
+    it('AC2: ignores an empty registered value', () => {
+        registerTelemetryRedaction('');
+
+        expect(redactRegistered('nothing to scrub')).toBe('nothing to scrub');
     });
 });
