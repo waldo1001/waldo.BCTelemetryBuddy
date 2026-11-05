@@ -27,6 +27,11 @@ export function registerTelemetryRedaction(value: string): void {
  * GUID `tid` claims), so a match spans exactly value.length code units of the original.
  */
 export function redactRegistered(text: string): string {
+    // Exported, so a JavaScript caller could pass an array-like object with a huge `length`;
+    // only ever iterate over a real string.
+    if (typeof text !== 'string') {
+        return String(text);
+    }
     let redacted = text;
     for (const value of registeredRedactions) {
         const needle = value.toLowerCase();

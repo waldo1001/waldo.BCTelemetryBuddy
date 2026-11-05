@@ -2147,3 +2147,7 @@ Keep entries short and focused. This doc is your presentation backbone.
 - **2026-11-05** — CodeQL follow-up: private az command builder, regex-free tenant scrub [Entry: c1893f68-8276-4e39-9a22-6e3eab043c9c]
   - **Why:** #152 added CodeQL alerts 379-383; an exported builder accepted unchecked strings, and the scrub fed values into a dynamic RegExp.
   - **How:** Named exports from @bctb/shared, position-wise case-insensitive replace (safe for characters like I-dot that change length when lower-cased). Plan: docs/plans/done/codeql-azure-cli-token.md
+
+- **2026-11-05** — CodeQL alert 384: bound the loop in redactRegistered [Entry: 0dd9dba3-1fe8-439a-8ce4-5956d2c14d30]
+  - **Why:** #153 iterated over text.length in an exported function, so an array-like object with a huge length could stall the process.
+  - **How:** typeof guard returning String(text) before the loop. Plan: docs/plans/done/codeql-loop-bound.md
